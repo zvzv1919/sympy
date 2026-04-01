@@ -1,0 +1,16 @@
+# sympy/concrete — Catalog
+
+> Part of [SymPy](../catalog.md). Finite and infinite sums and products: symbolic evaluation, convergence testing, Gosper's algorithm, and Kronecker-delta simplification.
+
+## Python Files
+
+| File | Summary |
+|------|---------|
+| `__init__.py` | Package entry point; re-exports `Product`, `product`, `Sum`, and `summation` from the `products` and `summations` submodules. |
+| `summations.py` | Implements the `Sum` class (unevaluated finite/infinite summations) with symbolic evaluation (`doit`, `eval_sum`, `eval_sum_symbolic`, `eval_sum_hyper`), convergence/absolute-convergence testing, Euler-Maclaurin approximation, telescopic summation, zeta-function matching, limit reversal (`reverse_order`), and the convenience function `summation`. |
+| `products.py` | Implements the `Product` class (unevaluated finite/infinite products) with symbolic evaluation (`doit`, `_eval_product`), convergence testing (`is_convergent`), limit reversal (`reverse_order`), and the convenience function `product` that constructs and immediately evaluates a `Product`. |
+| `expr_with_limits.py` | Defines the `ExprWithLimits` and `AddWithLimits` base classes (shared by `Sum`, `Product`, and `Integral`), implementing limit processing (`_process_limits`), property accessors (`function`, `limits`, `variables`, `free_symbols`), substitution (`_eval_subs`), dummy-variable renaming (`as_dummy`), and additive operations like `_eval_factor` and `_eval_expand_basic`. |
+| `expr_with_intlimits.py` | Defines `ReorderError` and the `ExprWithIntLimits` base class (extending `ExprWithLimits`), which adds integer-limit operations `change_index`, `index`, `reorder`, and `reorder_limit` used by `Sum` and `Product` to transform and permute their limit tuples. |
+| `gosper.py` | Implements Gosper's hypergeometric summation algorithm via `gosper_normal` (rational normal form), `gosper_term` (antidifference computation), and `gosper_sum` (closed-form evaluation of definite/indefinite hypergeometric sums). |
+| `guess.py` | Provides heuristic sequence-analysis utilities: `find_simple_recurrence_vector` and `find_simple_recurrence` for detecting linear recurrences, `rationalize` for approximating floats as rationals via continued fractions, and `guess_generating_function_rational`/`guess_generating_function` for guessing generating functions from a list of terms. |
+| `delta.py` | Provides helper functions and the public routines `deltaproduct` and `deltasummation` for evaluating products and sums containing `KroneckerDelta` terms. |

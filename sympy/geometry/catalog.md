@@ -1,0 +1,19 @@
+# sympy/geometry — Catalog
+
+> Part of [SymPy](../catalog.md). Computational geometry: points, lines, polygons, circles, ellipses, and curves.
+
+## Python Files
+
+| File | Summary |
+|------|---------|
+| `__init__.py` | Package initializer that imports and re-exports all public geometry classes (Point, Line, Ellipse, Circle, Polygon, Plane, Curve, Parabola) and utility functions. |
+| `entity.py` | Defines `GeometryEntity`, the base class for all geometric objects, and `GeometrySet`, a base for entities that can also act as SymPy Sets. Provides common methods such as rotation, scaling, translation, and intersection. |
+| `point.py` | Implements `Point`, `Point2D`, and `Point3D` classes representing points in n-dimensional Euclidean space, with operations like distance, midpoint, collinearity checks, and coordinate transformations. |
+| `line.py` | Implements line-like entities: `LinearEntity`, `Line`, `Ray`, `Segment` and their 2D/3D variants. Supports intersection, perpendicularity, parallelism, angle computation, and projections. |
+| `plane.py` | Implements the `Plane` class for 3D planes, constructed from three points or a point and normal vector. Supports intersection with lines and other planes, distance calculations, and projections. |
+| `polygon.py` | Implements `Polygon`, `RegularPolygon`, and `Triangle` classes. Provides area, perimeter, centroid, angle computations, and specialized triangle properties like incircle, circumcircle, and medians. |
+| `ellipse.py` | Implements `Ellipse` and `Circle` classes with support for tangent lines, focal properties, eccentricity, intersection with lines and other conics, and arbitrary point generation. |
+| `curve.py` | Implements the `Curve` class for parametrically-defined 2D curves, supporting arc length computation, arbitrary point generation, and plotting-related methods. |
+| `parabola.py` | Implements the `Parabola` class defined by a focus and directrix. Supports vertex, axis of symmetry, focal length, and equation generation for vertical and horizontal parabolas. |
+| `util.py` | Utility functions for geometry: `intersection`, `convex_hull`, `closest_points`, `farthest_points`, `are_coplanar`, `are_similar`, `centroid`, and `idiff` (implicit differentiation). |
+| `exceptions.py` | Defines `GeometryError`, the exception class raised by geometry module classes. |
