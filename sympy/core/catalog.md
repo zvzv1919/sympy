@@ -5,7 +5,7 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package entry point; re-exports all public core classes (Symbol, Expr, Add, Mul, Pow, Number, etc.) and exposes singleton constants like Catalan, EulerGamma, and GoldenRatio. |
 | `add.py` | Implements the `Add` class for symbolic addition, including canonical ordering, flattening of nested sums, and the `_unevaluated_Add` helper. |
 | `alphabets.py` | Defines the `greeks` tuple containing the names of the 24 Greek letters used for symbol rendering. |
@@ -20,7 +20,7 @@
 | `decorators.py` | Core decorators including `deprecated` (deprecation warnings), `_sympifyit` (auto-sympification of method arguments), and `call_highest_priority` (operator dispatch by `_op_priority`). |
 | `evaluate.py` | Provides the `evaluate` and `distribute` context managers and their backing `global_evaluate`/`global_distribute` flags to control automatic expression evaluation. |
 | `evalf.py` | Adaptive numerical evaluation engine using mpmath; implements `EvalfMixin`, the `N()` function, and internal helpers for arbitrary-precision floating-point arithmetic. |
-| `expr.py` | Defines `Expr`, the base class for algebraic expressions, providing arithmetic operators, series expansion, differentiation hooks, `as_numer_denom`, `as_coeff_Add/Mul`, and many expression-analysis methods. Also defines `AtomicExpr` and `UnevaluatedExpr`. |
+| `expr.py` | Defines `Expr`, the base class for algebraic expressions, providing arithmetic operators, series expansion, differentiation hooks, `as_numer_denom`, `as_coeff_Add/Mul`, and expression-analysis methods including `getn()` (extract exponent from O(...) terms), `getO()`/`removeO()` (access/remove asymptotic bounds), `count_ops()` (operation counting), and `args_cnc()` (separate commutative/non-commutative factors). Also defines `AtomicExpr` and `UnevaluatedExpr`. |
 | `exprtools.py` | Tools for manipulating large commutative expressions: `gcd_terms`, `factor_terms`, `factor_nc`, `Factors`/`Term` decomposition, and monotonic-sign analysis. |
 | `facts.py` | Rule-based deduction system: compiles alpha/beta implication rules and performs runtime inference via `FactRules` and `FactKB` for the assumption system. |
 | `function.py` | Implements `Function`, `FunctionClass`, `Lambda`, `Derivative`, `Subs`, and all `expand_*` helpers. Defines the framework for both defined and undefined symbolic functions. |

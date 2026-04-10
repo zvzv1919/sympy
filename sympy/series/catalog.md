@@ -5,7 +5,7 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package entry point; imports and re-exports the public API (limit, series, Order, fourier_series, fps, sequences, etc.). |
 | `acceleration.py` | Convergence acceleration methods for series and sequences, including Richardson extrapolation and the Shanks transformation. |
 | `approximants.py` | Generator for consecutive Pade approximants of a series, also usable for computing rational generating functions. |
@@ -17,7 +17,7 @@
 | `limitseq.py` | Limits of sequences, providing the `difference_delta` discrete difference operator and `limit_seq` for computing limits of sequences as n tends to infinity. |
 | `order.py` | The `Order` (big-O) class representing the limiting behavior of a function, used to track truncation error in series expansions. |
 | `residues.py` | Computes the residue of an expression at a point via Laurent series expansion, supporting the Residue Theorem. |
-| `sequences.py` | Sequence classes (`SeqBase`, `SeqFormula`, `SeqPer`, `SeqAdd`, `SeqMul`, `EmptySequence`) and the `sequence` convenience constructor for defining and manipulating symbolic sequences. |
+| `sequences.py` | Sequence classes (`SeqBase`, `SeqFormula`, `SeqPer`, `SeqAdd`, `SeqMul`, `EmptySequence`) and the `sequence` convenience constructor for defining and manipulating symbolic sequences. `SeqMul` implements element-wise multiplication with pairwise reduction (`reduce` method) that iteratively simplifies pairs of sequences via their `_mul` methods. |
 | `series.py` | Thin wrapper providing the top-level `series` function, which delegates to `Expr.series()` for Taylor/Laurent expansion. |
 | `series_class.py` | Abstract base class `SeriesBase` for series representations, defining the common interface (interval, start, stop, length, term) used by `FourierSeries` and `FormalPowerSeries`. |
 | `benchmarks/bench_limit.py` | Benchmark for the `limit` function, timing `limit(1/x, x, oo)`. |

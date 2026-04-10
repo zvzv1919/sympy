@@ -2,10 +2,22 @@
 
 > Part of [SymPy](../catalog.md). Physics subpackages: quantum mechanics, optics, classical mechanics, units, hydrogen wave functions, vector algebra.
 
+## Subdirectories
+
+| Directory | Description |
+|-----------|-------------|
+| `quantum/` | Quantum mechanics: operators (creation/annihilation, angular momentum, Pauli), states (Ket, Bra, Fock), gates, circuits, 1D harmonic oscillator (NumberOp, RaisingOp, LoweringOp, Hamiltonian), particle in a box, and matrix representations |
+| `mechanics/` | Classical mechanics: Kane's method, Lagrange's method, rigid bodies, particles, linearization, and symbolic dynamics |
+| `optics/` | Optics: Gaussian optics, ray transfer matrices, waves, and optical media |
+| `units/` | Physical units and dimensions: SI, MKS, CGS, and unit conversion |
+| `continuum_mechanics/` | Continuum mechanics: beam bending and singularity functions |
+| `hep/` | High-energy physics: Dirac gamma matrices |
+| `vector/` | Vector algebra and calculus: reference frames, vectors, dyadics, and field operations |
+
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init for sympy.physics; imports units and physics matrices (mgamma, msigma, minkowski_tensor, mdft). |
 | `gaussopt.py` | Deprecated shim that re-exports `sympy.physics.optics.gaussopt`; warns users to use the optics subpackage instead. |
 | `hydrogen.py` | Hydrogen atom wavefunctions and energy levels: radial wavefunction R_nl, non-relativistic energy E_nl, and Dirac relativistic energy E_nl_dirac. |

@@ -5,9 +5,9 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init that re-exports key public utilities such as `flatten`, `lambdify`, `source`, `threaded`, `test`, and `timed`. |
-| `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and ufuncify. |
+| `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and ufuncify. Contains CodeWrapper base class and specialized UfuncifyCodeWrapper for NumPy universal function (ufunc) generation: partitions routine arguments into inputs/outputs, generates C code with type declarations and loop bodies, determines input count via argument partitioning and output count from number of routines, validates that funcname is specified when multiple output expressions are present. |
 | `benchmarking.py` | Provides a py.test-based benchmarking framework with custom Timer, Function, and TerminalSession classes for timing SymPy functions. |
 | `codegen.py` | Generates complete compilable routines in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. |
 | `decorator.py` | Utility decorators including `threaded`/`xthreaded` (apply functions elementwise), `conserve_mpmath_dps`, `doctest_depends_on`, `public`, and `memoize_property`. |

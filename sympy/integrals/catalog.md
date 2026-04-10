@@ -5,17 +5,17 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init; exports `integrate`, `Integral`, `line_integrate`, and all integral transform functions. |
-| `integrals.py` | Core `Integral` class (unevaluated integral representation) and the `integrate` / `line_integrate` entry points that dispatch to various integration strategies. |
-| `risch.py` | Implementation of the Risch algorithm for transcendental function integration, including `DifferentialExtension`, `integer_powers`, and the main `risch_integrate` driver. |
+| `integrals.py` | Core `Integral` class (unevaluated integral representation), the `transform` method for change-of-variable substitution (u-substitution) on definite/indefinite integrals with automatic bound reversal and integrand negation when mapped bounds are inverted, and the `integrate` / `line_integrate` entry points that dispatch to various integration strategies. |
+| `risch.py` | Implementation of the Risch algorithm for transcendental function integration, including `DifferentialExtension`, `integer_powers`, the main `risch_integrate` driver, and rational function verification via `recognize_derivative` (checks if a rational function is the exact derivative of another by verifying divisibility conditions on squarefree factors) and `laurent_series` (computes principal parts of Laurent series expansions). |
 | `rde.py` | Algorithms for solving the Risch Differential Equation (Dy + f*y == g), used as a sub-problem solver by the Risch algorithm. |
-| `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. |
+| `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. Also includes `constant_system` for solving linear systems over differential fields with solutions restricted to the constant subfield, handling transcendental extensions via row reduction and derivative-based elimination. |
 | `heurisch.py` | Heuristic Risch algorithm for indefinite integration; provides `heurisch` and `heurisch_wrapper` along with the `components` helper. |
 | `manualintegrate.py` | Integration method emulating by-hand techniques with step-by-step rules (namedtuples); provides `integral_steps` and `manualintegrate`. |
-| `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. |
+| `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. Includes internal validity checking for combining hypergeometric functions (handling NaN edge cases in intermediate condition values for degenerate parameters) and lookup table management. |
 | `meijerint_doc.py` | Auto-generates a Sphinx docstring listing all Meijer G-function lookup table entries for documentation purposes. |
-| `transforms.py` | Integral transforms: Mellin, inverse Mellin, Laplace, inverse Laplace, Fourier, inverse Fourier, sine, cosine, and Hankel transforms with their unevaluated class representations. |
+| `transforms.py` | Integral transforms: Mellin, inverse Mellin, Laplace, inverse Laplace, Fourier, inverse Fourier, sine, cosine, and Hankel transforms with their unevaluated class representations. Helper functions `_rewrite_sin` and `_rewrite_gamma` decompose trigonometric and other expressions into products of gamma functions (generalized factorials) while ensuring the integration contour remains well-defined within the convergence strip. |
 | `trigonometry.py` | Integration of products of trigonometric functions (sin, cos, tan, sec, csc, cot) via the `trigintegrate` function. |
 | `rationaltools.py` | Tools for integrating rational functions: `ratint`, `ratint_ratpart`, and `ratint_logpart` implementing Hermite and Lazard-Rioboo-Trager methods. |
 | `deltafunctions.py` | Integration support for Dirac delta functions: `deltaintegrate` and the `change_mul` helper for rearranging delta-containing products. |

@@ -5,12 +5,12 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package initializer that re-exports the public API from submodules (primes, factoring, residues, partitions, multinomials, continued fractions, Egyptian fractions). |
 | `bbp_pi.py` | Implements the Bailey-Borwein-Plouffe (BBP) formula for computing hexadecimal digits of pi at an arbitrary starting position. |
 | `continued_fraction.py` | Provides routines for periodic continued fraction expansion of quadratic irrationals, convergent computation, iterating over continued fraction terms, and reducing a continued fraction list back to a rational expression. |
 | `egyptian_fraction.py` | Decomposes a positive rational number into a sum of distinct unit fractions (Egyptian fraction expansion) using selectable algorithms (Greedy, Graham-Jewett, Takenouchi, Golomb). |
-| `factor_.py` | Integer factorization and divisor-related functions including `factorint`, `divisors`, `totient`, Pollard rho/p-1 methods, smoothness analysis, perfect power detection, and multiplicative arithmetic functions (`divisor_sigma`, `primenu`, `primeomega`). |
+| `factor_.py` | Integer factorization and divisor-related functions including `factorint` (accepts integers, dictionaries of prime-power pairs, or unevaluated expressions as input, with output type controlled by the `visual` parameter), `divisors`, `totient`, Pollard rho/p-1 methods, smoothness analysis, perfect power detection, and multiplicative arithmetic functions (`divisor_sigma`, `primenu`, `primeomega`). |
 | `generate.py` | Prime and composite number generation via a dynamically growing Sieve of Eratosthenes, plus helpers like `nextprime`, `prevprime`, `primerange`, `primepi`, `randprime`, `primorial`, `composite`, `compositepi`, and `cycle_length`. |
 | `modular.py` | Solves systems of linear congruences using the Chinese Remainder Theorem (`crt`, `crt1`, `crt2`) and provides a general `solve_congruence` interface with symmetric residue support. |
 | `multinomial.py` | Computes binomial and multinomial coefficients, returning them as dictionaries or lists, with an efficient iterator variant for multinomial coefficients. |

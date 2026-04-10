@@ -5,14 +5,14 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init that re-exports the public plotting API: `plot`, `plot_parametric`, `plot3d`, `plot3d_parametric_line`, `plot3d_parametric_surface`, `plot_implicit`, `textplot`, and `PygletPlot`. |
 | `plot.py` | Core plotting module defining the `Plot` class, data series classes (`LineOver1DRangeSeries`, `Parametric2DLineSeries`, `SurfaceOver2DRangeSeries`, etc.), backend wrappers for matplotlib and text output, and the public convenience functions `plot`, `plot_parametric`, `plot3d`, `plot3d_parametric_line`, and `plot3d_parametric_surface`. |
 | `plot_implicit.py` | Implicit plotting using interval arithmetic (with a fallback adaptive algorithm). Defines `ImplicitSeries` and the `plot_implicit` function for rendering equations, inequalities, and boolean combinations of expressions. |
 | `textplot.py` | Provides `textplot`, a function that renders a crude ASCII-art plot of a single-variable SymPy expression over a given interval to the terminal. |
 | `experimental_lambdify.py` | Internal lambdify variant used by the plotting module to convert SymPy expressions into callable numerical functions. Translates expression strings to use math/numpy/mpmath and handles edge cases that the standard `lambdify` does not. |
 | `intervalmath/__init__.py` | Package init for the interval math subpackage; re-exports the `interval` class and all interval-aware math functions (sin, cos, exp, log, sqrt, etc.). |
-| `intervalmath/interval_arithmetic.py` | Defines the `interval` class representing a floating-point interval with a validity flag. Implements arithmetic operators and comparisons used by `plot_implicit` for adaptive region subdivision. |
+| `intervalmath/interval_arithmetic.py` | Defines the `interval` class representing a floating-point interval with a validity flag. Implements three-valued logic comparisons (`__lt__`, `__gt__`, `__le__`, `__ge__`, `__eq__`) that return tuples of (comparison_result, validity_result), where comparison results are True (entirely less/greater), False (entirely greater/less), or None (partial overlap), and validity results combine operand validities using a priority rule (False > None > True). Also implements arithmetic operators used by `plot_implicit` for adaptive region subdivision. |
 | `intervalmath/lib_interval.py` | Implements interval-aware versions of standard math functions (exp, log, sin, cos, tan, sqrt, Abs, floor, ceil, etc.) and boolean operations (And, Or) over `interval` objects, using numpy for speed. |
 | `pygletplot/__init__.py` | Package init for the pyglet-based plotting backend; defines and exports the `PygletPlot` factory function with doctest-style usage examples. |
 | `pygletplot/plot.py` | Implements `PygletPlot`, the main class for the pyglet backend. Manages a collection of plot functions, coordinates rendering via `PlotWindow`, and supports interactive features like color schemes, coordinate modes, and image saving. |

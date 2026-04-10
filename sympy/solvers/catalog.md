@@ -5,11 +5,11 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init that re-exports the public API from submodules (solve, dsolve, pdsolve, rsolve, diophantine, solveset, etc.). |
-| `solvers.py` | Core equation-solving module providing `solve()` for algebraic/transcendental equations, `nsolve()` for numerical solving, and helpers for linear systems and undetermined coefficients. |
+| `solvers.py` | Core equation-solving module providing `solve()` for algebraic/transcendental equations, `nsolve()` for numerical solving, and helpers for linear systems and undetermined coefficients. Includes `_solve_system()` for iterative symbol-by-symbol solving of equation systems with circular-dependency detection (discarding solutions where a candidate value references previously-solved symbols) and `solve_linear()` for linear equation analysis. |
 | `solveset.py` | Set-based equation solving with `solveset()`, `linsolve()`, `nonlinsolve()`, and `linear_eq_to_matrix()`, operating over real or complex domains and returning solutions as SymPy sets. |
-| `ode.py` | Ordinary differential equation solver (`dsolve`) supporting separable, homogeneous, exact, linear, Bernoulli, Lie group, Liouville, power series, and nth-order constant-coefficient methods, plus ODE classification and solution checking. |
+| `ode.py` | Ordinary differential equation solver (`dsolve`) supporting separable, homogeneous, exact, linear, Bernoulli, Liouville, power series, and nth-order constant-coefficient methods. Lie group symmetry methods include multiple heuristics: scanning for non-integer power subexpressions and unevaluated two-variable functions in the right-hand side, computing partial derivative ratios, applying variable separation to construct candidate infinitesimal generators (xi, eta), and verifying them against the determining PDE. Also includes ODE classification and solution checking. |
 | `pde.py` | Partial differential equation solver (`pdsolve`) for first-order linear PDEs with constant or variable coefficients, with classification and additive/multiplicative variable separation utilities. |
 | `recurr.py` | Recurrence relation (difference equation) solver providing `rsolve()` and lower-level routines (`rsolve_poly`, `rsolve_ratio`, `rsolve_hyper`) for linear inhomogeneous recurrences with polynomial or rational coefficients. |
 | `polysys.py` | Solvers for systems of polynomial equations using Groebner bases, including specialized handling of bivariate biquadratic systems. |

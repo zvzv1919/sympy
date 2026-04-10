@@ -5,13 +5,13 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init that re-exports the public API from submodules (polytools, polyfuncs, rationaltools, numberfields, monomials, orderings, rootoftools, polyroots, domains, constructor, specialpolys, orthopolys, partfrac, polyerrors, dispersion, ring_series). |
 | `polytools.py` | User-friendly public interface to polynomial functions; defines the `Poly` class, `Groebner` basis wrapper, and top-level helpers like `factor`, `gcd`, `resultant`, `discriminant`, etc. |
 | `polyclasses.py` | OO layer for low-level polynomial representations: `DMP` (dense multivariate), `DMF` (dense multivariate fractions), and `ANP` (algebraic number field elements). |
 | `polyoptions.py` | Options manager for `Poly` and public API functions; defines `Options`, `Flag`, and various option classes (Domain, Order, Extension, etc.) with validation and preprocessing. |
 | `polyutils.py` | Utility functions for higher-level polynomial classes: generator sorting, expression-to-dict conversion, `PicklableWithSlots` mixin, and numerical root sorting. |
-| `polyroots.py` | Algorithms for computing symbolic roots of polynomials, including solvers for linear, quadratic, cubic, quartic, and quintic equations. |
+| `polyroots.py` | Algorithms for computing symbolic roots of polynomials: `roots_linear`, `roots_quadratic`, `roots_cubic`, `roots_quartic`, `roots_quintic` solvers for degrees 1–5. The quintic solver (`roots_quintic`) handles solvable quintics via Dummit's algorithm, requiring depressed form (no x⁴ term) and normalizing by the leading coefficient only if all resulting coefficients are rational; otherwise it bails out. |
 | `polyerrors.py` | Definitions of exception classes for the polys module (e.g., `PolynomialError`, `DomainError`, `CoercionFailed`, `ExactQuotientFailed`). |
 | `polyconfig.py` | Configuration utilities for polynomial algorithms; manages settings such as GCD method, factorization method, and Groebner basis algorithm via `setup`/`query`/`using`. |
 | `polyfuncs.py` | High-level polynomial manipulation functions: `symmetrize`, `horner`, `interpolate`, `rational_interpolate`, and `viete`. |

@@ -5,12 +5,12 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package init that re-exports all public matrix classes (Matrix, SparseMatrix, ImmutableMatrix) and matrix expression types. |
 | `common.py` | Base classes and shared infrastructure for all matrix types, including `MatrixRequired`, `MatrixShaping`, `MatrixProperties`, `MatrixOperations`, `MatrixArithmetic`, `MatrixSpecial`, error classes, and the `MatrixCommon` composite class. |
 | `matrices.py` | Core `MatrixBase` class providing determinant computation (Berkowitz, LU), row reduction (RREF), subspace methods (nullspace, columnspace), eigenvalue/eigenvector routines, and calculus operations (diff, integrate, limit). |
 | `dense.py` | `DenseMatrix` and `MutableDenseMatrix` (aliased as `Matrix`) implementations, plus top-level helpers such as `eye`, `zeros`, `ones`, `diag`, `randMatrix`, rotation matrices, `GramSchmidt`, `wronskian`, `hessian`, and `casoratian`. |
-| `sparse.py` | `SparseMatrix` (`MutableSparseMatrix`) backed by a dictionary-of-keys storage, with sparse-specific LIL/row-list access, Cholesky and LDL decomposition, and applyfunc. |
+| `sparse.py` | `SparseMatrix` (`MutableSparseMatrix`) backed by a dictionary-of-keys storage, with sparse-specific LIL/row-list access, Cholesky and LDL decomposition, triangular solve methods (forward/backward substitution for lower/upper triangular systems), diagonal solve, and applyfunc. |
 | `immutable.py` | `ImmutableDenseMatrix` and `ImmutableSparseMatrix` — hashable, read-only matrix variants that can be used as keys and within SymPy expressions. |
 | `normalforms.py` | Smith Normal Form computation (`smith_normal_form`) and abelian invariant factors (`invariant_factors`) for matrices over a principal ideal domain. |
 | `densearith.py` | Deprecated list-of-lists dense arithmetic helpers (`add`, `sub`, `mulmatmat`, `mulmatscaler`, `negatemat`). |
@@ -29,7 +29,7 @@
 | `expressions/trace.py` | `Trace` — symbolic matrix trace expression with rewrite-as-Sum support and a convenience `trace()` function. |
 | `expressions/determinant.py` | `Determinant` — symbolic matrix determinant expression, a convenience `det()` function, and assumption-based refinement. |
 | `expressions/slice.py` | `MatrixSlice` — symbolic slicing of a matrix expression by row and column ranges. |
-| `expressions/blockmatrix.py` | `BlockMatrix` and `BlockDiagMatrix` — symbolic block-structured matrices with `block_collapse`, `blockcut`, transpose, trace, and determinant rules. |
+| `expressions/blockmatrix.py` | `BlockMatrix` and `BlockDiagMatrix` — symbolic block-structured matrices with `block_collapse`, `blockcut`, transpose, trace, and determinant rules. For 2×2 block matrices, determinant evaluation uses Schur complement formulas: if the top-left sub-block is invertible, uses `det(A)*det(D - C*A⁻¹*B)`; if not but the bottom-right is invertible, uses `det(D)*det(A - B*D⁻¹*C)`. |
 | `expressions/funcmatrix.py` | `FunctionMatrix` — a matrix expression defined by a Lambda function applied to index pairs, enabling lazy evaluation. |
 | `expressions/diagonal.py` | `DiagonalMatrix` and `DiagonalOf` — symbolic wrappers that treat a matrix as diagonal or extract its diagonal, using Kronecker deltas for element access. |
 | `expressions/hadamard.py` | `HadamardProduct` and `hadamard_product()` — symbolic elementwise (Hadamard) product of matrix expressions. |

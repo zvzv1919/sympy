@@ -5,13 +5,13 @@
 ## Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package initializer; imports and re-exports the main public classes and functions (Permutation, Prufer, Subset, Partition, Polyhedron, PermutationGroup, GrayCode, named groups, etc.). |
 | `coset_table.py` | Implements the `CosetTable` class and Todd-Coxeter coset enumeration algorithms (relator-based and coset-table-based) for finitely presented groups. |
 | `fp_groups.py` | Defines `FpGroup` (finitely presented groups) and related algorithms including low-index subgroup enumeration, Reidemeister-Schreier presentations, and permutation group isomorphism. |
 | `free_groups.py` | Implements `FreeGroup` and `FreeGroupElement` for constructing and manipulating free groups and their elements with word-level arithmetic. |
 | `generators.py` | Provides generator functions that yield all permutation elements of standard groups: `symmetric`, `cyclic`, `alternating`, `dihedral`, and Rubik's cube generators. |
-| `graycode.py` | Implements the `GrayCode` class for generating and manipulating Gray codes (reflected binary codes) over n-dimensional binary cubes. |
+| `graycode.py` | Implements the `GrayCode` class for generating and manipulating Gray codes (reflected binary codes) over n-dimensional binary cubes, plus utility functions for bitstring-to-subset conversion (`get_subset_from_bitstring`), Gray/binary encoding conversion (`gray_to_bin`, `bin_to_gray`), random bitstring generation (`random_bitstring`), and Gray code subset enumeration (`graycode_subsets`). |
 | `group_constructs.py` | Provides the `DirectProduct` function for computing the direct product of multiple permutation groups. |
 | `homomorphisms.py` | Implements `GroupHomomorphism` and a `homomorphism()` factory for creating and working with group homomorphisms between permutation groups and finitely presented groups. |
 | `named_groups.py` | Factory functions for constructing standard named permutation groups: `SymmetricGroup`, `CyclicGroup`, `DihedralGroup`, `AlternatingGroup`, `AbelianGroup`, and `RubikGroup`. |

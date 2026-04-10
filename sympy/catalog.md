@@ -7,11 +7,11 @@ SymPy is a pure-Python library for symbolic mathematics. It aims to be a full-fe
 | Directory | Description |
 |-----------|-------------|
 | [algebras/](algebras/catalog.md) | Abstract algebra structures (e.g. quaternions) |
-| [assumptions/](assumptions/catalog.md) | Assumption system for declaring and querying properties of symbols (positive, integer, etc.) |
+| [assumptions/](assumptions/catalog.md) | New-style assumption system: predicate-based querying (`ask()`, `Q` object), refinement, and SAT-based inference (see `core/assumptions.py` for the old-style metaclass-based system with `ManagedProperties`) |
 | [benchmarks/](benchmarks/catalog.md) | Performance benchmarks for SymPy internals |
 | [calculus/](calculus/catalog.md) | Calculus operations: finite differences, singularities, and continuity utilities |
 | [categories/](categories/catalog.md) | Category theory: objects, morphisms, diagrams, and diagram drawing |
-| [codegen/](codegen/catalog.md) | Code generation for C, Fortran, Julia, Rust, and other languages |
+| [codegen/](codegen/catalog.md) | Abstract Syntax Tree node types and helper function classes for code generation (AST nodes, C/Fortran/Julia function classes, expression rewriting); actual code generators are in utilities/codegen.py |
 | [combinatorics/](combinatorics/catalog.md) | Combinatorics: permutations, partitions, polyhedra, group theory, and Graycode |
 | [concrete/](concrete/catalog.md) | Concrete mathematics: symbolic sums, products, and related algorithms |
 | [core/](core/catalog.md) | Core symbolic engine: basic objects (Symbol, Number, Expr, Add, Mul, Pow), caching, evaluation, and compatibility |
@@ -19,7 +19,7 @@ SymPy is a pure-Python library for symbolic mathematics. It aims to be a full-fe
 | [deprecated/](deprecated/catalog.md) | Deprecated modules with import-time warnings pointing to replacements |
 | [diffgeom/](diffgeom/catalog.md) | Differential geometry: manifolds, coordinate systems, differential forms |
 | [external/](external/catalog.md) | Utilities for importing and probing optional external dependencies |
-| [functions/](functions/catalog.md) | Elementary and special mathematical functions (trig, exponential, Bessel, combinatorial, etc.) |
+| [functions/](functions/catalog.md) | Elementary and special mathematical functions (trig, exponential, Bessel, combinatorial, etc.); includes piecewise-defined functions with conditional evaluation and interval handling |
 | [geometry/](geometry/catalog.md) | Computational geometry: points, lines, polygons, circles, ellipses, and curves |
 | [holonomic/](holonomic/catalog.md) | Holonomic functions represented via linear differential equations with polynomial coefficients |
 | [integrals/](integrals/catalog.md) | Symbolic integration: definite/indefinite integrals, transforms (Laplace, Fourier, Mellin), and the Risch algorithm |
@@ -48,7 +48,7 @@ SymPy is a pure-Python library for symbolic mathematics. It aims to be a full-fe
 ## Root Python Files
 
 | File | Summary |
-|------|---------|
+|------|----------|
 | `__init__.py` | Package entry point; checks for mpmath, imports all public submodules, initializes the evalf table, and sets `SYMPY_DEBUG` from the environment |
 | `abc.py` | Exports all single Latin and Greek letters as pre-defined `Symbol` objects for convenient interactive use (`from sympy.abc import x, y`) |
 | `conftest.py` | Pytest configuration: test-splitting (`--split`), cache clearing between modules, architecture/ground-type reporting, and disabled-module skipping |
