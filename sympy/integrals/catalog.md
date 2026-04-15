@@ -7,17 +7,17 @@
 | File | Summary |
 |------|---------|
 | `__init__.py` | Package init; exports `integrate`, `Integral`, `line_integrate`, and all integral transform functions. |
-| `integrals.py` | Core `Integral` class (unevaluated integral representation) and the `integrate` / `line_integrate` entry points that dispatch to various integration strategies. |
+| `integrals.py` | Core `Integral` class (unevaluated integral representation) and the `integrate` / `line_integrate` entry points. The `_eval_integral` method implements the full integration pipeline with ordered dispatch (polynomials → rational → Risch → Meijer G → manual → heuristic Risch), including guard logic that discards results from sub-methods when they return unevaluated `Integral` objects (e.g., manual mode) and fallback/fall-through behavior on failure. |
 | `risch.py` | Implementation of the Risch algorithm for transcendental function integration, including `DifferentialExtension`, `integer_powers`, and the main `risch_integrate` driver. |
 | `rde.py` | Algorithms for solving the Risch Differential Equation (Dy + f*y == g), used as a sub-problem solver by the Risch algorithm. |
-| `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. |
+| `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. Also contains `is_log_deriv_k_t_radical_in_field`, which checks whether a rational function in a differential field tower is the logarithmic derivative of a radical (Du/u) by performing residue reduction and testing that all roots of the resultant polynomial are rational. See also `rationaltools.py` for basic rational-function integration (Lazard-Rioboo-Trager), which is a different use of resultants. |
 | `heurisch.py` | Heuristic Risch algorithm for indefinite integration; provides `heurisch` and `heurisch_wrapper` along with the `components` helper. |
 | `manualintegrate.py` | Integration method emulating by-hand techniques with step-by-step rules (namedtuples); provides `integral_steps` and `manualintegrate`. |
 | `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. |
 | `meijerint_doc.py` | Auto-generates a Sphinx docstring listing all Meijer G-function lookup table entries for documentation purposes. |
 | `transforms.py` | Integral transforms: Mellin, inverse Mellin, Laplace, inverse Laplace, Fourier, inverse Fourier, sine, cosine, and Hankel transforms with their unevaluated class representations. |
 | `trigonometry.py` | Integration of products of trigonometric functions (sin, cos, tan, sec, csc, cot) via the `trigintegrate` function. |
-| `rationaltools.py` | Tools for integrating rational functions: `ratint`, `ratint_ratpart`, and `ratint_logpart` implementing Hermite and Lazard-Rioboo-Trager methods. |
+| `rationaltools.py` | Tools for integrating rational functions: `ratint`, `ratint_ratpart`, and `ratint_logpart` implementing Hermite and Lazard-Rioboo-Trager methods. These compute the actual antiderivative of a rational function (always elementary). For checking whether a function is the logarithmic derivative of a radical in a differential extension tower, see `prde.py` instead. |
 | `deltafunctions.py` | Integration support for Dirac delta functions: `deltaintegrate` and the `change_mul` helper for rearranging delta-containing products. |
 | `singularityfunctions.py` | Indefinite integration of `SingularityFunction` expressions via `singularityintegrate`. |
 | `intpoly.py` | Integration of uni/bi/trivariate polynomials over 2D and 3D polytopes using the method of Chin et al. (2015); provides `polytope_integrate`. |

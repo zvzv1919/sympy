@@ -20,7 +20,7 @@
 | `benchmarks/bench_matrix.py` | Micro-benchmarks for `Matrix.__getitem__` and `zeros` construction. |
 | `expressions/__init__.py` | Package init for the matrix-expressions sub-package; re-exports all symbolic matrix expression classes. |
 | `expressions/matexpr.py` | `MatrixExpr` base class for symbolic matrix expressions, plus `MatrixSymbol`, `Identity`, `ZeroMatrix`, `MatrixElement`, and generic expression infrastructure (shape, transpose, inverse, indexing). |
-| `expressions/matmul.py` | `MatMul` — symbolic product of matrix expressions with canonicalization rules (flatten, combine scalars, identity removal, zero detection). |
+| `expressions/matmul.py` | `MatMul` — symbolic product of matrix expressions with canonicalization rules (flatten, combine scalars, identity removal, zero detection, inverse cancellation of `X * X.I` pairs with non-invertible guard, and square-factor grouping). Also contains `refine_MatMul` for simplifying products under orthogonal/unitary assumptions. |
 | `expressions/matadd.py` | `MatAdd` — symbolic sum of matrix expressions with canonicalization rules (merge, flatten, sort, zero removal). |
 | `expressions/matpow.py` | `MatPow` — symbolic matrix power expression with evaluation for integer exponents and identity/zero special cases. |
 | `expressions/inverse.py` | `Inverse` — symbolic multiplicative inverse of a matrix expression (subclass of `MatPow` with `exp = -1`). |

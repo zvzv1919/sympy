@@ -20,7 +20,7 @@
 | `elementary/trigonometric.py` | Implements trigonometric functions (`sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc`) and their inverses (`asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2`). |
 | `elementary/benchmarks/bench_exp.py` | Benchmark for `exp.subs()` performance on exponential expression substitution. |
 | `special/__init__.py` | Subpackage init for special functions; imports gamma, error, zeta, tensor, delta, elliptic, beta, Mathieu, singularity, and polynomial modules. |
-| `special/bessel.py` | Implements Bessel functions (`besselj`, `bessely`, `besseli`, `besselk`), Hankel functions, spherical Bessel functions (`jn`, `yn`), and Airy functions (`airyai`, `airybi`). |
+| `special/bessel.py` | Implements Bessel functions (`besselj`, `bessely`, `besseli`, `besselk`), Hankel functions, spherical Bessel functions (`jn`, `yn`), and Airy functions (`airyai`, `airybi`). Each class contains an `eval` classmethod with special-case evaluation logic for boundary/edge-case arguments (e.g., zero argument behavior branching on order parameter properties like real/imaginary part). This is where return values for specific inputs are determined — not in the test files. |
 | `special/beta_functions.py` | Implements the Euler beta function `B(x, y)` with differentiation, conjugation, and numerical evaluation support. |
 | `special/bsplines.py` | Implements B-spline basis functions (`bspline_basis`, `bspline_basis_set`) as piecewise polynomials over a knot vector. |
 | `special/delta_functions.py` | Implements the `DiracDelta` distribution and the `Heaviside` step function. |

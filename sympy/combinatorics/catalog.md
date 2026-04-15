@@ -12,16 +12,16 @@
 | `free_groups.py` | Implements `FreeGroup` and `FreeGroupElement` for constructing and manipulating free groups and their elements with word-level arithmetic. |
 | `generators.py` | Provides generator functions that yield all permutation elements of standard groups: `symmetric`, `cyclic`, `alternating`, `dihedral`, and Rubik's cube generators. |
 | `graycode.py` | Implements the `GrayCode` class for generating and manipulating Gray codes (reflected binary codes) over n-dimensional binary cubes. |
-| `group_constructs.py` | Provides the `DirectProduct` function for computing the direct product of multiple permutation groups. |
+| `group_constructs.py` | Provides the `DirectProduct` function for computing the direct product of multiple `PermutationGroup` objects (high-level group API). For BSGS-level direct products used in tensor canonicalization, see `tensor_can.py`. |
 | `homomorphisms.py` | Implements `GroupHomomorphism` and a `homomorphism()` factory for creating and working with group homomorphisms between permutation groups and finitely presented groups. |
 | `named_groups.py` | Factory functions for constructing standard named permutation groups: `SymmetricGroup`, `CyclicGroup`, `DihedralGroup`, `AlternatingGroup`, `AbelianGroup`, and `RubikGroup`. |
 | `partitions.py` | Defines `Partition` (set partitions) and `IntegerPartition` classes, along with RGS (restricted growth string) ranking/unranking utilities. |
 | `perm_groups.py` | Core `PermutationGroup` class implementing group-theoretic operations: order, orbits, stabilizers, Schreier-Sims algorithm, coset decomposition, subgroup testing, and more. |
 | `permutations.py` | Core `Permutation` and `Cycle` classes for representing and manipulating permutations in array and cyclic notation, with support for composition, inversion, parity, and ranking. |
-| `polyhedron.py` | Implements the `Polyhedron` class for representing polyhedral symmetry groups, with pre-built instances for the five Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron). |
+| `polyhedron.py` | Implements the `Polyhedron` class for representing polyhedral symmetry groups, with pre-built instances for the five Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron). The constructor docstring demonstrates how applying symmetry group elements generates all valid orientations of a solid and verifies that sequential transformation application equals composite permutation application. |
 | `prufer.py` | Implements the `Prufer` class for the bijection between labeled trees and Prufer sequences, with ranking/unranking and tree-edge conversion methods. |
 | `rewritingsystem.py` | Implements `RewritingSystem` for Knuth-Bendix completion on finitely presented groups, used for word reduction and confluence checking. |
 | `subsets.py` | Implements the `Subset` class for enumerating subsets of a set via binary, lexicographic, and Gray code orderings with ranking/unranking support. |
-| `tensor_can.py` | Algorithms for tensor canonicalization using permutation group double-coset representatives, including dummy-index symmetry handling. |
+| `tensor_can.py` | Algorithms for tensor canonicalization using permutation group double-coset representatives, including dummy-index symmetry handling. Also provides low-level BSGS (base-and-strong-generating-set) utilities: `bsgs_direct_product` for combining two BSGS structures, `perm_af_direct_product` for generator-level direct products, and `get_symmetric_group_sgs` for minimal BSGS of (anti)symmetric tensors. |
 | `testutil.py` | Testing utilities for the combinatorics module: naive centralizer computation, BSGS verification, normal closure checks, and graph certificate comparison. |
 | `util.py` | Internal utility functions for computational group theory: base ordering, cycle checks for alternating/symmetric detection, BSGS-related strip and distribution routines. |

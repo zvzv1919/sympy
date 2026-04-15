@@ -13,17 +13,17 @@
 | `paulialgebra.py` | Implements Pauli algebra by subclassing Symbol, providing the Pauli class and evaluate_pauli_product for symbolic Pauli matrix multiplication. |
 | `pring.py` | Quantum particle on a ring: wavefunction and energy functions for a 1D ring geometry. |
 | `qho_1d.py` | One-dimensional quantum harmonic oscillator: wavefunction psi_n, energy E_n, and coherent state functions. |
-| `secondquant.py` | Second quantization operators and states for bosons and fermions, including creation/annihilation operators, Fock states, Wick's theorem, normal ordering, and commutator algebra. |
+| `secondquant.py` | Second quantization operators and states for bosons and fermions, including creation/annihilation operators (F, Fd), Fock states, Wick's theorem, the NO class (normal-ordered product container with methods for iterating quasi-creators/annihilators and removing operators at specific positions via get_subNO), contraction functions, and commutator algebra. Note: for reordering generic bosonic/fermionic operator expressions into normal form, see `quantum/operatorordering.py`. |
 | `sho.py` | 3D isotropic simple harmonic oscillator: radial wavefunction R_nl and energy E_nl using associated Laguerre polynomials. |
 | `unitsystems.py` | Deprecated shim that re-exports `sympy.physics.units`; warns users to use the units subpackage instead. |
-| `wigner.py` | Wigner 3j, 6j, 9j symbols, Clebsch-Gordan coefficients, Racah coefficients, and Gaunt coefficients for angular momentum coupling. |
+| `wigner.py` | Pure numerical computation of Wigner 3j, 6j, 9j symbols, Clebsch-Gordan coefficients, Racah coefficients, and Gaunt coefficients for angular momentum coupling. These are low-level functions that require numeric arguments; for symbolic wrapper classes (Wigner3j, CG) with parameter validation, doit(), and pretty-printing, see `quantum/cg.py`. |
 | `continuum_mechanics/__init__.py` | Package init for continuum_mechanics; imports the Beam class. |
 | `continuum_mechanics/beam.py` | Beam class for solving 2D beam bending problems using singularity functions, including load application, reaction forces, shear force, bending moment, slope, and deflection. |
 | `hep/gamma_matrices.py` | Gamma (Dirac) matrices expressed as tensor objects for high-energy physics, with Kahane simplification and gamma trace algorithms. |
 | `mechanics/__init__.py` | Package init for classical mechanics; imports and re-exports Kane's method, Lagrange's method, rigid body, particle, linearization, body, system, and vector modules. |
 | `mechanics/body.py` | Body class that serves as a unified representation of either a RigidBody or Particle, with support for applied loads (forces and torques). |
-| `mechanics/functions.py` | Utility functions for classical mechanics: inertia dyadic creation, linear/angular momentum, kinetic/potential energy, Lagrangian computation, mechanics printing, and symbolic substitution (msubs). |
-| `mechanics/kane.py` | KanesMethod class implementing Kane's method for forming equations of motion, producing mass matrix and forcing vector representations. |
+| `mechanics/functions.py` | Utility functions for classical mechanics: inertia dyadic creation, linear/angular momentum, kinetic/potential energy, Lagrangian computation, find_dynamicsymbols (discovers dynamic symbols in expressions), mechanics printing (re-exported from `vector/printing.py`), and symbolic substitution (msubs). Note: `dynamicsymbols` itself is defined in `vector/functions.py` and re-exported here. |
+| `mechanics/kane.py` | KanesMethod class implementing Kane's method for forming equations of motion: computes generalized active forces (_form_fr) and generalized inertia forces (_form_frstar) including translational (mass × acceleration) and rotational (inertia tensor rate, angular acceleration, and gyroscopic cross-product) contributions, distinguishing rigid bodies from particles. Produces mass matrix and forcing vector representations. |
 | `mechanics/lagrange.py` | LagrangesMethod class implementing Lagrange's method for deriving equations of motion from a Lagrangian, with support for constraints and non-conservative forces. |
 | `mechanics/linearize.py` | Linearizer class for computing the linearized form of a dynamic system, handling dependent coordinates and speeds arising from constraints. |
 | `mechanics/models.py` | Sample symbolic mechanical models (multi-mass spring-damper, n-link pendulum) for testing and examples. |
@@ -39,9 +39,9 @@
 | `quantum/anticommutator.py` | AntiCommutator class implementing the unevaluated anticommutator {A, B} = A*B + B*A for quantum operators. |
 | `quantum/boson.py` | Bosonic quantum operators (BosonOp) and Fock/coherent states (BosonFockKet, BosonCoherentKet) satisfying [a, a^dagger] = 1. |
 | `quantum/cartesian.py` | 1D Cartesian position and momentum operators (XOp, PxOp) and their eigenstates (XKet, PxKet), plus 3D position states. |
-| `quantum/cg.py` | Clebsch-Gordan coefficients and Wigner 3j/6j/9j symbol classes with symbolic representations and simplification via cg_simp. |
+| `quantum/cg.py` | Symbolic wrapper classes for angular momentum coupling coefficients: Wigner3j and CG (Clebsch-Gordan) classes with parameter validation (is_symbolic check raises ValueError for non-numeric args in doit()), pretty-printing, LaTeX output, and simplification via cg_simp. The doit() method delegates to numerical functions in `wigner.py`. |
 | `quantum/circuitplot.py` | Matplotlib-based plotting of quantum circuits, including CircuitPlot, measurement gates (Mz, Mx), and gate creation helpers. |
-| `quantum/circuitutils.py` | Primitive circuit operations: subcircuit finding/replacement using KMP algorithm, symbolic index conversion, and random circuit reduction/insertion. |
+| `quantum/circuitutils.py` | Primitive circuit operations: subcircuit finding/replacement using KMP algorithm, symbolic-to-real index conversion, random_reduce (tries to remove identity patterns from a circuit, returns original if none found), and random_insert. See `quantum/identitysearch.py` for discovering gate identities; this module applies/removes them from circuits. |
 | `quantum/commutator.py` | Commutator class implementing the unevaluated commutator [A, B] = A*B - B*A for quantum operators. |
 | `quantum/constants.py` | Quantum mechanical constants: defines hbar (reduced Planck's constant) as a singleton NumberSymbol. |
 | `quantum/dagger.py` | Dagger class implementing the Hermitian conjugate operation for quantum objects (operators, states, matrices). |
@@ -49,21 +49,21 @@
 | `quantum/fermion.py` | Fermionic quantum operators (FermionOp) and Fock states (FermionFockKet) satisfying {c, c^dagger} = 1. |
 | `quantum/gate.py` | Quantum gates acting on qubits: base Gate class, controlled gates (CGate, CNotGate), single-qubit gates (Hadamard, X, Y, Z, Phase, T), SwapGate, UGate, and gate sorting/simplification. |
 | `quantum/grover.py` | Grover's quantum search algorithm: OracleGate, WGate, superposition_basis, grover_iteration, and apply_grover. |
-| `quantum/hilbert.py` | Hilbert space classes: HilbertSpace, ComplexSpace, L2, FockSpace, with support for direct sum and tensor product of spaces. |
-| `quantum/identitysearch.py` | Gate identity search algorithms: BFS and random search for equivalent quantum gate sequences, scalar matrix checking, and GateIdentity class. |
+| `quantum/hilbert.py` | Hilbert space classes: HilbertSpace, ComplexSpace, L2, FockSpace, TensorProductHilbertSpace, DirectSumHilbertSpace, and TensorPowerHilbertSpace (exponentiation via `**` with eval() validation for zero/unit powers and symbolic exponent checking). Handles space algebra, not operator/state tensor products (see `quantum/tensorproduct.py` for those). |
+| `quantum/identitysearch.py` | Gate identity discovery algorithms: BFS and random search for finding equivalent quantum gate sequences (GateIdentity class, scalar matrix checking). Only searches for identities; to apply or remove identities from circuits, see `quantum/circuitutils.py`. |
 | `quantum/innerproduct.py` | InnerProduct class representing the symbolic inner product between a Bra and a Ket. |
 | `quantum/matrixcache.py` | MatrixCache class for storing small matrices in SymPy, NumPy, and SciPy sparse formats for efficient reuse in quantum computations. |
 | `quantum/matrixutils.py` | Utility functions for interconversion between SymPy Matrix, NumPy ndarray, and SciPy sparse matrices, plus matrix tensor product and dagger operations. |
 | `quantum/operator.py` | Base quantum operator classes: Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, and DifferentialOperator. |
-| `quantum/operatorordering.py` | Functions for reordering quantum operator expressions into normal ordered form for bosonic and fermionic operators. |
+| `quantum/operatorordering.py` | Functions for reordering quantum operator expressions into normal ordered form: normal_ordered_form and helpers (_normal_ordered_form_factor, _normal_ordered_form_terms) that handle bosonic commutator and fermionic anti-commutator correction terms during reordering, with an `independent` flag controlling whether cross-mode corrections are included or omitted. See `secondquant.py` for the NO container class. |
 | `quantum/operatorset.py` | Mapping between quantum operators and their corresponding eigenstates (operators_to_state, state_to_operators). |
 | `quantum/pauli.py` | Pauli sigma operators (SigmaX, SigmaY, SigmaZ, SigmaPlus, SigmaMinus) and states (SigmaZKet/Bra) for two-level quantum systems, with qsimplify_pauli. |
 | `quantum/piab.py` | Particle in a box (PIAB) Hamiltonian operator and eigenstates (PIABKet, PIABBra) with position-space representation. |
 | `quantum/qapply.py` | qapply function for symbolically applying quantum operators to states in an expression tree. |
 | `quantum/qasm.py` | QASM parser: Qasm class that converts QASM circuit description commands into SymPy quantum gate circuits. |
-| `quantum/qexpr.py` | QExpr base class for quantum expressions, providing argument handling, Hilbert space association, and multi-format printing. |
+| `quantum/qexpr.py` | QExpr base class for quantum expressions, providing argument handling, Hilbert space association, adjoint evaluation (_eval_adjoint with fallback to Dagger wrapping and Hilbert space preservation), and multi-format printing utilities. The adjoint logic lives here, not in `quantum/dagger.py`. |
 | `quantum/qft.py` | Quantum Fourier Transform (QFT) and inverse QFT gate implementations, including the RkGate phase rotation gate. |
-| `quantum/qubit.py` | Qubit classes (Qubit, IntQubit) and measurement functions (measure_all, measure_partial, measure_partial_oneshot, measure_all_oneshot), with matrix-to-qubit conversion. |
+| `quantum/qubit.py` | Qubit classes (Qubit, IntQubit) and measurement functions (measure_all, measure_partial, measure_partial_oneshot, measure_all_oneshot) that accept a format parameter ('sympy', 'numpy', 'scipy.sparse') — currently only 'sympy' is implemented (raises NotImplementedError for others). Also includes qubit-to-matrix and matrix-to-qubit conversion. |
 | `quantum/represent.py` | represent function for computing matrix representations of quantum operators and states in various bases, plus expectation value and inner product helpers. |
 | `quantum/sho1d.py` | 1D quantum simple harmonic oscillator operators (RaisingOp, LoweringOp, NumberOp, Hamiltonian) and Fock states (SHOKet, SHOBra) with matrix representations. |
 | `quantum/shor.py` | Shor's factoring algorithm implementation with the CMod controlled modular exponentiation gate, period finding, and continued fraction expansion. |
@@ -86,7 +86,7 @@
 | `vector/dyadic.py` | Dyadic class representing a second-order tensor (dyadic product) used for inertia tensors and other rigid body properties. |
 | `vector/fieldfunctions.py` | Vector field operations: curl, divergence, gradient, is_conservative, is_solenoidal, scalar_potential, and scalar_potential_difference. |
 | `vector/frame.py` | ReferenceFrame class for defining coordinate frames with orientation relationships (DCM), angular velocity, and coordinate symbols (CoordinateSym). |
-| `vector/functions.py` | Core vector functions: cross, dot, express, time_derivative, outer product, kinematic_equations, get_motion_params, partial_velocity, and dynamicsymbols. |
+| `vector/functions.py` | Core vector functions: cross, dot, express, time_derivative, outer product, kinematic_equations, get_motion_params, partial_velocity, and dynamicsymbols (canonical definition — creates time-dependent symbolic functions, handles single-name vs comma-separated names differently). Re-exported by `mechanics/functions.py`. |
 | `vector/point.py` | Point class representing a point in a dynamic system with position, velocity, and acceleration relative to other points. |
-| `vector/printing.py` | Custom printers (VectorStrPrinter, VectorLatexPrinter, VectorPrettyPrinter) and init_vprinting for physics vector/dynamics notation. |
+| `vector/printing.py` | Custom printers (VectorStrPrinter, VectorLatexPrinter, VectorPrettyPrinter) and display functions (vsprint, vprint, vpprint, vlatex) that strip explicit time arguments from dynamic symbols and use prime notation for time derivatives (e.g., `u1(t)` → `u1`, `Derivative(u2(t), t)` → `u2'`). Also provides init_vprinting for physics vector/dynamics notation. |
 | `vector/vector.py` | Vector class for representing 3D vectors in reference frames, with operations for dot product, cross product, magnitude, normalization, and expression in different frames. |

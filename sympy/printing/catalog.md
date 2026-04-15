@@ -9,14 +9,14 @@
 | `__init__.py` | Package entry point; re-exports public printing functions (`latex`, `pretty`, `ccode`, `fcode`, `mathematica_code`, etc.) from submodules. |
 | `printer.py` | Defines the `Printer` base class that all printers inherit from, implementing the dispatch mechanism that resolves `_print_<ClassName>` methods by MRO. |
 | `defaults.py` | Provides the `DefaultPrinting` mixin that gives SymPy objects readable `__str__` and `__repr__` via `sstr`. |
-| `conventions.py` | Shared helper utilities for printers: `split_super_sub` parses symbol names into name/superscript/subscript parts, and `requires_partial` detects when partial-derivative notation is needed. |
+| `conventions.py` | Shared helper utilities for printers: `split_super_sub` splits symbol names at `^` and `_` delimiters into name/superscript/subscript parts (structural splitting only, no accent/decoration handling), and `requires_partial` detects when partial-derivative notation is needed. See `latex.py` `translate()` for Greek-letter and accent-modifier conversion. |
 | `precedence.py` | Defines operator-precedence constants (`PRECEDENCE` dict) and the `precedence()` function used by printers to decide when parentheses are required. |
 | `codeprinter.py` | `CodePrinter` base class for all code-generation printers (C, Fortran, JS, etc.), extending `StrPrinter` with assignment handling, loop generation, and the `@requires` decorator. |
 | `str.py` | `StrPrinter` — the default human-readable string printer; provides `sstr()` and `sstrrepr()` convenience functions. |
 | `repr.py` | `ReprPrinter` — produces `srepr()` output where `eval(srepr(expr)) == expr` holds, giving a round-trippable representation of expressions. |
 | `python.py` | `PythonPrinter` — generates executable Python code strings (with `Symbol`/`Function` import preambles) via the `python()` function. |
 | `pycode.py` | `PythonCodePrinter`, `MpmathPrinter`, `NumPyPrinter`, and `SciPyPrinter` — emit Python code targeting the standard math library, mpmath, NumPy, or SciPy respectively. |
-| `latex.py` | `LatexPrinter` — converts SymPy expressions to LaTeX markup; provides the `latex()` convenience function. |
+| `latex.py` | `LatexPrinter` — converts SymPy expressions to LaTeX markup; provides the `latex()` convenience function. Also contains the module-level `translate()` helper that recursively converts symbol name strings (e.g. "alphahatdotprime") into LaTeX with nested accent decorations by stripping modifier suffixes (longest first) via `modifier_dict`, and mapping Greek letters via `tex_greek_dictionary`. |
 | `mathml.py` | `MathMLPrinter` — renders expressions as MathML (Content markup) XML; provides `mathml()` and `print_mathml()`. |
 | `ccode.py` | `C89CodePrinter` and `C99CodePrinter` — generate C89/C99 source code from expressions, mapping SymPy functions to their `math.h` equivalents. |
 | `cxxcode.py` | `CXX98CodePrinter`, `CXX11CodePrinter`, and `CXX17CodePrinter` — generate C++ code, extending the C printers with C++ standard-library math functions and reserved words. |
