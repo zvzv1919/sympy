@@ -8,7 +8,7 @@
 |------|---------|
 | `__init__.py` | Top-level package init that imports and re-exports all public functions from the combinatorial, elementary, and special subpackages. |
 | `combinatorial/__init__.py` | Subpackage init for combinatorial functions; imports the `factorials` and `numbers` modules. |
-| `combinatorial/factorials.py` | Implements combinatorial factorial-related functions: `factorial`, `factorial2`, `subfactorial`, `RisingFactorial`, `FallingFactorial`, and `binomial`. |
+| `combinatorial/factorials.py` | Implements combinatorial factorial-related functions: `factorial`, `factorial2`, `subfactorial`, `RisingFactorial`, `FallingFactorial`, and `binomial`. Note: logarithmic derivatives of the factorial/gamma function and their sign properties are handled by polygamma in `special/gamma_functions.py`. |
 | `combinatorial/numbers.py` | Implements combinatorial number sequences: Fibonacci, Lucas, harmonic, Bernoulli, Bell, Euler, Catalan, and Genocchi numbers/polynomials. |
 | `elementary/__init__.py` | Subpackage init for elementary functions; imports complexes, exponential, hyperbolic, integers, trigonometric, and miscellaneous modules. |
 | `elementary/complexes.py` | Implements complex-number operations: `re`, `im`, `sign`, `Abs`, `conjugate`, `arg`, `polar_lift`, `periodic_argument`, `transpose`, `adjoint`, and related helpers. |
@@ -26,7 +26,7 @@
 | `special/delta_functions.py` | Implements the `DiracDelta` distribution and the `Heaviside` step function. |
 | `special/elliptic_integrals.py` | Implements complete and incomplete elliptic integrals of the first (`elliptic_k`, `elliptic_f`), second (`elliptic_e`), and third kind (`elliptic_pi`). |
 | `special/error_functions.py` | Implements error functions (`erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`), exponential integrals (`Ei`, `expint`, `E1`, `li`, `Li`), trig integrals (`Si`, `Ci`, `Shi`, `Chi`), and Fresnel integrals (`fresnels`, `fresnelc`). |
-| `special/gamma_functions.py` | Implements the gamma function, upper/lower incomplete gamma functions, log-gamma, polygamma (`digamma`, `trigamma`), and related utilities. |
+| `special/gamma_functions.py` | Implements the gamma function, upper/lower incomplete gamma functions, log-gamma, polygamma (`digamma`, `trigamma`), and related utilities. Polygamma represents higher-order logarithmic derivatives of the factorial/gamma function; includes sign-determination logic (`_eval_is_positive`, `_eval_is_negative`) that decides positivity or negativity based on whether the derivative order is even or odd. |
 | `special/hyper.py` | Implements the generalized hypergeometric function `hyper` (pFq) and the Meijer G-function `meijerg`. |
 | `special/mathieu_functions.py` | Implements Mathieu functions (`mathieus`, `mathieuc`) and their derivatives (`mathieusprime`, `mathieucprime`) for the Mathieu differential equation. |
 | `special/polynomials.py` | Implements special orthogonal polynomials: Jacobi, Gegenbauer, Chebyshev (T and U), Legendre, associated Legendre, Hermite, Laguerre, and associated Laguerre. |

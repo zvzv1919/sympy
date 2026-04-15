@@ -7,14 +7,14 @@
 | File | Summary |
 |------|---------|
 | `__init__.py` | Package init that re-exports key public utilities such as `flatten`, `lambdify`, `source`, `threaded`, `test`, and `timed`. |
-| `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and ufuncify. |
+| `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and numpy. Key entry points: `autowrap` (compile & wrap a single expression), `binary_function` (return a SymPy Function backed by compiled code), and `ufuncify` (create actual `numpy.ufunc` instances with ndimensional broadcasting). The numpy backend enforces numpy's compile-time argument limit (NPY_MAXARGS = 32) on the combined count of inputs and outputs. See also `lambdify.py` which converts expressions to pure-Python lambda functions without compilation. |
 | `benchmarking.py` | Provides a py.test-based benchmarking framework with custom Timer, Function, and TerminalSession classes for timing SymPy functions. |
 | `codegen.py` | Generates complete compilable routines in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. |
 | `decorator.py` | Utility decorators including `threaded`/`xthreaded` (apply functions elementwise), `conserve_mpmath_dps`, `doctest_depends_on`, `public`, and `memoize_property`. |
 | `enumerative.py` | Algorithms for enumerative combinatorics, primarily multiset partition enumeration following Knuth's TAOCP algorithm 7.1.2.5M. |
 | `exceptions.py` | Defines `SymPyDeprecationWarning`, a structured deprecation warning class that includes version, issue tracker link, and migration guidance. |
 | `iterables.py` | Extensive collection of iterable utilities: `flatten`, `group`, `subsets`, `variations`, `partitions`, `topological_sort`, `sift`, `ordered`, and many more combinatorial helpers. |
-| `lambdify.py` | Converts SymPy expressions into fast numerical lambda functions targeting math, mpmath, NumPy, TensorFlow, and other numeric backends. |
+| `lambdify.py` | Converts SymPy expressions into fast numerical lambda functions (pure Python, no compilation) targeting math, mpmath, NumPy, TensorFlow, and other numeric backends. For compiled binary ufuncs with numpy broadcasting, see `autowrap.py`. |
 | `magic.py` | Contains the `pollute` function that injects name-object mappings into a caller's global namespace via frame introspection. |
 | `memoization.py` | Memoization decorators for recurrence-defined sequences (`recurrence_memo`) and associated sequences (`assoc_recurrence_memo`). |
 | `misc.py` | Miscellaneous helpers including `filldedent` (text formatting), `rawlines` (pasteable string repr), `translate`, `replace`, `find_executable`, and the `Undecidable` exception. |
