@@ -13,7 +13,7 @@
 | `elementary/__init__.py` | Subpackage init for elementary functions; imports complexes, exponential, hyperbolic, integers, trigonometric, and miscellaneous modules. |
 | `elementary/complexes.py` | Implements complex-number operations: `re`, `im`, `sign`, `Abs`, `conjugate`, `arg`, `polar_lift`, `periodic_argument`, `transpose`, `adjoint`, and related helpers. |
 | `elementary/exponential.py` | Implements exponential and logarithmic functions (`exp`, `exp_polar`, `log`, `LambertW`) with series expansion support for the Gruntz limit algorithm. |
-| `elementary/hyperbolic.py` | Implements hyperbolic functions (`sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch`) and their inverses (`asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch`). |
+| `elementary/hyperbolic.py` | Implements hyperbolic functions (`sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch`) and their inverses (`asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch`). Inverse hyperbolic functions convert purely imaginary arguments into circular (trigonometric) counterparts (e.g., `asinh(ix) = i*asin(x)`). |
 | `elementary/integers.py` | Implements rounding functions: `floor`, `ceiling`, and `frac` (fractional part). |
 | `elementary/miscellaneous.py` | Implements miscellaneous elementary functions: `sqrt`, `cbrt`, `root`, `real_root`, `Min`, `Max`, and the `IdentityFunction`. |
 | `elementary/piecewise.py` | Implements the `Piecewise` function for piecewise-defined expressions and the `piecewise_fold` simplification utility. |
@@ -25,7 +25,7 @@
 | `special/bsplines.py` | Implements B-spline basis functions (`bspline_basis`, `bspline_basis_set`) as piecewise polynomials over a knot vector. |
 | `special/delta_functions.py` | Implements the `DiracDelta` distribution and the `Heaviside` step function. |
 | `special/elliptic_integrals.py` | Implements complete and incomplete elliptic integrals of the first (`elliptic_k`, `elliptic_f`), second (`elliptic_e`), and third kind (`elliptic_pi`). |
-| `special/error_functions.py` | Implements error functions (`erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`), exponential integrals (`Ei`, `expint`, `E1`, `li`, `Li`), trig integrals (`Si`, `Ci`, `Shi`, `Chi`), and Fresnel integrals (`fresnels`, `fresnelc`). |
+| `special/error_functions.py` | Implements error functions (`erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`), exponential integrals (`Ei`, `expint`, `E1`, `li`, `Li`), trigonometric and hyperbolic integrals (`Si`, `Ci`, `Shi`, `Chi`) with argument negation and imaginary-rotation transformation rules, and Fresnel integrals (`fresnels`, `fresnelc`). Note: `Chi` (hyperbolic cosine integral) and `Shi` (hyperbolic sine integral) are integral transforms distinct from the elementary `cosh`/`sinh` in `elementary/hyperbolic.py`. |
 | `special/gamma_functions.py` | Implements the gamma function, upper/lower incomplete gamma functions, log-gamma, polygamma (`digamma`, `trigamma`), and related utilities. |
 | `special/hyper.py` | Implements the generalized hypergeometric function `hyper` (pFq) and the Meijer G-function `meijerg`. |
 | `special/mathieu_functions.py` | Implements Mathieu functions (`mathieus`, `mathieuc`) and their derivatives (`mathieusprime`, `mathieucprime`) for the Mathieu differential equation. |
