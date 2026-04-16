@@ -9,7 +9,7 @@
 | `__init__.py` | Top-level package init that imports and re-exports all public functions from the combinatorial, elementary, and special subpackages. |
 | `combinatorial/__init__.py` | Subpackage init for combinatorial functions; imports the `factorials` and `numbers` modules. |
 | `combinatorial/factorials.py` | Implements combinatorial factorial-related functions: `factorial`, `factorial2`, `subfactorial`, `RisingFactorial`, `FallingFactorial`, and `binomial`. |
-| `combinatorial/numbers.py` | Implements combinatorial number sequences: Fibonacci, Lucas, harmonic, Bernoulli, Bell, Euler, Catalan, and Genocchi numbers/polynomials. |
+| `combinatorial/numbers.py` | Implements combinatorial number sequences and counting functions: Fibonacci, Lucas, harmonic, Bernoulli, Bell, Euler, Catalan, Genocchi numbers/polynomials, and Stirling numbers of the first and second kind (`stirling`, with internal cached helpers `_stirling1`/`_stirling2` containing closed-form shortcuts for special cases like k near n). |
 | `elementary/__init__.py` | Subpackage init for elementary functions; imports complexes, exponential, hyperbolic, integers, trigonometric, and miscellaneous modules. |
 | `elementary/complexes.py` | Implements complex-number component-extraction operations: `re` (real part), `im` (imaginary part), `sign`, `Abs`, `conjugate`, `arg`, `polar_lift`, `periodic_argument`, `transpose`, `adjoint`, and related helpers. Does NOT contain realness/domain predicates for other function classes. |
 | `elementary/exponential.py` | Implements exponential and logarithmic functions (`exp`, `exp_polar`, `log`, `LambertW`) with series expansion support for the Gruntz limit algorithm. |
