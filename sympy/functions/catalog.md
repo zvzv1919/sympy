@@ -29,9 +29,9 @@
 | `special/gamma_functions.py` | Implements the gamma function, upper/lower incomplete gamma functions, log-gamma, polygamma (`digamma`, `trigamma`), and related utilities. |
 | `special/hyper.py` | Implements the generalized hypergeometric function `hyper` (pFq) and the Meijer G-function `meijerg`. |
 | `special/mathieu_functions.py` | Implements Mathieu functions (`mathieus`, `mathieuc`) and their derivatives (`mathieusprime`, `mathieucprime`) for the Mathieu differential equation. |
-| `special/polynomials.py` | Implements special orthogonal polynomials: Jacobi, Gegenbauer, Chebyshev (T and U), Legendre, associated Legendre, Hermite, Laguerre, and associated Laguerre. |
+| `special/polynomials.py` | Implements special orthogonal polynomials: Jacobi, Gegenbauer, Chebyshev (T and U), Legendre, `assoc_legendre` (associated Legendre P_n^m(x), with eval-time negative-order conversion using factorial ratio identity, derivative via recurrence, and polynomial rewrite), Hermite, Laguerre, and associated Laguerre. |
 | `special/singularity_functions.py` | Implements the `SingularityFunction` (Macaulay bracket notation) used in structural engineering beam analysis. |
-| `special/spherical_harmonics.py` | Implements spherical harmonic functions `Ynm`, `Ynm_c` (conjugate), and `Znm` (real form). |
+| `special/spherical_harmonics.py` | Implements spherical harmonic functions `Ynm(n, m, theta, phi)`, `Ynm_c` (conjugate), and `Znm` (real form). Handles negative-m for Ynm via exponential phase factor identity; delegates to `assoc_legendre` from `polynomials.py` for the underlying P_n^m polynomial. |
 | `special/tensor_functions.py` | Implements the `KroneckerDelta` and `LeviCivita` (Levi-Civita symbol / `Eijk`) tensor-index functions. |
 | `special/zeta_functions.py` | Implements the Riemann `zeta` function, `dirichlet_eta`, Lerch transcendent (`lerchphi`), `polylog` (polylogarithm Li_s, the generalized logarithmic sum; supports `expand_func` to reduce to elementary rational expressions for non-positive integer order via iterated differential operations), and Stieltjes constants. |
 | `special/benchmarks/bench_special.py` | Benchmark for spherical harmonics (`Ynm`) evaluation performance. |
