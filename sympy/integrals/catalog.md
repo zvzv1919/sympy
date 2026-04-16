@@ -7,12 +7,12 @@
 | File | Summary |
 |------|---------|
 | `__init__.py` | Package init; exports `integrate`, `Integral`, `line_integrate`, and all integral transform functions. |
-| `integrals.py` | Core `Integral` class (unevaluated integral representation) and the `integrate` / `line_integrate` entry points that dispatch to various integration strategies. |
+| `integrals.py` | Core `Integral` class (unevaluated integral representation) and the `integrate` / `line_integrate` entry points that dispatch to various integration strategies. `Integral` also provides the `transform` method for performing change-of-variables (u-substitution) on definite integrals, handling limit adjustment, dummy variable conflicts, and uniqueness checks. |
 | `risch.py` | Implementation of the Risch algorithm for transcendental function integration, including `DifferentialExtension`, `integer_powers`, and the main `risch_integrate` driver. |
 | `rde.py` | Algorithms for solving the Risch Differential Equation (Dy + f*y == g), used as a sub-problem solver by the Risch algorithm. |
 | `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. |
 | `heurisch.py` | Heuristic Risch algorithm for indefinite integration; provides `heurisch` and `heurisch_wrapper` along with the `components` helper. |
-| `manualintegrate.py` | Integration method emulating by-hand techniques with step-by-step rules (namedtuples); provides `integral_steps` and `manualintegrate`. |
+| `manualintegrate.py` | Integration method emulating by-hand techniques with step-by-step rules (namedtuples); provides `integral_steps` and `manualintegrate`. Rules decompose an integrand into named computation steps (e.g., `SubstitutionRule`, `PartsRule`) for solving integrals, not for transforming existing `Integral` objects. |
 | `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. Definite integration (0 to ∞) uses a multi-stage pipeline: expansion/simplification of the integrand, then attempts to rewrite as G-functions; if the direct attempt fails and the integrand is a sum, a linearity fallback splits it into individual terms, integrates each separately, and combines their convergence conditions via logical conjunction. |
 | `meijerint_doc.py` | Auto-generates a Sphinx docstring listing all Meijer G-function lookup table entries for documentation purposes. |
 | `transforms.py` | Integral transforms: Mellin, inverse Mellin, Laplace, inverse Laplace, Fourier, inverse Fourier, sine, cosine, and Hankel transforms with their unevaluated class representations. |
