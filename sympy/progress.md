@@ -1,0 +1,41 @@
+# Catalog Generation Progress — COMPLETE
+
+| Module | Status |
+|--------|--------|
+| assumptions | done |
+| benchmarks | done |
+| calculus | done |
+| categories | done |
+| codegen | done |
+| combinatorics | done |
+| concrete | done |
+| core | done |
+| crypto | done |
+| deprecated | done |
+| diffgeom | done |
+| external | done |
+| functions | done |
+| geometry | done |
+| holonomic | done |
+| integrals | done |
+| interactive | done |
+| liealgebras | done |
+| logic | done |
+| matrices | done |
+| ntheory | done |
+| parsing | done |
+| physics | done |
+| plotting | done |
+| polys | done |
+| printing | done |
+| sandbox | done |
+| series | done |
+| sets | done |
+| simplify | done |
+| solvers | done |
+| stats | done |
+| strategies | done |
+| tensor | done |
+| unify | done |
+| utilities | done |
+| vector | done |
