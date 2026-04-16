@@ -23,7 +23,7 @@
 | `rcode.py` | `RCodePrinter` — converts expressions into R language code, mapping SymPy functions to R's built-in math functions. |
 | `jscode.py` | `JavascriptCodePrinter` — emits JavaScript code using `Math.*` functions; provides `jscode()`. |
 | `julia.py` | `JuliaCodePrinter` — generates Julia source code from expressions; provides `julia_code()`. Handles element-wise (Hadamard) vs matrix operations, `Piecewise` rendering (inline ternary or if-else), and validates that Piecewise has a default branch (raises error otherwise). |
-| `octave.py` | `OctaveCodePrinter` — produces Octave/Matlab-compatible code from expressions; provides `octave_code()`. |
+| `octave.py` | `OctaveCodePrinter` — produces Octave/Matlab-compatible code from expressions; provides `octave_code()`. Handles element-wise vs matrix operator selection (`.*` / `./` vs `*` / `/`) based on whether operands are numeric scalars or matrix symbols, and renders imaginary number literals in Octave's `Ni` format. |
 | `rust.py` | `RustCodePrinter` — generates Rust source code from expressions using `f64` methods; provides `rust_code()`. |
 | `glsl.py` | `GLSLPrinter` — emits GLSL (OpenGL Shading Language) code from expressions, with options for operator vs. function style and matrix formatting. |
 | `mathematica.py` | `MCodePrinter` — converts expressions to Wolfram Mathematica syntax; provides `mathematica_code()`. |
