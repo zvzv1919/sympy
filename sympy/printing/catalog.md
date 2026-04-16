@@ -23,7 +23,7 @@
 | `fcode.py` | `FCodePrinter` — generates Fortran 77/90/95 code from expressions, handling column-width wrapping, implicit typing, and Fortran-specific math intrinsics. |
 | `rcode.py` | `RCodePrinter` — converts expressions into R language code, mapping SymPy functions to R's built-in math functions. |
 | `jscode.py` | `JavascriptCodePrinter` — emits JavaScript code using `Math.*` functions; provides `jscode()`. |
-| `julia.py` | `JuliaCodePrinter` — generates Julia source code from expressions; provides `julia_code()`. |
+| `julia.py` | `JuliaCodePrinter` — generates Julia source code from expressions; provides `julia_code()`. Handles element-wise (Hadamard) vs matrix operations, `Piecewise` rendering (inline ternary or if-else), and validates that Piecewise has a default branch (raises error otherwise). |
 | `octave.py` | `OctaveCodePrinter` — produces Octave/Matlab-compatible code from expressions; provides `octave_code()`. |
 | `rust.py` | `RustCodePrinter` — generates Rust source code from expressions using `f64` methods; provides `rust_code()`. |
 | `glsl.py` | `GLSLPrinter` — emits GLSL (OpenGL Shading Language) code from expressions, with options for operator vs. function style and matrix formatting. |
@@ -37,6 +37,6 @@
 | `theanocode.py` | `TheanoPrinter` — translates SymPy expressions into Theano tensor-variable graphs for GPU-accelerated numerical computation. |
 | `llvmjitcode.py` | `LLVMJitPrinter` and `llvm_callable()` — compiles SymPy expressions to native machine code via LLVM IR using the llvmlite library. |
 | `pretty/__init__.py` | Sub-package entry point for the ASCII/Unicode 2-D pretty-printer; re-exports `pretty`, `pprint`, and related functions. |
-| `pretty/pretty.py` | `PrettyPrinter` — the core 2-D ASCII-art / Unicode pretty-printer that builds multi-line box-drawing representations of expressions. |
-| `pretty/pretty_symbology.py` | Symbolic primitives and Unicode/ASCII abstraction layer for the pretty printer: Greek letter tables, sub/superscript digit mappings, box-drawing characters, and related helpers. |
-| `pretty/stringpict.py` | `stringPict` and `prettyForm` — data structures representing 2-D ASCII pictures with baseline tracking, used for composing multi-line pretty-print output. |
+| `pretty/pretty.py` | `PrettyPrinter` — the core 2-D pretty-printer with `_print_<Type>` methods that compose `prettyForm` objects for each expression type. Orchestrates layout of expressions but delegates symbol/character lookup to `pretty_symbology.py` and 2-D picture manipulation to `stringpict.py`. |
+| `pretty/pretty_symbology.py` | Low-level Unicode/ASCII abstraction layer for the pretty printer. Contains `pretty_atom()` which maps atom names (Pi, Infinity, etc.) to display characters and raises `KeyError` when in ASCII mode with no default. Contains `xobj()` which constructs variable-height bracket and delimiter characters (parentheses, curly braces, integrals, etc.), handling even-height adjustment for centered middle pieces. Also provides Greek letter tables, sub/superscript digit mappings, `pretty_symbol()`, and `xsym()`. |
+| `pretty/stringpict.py` | `stringPict` and `prettyForm` — data structures representing 2-D ASCII pictures with baseline tracking, providing operations like horizontal/vertical joining, alignment, and binding-power parenthesization. Does not handle character/symbol lookup or delimiter construction. |

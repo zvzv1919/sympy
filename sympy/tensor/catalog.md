@@ -8,8 +8,8 @@
 |------|---------|
 | `__init__.py` | Package initializer; exports `IndexedBase`, `Idx`, `Indexed`, index-method helpers, and all N-dim array classes and operations. |
 | `indexed.py` | Defines `IndexedBase`, `Indexed`, and `Idx` classes for representing indexed objects (e.g. matrix elements `M[i, j]`) with optional shape and range information. |
-| `index_methods.py` | Provides functions for analyzing indexed expressions: `get_indices` determines free and dummy indices, and `get_contraction_structure` maps out implicit summations. |
-| `tensor.py` | Implements tensors with abstract index notation (Penrose formalism), including tensor index types, symmetries, canonicalization via the Butler-Portugal algorithm, and Einstein summation. |
+| `index_methods.py` | Provides functions for analyzing indices of `Indexed`-based expressions: `get_indices` dispatches to expression-type-specific handlers (`_get_indices_Mul`, `_get_indices_Pow`, `_get_indices_Add`) to determine free/dummy indices; `_get_indices_Pow` notably treats power as element-wise (e.g. `x[i]**2` is NOT a self-contraction); `get_contraction_structure` maps out implicit summations. |
+| `tensor.py` | Implements tensors with abstract index notation (Penrose formalism), including tensor index types, symmetries, canonicalization via Butler-Portugal, Einstein summation, and index replacement via `Tensor.__call__` (which detects when replacement indices form a contraction pair and rebuilds the object so contracted indices become proper dummies). |
 | `array/__init__.py` | Package initializer for the N-dim array submodule; exports dense/sparse and mutable/immutable array classes along with `tensorproduct`, `tensorcontraction`, `derive_by_array`, and `permutedims`. |
 | `array/ndim_array.py` | Defines the `NDimArray` base class with common functionality for N-dimensional arrays such as indexing, shape handling, arithmetic, and conversion utilities. |
 | `array/dense_ndim_array.py` | Implements `ImmutableDenseNDimArray` and `MutableDenseNDimArray`, which store all elements in a flat list for dense N-dimensional array representations. |

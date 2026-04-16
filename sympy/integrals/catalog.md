@@ -13,7 +13,7 @@
 | `prde.py` | Algorithms for solving the Parametric Risch Differential Equation (Dy + f*y == Sum(ci*gi)), paralleling the methods in `rde.py`. |
 | `heurisch.py` | Heuristic Risch algorithm for indefinite integration; provides `heurisch` and `heurisch_wrapper` along with the `components` helper. |
 | `manualintegrate.py` | Integration method emulating by-hand techniques with step-by-step rules (namedtuples); provides `integral_steps` and `manualintegrate`. |
-| `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. |
+| `meijerint.py` | Integration by rewriting integrands as Meijer G-functions; exposes `meijerint_indefinite`, `meijerint_definite`, and `meijerint_inversion`. Definite integration (0 to ∞) uses a multi-stage pipeline: expansion/simplification of the integrand, then attempts to rewrite as G-functions; if the direct attempt fails and the integrand is a sum, a linearity fallback splits it into individual terms, integrates each separately, and combines their convergence conditions via logical conjunction. |
 | `meijerint_doc.py` | Auto-generates a Sphinx docstring listing all Meijer G-function lookup table entries for documentation purposes. |
 | `transforms.py` | Integral transforms: Mellin, inverse Mellin, Laplace, inverse Laplace, Fourier, inverse Fourier, sine, cosine, and Hankel transforms with their unevaluated class representations. |
 | `trigonometry.py` | Integration of products of trigonometric functions (sin, cos, tan, sec, csc, cot) via the `trigintegrate` function. |

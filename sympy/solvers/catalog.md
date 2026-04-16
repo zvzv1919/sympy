@@ -7,10 +7,10 @@
 | File | Summary |
 |------|---------|
 | `__init__.py` | Package init that re-exports the public API from submodules (solve, dsolve, pdsolve, rsolve, diophantine, solveset, etc.). |
-| `solvers.py` | Core equation-solving module providing `solve()` for algebraic/transcendental equations, `nsolve()` for numerical solving, and helpers for linear systems and undetermined coefficients. |
+| `solvers.py` | Core equation-solving module providing `solve()` for algebraic/transcendental equations, `nsolve()` for numerical solving, and helpers for linear systems and undetermined coefficients. Internal `_solve` handles conditionally-defined (piecewise/branch-based) expressions with branch-priority logic, polynomial generator analysis, and change-of-variable strategies. |
 | `solveset.py` | Set-based equation solving with `solveset()`, `linsolve()`, `nonlinsolve()`, and `linear_eq_to_matrix()`, operating over real or complex domains and returning solutions as SymPy sets. |
-| `ode.py` | Ordinary differential equation solver (`dsolve`) supporting separable, homogeneous, exact, linear, Bernoulli, Lie group, Liouville, power series, and nth-order constant-coefficient methods, plus ODE classification and solution checking. |
-| `pde.py` | Partial differential equation solver (`pdsolve`) for first-order linear PDEs with constant or variable coefficients, with classification and additive/multiplicative variable separation utilities. |
+| `ode.py` | Ordinary differential equation solver (`dsolve`) supporting separable, homogeneous, exact, linear, Bernoulli, Lie group, Liouville, power series, and nth-order constant-coefficient methods, plus ODE classification and solution verification via `checkodesol` (which includes fallback inference of the dependent function from the solution when it cannot be determined from the ODE). |
+| `pde.py` | Partial differential equation solver (`pdsolve`) for first-order linear PDEs with constant or variable coefficients, with classification and additive/multiplicative variable separation utilities. Supports an 'all' meta-hint that iterates over every classification method, catching and storing exceptions (e.g., NotImplementedError) for methods that fail. |
 | `recurr.py` | Recurrence relation (difference equation) solver providing `rsolve()` and lower-level routines (`rsolve_poly`, `rsolve_ratio`, `rsolve_hyper`) for linear inhomogeneous recurrences with polynomial or rational coefficients. |
 | `polysys.py` | Solvers for systems of polynomial equations using Groebner bases, including specialized handling of bivariate biquadratic systems. |
 | `inequalities.py` | Tools for solving polynomial, rational, and absolute-value inequalities and reducing systems of inequalities to solution sets. |

@@ -9,7 +9,7 @@
 | `__init__.py` | Package init that re-exports key public utilities such as `flatten`, `lambdify`, `source`, `threaded`, `test`, and `timed`. |
 | `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and ufuncify. |
 | `benchmarking.py` | Provides a py.test-based benchmarking framework with custom Timer, Function, and TerminalSession classes for timing SymPy functions. |
-| `codegen.py` | Generates complete compilable routines in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. |
+| `codegen.py` | Generates complete compilable routines in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. Defines the `Routine` class whose `__init__` validates that all symbols in expressions are covered by input arguments, local variables, or global variables (raises `ValueError` for unresolved symbols). Also provides `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen`, `codegen`, and `make_routine`. |
 | `decorator.py` | Utility decorators including `threaded`/`xthreaded` (apply functions elementwise), `conserve_mpmath_dps`, `doctest_depends_on`, `public`, and `memoize_property`. |
 | `enumerative.py` | Algorithms for enumerative combinatorics, primarily multiset partition enumeration following Knuth's TAOCP algorithm 7.1.2.5M. |
 | `exceptions.py` | Defines `SymPyDeprecationWarning`, a structured deprecation warning class that includes version, issue tracker link, and migration guidance. |
