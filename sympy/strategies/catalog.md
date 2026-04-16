@@ -6,8 +6,8 @@
 
 | File | Summary |
 |------|---------|
-| `__init__.py` | Package init that re-exports core rules (`rm_id`, `flatten`, `sort`, etc.), strategies (`chain`, `exhaust`, `do_one`, etc.), traversal helpers, and the `branch` subpackage. |
-| `core.py` | Generic, SymPy-independent strategy combinators that each accept and return a single expression (not generators): `exhaust`, `memoize`, `condition`, `chain` (simple sequential loop over rules), `debug`, `null_safe`, `tryit`, `do_one`, `switch`, and `minimize`. |
+| `__init__.py` | Package init that selectively re-exports symbols from submodules. Imports rules from `rl` (`rm_id`, `flatten`, `sort`, etc.), selected strategies from `core` (`chain`, `exhaust`, `do_one`, `minimize`, `tryit`, `condition`, `debug`, `null_safe`), and tools (`canon`, `typed`). Notably excludes `memoize` and `switch` from `core.py` — questions about missing or inaccessible package-level exports belong here. |
+| `core.py` | Generic, SymPy-independent strategy combinators that each accept and return a single expression (not generators): `exhaust`, `condition`, `chain`, `debug`, `null_safe`, `tryit`, `do_one`, `switch`, `minimize`, and `memoize` (caching decorator for rules; not re-exported by `__init__.py`). |
 | `rl.py` | Concrete rewrite rules for SymPy expressions: `rm_id`, `glom`, `sort`, `distribute`, `subs`, `unpack`, `flatten`, and `rebuild`. |
 | `tools.py` | Higher-level SymPy-aware strategies built on the core combinators: `subs` (full simultaneous substitution via tree traversal), `canon` (bottom-up canonicalization), and `typed` (dispatch rules by expression type). |
 | `tree.py` | Utilities for executing strategic trees: `treeapply` (recursively apply join functions over nested lists/tuples), `greedy` (select alternatives that minimize an objective), `allresults` (exhaustively enumerate all outcomes), and `brute` (brute-force best result). |
