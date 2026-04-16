@@ -25,7 +25,7 @@
 | `special/bsplines.py` | Implements B-spline basis functions (`bspline_basis`, `bspline_basis_set`) as piecewise polynomials over a knot vector. |
 | `special/delta_functions.py` | Implements the `DiracDelta` distribution and the `Heaviside` step function. |
 | `special/elliptic_integrals.py` | Implements complete and incomplete elliptic integrals of the first (`elliptic_k`, `elliptic_f`), second (`elliptic_e`), and third kind (`elliptic_pi`). |
-| `special/error_functions.py` | Implements error functions (`erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`), exponential integrals (`Ei`, `expint`, `E1`, `li`, `Li`), trigonometric and hyperbolic integrals (`Si`, `Ci`, `Shi`, `Chi`) with argument negation and imaginary-rotation transformation rules, and Fresnel integrals (`fresnels`, `fresnelc`). Note: `Chi` (hyperbolic cosine integral) and `Shi` (hyperbolic sine integral) are integral transforms distinct from the elementary `cosh`/`sinh` in `elementary/hyperbolic.py`. |
+| `special/error_functions.py` | Implements error functions (`erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`), exponential integrals (`Ei`, `expint`, `E1`, `li`, `Li` — where `Li` is the logarithmic integral offset li(x)−li(2), NOT the polylogarithm Li_s), trigonometric and hyperbolic integrals (`Si`, `Ci`, `Shi`, `Chi`) with argument negation and imaginary-rotation transformation rules, and Fresnel integrals (`fresnels`, `fresnelc`). Note: `Chi` (hyperbolic cosine integral) and `Shi` (hyperbolic sine integral) are integral transforms distinct from the elementary `cosh`/`sinh` in `elementary/hyperbolic.py`. |
 | `special/gamma_functions.py` | Implements the gamma function, upper/lower incomplete gamma functions, log-gamma, polygamma (`digamma`, `trigamma`), and related utilities. |
 | `special/hyper.py` | Implements the generalized hypergeometric function `hyper` (pFq) and the Meijer G-function `meijerg`. |
 | `special/mathieu_functions.py` | Implements Mathieu functions (`mathieus`, `mathieuc`) and their derivatives (`mathieusprime`, `mathieucprime`) for the Mathieu differential equation. |
@@ -33,5 +33,5 @@
 | `special/singularity_functions.py` | Implements the `SingularityFunction` (Macaulay bracket notation) used in structural engineering beam analysis. |
 | `special/spherical_harmonics.py` | Implements spherical harmonic functions `Ynm`, `Ynm_c` (conjugate), and `Znm` (real form). |
 | `special/tensor_functions.py` | Implements the `KroneckerDelta` and `LeviCivita` (Levi-Civita symbol / `Eijk`) tensor-index functions. |
-| `special/zeta_functions.py` | Implements the Riemann `zeta` function, `dirichlet_eta`, Lerch transcendent (`lerchphi`), `polylog`, and Stieltjes constants. |
+| `special/zeta_functions.py` | Implements the Riemann `zeta` function, `dirichlet_eta`, Lerch transcendent (`lerchphi`), `polylog` (polylogarithm Li_s, the generalized logarithmic sum; supports `expand_func` to reduce to elementary rational expressions for non-positive integer order via iterated differential operations), and Stieltjes constants. |
 | `special/benchmarks/bench_special.py` | Benchmark for spherical harmonics (`Ynm`) evaluation performance. |

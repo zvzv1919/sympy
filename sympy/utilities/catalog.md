@@ -7,13 +7,13 @@
 | File | Summary |
 |------|---------|
 | `__init__.py` | Package init that re-exports key public utilities such as `flatten`, `lambdify`, `source`, `threaded`, `test`, and `timed`. |
-| `autowrap.py` | Compiles generated code (C/Fortran) and wraps the resulting binaries for use in Python via backends like f2py, Cython, and ufuncify. |
+| `autowrap.py` | High-level module that compiles symbolic expressions into callable Python binaries via f2py, Cython, or numpy-ufunc backends. The main `autowrap` function handles error recovery when the user-supplied argument list is incomplete (appends missing output-only args and retries). The ufunc wrapper partitions arguments by category and raises ValueError for bidirectional (in-out) arguments. Also provides `binary_function` and `ufuncify`. |
 | `benchmarking.py` | Provides a py.test-based benchmarking framework with custom Timer, Function, and TerminalSession classes for timing SymPy functions. |
-| `codegen.py` | Generates complete compilable routines in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. Defines the `Routine` class whose `__init__` validates that all symbols in expressions are covered by input arguments, local variables, or global variables (raises `ValueError` for unresolved symbols). Also provides `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen`, `codegen`, and `make_routine`. |
+| `codegen.py` | Lower-level code generation: produces complete compilable source files in C, C++, Fortran, Julia, Rust, and Octave/Matlab from SymPy expressions. Defines `Routine`, `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen`, `codegen`, and `make_routine`. Raises `CodeGenArgumentListError` when required arguments are missing, but does not itself recover—callers (e.g. autowrap) handle recovery. |
 | `decorator.py` | Utility decorators including `threaded`/`xthreaded` (apply functions elementwise), `conserve_mpmath_dps`, `doctest_depends_on`, `public`, and `memoize_property`. |
-| `enumerative.py` | Algorithms for enumerative combinatorics, primarily multiset partition enumeration following Knuth's TAOCP algorithm 7.1.2.5M. |
+| `enumerative.py` | Multiset partition enumeration and counting following Knuth's TAOCP algorithm 7.1.2.5M. `MultisetPartitionTraverser` enumerates partitions and provides `count_partitions`, which uses dynamic-programming memoization with a persistent cross-call cache for efficient tallying. |
 | `exceptions.py` | Defines `SymPyDeprecationWarning`, a structured deprecation warning class that includes version, issue tracker link, and migration guidance. |
-| `iterables.py` | Extensive collection of iterable utilities: `flatten`, `group`, `subsets`, `variations`, `partitions`, `topological_sort`, `sift`, `ordered`, and many more combinatorial helpers. |
+| `iterables.py` | Extensive collection of iterable utilities: `flatten`, `group`, `subsets`, `variations`, `topological_sort`, `sift`, `ordered`, integer `partitions`, and many more combinatorial helpers for sequences and sets (not multiset partition enumeration). |
 | `lambdify.py` | Converts SymPy expressions into fast numerical lambda functions targeting math, mpmath, NumPy, TensorFlow, and other numeric backends. |
 | `magic.py` | Contains the `pollute` function that injects name-object mappings into a caller's global namespace via frame introspection. |
 | `memoization.py` | Memoization decorators for recurrence-defined sequences (`recurrence_memo`) and associated sequences (`assoc_recurrence_memo`). |
