@@ -17,8 +17,8 @@
 | `limitseq.py` | Limits of sequences, providing the `difference_delta` discrete difference operator and `limit_seq` for computing limits of sequences as n tends to infinity. |
 | `order.py` | The `Order` (big-O) class representing the limiting behavior of a function, used to track truncation error in series expansions. |
 | `residues.py` | Computes the residue of an expression at a point via Laurent series expansion, supporting the Residue Theorem. |
-| `sequences.py` | Sequence classes (`SeqBase`, `SeqFormula`, `SeqPer`, `SeqAdd`, `SeqMul`, `EmptySequence`) and the `sequence` convenience constructor for defining and manipulating symbolic sequences. |
+| `sequences.py` | Discrete *sequence* classes (`SeqBase`, `SeqFormula`, `SeqPer`, `SeqAdd`, `SeqMul`, `EmptySequence`) and the `sequence` constructor. `SeqBase` is the base for sequences (distinct from `SeriesBase` in `series_class.py`); provides coefficient access, arithmetic ops, and interval-based indexing. |
 | `series.py` | Thin wrapper providing the top-level `series` function, which delegates to `Expr.series()` for Taylor/Laurent expansion. |
-| `series_class.py` | Abstract base class `SeriesBase` for series representations, defining the common interface (interval, start, stop, length, term) used by `FourierSeries` and `FormalPowerSeries`. |
+| `series_class.py` | Abstract base class `SeriesBase` for *series* representations (parent of `FourierSeries`, `FormalPowerSeries`), defining the common interface (interval, start, stop, length, term) and point-indexing logic that handles negative-infinity lower bounds by iterating backwards from the stop value. |
 | `benchmarks/bench_limit.py` | Benchmark for the `limit` function, timing `limit(1/x, x, oo)`. |
 | `benchmarks/bench_order.py` | Benchmark for `Order` addition, timing the creation of a large sum with an `O(x^1001)` term. |
