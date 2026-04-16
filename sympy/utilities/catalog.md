@@ -21,7 +21,7 @@
 | `pkgdata.py` | Provides `get_resource` for acquiring data files from a package, supporting both filesystem and custom `__loader__` access. |
 | `pytest.py` | Compatibility layer for py.test functionality (`raises`, `skip`, `XFAIL`, `slow`) that works both with and without py.test installed. |
 | `randtest.py` | Helpers for randomized testing: `random_complex_number`, `verify_numerically` (compare expressions at random points), and `test_derivative_numerically`. |
-| `runtests.py` | SymPy's built-in test runner framework, compatible with py.test but requiring no external dependencies. Supports doctest, split-based parallelism, and timeout handling. |
+| `runtests.py` | SymPy's built-in test runner framework, compatible with py.test but requiring no external dependencies. Supports doctest, split-based parallelism, and timeout handling. Includes an output checker that performs approximate floating-point comparison of decimal numbers in doctest results (handling ellipsis-truncated expected values), and an AST-based assertion rewriter that transforms assert statements to display actual compared values on failure. |
 | `source.py` | Interactive source inspection utilities: `source` (print an object's source code), `get_class`, and `get_mod_func` (resolve dotted class paths). |
 | `timeutils.py` | Simple adaptive timing tools (`timed`) for measuring function execution time, plus recursive timing instrumentation via `timethis`. |
 | `mathml/__init__.py` | MathML utilities for transforming MathML content markup into MathML presentation markup using XSL transforms (requires lxml). |
