@@ -19,7 +19,7 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 
 - `fu(rv, measure)` — main Fu algorithm; applies TR rules via CTR and RL sequences, selects simplest result.
   - Uses JIT factoring: extracts common factors to attempt trig combination, discards factoring if it doesn't simplify.
-- `TR0(rv)` — simplify rational trig subexpressions (combine like terms).
+- `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
 - `TR2(rv)` — replace tan/cot with sin/cos and cos/sin ratios.
 - `TR2i(rv, half)` — convert sin/cos ratios back to tan; guards against invalid rewrites when exponent is non-integer and base lacks positivity.
@@ -78,6 +78,7 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `signsimp(expr, evaluate)` — canonicalize sign of Add sub-expressions (e.g., y−x → −(x−y)).
   - Uses double-negation on Mul atoms to detect non-canonical signs; `evaluate` controls whether no-op transforms are kept.
 - `separatevars(expr, symbols, dict, force)` — factor expression into product of single-variable terms.
+  - `dict=True` delegates to `_separatevars_dict`: returns a dict mapping each symbol to its factor plus a `'coeff'` key; returns `{'coeff': expr}` if symbols is None, None if unseparable.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
 - `logcombine(expr, force)` — combine/split logarithms using log rules.
 - `nsimplify(expr, constants, tolerance)` — find simple closed-form for numerical expressions.
@@ -127,7 +128,9 @@ Denests nested square root expressions.
 ### [`combsimp.py`](combsimp.py)
 Simplifies combinatorial expressions (factorials, binomials, gamma, Pochhammer).
 
-- `combsimp(expr)` — minimize number of combinatorial functions.
+- `combsimp(expr)` — minimize number of combinatorial functions (factorials, binomials, gamma, Pochhammer).
+  - For multiplicative expressions: splits non-commutative factors out, simplifies only the commutative part; returns expr unchanged if no commutative args.
+  - Gamma simplification applies reflection formula, multiplication theorem, and recursive absorption of rational offsets.
 
 ### [`ratsimp.py`](ratsimp.py)
 Simplifies rational expressions by computing common denominators.

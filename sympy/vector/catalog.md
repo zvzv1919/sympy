@@ -65,6 +65,7 @@ Vector calculus operations and coordinate re-expression.
 - `scalar_potential`, `scalar_potential_difference` — potential computations.
 - `matrix_to_vector` — convert a matrix to a vector in a given system.
 - `orthogonalize` — Gram-Schmidt orthogonalization of vectors.
+- `_path(from_object, to_object)` — traverses the parent-hierarchy tree to find the route between two coordinate systems/points; raises `ValueError` if they don't share a common root.
 
 ### [`deloperator.py`](deloperator.py)
 Vector differential operator (∇).

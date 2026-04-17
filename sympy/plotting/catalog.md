@@ -17,7 +17,8 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.
 - `SurfaceBaseSeries` — base class for 3D surfaces; `get_color_array()` dispatches callable coloring by arity and `is_parametric` flag (uses parameter meshes vs coordinate meshes).
-- `SurfaceOver2DRangeSeries`, `ParametricSurfaceSeries` — 3D surface data series.
+- `SurfaceOver2DRangeSeries` — 3D surface from one expression over two variables; `get_meshes()` builds x/y meshgrid and lambdifies the expression.
+- `ParametricSurfaceSeries` — 3D parametric surface from three coordinate expressions (x, y, z) over two parameters (u, v); `get_meshes()` lambdifies each expression separately and evaluates on parameter meshgrid to produce numerical coordinate grids.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
 - `_matplotlib_list(interval_list)` — converts bounding rectangular intervals to x/y coordinate lists for matplotlib `fill()`; returns lists of four `None`s when input is empty (workaround because matplotlib rejects empty lists for `fill`).
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
@@ -117,7 +118,7 @@ Curve rendering for 1D pyglet plots.
 ### `plot_surface.py`
 Surface rendering for 2D pyglet plots.
 
-- `PlotSurface` — calculates 2D vertex grid; supports wireframe and solid draw styles.
+- `PlotSurface` — OpenGL vertex grid for pyglet surface rendering; supports wireframe and solid draw styles (not used by matplotlib-based plotting).
 
 ### `plot_axes.py`
 Coordinate axes rendering.

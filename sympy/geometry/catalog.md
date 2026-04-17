@@ -22,6 +22,8 @@ Point representations in n-dimensional Euclidean space.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
 - `Point2D` — 2D specialization; adds `x`, `y` coordinate properties and `transform(Matrix)`.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`.
+  - `are_coplanar(*points)` — static; tests coplanarity by trying to construct a `Plane` from triples; raises `ValueError` if all points are collinear.
+  - `are_collinear(*points)` — static; delegates to `Point.is_collinear`.
 
 ## Lines & Segments
 
@@ -76,6 +78,7 @@ Parabolic entities defined by focus and directrix.
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
 - `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`.
+  - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.
   - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via angular-sweep over edge pairs (rotating calipers).
 - `RegularPolygon` — `Polygon` subclass for regular n-gons; stored as center + radius + n (not explicit vertices). Adds `radius`, `interior_angle`, `exterior_angle`, `incircle`, `circumcircle`, `spin()`, `rotate()`.

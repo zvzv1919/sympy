@@ -24,13 +24,14 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`.
 - `pinv`: Moore-Penrose pseudoinverse; raises `NotImplementedError` for rank-deficient matrices (catches `ValueError` from `inv()`). `pinv_solve`: least-squares solver via pseudoinverse.
 - **Determinant/inverse**: `det`, `det_bareis` (Bareiss fraction-free Gaussian elimination for determinant; divides by previous pivot to avoid fractions; swaps rows when current pivot is zero), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Inversion strategies** (concrete implementations): `inverse_ADJ` (adjugate/determinant method; falls back to rref diagonal check when `equals(0)` is indeterminate), `inverse_LU`, `inverse_GE`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
 - `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.
 - **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
 - **Display**: `print_nonzero` (text-based sparsity visualization — prints configurable symbol at non-zero entry positions, space at zeros).
 - **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
-- `is_hermitian`: checks equality to conjugate transpose via fuzzy three-valued logic; returns None when free-variable entries make result indeterminate.
+- `is_hermitian`: checks self-adjoint property (equality to conjugate transpose) via fuzzy three-valued logic; returns None when symbolic entries make result indeterminate.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
@@ -103,7 +104,7 @@ Block-structured symbolic matrices.
 - `Transpose`: unevaluated symbolic transpose Mᵀ.
 
 ### [`expressions/adjoint.py`](expressions/adjoint.py)
-- `Adjoint`: unevaluated conjugate transpose M*.
+- `Adjoint`: unevaluated symbolic expression node for conjugate transpose M*; represents the operation lazily, does not verify self-adjoint properties.
 
 ### [`expressions/matmul.py`](expressions/matmul.py)
 - `MatMul`: unevaluated symbolic matrix product A·B·C…; `doit()` evaluates via `canonicalize`.

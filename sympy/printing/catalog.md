@@ -53,6 +53,8 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other.
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
+- `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
+- `prettyForm.__add__` / `__mul__` — binding-aware addition and multiplication of pretty-printed forms.
 
 ### [`pretty/__init__.py`](pretty/__init__.py)
 Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
@@ -66,6 +68,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and formatting hooks.
+- `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as `a*b/c` or `a*b/(c*d)`.
 
 ### [`ccode.py`](ccode.py)
 `CCodePrinter` — generates C code, mapping SymPy functions to C math library equivalents.

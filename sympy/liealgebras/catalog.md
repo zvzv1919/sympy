@@ -45,8 +45,10 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 - `positive_roots()` — enumerates all positive roots via nested loop over pairs i < j, each root a +1/−1 difference vector.
 
 ### [`type_b.py`](type_b.py)
-`TypeB` — B_n series. Lie algebra so(2n+1). Dimension n. Roots: 2n².
+`TypeB` — B_n series. Lie algebra so(2n) (as returned by `lie_algebra()`). Dimension n. Roots: 2n².
 - `simple_root(i)` — first n−1 roots are difference vectors (same as A_(n−1)); last root is a single unit vector [0,…,0,1].
+- `positive_roots()` — generates three kinds of positive roots: difference vectors (e_i−e_j), sum vectors (e_i+e_j), and unit vectors (e_i).
+- Cartan matrix has asymmetric boundary entry (−2 in [n−2,n−1] vs −1 in [n−1,n−2]).
 
 ### [`type_c.py`](type_c.py)
 `TypeC` — C_n series. Lie algebra sp(2n). Dimension n. Roots: 2n².
@@ -54,6 +56,7 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 ### [`type_d.py`](type_d.py)
 `TypeD` — D_n series. Lie algebra so(2n). Dimension n. Roots: 2n(n−1). Branching Dynkin diagram.
 - `simple_root(i)` — defines simple roots; last root has two +1 entries (branching node).
+- `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots.
 
 ### [`type_e.py`](type_e.py)
 `TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all. Complex positive-root enumeration with Rationals.

@@ -22,7 +22,8 @@ Individual permutation representation, construction, and properties.
 - `Permutation` — core permutation class (array form, cyclic form, composition, inversion).
   - Ranking/unranking of individual permutations in lexicographic order: `rank`, `unrank_lex`, `next_lex`.
   - Non-lex ranking: `rank_nonlex`, `unrank_nonlex`, `rank_trotterjohnson`, `unrank_trotterjohnson`.
-  - Properties: `is_even`, `is_odd`, `parity`, `order`, `inversions`, `cycle_structure`, `support`.
+  - Properties: `is_even`, `is_odd`, `parity`, `order`, `inversions`, `support`.
+  - `cycle_structure` — dict mapping each cycle length to its multiplicity; fixed points (self-mapping elements) counted as length-1 cycles.
   - `commutes_with` — checks if two individual permutations commute (boolean, no search).
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.
 - Low-level array-form helpers: `_af_rmul`, `_af_rmuln`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
@@ -138,7 +139,8 @@ Tensor canonicalization using double-coset representatives.
 Low-level algorithms for computational group theory.
 - `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
 - `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
-- `_base_ordering`, `_orbits_transversals_from_bsgs`.
+- `_base_ordering`.
+- `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
 - `_strip` — sift (strip) a permutation through a BSGS; returns residual permutation and level where sifting stopped.
 - `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
 - `_strong_gens_from_distr`, `_remove_gens`, `_check_cycles_alt_sym`.

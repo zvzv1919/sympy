@@ -76,7 +76,7 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces).
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
-  - `state.py` — Ket/Bra/Wavefunction; `KetBase.__mul__`/`__rmul__` dispatch multiplication: Ket*Bra → OuterProduct, Bra*Ket → InnerProduct.
+  - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
   - `Wigner3j` — symbolic Wigner 3-j coefficient; `is_symbolic` property checks if any parameter is non-numeric. `doit()` raises ValueError for symbolic params.
@@ -121,6 +121,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `apply_op(op)` — applies an operator to each pure-state component while preserving weights; returns a new Density.
   - `doit()` — expands into outer-product form (Σ pᵢ|ψᵢ⟩⟨ψᵢ|). `states()`, `probs()` — extract components.
   - Module-level `entropy()` — von Neumann entropy; `fidelity()` — quantum state fidelity.
+- **Operator–state mapping**: `operatorset.py` — bidirectional mapping between operator classes and their eigenstate classes.
+  - `state_to_operators(state)` — maps a state (class or instance) to its observable operator(s); for Bra states not directly in the registry, resolves via `dual_class()` to look up the corresponding Ket entry.
+  - `operators_to_state(operators)` — inverse mapping: operator(s) → eigenstate.
 - **Other**: `tensorproduct.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.

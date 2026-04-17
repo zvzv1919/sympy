@@ -29,7 +29,8 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 - `Naturals` / `Naturals0` — positive integers / non-negative integers (singletons)
 - `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
 - `Reals` — all reals as Interval(−∞, ∞) singleton
-- `ImageSet` — the image of a base set under a Lambda; membership via `solveset`/`diophantine`; intersection uses Diophantine solver for integer bases
+- `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases
+  - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation
   - `_intersect` with `Interval`: inverts boundary values, restricts base set; converts finite `Range` to `FiniteSet` before remapping through the lambda
 - `Range` — discrete integer range (start, stop, step); supports slicing, iteration, and Diophantine-based intersection
   - `_contains` — returns `S.false` for non-integers; returns `None` (propagates uncertainty) when the value's integer nature is unknown

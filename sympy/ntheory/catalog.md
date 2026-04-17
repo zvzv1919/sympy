@@ -53,7 +53,7 @@ Modular roots, residues, and multiplicative-order computations.
 - `is_quad_residue(a, p)`, `quadratic_residues(p)` — quadratic residue test / enumeration
 - `is_nthpow_residue(a, n, m)` — nth-power residue test
 - `legendre_symbol(a, p)`, `jacobi_symbol(m, n)` — Legendre and Jacobi symbols
-- `mobius` — Möbius function (symbolic Function class)
+- `mobius` — Möbius function: maps n → {-1, 0, 1}; returns 0 if n has squared prime factors, (-1)^k if square-free with k primes, 1 if n=1 (symbolic Function class)
 
 ### [`modular.py`](modular.py)
 Chinese Remainder Theorem and congruence solving.

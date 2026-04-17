@@ -84,6 +84,7 @@ Sparse rational function fields and their elements.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
   - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
+  - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
 
 ---
 
@@ -93,6 +94,7 @@ Sparse rational function fields and their elements.
 User-facing `Poly` class and public free functions for polynomial manipulation.
 
 - `Poly` — main symbolic polynomial class.
+  - `new(rep, *gens)` — construct Poly from raw `DMP` representation; **raises `PolynomialError` if `rep.lev != len(gens) - 1`** (nesting level must match generator count minus one).
   - `_from_poly(rep, opt)` — construct from existing Poly; **if generators are the same set in different order, calls `reorder`; if generators differ, falls back to `_from_expr`**.
   - `_from_expr`, `_from_dict`, `_from_list` — alternative constructors.
   - `ltrim(gen)` — remove unused leading generators; **raises `PolynomialError` if two distinct terms collapse to the same monomial** after truncation.
@@ -153,6 +155,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub`, `dup_mul`, `dmp_mul` — basic arithmetic.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
+- `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
 - `dup_mul_ground`, `dmp_mul_ground`, `dup_quo_ground`, `dmp_quo_ground` — ground element operations.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — remainder, quotient, exact quotient.
@@ -187,7 +190,6 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation.
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
 - `dup_compose`, `dmp_compose` — polynomial composition.
-- `dup_decompose` — functional decomposition of univariate polynomial.
 - `dup_clear_denoms(f, K0, K1)` — clear fractional coefficients from univariate polynomial; computes LCM of denominators. **If `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**.
 - `dmp_clear_denoms(f, u, K0, K1)` — clear fractional coefficients from multivariate polynomial; uses `_rec_clear_denoms` to **recursively traverse nested coefficient lists** computing LCM of all denominators across all nesting levels.
 - `dup_trunc(f, p, K)` — reduce coefficients modulo constant `p`; **over ZZ, uses symmetric representation** (if remainder > p//2, subtracts p to center around zero); over other domains, uses plain modular remainder.
@@ -196,7 +198,10 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_monic`, `dmp_ground_monic` — make polynomial monic.
 - `dup_content`, `dmp_ground_content`, `dup_primitive`, `dmp_ground_primitive` — ground-level content and primitive part (GCD of scalar coefficients only; for multivariate coefficient GCD, see `dmp_content` in `euclidtools.py`).
 - `dup_real_imag` — split into real/imaginary parts.
-- `dup_mirror`, `dup_scale`, `dup_shift`, `dup_transform` — polynomial transformations.
+- `dup_mirror`, `dup_scale`, `dup_shift` — polynomial transformations (sign-flip, rescale, Taylor shift).
+- `dup_transform(f, p, q, K)` — functional transformation `q^n * f(p/q)`; **returns `[]` immediately for zero polynomial**.
+- `dup_decompose(f, K)` — functional decomposition into `[g, h]` where `f = g(h)` and `deg(g), deg(h) > 1`.
+  - Iterates degree divisors, computes candidate inner part, validates outer part via repeated division (**rejects split if any remainder has positive degree**).
 - `dup_sign_variations` — count sign changes in coefficient sequence.
 - `dup_revert`, `dmp_revert` — compute polynomial inverse modulo x^n.
 
@@ -234,7 +239,9 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `func_field_modgcd` — modular GCD over algebraic function fields.
-- `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing the algebraic element α with a formal indeterminate z.
+- `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
+  - **Branches on `isinstance(ring.domain, PolynomialRing)`**: if yes (has parameter vars), extracts inner domain for LCM and multiplies by `monom[1:]`; if no, uses `ring.domain` directly.
+- `_euclidean_algorithm(f, g, minpoly, p)` — monic GCD in Z_p[z]/(m(z))[x] via Euclidean algorithm; **returns `None` if a leading coefficient is not invertible mod m(z)** (detected via extended GCD when m(z) is not irreducible).
 - `_to_ANP_poly(f, ring)` — inverse of `_to_ZZ_poly`.
 - `_interpolate_multivariate(evalpoints, hpeval, ring, i, p, ground)` — Lagrange interpolation in Z_p; **when `ground=True`, the reconstructed variable comes from `ring.domain.gens[i]`** (coefficient ring) instead of `ring.gens[i]`.
 - `_chinese_remainder_reconstruction_univariate` — CRT for univariate polynomials; combines two residue representations over coprime moduli into symmetric representation over their product.
@@ -256,7 +263,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dmp_zz_wang_hensel_lifting` — **parallel Hensel lifting for multivariate factorization**; iteratively lifts univariate factor approximations to full multivariate factors; verifies final product matches original, raises `ExtraneousFactors` on mismatch.
 - `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
-- `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities.
+- `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities; **if domain is not exact (e.g. RR), converts to exact domain, factors there, then converts results back**.
 - `dup_zz_irreducible_p` — integer polynomial irreducibility test via **Eisenstein's criterion** (checks if a prime divides all non-leading coefficients but its square does not divide the constant term).
 - `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing (general).
 - `dup_trial_division`, `dmp_trial_division` — determine factor multiplicities via repeated division; **includes factors with multiplicity 0** if candidate does not divide.
@@ -316,7 +323,9 @@ Caveat: All operations here are list-based GF(p)-specific. For dense polynomial 
 Symbolic root representations and root-sum evaluation.
 
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
-  - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range. When second positional arg is an integer and no explicit `index` kwarg is given, **reinterprets it as root index** (not generator).
+  - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
+    - **If coefficient domain is not exact (e.g. RR), converts to exact domain before proceeding**.
+    - When second positional arg is an integer and no explicit `index` kwarg, **reinterprets it as root index** (not generator).
   - `_real_roots`, `_all_roots`, `_roots_radical` — root enumeration.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_reals_index`, `_complexes_index` — map global root index to per-factor local index; `_complexes_index` **offsets the local index by the number of real roots** of the same factor (via `_reals_cache`).
@@ -363,7 +372,9 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 
 - `sign_seq(poly_seq, x)` — extract the sequence of signs of leading coefficients from a polynomial remainder sequence.
 - `sturm_q(p, q, x)` — **generalized Sturm sequence in Q[x]** using polynomial remainder; if LC(p) < 0, negates both inputs and flips the final sequence; removes trailing zero/NaN entry if GCD has degree > 0.
-- `sturm_pg`, `sturm_amv` — Sturm sequences via alternative methods (Pell-Gordon / AMV theorems); `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence to ensure correctness.
+- `sturm_pg(p, q, x, method)`, `sturm_amv` — Sturm sequences via alternative methods (Pell-Gordon / AMV theorems).
+  - `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence.
+  - `method=0` scales remainders by `LC(p)^(deg_diff)` for modified subresultant coefficients; `method=1` produces plain (unscaled) coefficients.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
@@ -517,11 +528,15 @@ Special polynomial constructors for testing and benchmarking.
 
 - `swinnerton_dyer_poly(n, x)` — Swinnerton-Dyer polynomial; **n ≤ 3 returns hardcoded expressions; n > 3 computes via `minimal_polynomial` of sum of square roots of primes**.
 - `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
+- `fateman_poly_F_1/F_2/F_3`, `dmp_fateman_poly_F_1/F_2/F_3` — Fateman GCD benchmarks (symbolic and dense multivariate).
+  - F_1 = linearly dense quartic, F_2 = quadratic, F_3 = sparse (degree ~ vars).
+  - **In `dmp_fateman_poly_F_3`, the GCD's constant term is added at nesting level `n-1`** (not `n` as in F_1), reflecting the sparse structure.
 
 ### [`groebnertools.py`](groebnertools.py)
 Gröbner basis computation algorithms.
 
 - `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm.
+- `red_groebner(G, ring)` — compute reduced Gröbner basis; selects a generating subset, then reduces each polynomial by taking its remainder w.r.t. all others — **silently drops any polynomial that reduces to zero**.
 - `is_groebner`, `is_reduced` — basis validation.
 - `lbp`, `lbp_cmp`, `lbp_key` — labeled polynomial constructors and comparators for the F5B signature-based algorithm.
 - `lbp_sub(f, g)` — subtract labeled polynomials; **propagates signature and number from whichever operand has the larger signature** (via `sig_cmp`), not necessarily from the minuend.

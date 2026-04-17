@@ -78,7 +78,7 @@ Solves Diophantine equations (polynomial equations over integers).
 Solves inequality constraints and returns interval-based solutions.
 
 - `reduce_inequalities(inequalities, symbols)` — general entry point for mixed inequality systems.
-- `solve_univariate_inequality(expr, gen)` — generic univariate inequality solver.
+- `solve_univariate_inequality(expr, gen)` — solves a single real-valued univariate inequality. Substitutes a real-constrained dummy for the generator to decouple from user assumptions on the original symbol.
 - `solve_poly_inequality(poly, rel)` — polynomial inequality → interval list.
 - `solve_rational_inequalities(eqs)` — rational expression inequalities.
 - `reduce_abs_inequality` / `reduce_abs_inequalities` — absolute value inequalities.
@@ -109,7 +109,9 @@ Solves partial differential equations via method dispatch.
 
 - `pdsolve(eq, func, hint)` — main PDE solver; supports meta-hints "all"/"all_Integral" returning a dict where failed strategies store the NotImplementedError exception object as value.
 - `classify_pde(eq, func)` — classifies PDE into applicable hints.
-- `checkpdesol(pde, sol)` — validates PDE solution.
+- `checkpdesol(pde, sol)` — validates PDE solution by substitution. When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.
+- `_handle_Integral(expr, func, order, hint)` — post-processes PDE solutions containing unevaluated integrals.
+  - Hint suffix `_Integral` preserves raw integral form; `1st_linear_constant_coeff` triggers `doit()` + `simplify`; all others return unchanged.
 - `pde_separate`, `pde_separate_add`, `pde_separate_mul` — variable separation methods.
 
 ### [`recurr.py`](recurr.py)

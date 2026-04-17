@@ -45,6 +45,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TIDS` — internal tensor-index data structure holding components, free indices, and dummy indices.
   - `TIDS.mul(f, g)` — multiplies two TIDS; contracts matching free indices of opposite variance; raises `ValueError` if both indices share the same covariant/contravariant orientation.
   - `TIDS.from_components_and_indices` — constructs TIDS from component list and index list.
+  - `TIDS.get_components_with_free_indices` — returns list of (component, free-indices) pairs; maps each factor to its uncontracted indices; returns all-empty lists when every index is contracted.
   - `TIDS._check_matrix_indices` — handles matrix-style auto-indices during multiplication.
 - `Tensor` — single tensor (head + indices).
   - `equals(other)` — structural equality via canonicalization: compares `(coeff, components, sorted free, sorted dum)` tuples after `canon_bp`.
@@ -60,6 +61,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
+  - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
   - Handles metric tensors specially via covariant/contravariant signature lookup.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.
 

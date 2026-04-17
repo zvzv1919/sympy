@@ -55,6 +55,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
 - `_fourier_transform(f, x, k, a, b)` — backend computing generalized F(k) = a·∫exp(b·i·x·k)f(x)dx over (−∞,∞); extracts first branch if result is Piecewise
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
+- `_sine_cosine_transform` — backend for sine/cosine transforms; integrates over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
 - Sine/Cosine: `sine_transform`, `cosine_transform` and inverses — unitary half-range [0,∞) transforms with prefactor sqrt(2/π); odd-parity (sine) and even-parity (cosine)
 - Hankel: `hankel_transform`, `inverse_hankel_transform` with order parameter ν
 
@@ -67,7 +68,8 @@ Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
 - `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
-- Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `residue_reduce`, `laurent_series`
+- Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `laurent_series`
+- `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
 
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
@@ -80,10 +82,11 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
+- `prde_linear_constraints` — generates linear constraints on undetermined constants; computes LCM denominator, divides scaled terms, returns empty Matrix when all remainders are zero (no constraints)
 - `prde_spde` — parametric Special Polynomial Differential Equation; reduces degree bound via Diophantine step
 - `is_deriv_k` — structure-theorem test for derivatives in a differential extension
 - `is_log_deriv_k_t_radical` — verifies if an expression is the log-derivative of a radical in a tower of transcendental extensions:
-  - Checks elementary extension validity (logarithmic/exponential monomial counts)
+  - Checks elementary extension validity; raises NotImplementedError if hypertangent monomials or unaccounted primitive extensions cause monomial count ≠ transcendence degree
   - Builds linear system from monomial derivatives, solves via `constant_system`
   - Verifies rationality of solution coefficients; raises NotImplementedError for non-rational coefficients
   - Computes multiplicative constant correction between exp(f) and the radical

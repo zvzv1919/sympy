@@ -68,16 +68,17 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 ## User-Facing API
 
 ### [`rv_interface.py`](rv_interface.py)
-Convenience functions for probability and statistics queries.
+Convenience functions that **directly evaluate** probability and statistics queries by calling into probability-space integration/summation.
 - `P()`, `E()`, `density()`, `where()`, `given()`, `sample()`, `pspace()`.
 - `moment()`, `variance()`, `std()`, `covariance()`, `correlation()`, `cmoment()`, `smoment()`, `skewness()`.
+- `covariance(X, Y)`: computes `E((X-E(X))*(Y-E(Y)))` by calling `expectation()` for each argument independently, then for the product.
+- `variance(X)`: delegates to `cmoment(X, 2)` (second central moment).
 
 ### [`symbolic_probability.py`](symbolic_probability.py)
-Symbolic (unevaluated) representations of probabilistic expressions.
-- `Probability`, `Expectation`, `Variance`, `Covariance`: subclasses of `Expr`.
-- Support `rewrite()` to Integral/Sum forms and `doit()` for evaluation.
-- `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients (Var(aX)=a²·Var(X)).
-- `Covariance.doit()`: expands covariance of sums/products using linearity properties.
+Symbolic (unevaluated) representations of probabilistic expressions — for algebraic manipulation and rewriting, not direct numeric evaluation.
+- `Probability`, `Expectation`, `Variance`, `Covariance`: subclasses of `Expr`; remain unevaluated until `.doit()` or `.rewrite()` is called.
+- `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients.
+- `Covariance.doit()`: expands covariance of sums/products using linearity; detects identical args and delegates to `Variance`.
 
 ---
 
