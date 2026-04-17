@@ -73,15 +73,20 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
-- **Core**: `qexpr.py` (base quantum expression), `state.py` (Ket/Bra/Wavefunction), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
-- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan coefficient symbolic expressions and simplification rules (not state construction); orthogonality-relation identities reduce CG products summed over j,m to Kronecker deltas.
+- **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
+  - `state.py` — Ket/Bra/Wavefunction; `KetBase.__mul__`/`__rmul__` dispatch multiplication: Ket*Bra → OuterProduct, Bra*Ket → InnerProduct.
+- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan coefficient symbolic expressions, evaluation, and simplification (not state construction).
+  - `CG.doit()` — numerically evaluates a CG coefficient; raises ValueError if any angular momentum parameter is symbolic (non-numeric).
+  - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
+  - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation.
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
   - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates valid magnetic projection configurations for numeric quantum numbers.
-- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate); each gate stores target matrices, commutation relations, and decomposition methods.
+- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices, commutation relations, and decomposition methods.
+  - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
@@ -93,14 +98,16 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order; when two operators belong to different independent modes, the commutation correction term is set to zero.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — symbolic `Commutator` and `AntiCommutator` with `doit()` evaluation; these delegate to gate/operator `_eval_commutator_*` methods.
 - **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
-- **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation and measurement.
+- **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
+  - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
 - **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
-  - `pauli.py` — Pauli spin operators: SigmaX/Y/Z, SigmaPlus/SigmaMinus raising/lowering operators (nilpotent under positive-integer exponentiation).
+  - `pauli.py` — Pauli spin operators (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
+  - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
   - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
 
 ### [`vector/`](vector/catalog.md)

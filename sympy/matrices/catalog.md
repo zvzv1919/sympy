@@ -26,6 +26,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
 - **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
+- **Display**: `print_nonzero` (text-based sparsity visualization — prints configurable symbol at non-zero entry positions, space at zeros).
 - **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
 - `is_hermitian`: checks equality to conjugate transpose via fuzzy three-valued logic; returns None when free-variable entries make result indeterminate.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
@@ -97,13 +98,20 @@ Block-structured symbolic matrices.
 - `Adjoint`: unevaluated conjugate transpose M*.
 
 ### [`expressions/matmul.py`](expressions/matmul.py)
-- `MatMul`: unevaluated symbolic matrix product A·B·C…; `doit()` evaluates.
+- `MatMul`: unevaluated symbolic matrix product A·B·C…; `doit()` evaluates via `canonicalize`.
+- `_eval_inverse`: reverses factor order and inverts each; falls back to `Inverse(self)` on ShapeError (incompatible dimensions).
+- `_eval_transpose`, `_eval_adjoint`: reverse factor order and apply transpose/adjoint to each factor.
+- `_eval_determinant`: extracts scalar coefficient and delegates to `Determinant` per square sub-factor.
+- `as_coeff_matrices`: splits args into scalar coefficient and matrix factors.
+- `validate`: checks adjacent factor dimension compatibility.
 
 ### [`expressions/matadd.py`](expressions/matadd.py)
 - `MatAdd`: unevaluated symbolic matrix sum A+B+C…; `doit()` evaluates.
 
 ### [`expressions/determinant.py`](expressions/determinant.py)
-- `Determinant`: unevaluated symbolic determinant det(M).
+- `Determinant`: unevaluated symbolic determinant det(M); `doit()` delegates to `_eval_determinant`.
+- `det(matexpr)`: convenience function returning `Determinant(matexpr).doit()`.
+- `refine_Determinant`: assumption-based simplification — returns 1 for orthogonal/unit-triangular, 0 for singular matrices.
 
 ### [`expressions/trace.py`](expressions/trace.py)
 - `Trace`: unevaluated symbolic trace tr(M).
@@ -137,7 +145,7 @@ Block-structured symbolic matrices.
 Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`, `rref`: row reduction on raw nested lists.
-- `LU`, `cholesky`: decomposition routines on raw nested lists.
+- `LU`, `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists.
 - `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
 - `forward_substitution`: lower-triangular solve on raw nested lists. `backward_substitution`: upper-triangular solve on raw nested lists.
 - These are internal backends; the public API lives in `MatrixBase` (`matrices.py`).

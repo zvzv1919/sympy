@@ -15,6 +15,7 @@ Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 
 - `Basic` — base class: `__eq__`, `__hash__`, `compare()`, `atoms()`, `subs()`, `replace()`, `rewrite()`, `dummy_eq()`, canonical ordering
   - `subs()` — substitution; silently drops pairs where old/new cannot be sympified (non-string, non-symbolic objects)
+  - `_subs()` — internal recursive substitution; fallback traverses args and reconstructs via `self.func(*args)`; in simultaneous mode, prevents type-collapse when a Mul reconstruction loses its Mul type by manually separating numeric coefficients
   - `replace(query, value, simultaneous)` — wildcard-capable replacement; in simultaneous mode, creates Dummy placeholders defaulting commutativity to True when replacement's `is_commutative` is None
   - `dummy_eq()` — structural comparison tolerant of anonymous placeholder variables; raises ValueError if left side has more than one Dummy
 - `Atom` — parent for indivisible expressions (Symbol, Number); has no `.args`
@@ -67,6 +68,7 @@ All concrete numeric types and their arithmetic operations.
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
+- `as_coeff_mul(*deps, rational=True)` — splits leading numeric coefficient from remaining factors; with `rational=True`, non-rational negative leading numbers return `(-1, (abs_num, ...))` instead of the number itself
 - `_eval_is_rational`, `_eval_is_algebraic` — assumption handlers with zero-fallback for mixed cases
 
 ### [`power.py`](power.py)
@@ -127,6 +129,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `as_independent(*deps)` — splits expression into (independent, dependent) parts w.r.t. given symbols; for Mul, non-commutative factors after the first dependent one are all grouped as dependent to preserve ordering
 - `extract_multiplicatively(c)` — returns self/c if division moves all coefficients toward zero, else None; for Add expressions, requires every term to be individually divisible (all-or-nothing)
 - `extract_additively(c)` — returns self - c if subtraction moves matching coefficients toward zero, else None
+- `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first, then single-term match (returns Zero if multiple terms match individually)
+- `could_extract_minus_sign()` — canonical choice between `{e, -e}`; compares minus-sign structure, then for Add counts positive vs negative args, for Mul checks parity; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — ordering key for expressions; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
 - `_eval_lseries(x)` — default lazy series iterator; adaptively increases n in `_eval_nseries`, yields incremental term differences; loops past pure-Order results until concrete terms appear
 - `taylor_term(n, x)` — n-th Taylor coefficient by n-fold differentiation (slow default; subclasses override)
@@ -159,6 +163,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lambda`, `Derivative`, `Subs`.
 
 - `Function.__new__` — after evaluation, checks `_should_evalf` on all args; auto-calls `evalf` if any arg is floating-point
+- `Function._eval_nseries` — series expansion for symbolic functions; handles infinite-argument cases via leading-term substitution; general algorithm uses repeated differentiation at zero with NaN→limit fallback and PoleError on infinite results
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments

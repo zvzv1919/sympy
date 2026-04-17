@@ -55,7 +55,7 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 - `DiscreteUniformDistribution` / `DiscreteUniform()`: uniform distribution over a finite set of items.
 - `BernoulliDistribution` / `Bernoulli()`: two-outcome process with probability p.
 - `Coin(name, p)`: fair or unfair coin toss (wrapper around Bernoulli with 'H'/'T').
-- `BinomialDistribution` / `Binomial()`: number of successes in n independent Bernoulli trials.
+- `BinomialDistribution` / `Binomial()`: number of successes in n independent Bernoulli trials. `__new__` validates n (nonneg integer) and p (0 ≤ p ≤ 1), raises `ValueError` on invalid args.
 - `HypergeometricDistribution` / `Hypergeometric()`: draws without replacement.
 - `FiniteDistributionHandmade` / `FiniteRV()`: user-specified density dict.
 

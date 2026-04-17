@@ -105,7 +105,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `to_rational_coeffs(f)` — transform polynomial with irrational (square-root) coefficients to rational coefficients.
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression; **returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1)**.
-- `cancel(f, g)`, `reduced`, `groebner`, `factor`, `sqf`, `decompose`, `sturm` — public free functions.
+- `reduced(f, G)` — divide polynomial `f` modulo a set of polynomials `G`, returning quotients and remainder.
+  - **Auto-promotes ring domain to its fraction field** for division, then attempts to retract results back to the ring (keeps field results if retraction fails).
+- `cancel(f, g)`, `groebner`, `factor`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
@@ -135,6 +137,10 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_ground`, `dmp_mul_ground`, `dup_quo_ground`, `dmp_quo_ground` — ground element operations.
 - `dup_div`, `dmp_div`, `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — division.
+- `dup_abs` — absolute values of coefficients.
+- `dup_max_norm`, `dmp_max_norm` — maximum coefficient norm; **returns `K.zero` for zero polynomial (empty list)**.
+- `dup_l1_norm`, `dmp_l1_norm` — L1 norm (sum of absolute coefficient values); **returns `K.zero` for zero polynomial (empty list)**.
+- `dup_expand`, `dmp_expand` — multiply together several polynomials.
 
 ### [`densebasic.py`](densebasic.py)
 Low-level dense polynomial basics: construction, conversion, queries.
@@ -143,6 +149,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy`, `dmp_to_tuple` — format conversions.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC` — degree/coefficient queries.
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
+- `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
 - `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
 - `dmp_exclude(f, u, K)` — detect and remove variable dimensions unused by any term; returns `(removed_indices, reduced_poly, new_level)`.
@@ -159,9 +166,11 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_decompose` — functional decomposition of univariate polynomial.
 - `dup_clear_denoms(f, K0, K1)` — clear fractional coefficients from univariate polynomial; computes LCM of denominators.
 - `dmp_clear_denoms(f, u, K0, K1)` — clear fractional coefficients from multivariate polynomial; uses `_rec_clear_denoms` to **recursively traverse nested coefficient lists** computing LCM of all denominators across all nesting levels.
-- `dup_trunc`, `dmp_trunc`, `dmp_ground_trunc` — coefficient truncation.
+- `dup_trunc(f, p, K)` — reduce coefficients modulo constant `p`; **over ZZ, uses symmetric representation** (if remainder > p//2, subtracts p to center around zero); over other domains, uses plain modular remainder.
+- `dmp_trunc` — reduce multivariate polynomial modulo a polynomial in the inner variable.
+- `dmp_ground_trunc` — reduce multivariate polynomial coefficients modulo a constant (delegates to `dup_trunc` at level 0).
 - `dup_monic`, `dmp_ground_monic` — make polynomial monic.
-- `dup_content`, `dmp_ground_content`, `dup_primitive`, `dmp_ground_primitive` — content and primitive part.
+- `dup_content`, `dmp_ground_content`, `dup_primitive`, `dmp_ground_primitive` — ground-level content and primitive part (GCD of scalar coefficients only; for multivariate coefficient GCD, see `dmp_content` in `euclidtools.py`).
 - `dup_real_imag` — split into real/imaginary parts.
 - `dup_mirror`, `dup_scale`, `dup_shift`, `dup_transform` — polynomial transformations.
 - `dup_sign_variations` — count sign changes in coefficient sequence.
@@ -190,8 +199,9 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `_dmp_simplify_gcd(f, g, u, K)` — **tries to eliminate the outermost variable** from multivariate GCD when at least one input has degree 0 in that variable; extracts content/LC in fewer variables.
 - `_dmp_rr_trivial_gcd`, `_dmp_ff_trivial_gcd` — trivial-case handlers for zero/unit inputs.
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points.
-- `dup_lcm`, `dmp_lcm` — LCM computation.
-- `dmp_content`, `dmp_primitive` — multivariate content and primitive part.
+- `dup_lcm`, `dmp_lcm` — LCM computation; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`** (effectively univariate).
+- `dmp_content` — GCD of multivariate coefficients; **negates result if leading ground coefficient is negative** (sign normalization).
+- `dmp_primitive` — multivariate content and primitive part.
 - `dup_cancel`, `dmp_cancel` — cancel common factors from numerator/denominator pair.
 
 ### [`heuristicgcd.py`](heuristicgcd.py)
@@ -237,7 +247,8 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic extensions).
 
 - `dup_sqf_p`, `dmp_sqf_p` — square-free predicate (checks gcd(f, f') == 1).
-- `dup_sqf_norm`, `dmp_sqf_norm` — square-free norm.
+- `dup_sqf_norm`, `dmp_sqf_norm` — square-free norm over algebraic extensions; iteratively shifts input by the algebraic generator until the resultant is square-free.
+  - Returns `(shift_count, shifted_poly, resultant_in_ground_domain)`.
 - `dup_sqf_part`, `dmp_sqf_part` — square-free part.
 - `dup_sqf_list`, `dmp_sqf_list` — square-free decomposition with multiplicities.
 - `dup_gf_sqf_part`, `dmp_gf_sqf_part`, `dup_gf_sqf_list`, `dmp_gf_sqf_list` — GF variants (thin wrappers around `galoistools`).
@@ -281,7 +292,8 @@ Symbolic root representations and root-sum evaluation.
 
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
   - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
-  - `_real_roots`, `_all_roots`, `_roots_trivial`, `_roots_radical` — root enumeration.
+  - `_real_roots`, `_all_roots`, `_roots_radical` — root enumeration.
+  - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_get_interval`, `_refine_interval`, `_eval_evalf` — numerical evaluation.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
     - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
@@ -355,6 +367,8 @@ Bridge between sparse polynomial ring interface and dense function API.
   - `ground_new`, `domain_new`, `from_dict`, `clone`, `drop` — ring interface methods.
   - Multivariate result methods (`dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
     - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
+  - `dup_sqf_norm`, `dmp_sqf_norm` — bridge methods; the resultant (third return value) is converted via `self.to_ground().from_dense()` (ground domain ring), not `self.from_dense()`.
+  - `gf_*` wrapper methods (e.g. `gf_trunc`, `gf_normal`, `gf_neg`, `gf_add`, …) — convert sparse ↔ dense and pass through domain modulus/base to the corresponding `galoistools` functions.
 - Re-exports all `dup_*`/`dmp_*`/`gf_*` functions from dense modules.
 
 ### [`polyoptions.py`](polyoptions.py)
@@ -380,7 +394,8 @@ Expression-to-polynomial conversion utilities and generator management.
 - `expr_from_dict` — convert monomial dictionary back to expression.
 - `_sort_gens`, `_unify_gens`, `_analyze_gens` — generator ordering and unification.
 - `_sort_factors` — sort polynomial factors.
-- `_dict_reorder` — reorder monomial dictionary for new generator order.
+- `_dict_reorder(rep, gens, new_gens)` — reorder monomial exponent tuples to match a new generator ordering; appends zero for new generators not in the original set.
+  - **Raises `GeneratorsError` if an original generator with non-zero exponent is absent from the new ordering**.
 - `_nsort` — numerical sorting of roots.
 - `PicklableWithSlots` — base class for picklable objects with `__slots__`.
 
@@ -471,6 +486,8 @@ Gröbner basis computation algorithms.
 - `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm.
 - `is_groebner`, `is_reduced` — basis validation.
 - `lbp`, `lbp_cmp`, `lbp_key` — labeled polynomial constructors and comparators for the F5B signature-based algorithm.
+- `lbp_sub(f, g)` — subtract labeled polynomials; **propagates signature and number from whichever operand has the larger signature** (via `sig_cmp`), not necessarily from the minuend.
+- `lbp_mul_term(f, cx)` — multiply labeled polynomial by a term; scales both signature and polynomial.
 - `critical_pair`, `cp_cmp`, `cp_key` — critical pair construction and ordering; `cp_cmp` uses **two-level comparison: first the dominant (signature) component, then the subordinate component as tiebreaker** when dominants are equal.
 
 ### [`fglmtools.py`](fglmtools.py)
@@ -515,10 +532,13 @@ Polynomial system solving.
 ### [`agca/`](agca/catalog.md)
 Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over polynomial rings.
 
-- `Ideal.__add__(e)` (in `ideals.py`) — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
+- `Ideal` (in `ideals.py`) — abstract base class for ideals of polynomial rings.
+  - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
+  - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
+  - `_quotient_codomain(sm)` — quotient the codomain by `sm`; uses `Q.container.convert` for matrix entries **when codomain is a SubModule**, else uses `Q.convert`.
 - `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
 - `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.
 - `ModuleHomomorphism.restrict_codomain(sm)` — narrow target module to submodule `sm`; **raises `ValueError` if `sm` does not contain the image**; returns `self` if `sm` equals the full codomain.
@@ -528,7 +548,12 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 ### [`domains/`](domains/catalog.md)
 Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial rings, fraction fields, expression domain.
 
-- `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings; distinguishes single vs. multiple generators via iterable check.
+- `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings.
+  - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
+  - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
+    - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
+- `Ring` (in `ring.py`) — abstract base for ring domains.
+  - `is_unit(a)` — test invertibility by attempting `revert`; `revert(a)` **only succeeds for the multiplicative identity** (raises `NotReversible` otherwise).
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.

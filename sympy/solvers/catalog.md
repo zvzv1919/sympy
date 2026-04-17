@@ -27,7 +27,8 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
-- `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
+- `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
+  - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
 - `unrad(eq, *syms)` — removes radicals from equations.
 - `denoms(eq, symbols)` — extracts denominators for solution validation.
 
@@ -50,8 +51,9 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 ### [`bivariate.py`](bivariate.py)
 Solves bivariate equations by structural reduction to single-variable problems.
 
-- `bivariate_type(f, x, y)` — classifies bivariate equation structure.
+- `_mostfunc(lhs, func, X=None)` — selects the most deeply nested occurrence of a given function type (exp, log, Pow, etc.) in an expression; ties broken by highest nesting count; optional variable filter restricts candidates.
 - `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
+- `bivariate_type(f, x, y)` — classifies bivariate equation structure.
 
 ### [`diophantine.py`](diophantine.py)
 Solves Diophantine equations (polynomial equations over integers).

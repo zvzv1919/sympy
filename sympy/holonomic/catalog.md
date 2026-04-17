@@ -18,7 +18,7 @@ Main module: differential operator algebra, `HolonomicFunction` class, and conve
   - `integrate(limits)` / `diff()` — symbolic integral/derivative returning new `HolonomicFunction`.
   - `composition(expr)` — compose with another expression.
   - `series(n)` — power series expansion.
-  - `to_sequence()` — convert to recurrence relation (`HolonomicSequence`).
+  - `to_sequence()` — convert ODE to recurrence relation by substituting each `x^k Dx^j` term into a rising-factorial shifted-index expression; returns `HolonomicSequence`.
   - `to_hyper()` / `to_expr()` — convert to hypergeometric or closed-form symbolic expression.
   - `evalf(points, method, h, derivatives)` — **user-facing numerical evaluation entry point**.
     - Accepts a single scalar point **or** list of mesh points.
@@ -33,7 +33,7 @@ Main module: differential operator algebra, `HolonomicFunction` class, and conve
 - `_find_conditions` — compute initial conditions for a given function at a point.
 
 ### [`recurrence.py`](recurrence.py)
-Recurrence (shift) operator algebra and holonomic sequences — discrete analogue of differential operators.
+Recurrence (shift) operator algebra and holonomic sequences — defines algebraic structures only; ODE-to-recurrence conversion lives in `holonomic.py`.
 
 - `RecurrenceOperators(base, generator)` — factory returning algebra and shift operator `Sn`.
 - `RecurrenceOperator` — element of recurrence algebra; commutation rule `Sn * a(n) = a(n+1) * Sn`.

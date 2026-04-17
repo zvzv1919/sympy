@@ -30,7 +30,7 @@ Point representations in n-dimensional Euclidean space.
   - `are_concurrent(*lines)` — static; tests concurrency.
   - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`, `angle_between(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`, `projection(o)`.
-  - `intersection(o)` — intersects with other geometric entities.
+  - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
   - `arbitrary_point()`, `random_point()`, `contains()`.
 - `Line` — infinite 2D line through two points.
 - `Ray` — 2D ray from a point in a direction.
@@ -53,6 +53,8 @@ Parametric curves in 2D space.
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
 - `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `is_tangent()`, `equation()`.
+  - `_do_line_intersection(o)` — line–ellipse intersection via quadratic discriminant; handles symbolic discriminants by allowing indeterminate-sign cases.
+  - `_do_ellipse_intersection(o)` — ellipse–ellipse / ellipse–circle intersection via solving simultaneous conic equations.
 - `Circle` — `Ellipse` subclass; constructed from center+radius, three points, or center+point. Adds `radius`, `circumference`, `equation()`.
 
 ### [`parabola.py`](parabola.py)
@@ -78,7 +80,7 @@ Polygonal entities in 2D.
 
 ### [`util.py`](util.py)
 Standalone geometric utility functions.
-- `intersection(*entities)` — finds intersections among multiple geometry objects.
+- `intersection(*entities)` — convenience dispatcher; delegates to each entity's own `.intersection()` method. Contains no intersection math itself.
 - `convex_hull(*points)` — returns convex hull as a `Polygon`, `Segment`, or `Point`.
 - `closest_points(*points)` / `farthest_points(*points)` — brute-force pairwise distance between discrete points (not polygon boundaries).
 - `are_coplanar(*entities)` — tests coplanarity of points/lines in 3D.

@@ -32,7 +32,7 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 
 ### [`pretty/pretty.py`](pretty/pretty.py)
 `PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
-- `_print_Mul` — decomposes products into numerator/denominator lists; treats exponent −1 differently from other negative rational exponents (evaluate vs evaluate=False).
+- `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty.
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
 - `_print_Integral` — builds integral signs with limits and spacing.
@@ -60,7 +60,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ## String / Code Printers
 
 ### [`str.py`](str.py)
-`StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout or spatial arrangement.
+`StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and formatting hooks.

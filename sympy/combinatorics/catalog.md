@@ -81,6 +81,8 @@ Free groups with symbolic generators.
 - `FreeGroup` — finitely generated free group; generators are ordered by creation order.
 - `FreeGroupElement` — word (element) in a free group, stored as tuple of (generator, exponent) pairs.
   - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
+  - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.
+  - Word operations: `identity_cyclic_reduction`, `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `letter_form`.
 
 ---
 
@@ -131,7 +133,8 @@ Tensor canonicalization using double-coset representatives.
 Low-level algorithms for computational group theory.
 - `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
 - `_base_ordering`, `_distribute_gens_by_base`, `_orbits_transversals_from_bsgs`.
-- `_strip`, `_strip_af` — strip an element through a BSGS.
+- `_strip` — sift (strip) a permutation through a BSGS; returns residual permutation and level where sifting stopped.
+- `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
 - `_strong_gens_from_distr`, `_remove_gens`, `_check_cycles_alt_sym`.
 
 ### [`testutil.py`](testutil.py)

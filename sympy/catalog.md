@@ -42,17 +42,17 @@ Deprecated stub redirecting to the external `galgebra` package.
 ### [`core/`](core/catalog.md)
 Foundational expression tree: base classes, arithmetic operations, and evaluation hooks.
 - `basic.py` — `Basic` base class: `_has`, `matches`, `atoms`, `xreplace`, structural traversal.
-- `expr.py` — `Expr` class: `as_coefficient`, `leadterm`, `extract_multiplicatively`, `as_leading_term`.
+- `expr.py` — `Expr` class: `as_coefficient`, `leadterm`, `extract_multiplicatively`, `as_leading_term`; `series` (power series expansion with adaptive retry: if truncation order is too low, iteratively increases requested terms and uses linear interpolation to predict correct count).
 - `power.py` — `Pow` class: `_eval_power`, `_eval_subs` (exponent splitting for substitution).
 - `add.py` — `Add` class: `flatten` (infinity filtering, order processing), `_eval_as_leading_term`.
 - `mul.py` — `Mul` class: `flatten`, `as_content_primitive`, `as_two_terms`.
-- `numbers.py` — `Integer`, `Rational`, `Float`, `ImaginaryUnit`, `AlgebraicNumber`, `_eval_power`, `mod_inverse`.
+- `numbers.py` — `Integer`, `Rational`, `Float`, `ImaginaryUnit`, `AlgebraicNumber`, `_eval_power`, `mod_inverse`; `igcd` (integer GCD with caching; short-circuits on 1 but still validates remaining arg types).
 - `function.py` — `Function`, `Derivative.__new__`, `expand()`, `AppliedUndef`, `WildFunction`, `nfloat` (Rational→Float with exponent protection); `_coeff_isneg` (checks if leading numeric coefficient is negative; returns False for bare negative symbols since coeff is implicitly 1).
 - `containers.py` — `Tuple`: immutable symbolic sequence wrapper; `tuple_count` (renamed from `count` to avoid `Basic.count` conflict); `Dict`: immutable symbolic dict wrapper.
 - `cache.py` — `cacheit` memoization decorator; `__cacheit_debug` (debug mode: always calls both cached and uncached, verifies immutability via hash, raises RuntimeError on inconsistency); `_getenv` (reads `SYMPY_USE_CACHE` env var).
 - `relational.py` — `Relational`, `Equality`, `GreaterThan`, `StrictLessThan`; `as_set` (univariate inequality → real set; raises NotImplementedError for multivariate).
 - `exprtools.py` — `gcd_terms`, `factor_terms`: GCD extraction with non-commutative masking for Add terms.
-- `evalf.py` — `hypsum`, `evalf_sum`: numerical evaluation, hypergeometric series summation, precision.
+- `evalf.py` — `hypsum`, `evalf_sum`: numerical evaluation, hypergeometric series summation, precision; `get_integer_part` (floor/ceiling evaluation; handles near-integer cases by subtracting nearest int and checking remainder sign, falls back to symbolic equality test on precision exhaustion).
 - `logic.py` — fuzzy logic (`fuzzy_and`, `fuzzy_or`, `fuzzy_not`) AND internal propositional `Logic` class with `fromstring` (space-delimited boolean formula parser), `And`/`Or`/`AndOr_Base`.
 - `operations.py` — `AssocOp`, `LatticeOp.__new__`: base classes for associative/lattice operations.
 - `symbol.py` — `Symbol`, `Dummy`, `Wild` class definitions.
@@ -65,7 +65,8 @@ Foundational expression tree: base classes, arithmetic operations, and evaluatio
 
 ### [`polys/`](polys/catalog.md)
 Polynomial algebra, domains, Gröbner bases, factorization, root isolation, and module theory.
-- `polytools.py` — `Poly` class, `degree`, `primitive`, `factor`, `gcd`, `groebner` (high-level API).
+- `polytools.py` — `Poly` class, `degree`, `primitive`, `factor`, `gcd`, `groebner` (high-level API); `quo_ground`/`exquo_ground` (truncating vs exact ground division; exact variant raises ExactQuotientFailed).
+- `polyclasses.py` — `GenericPoly` (base class for low-level polynomial representations): `ground_to_ring`, `ground_to_field`, `ground_to_exact` (convert approximate coefficient domain to exact); `DMP`, `DMF`, `ANP`.
 - `polyroots.py` — `roots_quadratic` (inner `_sqrt` extracts perfect-square factors from discriminant), `roots_cubic`, `roots_quartic`: algebraic root formulas; `preprocess_roots` strips symbolic coefficients.
 - `rootisolation.py` — `dup_isolate_real_roots_list`: real root isolation via continued fractions (VAS).
 - `polyconfig.py` — `configure`: initializes polynomial algorithm settings from `SYMPY_`-prefixed OS environment variables at import time (uses `eval`, falls back to raw string on NameError); `setup`, `query`, `using` context manager.
@@ -73,6 +74,7 @@ Polynomial algebra, domains, Gröbner bases, factorization, root isolation, and 
 - `orthopolys.py` — `hermite_poly`, `laguerre_poly`, `legendre_poly`: computational polynomial generators.
 - `factortools.py` — low-level factorization: Hensel lifting, Zassenhaus algorithm.
 - `numberfields.py` — `minimal_polynomial`, algebraic field extensions.
+- `densetools.py` — `dup_real_imag` (split univariate polynomial into real/imaginary bivariate parts via x→x+iy substitution; uses k%4 cycle for i powers), `dup_mirror`, `dup_extract`.
 - `ring_series.py` — `rs_tanh`, `rs_exp`, `rs_asin`, `rs_LambertW`, `rs_series_inversion`: formal power series via polynomial rings.
 - `polytools.py` also has `terms_gcd` (extract shared monomial factor from addends, with `deep` flag for recursive traversal into function args).
 - `agca/` — abstract algebra: `modules.py` (free modules), `homomorphisms.py` (module maps).
@@ -93,19 +95,20 @@ Mathematical function classes (symbolic, unevaluated). Defines the functions, do
 - `combinatorial/numbers.py` — `fibonacci`, `bernoulli`, `catalan`, `harmonic`, `nP` permutation counting, `nC` combination counting (multiset support).
 - `combinatorial/factorials.py` — `factorial`, `binomial`, `RisingFactorial`, `FallingFactorial`.
 - `elementary/exponential.py` — `log` (eval handles `AccumBounds`, imaginary args, rationals), `exp`, `exp_polar`.
-- `special/error_functions.py` — `TrigonometricIntegral` (base for `Si`, `Ci`, `Shi`, `Chi`), `Ei`, `li`, `Li`, `erf`.
+- `special/error_functions.py` — `TrigonometricIntegral` (base for `Si`, `Ci`, `Shi`, `Chi`), `Ei`, `li`, `Li`, `erf`; `fresnels`, `fresnelc` (Fresnel sine/cosine integrals with `taylor_term` recurrence using previous terms).
+- `special/zeta_functions.py` — `lerchphi` (Lerch transcendent Φ(z,s,a) with `_eval_expand_func`: reduces to polylog/zeta sums when a is rational), `polylog`, `zeta`, `dirichlet_eta`, `stieltjes`.
 - Caveats: `special/polynomials.py` defines symbolic classes; `polys/orthopolys.py` has computational generators.
 
 ### [`simplify/`](simplify/catalog.md)
 Expression transformation and simplification algorithms. Operates ON functions, does not define them.
-- `fu.py` — trigonometric simplification rules (`TR10i` product-to-sum with sqrt(3):1 ratio handling); `hyper_as_trig`.
+- `fu.py` — trigonometric simplification rules: `TR10i` (product-to-sum with sqrt(3):1 ratio handling), `TR11` (double-angle to half-angle reduction, with optional base arg for targeting auto-simplified angles); `hyper_as_trig`.
 - `hyperexpand.py` — `hyperexpand`, `ReduceOrder`, `add_formulae` (lookup table of hypergeometric identities including Fresnel/Laplace rules), `_meijergexpand` (Slater expansion with candidate weighting), shift operators (`ShiftA`, `ShiftB`).
 - `trigsimp.py` — `trigsimp_groebner`: Gröbner-basis trig/hyperbolic simplification (substitutes I with Dummy, adds I²+1 to ideal).
 - `ratsimp.py` — `ratsimpmodprime`: simplify rational expressions modulo a Gröbner basis ideal.
 - `radsimp.py` — `collect`: group additive terms by pattern (supports derivatives, exact-match flag).
 - `combsimp.py` — `combsimp`, `_rf` (rising factorial simplification for combinatorial expressions).
 - `powsimp.py` — `powsimp`, `powdenest`: power/exponent simplification.
-- `simplify.py` — `simplify()`: general-purpose dispatch; `logcombine`; `separatevars`/`_separatevars` (variable separation); `bottom_up` (recursive tree transformation with nonbasic fallback).
+- `simplify.py` — `simplify()`: general-purpose dispatch; `logcombine`; `separatevars`/`_separatevars` (variable separation); `bottom_up` (recursive tree transformation with nonbasic fallback); `nthroot` (real nth-root of sums of surds; handles negative base with odd degree); `sum_add` (merge two Sum objects: same-limits adds functions, same-function merges adjacent index ranges).
 - `epathtools.py` — `EPath`: XPath-like tool for selecting and transforming expression sub-trees.
 
 ### [`printing/`](printing/catalog.md)
@@ -123,10 +126,10 @@ String/code representation of SymPy expressions. Outputs text, NOT callable code
 
 ### [`solvers/`](solvers/catalog.md)
 Equation solving: algebraic, ODE, PDE, recurrence, diophantine, systems.
-- `solvers.py` — `solve`, `_solve` (fallback chain: roots→all_roots→unrad→_tsolve; `incomplete` flag controls error vs silent pass), `unrad` (radical elimination/denesting), `solve_linear_system`: main algebraic solver.
+- `solvers.py` — `solve`, `_solve` (fallback chain: roots→all_roots→unrad→_tsolve; `incomplete` flag controls error vs silent pass), `unrad` (radical elimination/denesting), `solve_linear_system`, `check_assumptions` (validate expression against property constraints; returns False on any definitive contradiction, None if inconclusive): main algebraic solver.
 - `solveset.py` — `solveset`, `linsolve`, `linear_eq_to_matrix`: new-style set-based solver API.
 - `recurr.py` — `rsolve`, `rsolve_poly`, `rsolve_hyper`: linear recurrence equation solvers.
-- `ode.py` — ODE classification and solution: `dsolve`, `_frobenius`, Lie group methods, `odesimp`.
+- `ode.py` — ODE classification and solution: `classify_ode` (pattern matching including Cauchy-Euler form via `_test_term` coefficient validator), `dsolve`, `_frobenius`, Lie group methods, `odesimp`.
 - `diophantine.py` — `diophantine`, `sum_of_four_squares`, `_transformation_to_normal` (change-of-variables matrix to eliminate cross terms from ternary quadratic forms): integer/diophantine equation solving.
 - `bivariate.py` — `bivariate_type`: solve equations with two variables via back-substitution.
 - `inequalities.py` — `solve_poly_inequality`, `solve_rational_inequalities`, `reduce_abs_inequality` (nested absolute-value decomposition into piecewise cases via Cartesian product of branches).
@@ -137,8 +140,9 @@ Equation solving: algebraic, ODE, PDE, recurrence, diophantine, systems.
 Utility functions: numeric code generation, iterables, source inspection, multiset enumeration.
 - `lambdify.py` — `lambdify`, `lambdastr`: convert expressions to callable Python/NumPy functions.
 - `autowrap.py` — `autowrap`, `ufuncify`, `CythonCodeWrapper._partition_args`: compile to binary.
-- `codegen.py` — `Routine`, `CCodeGen`, `OctaveCodeGen`: generate Fortran/C/Octave source files.
-- `iterables.py` — `partitions`, `_set_partitions` (set partition enumeration), `topological_sort`, `numbered_symbols`, `generate_derangements` (permutations where no element stays in its original position; compares against sorted reference, not input order), combinatoric generators.
+- `codegen.py` — `Routine`, `CCodeGen`, `OctaveCodeGen`: generate Fortran/C/Octave source files; `Variable` (typed variable with `get_datatype` for language-specific type lookup; raises error listing supported languages on unknown language).
+- `iterables.py` — `partitions`, `_set_partitions` (set partition enumeration), `topological_sort`, `numbered_symbols`, `generate_derangements`, `minlex` (lexicographically smallest rotation of a cyclic sequence; handles duplicate minima and optional reversal), combinatoric generators.
+- `randtest.py` — `_randint`, `_randrange`: deterministic pseudo-random generators from a seed or predetermined list (silently skips out-of-range values via recursion).
 - `misc.py` — `replace` (simultaneous multi-pattern text substitution, longer keys matched first), `translate` (character-level replacement/deletion), `_replace` (regex-compiled helper).
 - `decorator.py` — `threaded_factory` (decorator: maps function over iterables/matrices; silently returns input unchanged if container constructor rejects list), `threaded`, `xthreaded`.
 - `enumerative.py` — `MultisetPartitionTraverser`: multiset partition enumeration (Knuth's algorithm).
@@ -153,6 +157,7 @@ Property inference system for symbolic objects (is_positive, is_integer, etc.).
 - `ask.py` — `Q` predicate definitions (`Q.transcendental`, `Q.algebraic`, etc.), `ask()` query function.
 - `assume.py` — `Predicate.eval`: handler dispatch with contradiction detection; `assuming` context manager.
 - `refine.py` — `refine`, `refine_atan2`, `refine_Pow`: simplify expressions under assumptions.
+- `handlers/calculus.py` — `AskFiniteHandler`: boundedness inference for `Add`, `Mul`, `Pow` (|base|≥1 + unbounded exp → unbounded), `log`, `exp`.
 - `handlers/sets.py` — `AskImaginaryHandler`, `AskRealHandler`, `AskIntegerHandler`: set-membership queries.
 - `handlers/matrices.py` — `AskOrthogonalHandler`, `AskUnitaryHandler`, `AskDiagonalHandler`: matrix property inference.
 - `sathandlers.py` — `register_fact`: register assumption rules for SAT-based inference.
@@ -169,6 +174,7 @@ Propositional and boolean logic: representation, inference, satisfiability.
 Physics subpackages: quantum mechanics, classical mechanics, optics, units, second quantization.
 - `secondquant.py` — creation/annihilation operators, second-quantization `Commutator`, Wick's theorem.
 - `mechanics/functions.py` — `_smart_subs`: intelligent substitution for mechanics expressions.
+- `vector/frame.py` — `ReferenceFrame`: `orient` (Body/Space/Quaternion/Axis orientation; angular velocity via kinematic eqs with fallback to DCM differentiation on solver failure), `_w_diff_dcm` (angular velocity from time-derivative of DCM; extracts skew-symmetric matrix elements at indices [7],[2],[3]).
 - `vector/printing.py` — `VectorLatexPrinter`, `VectorPrettyPrinter`: Newton dot notation for time-derivatives.
 - `quantum/` — states (`Ket`, `Bra`, `Wavefunction` with `normalize`/`norm`), `Dagger`, spin eigenstates, operator sets, representations.
 - `quantum/commutator.py` — `Commutator`: Lie bracket [A,B]=AB-BA with scalar prefix extraction and canonical ordering.
@@ -182,12 +188,16 @@ Physics subpackages: quantum mechanics, classical mechanics, optics, units, seco
 - `hep/gamma_matrices.py` — Dirac gamma matrix traces and simplification for high-energy physics.
 - `wigner.py` — Wigner 3j/6j/9j, Clebsch-Gordan, Gaunt coefficients (spherical harmonic integrals).
 - `units.py` — legacy physical units; `Unit` class with `is_positive=True`.
+- `unitsystems/units.py` — `UnitSystem`: `print_unit_base` (express derived unit in basis; sorts by decreasing power, normalizes scale factors), `get_unit`, `extend`.
 - `unitsystems/simplifiers.py` — `dim_simplify`: dimensional analysis simplification.
 
 ### [`matrices/`](matrices/catalog.md)
 Matrix classes and matrix expression algebra.
+- `matrices.py` — `DeferredVector` (symbolic vector for `lambdify`; `__getitem__` raises IndexError on negative index), `MatrixBase`: core matrix operations.
+- `dense.py` — `MutableDenseMatrix`, `wronskian` (Wronskian determinant for linear independence; returns 1 for empty input list), `hessian`, `casoratian`.
 - `sparse.py` — `SparseMatrix`: dictionary-backed sparse matrix; `add` (zero-entry cleanup on cancellation), `_LDL_solve` (L·D·L^T forward/diagonal/back-solve), `_cholesky_solve`.
 - `immutable.py` — `ImmutableMatrix`, `_eval_Eq`: immutable matrix with equality support.
+- `expressions/determinant.py` — `Determinant`, `det`; `refine_Determinant` (orthogonal→1, singular→0, unit_triangular→1).
 - `expressions/inverse.py` — `Inverse` (symbolic matrix inverse, subclass of MatPow); `refine_Inverse` (orthogonal→transpose, unitary→conjugate, singular→error).
 - `expressions/transpose.py` — `Transpose`, `refine_Transpose`: symbolic transpose operations.
 - `expressions/matmul.py` — `MatMul`, `_eval_trace`: symbolic matrix multiplication and trace.
@@ -217,6 +227,7 @@ Symbolic integration: indefinite, definite, transforms, Risch algorithm, Meijer-
 
 ### [`series/`](series/catalog.md)
 Series expansions, limits, sequences, formal power series, Fourier series, and asymptotic analysis.
+- `order.py` — `Order` (big-O notation): `__new__` (handles nested Order expressions; raises NotImplementedError if same variable has different limit point), `_eval_power` (nonneg exponent → raise inner expr; O(1) exponent → identity).
 - `limits.py` — `Limit.doit`: compute limits using the Gruntz algorithm.
 - `fourier.py` — `FourierSeries`, `fourier_series`: precomputed trigonometric series with `scale`, `shift`, `shiftx`, `scalex` (fast coefficient transforms without recomputing integrals).
 - `formal.py` — `fps`, `solve_de`, `hyper_re`, `exp_re`: formal power series via DE-to-recurrence conversion.
@@ -231,6 +242,7 @@ Combinatorics: permutation groups, polyhedra, partitions, free groups, tensor ca
 - `free_group.py` — `FreeGroup`, `FreeGroupElement`: word reduction, cyclic reduction in free groups.
 - `fp_groups.py` — finitely presented groups, coset enumeration (Todd-Coxeter, Felsch strategies).
 - `permutations.py` — `Permutation`: finite bijective mappings; `__pow__` (rejects non-integer exponent with conjugate hint); `from_sequence` (derives rearrangement mapping from arbitrary comparable items relative to sorted order).
+- `subsets.py` — `Subset`: `subset_indices` (locate elements of one list within another; returns [] for empty input or missing elements via for/else), `subset_from_bitlist`, `unrank_binary`, `unrank_gray`; `ksubsets`.
 - `tensor_can.py` — `double_coset_can_rep`, `dummy_sgs` (symmetry generators for contracted index pairs): Butler-Portugal canonicalization.
 - `partitions.py` — `Partition`, `IntegerPartition`: set and integer partition classes.
 
@@ -242,6 +254,7 @@ Concrete mathematics: sums, products, Gosper's algorithm, sequence guessing.
 
 ### [`ntheory/`](ntheory/catalog.md)
 Number theory: primes, residues, continued fractions, factorization, partitions, multinomial coefficients.
+- `egyptian_fraction.py` — `egyptian_fraction` (unit fraction decomposition: Greedy/Graham-Jewett/Takenouchi/Golomb algorithms; harmonic prefix extraction with early return when remainder is zero).
 - `generate.py` — `prime`, `primerange`, `primorial`, `cycle_length`: prime generation and cycle detection.
 - `factor_.py` — `factorint` (integer factorization with visual/dict toggling; trial division, Pollard rho, Pollard p-1), `divisors`, `primefactors`, `smoothness`.
 - `partitions_.py` — `npartitions`: exact partition count via Hardy-Ramanujan-Rademacher series; `_a` (inner exponential sum with special-case branching for primes 2, 3, and general primes).
@@ -256,9 +269,10 @@ Plotting backends for 2D/3D mathematical visualization.
 - `pygletplot/plot.py` — `PygletPlot.show`: alternative pyglet-based 3D plotting backend.
 
 ### [`geometry/`](geometry/catalog.md)
-Euclidean geometry: points, lines, polygons, circles, ellipses.
+Euclidean geometry: points, lines, polygons, circles, ellipses, planes.
 - `ellipse.py` — `Ellipse`, `Circle`: tangent lines, intersection, `encloses_point`.
-- `point.py` — `Point` (2D/3D Euclidean). NOT `vector/point.py` (coordinate system points).
+- `plane.py` — `Plane`: `angle_between` (uses asin for lines, acos for planes), `distance`, `intersection`, `are_concurrent`.
+- `point.py` — `Point` (2D/3D Euclidean): `intersection` (delegates to other entity if not a Point). NOT `vector/point.py` (coordinate system points).
 
 ### [`holonomic/`](holonomic/catalog.md)
 Holonomic function representation via differential equations.
@@ -275,7 +289,7 @@ Abstract index notation for tensors: `TensorHead`, `TensorIndex`, `TIDS`, Einste
 
 ### [`sets/`](sets/catalog.md)
 Set theory: intervals, finite sets, unions, complements, images.
-- `sets.py` — `Interval`, `FiniteSet`, `Union` (with `reduce`: merge FiniteSets then iterative pairwise simplification), `Complement`.
+- `sets.py` — `Interval` (`_eval_imageset`: piecewise function image via progressive domain removal; continuous function image via critical points), `FiniteSet`, `Union` (with `reduce`: merge FiniteSets then iterative pairwise simplification), `Complement`.
 - `contains.py` — `Contains`: element-membership predicate (delegates to set's `contains`; returns None to break mutual recursion).
 - `fancysets.py` — `Range`, `Naturals`, `Integers`, `Reals`; `ComplexRegion` (polar/rectangular complex sets); `normalize_theta_set` (angular interval normalization to [0,2π), splits wrap-around).
 
@@ -286,8 +300,8 @@ Calculus utilities: finite differences, Euler equations, singularities, accumula
 - NOT ODE solving (that's `solvers/ode.py`). NOT limits (that's `series/limits.py`).
 
 ### [`diffgeom/`](diffgeom/catalog.md)
-Differential geometry: manifolds, forms, connections.
-- `diffgeom.py` — `CoordSystem` (coordinate charts with auto-generated labels), `Manifold`, `Patch`, `BaseScalarField`.
+Differential geometry: manifolds, forms, connections, tensor products.
+- `diffgeom.py` — `CoordSystem` (coordinate charts with auto-generated labels), `Manifold`, `Patch`, `BaseScalarField`; `TensorProduct` (differential form tensor product; filters scalars from forms, returns scalar*form if only one form), `WedgeProduct`, `LieDerivative`.
 
 ### [`liealgebras/`](liealgebras/catalog.md)
 Lie algebra representations, root systems, and Weyl groups.

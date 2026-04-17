@@ -5,6 +5,10 @@
 ### [`integrals.py`](integrals.py)
 Core symbolic integration engine and public API.
 - `Integral` — unevaluated integral expression with limits; supports `.doit()` evaluation
+- `Integral._eval_integral` — strategy cascade for antiderivative computation:
+  - Fast paths: polynomial, piecewise, constant integrands
+  - Calls `risch_integrate` with `separate_integral=True`; if non-elementary remainder is returned, recursively evaluates it with other methods
+  - Falls back to term-wise splitting (Add terms), then manual, Meijer G, and heuristic Risch in order
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration
 - `line_integrate(field, curve, vars)` — line integral of a vector field over a curve
@@ -62,7 +66,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `residue_reduce`, `laurent_series`
 
 ### [`rde.py`](rde.py)
-Risch Differential Equation solver: Dy + f·y = g in a differential field.
+Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
 - `rischDE(fa, fd, ga, gd, DE)` — main RDE solver
 - Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
 
@@ -70,8 +74,13 @@ Risch Differential Equation solver: Dy + f·y = g in a differential field.
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
-- `is_deriv_k`, `is_log_deriv_k_t_radical` — structure-theorem tests for derivatives and logarithmic derivatives
-- `is_log_deriv_k_t_radical_in_field` — checks if f is the log-derivative of a k(t)-radical; uses `splitfactor` to test denominator simplicity, then `residue_reduce`
+- `is_deriv_k` — structure-theorem test for derivatives in a differential extension
+- `is_log_deriv_k_t_radical` — verifies if an expression is the log-derivative of a radical in a tower of transcendental extensions:
+  - Checks elementary extension validity (logarithmic/exponential monomial counts)
+  - Builds linear system from monomial derivatives, solves via `constant_system`
+  - Verifies rationality of solution coefficients; raises NotImplementedError for non-rational coefficients
+  - Computes multiplicative constant correction between exp(f) and the radical
+- `is_log_deriv_k_t_radical_in_field` — field-level variant; checks if f is Du/u for some k(t)-radical u; uses `splitfactor` for denominator simplicity, then `residue_reduce`
 
 ### [`heurisch.py`](heurisch.py)
 Heuristic (pattern-based) integration for expressions not covered by the Risch algorithm.

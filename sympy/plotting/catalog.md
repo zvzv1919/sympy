@@ -11,6 +11,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.
+- `SurfaceBaseSeries` — base class for 3D surfaces; `get_color_array()` dispatches callable coloring by arity and `is_parametric` flag (uses parameter meshes vs coordinate meshes).
 - `SurfaceOver2DRangeSeries`, `ParametricSurfaceSeries` — 3D surface data series.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
@@ -146,7 +147,8 @@ Color mapping for curves and surfaces.
 
 - `ColorGradient` — interpolates colors across value intervals.
 - `ColorScheme` — applies color functions (including lambdified expressions) to vertices.
-  - `apply_to_curve(verts, u_set)` — assigns RGB to 1D vertex list; two-pass: compute raw channels + track bounds, then normalize to [0,1] and apply gradient. Skips None vertices.
+  - `__call__(x, y, z, u, v)` — evaluates the color function; catches any exception and returns `None` (used as sentinel for failed evaluations).
+  - `apply_to_curve(verts, u_set)` — assigns RGB to 1D vertex list; two-pass: compute raw channels + track bounds, then normalize to [0,1] and apply gradient. Skips None vertices (from exceptions or missing verts). Sets `v=None` for single-parameter curves.
   - `apply_to_surface(verts, u_set, v_set)` — same two-pass normalization for 2D vertex grid (u×v mesh); skips None entries.
 
 ### `managed_window.py`
