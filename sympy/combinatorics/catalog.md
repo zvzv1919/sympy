@@ -24,6 +24,7 @@ Individual permutation representation, construction, and properties.
   - Non-lex ranking: `rank_nonlex`, `unrank_nonlex`, `rank_trotterjohnson`, `unrank_trotterjohnson`.
   - Properties: `is_even`, `is_odd`, `parity`, `order`, `inversions`, `support`.
   - `cycle_structure` — dict mapping each cycle length to its multiplicity; fixed points (self-mapping elements) counted as length-1 cycles.
+  - `commutator(x)` — group commutator of two individual permutations (~x·~self·x·self); raises `ValueError` if sizes differ.
   - `commutes_with` — checks if two individual permutations commute (boolean, no search).
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.
 - Low-level array-form helpers: `_af_rmul`, `_af_rmuln`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
@@ -39,7 +40,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - **Subgroup search**: `subgroup_search` — depth-first search for all elements satisfying a boolean predicate, with tree-pruning tests and base-change strategy.
   - **Centralizer**: `centralizer` — finds the subgroup of elements commuting with a given permutation, list, or subgroup. Type-dispatches: wraps single permutation or list into a group before searching.
   - Stabilizers: `stabilizer`, `pointwise_stabilizer`.
-  - Subgroup/normality: `is_subgroup`, `is_normal`, `normal_closure`, `commutator`, `derived_subgroup`, `derived_series`.
+  - Subgroup/normality: `is_subgroup`, `is_normal`, `normal_closure`, `commutator` (group-level: returns subgroup [G,H]), `derived_subgroup`, `derived_series`.
   - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_alt_sym`, `is_trivial`.
   - `center` — subgroup of permutation group elements commuting with all group elements; computed via subgroup search.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.

@@ -56,7 +56,8 @@ All concrete numeric types and their arithmetic operations.
   - `_eval_power` — negative-base sign branching differs for integer vs fractional exponents
   - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
 - `NegativeOne` — singleton `-1`; `_eval_power`: odd exp → -1, even → 1; rational exp with denominator 2 → `I**p` (imaginary unit); general rational exponents decomposed via `divmod` into integer and fractional parts
-- `Zero` — additive identity singleton; `_eval_power` strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
+- `Zero` — additive identity singleton; `_eval_power`: positive exp → 0, negative exp → ComplexInfinity, non-real (complex) exp → NaN
+  - Fallback strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
 - `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power`
@@ -157,7 +158,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation preserves sign properties, else None; Add requires all terms individually divisible
 - `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
-- `sort_key()` — ordering key for expressions; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
+- `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
 - `is_constant(*wrt)` — checks if expression is constant w.r.t. given symbols; uses numerical probing (substitutes 0, 1, random values)
 - `is_polynomial(*syms)` — returns True only if expression is an exact finite-degree polynomial; rejects symbolic exponents (e.g., `x**n` where n is a symbol, even if integer/nonneg); delegates to `_eval_is_polynomial`
 - `as_terms()` — decomposes a sum into structured term list: each term becomes `(coeff, monom, ncpart)` where coeff is `(real, imag)`, monom is a tuple of commutative base exponents indexed by sorted generators, ncpart is non-commutative factors

@@ -11,6 +11,12 @@ Mathematical function classes (symbolic, unevaluated). Defines function behavior
 - **fdiff**: method on Function subclasses returning symbolic partial derivatives; lives alongside the class definition.
 - **rewrite**: `_eval_rewrite_as_*` methods live on the source class, not the target class.
 
+## Package Init
+
+### [`__init__.py`](__init__.py)
+Top-level namespace for the functions package. Re-exports all standard mathematical functions from submodules.
+- Defines shorthand aliases: `ln = log` (natural logarithm alias).
+
 ## Submodules
 
 ### [`special/`](special/)

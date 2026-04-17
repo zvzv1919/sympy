@@ -73,6 +73,7 @@ Discrete sequence representations and term-wise arithmetic operations (not limit
 - `SeqAdd(SeqExprOp)` — term-wise addition of sequences; constructor filters out `EmptySequence` args before processing.
 - `SeqMul(SeqExprOp)` — term-wise multiplication of sequences; detects `EmptySequence` via interval intersection (no explicit filtering).
 - `SeqAdd.reduce(args)` / `SeqMul.reduce(args)` — simplify by iterating pairs and calling `_add` / `_mul` rules.
+- `SeqBase.find_linear_recurrence(n, d, gfvar)` — discover shortest linear recurrence for a sequence via matrix determinant/LU-solve; optionally computes the ordinary generating function (rational) from the recurrence coefficients and initial terms.
 - Caveat: `SeqAdd` and `SeqMul` handle `EmptySequence` differently — `SeqAdd` explicitly filters trivial args; `SeqMul` relies on interval intersection returning empty set.
 
 ---
@@ -88,8 +89,8 @@ Residue computation via Laurent series coefficient extraction.
 - `residue(expr, x, x0)` — compute residue at x=x0 using series expansion with adaptive precision.
 
 ### [`approximants.py`](approximants.py)
-Generator for consecutive Padé approximants from an input coefficient list; also computes rational generating functions of series.
-- `approximants(l, X, simplify)` — generator taking a coefficient list `l`; yields rational approximants.
+Generator for consecutive Padé approximants from a raw coefficient list (not from recurrence relations or sequence objects).
+- `approximants(l, X, simplify)` — generator taking a coefficient list `l`; yields successive rational approximants via Padé method.
 - Terminates early when the internal coefficient list becomes all zeros (no further approximants producible).
 
 ### [`acceleration.py`](acceleration.py)

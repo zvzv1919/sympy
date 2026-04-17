@@ -58,8 +58,9 @@ Core interval class for bounded floating-point interval computations.
 ### `lib_interval.py`
 Interval-aware math function library and ternary logic operators for implicit plotting.
 
-- Math functions operating on `interval` objects: `Abs`, `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `acosh`, `asinh`, `atanh`.
+- Math functions operating on `interval` objects: `Abs`, `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `acosh`, `asinh`, `atanh`, `ceil`, `floor`.
 - Each function handles domain validation, returning `is_valid=False` outside domain, `is_valid=None` for partial overlap.
+- `ceil`, `floor` — set `is_valid=None` when the interval spans a discontinuity (i.e., rounded start ≠ rounded end).
 - `And(*args)` — ternary conjunction over 2-tuples of truth values (True/False/None); priority: False > None > True. Used to combine comparison results in range-based curve rendering.
 - `Or(*args)` — ternary disjunction over 2-tuples; priority: True > None > False.
 - `Min`, `Max` — interval-aware min/max returning new intervals.

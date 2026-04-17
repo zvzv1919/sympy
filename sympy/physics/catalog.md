@@ -42,7 +42,8 @@ One-dimensional quantum harmonic oscillator: closed-form analytical wavefunction
 Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
 - `BosonicOperator`, `CreateBoson` (B†), `AnnihilateBoson` (B) — bosonic ladder operators with commutation relations.
 - `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules (not mode-labeled like `quantum/fermion.py`).
-- `NO` — normal-ordering bracket; constructor reorders operators into creation-before-annihilation form, returns S.Zero if identical fermion operators violate Pauli exclusion.
+- `NO` — normal-ordering bracket for `secondquant` operators (CreateBoson/AnnihilateBoson, CreateFermion/AnnihilateFermion); reorders into creation-before-annihilation form.
+  - Returns S.Zero if identical fermion operators violate Pauli exclusion. For mode-labeled `BosonOp`/`FermionOp`, see `quantum/operatorordering.py`.
 - `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
@@ -108,8 +109,10 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
   - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).
     - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
-- **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order via commutation/anticommutation relations.
-  - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess. Independent modes: commutation correction set to zero.
+- **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products of `BosonOp`/`FermionOp` (mode-labeled quantum/ operators) into creation-before-annihilation order.
+  - `_normal_ordered_form_factor` — core swap logic: bosonic swaps use Commutator (no sign change); fermionic swaps use AntiCommutator (with sign flip).
+  - Independent modes (`independent=True`): correction term set to zero for operators on different modes.
+  - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.
   - Delegates to operator `_eval_commutator_*`/`_eval_anticommutator_*` methods; falls back through NotImplementedError chain.
 - **Algorithms**: `grover.py` (Grover's search), `qft.py` (quantum Fourier transform).

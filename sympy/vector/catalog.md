@@ -13,6 +13,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 ### [`vector.py`](vector.py)
 Concrete vector classes built on `BasisDependent`.
 - `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix` (vector → 3×1 column matrix of components), `separate`.
+  - `dot` dispatches on operand type: Vector → scalar, Dyadic → Vector, Del → returns a **callable** (directional derivative operator that, when applied to a scalar field, computes the directional derivative).
   - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
@@ -36,7 +37,7 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `orient_new_axis` — create a new system rotated about an arbitrary axis.
 - `orient_new_body` — create a new system via body-fixed (Euler) rotations; each successive rotation is about the *moving* frame's axes.
 - `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors.
-- `orient_new_quaternion` — create a new system oriented by quaternion parameters; wrapper that accepts four scalars and returns a new frame.
+- `orient_new_quaternion` — create a new system oriented by quaternion parameters (q0=cos(θ/2), q1–q3=direction-sine components λ·sin(θ/2)); the user-facing API for finite-rotation frame creation via quaternions.
 - `orient_new` — generic factory accepting a single `Orienter` or an iterable of orienters; composes multiple rotation matrices sequentially. Applies `trigsimp` only for a single orienter (not for iterable case).
 - `locate_new` — create a translated system sharing the same orientation.
 - `rotation_matrix` — direction cosine matrix between two systems.

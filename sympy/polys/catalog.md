@@ -117,6 +117,10 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
+  - `unify(g)` / `_unify(g)` — reconcile two Polys to a common variable ordering and coefficient domain.
+    - Merges generator sets via `_unify_gens`, reorders monomial dicts via `_dict_reorder`, converts coefficients to unified domain.
+    - **If `g` is not a Poly (e.g. a plain scalar), attempts to interpret it as a constant in `f`'s coefficient domain**; raises `UnificationFailed` if conversion fails.
+  - `__eq__(other)` — equality comparison; **if generators match but coefficient domains differ, attempts domain unification; returns `False` (not an error) if `UnificationFailed`**.
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.
       Attempts to retract quotient/remainder back to the ring; keeps field-domain results silently if retraction fails.
@@ -140,7 +144,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
-- `PurePoly` — Poly subclass with equality ignoring generator names.
+- `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
+  - `__eq__` — checks `len(f.gens) == len(g.gens)` (not name equality); **attempts domain unification and returns `False` on `UnificationFailed`** (same pattern as `Poly.__eq__`).
 - `GroebnerBasis` — Gröbner basis representation class.
   - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
@@ -287,10 +292,15 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities; **if domain is not exact (e.g. RR), converts to exact domain, factors there, then converts results back**.
+  - `dmp_factor_list` first extracts common variable powers via `dmp_terms_gcd`; **after core factorization, reinserts each extracted power as a separate monomial factor** (constructed as a single-term dict entry at the appropriate nesting level).
 - `dup_zz_irreducible_p` — integer polynomial irreducibility test via **Eisenstein's criterion** (checks if a prime divides all non-leading coefficients but its square does not divide the constant term).
 - `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing (general).
 - `dup_trial_division`, `dmp_trial_division` — determine factor multiplicities via repeated division; **includes factors with multiplicity 0** if candidate does not divide.
+- `dmp_zz_wang_non_divisors(E, cs, ct, K)` — validate evaluation values for Wang's algorithm.
+  - Iteratively extracts GCDs from evaluation results against accumulated divisors; **returns `None` if any value reduces to 1**.
+- `dmp_zz_wang_test_points` — test evaluation points for suitability (leading coefficient non-vanishing, square-free, valid non-divisors).
 - `dup_zz_diophantine`, `dmp_zz_diophantine` — Wang/EEZ Diophantine equation solvers; `dup_zz_diophantine` for >2 inputs **builds cumulative products and recursively reduces to the 2-input base case** (extended GCD).
+  - `dmp_zz_diophantine` recursively peels evaluation points from the list, reducing dimension by one each step; **uses Taylor-like expansion with successive differentiation at evaluation points** to lift solutions back to full dimension.
 - `dup_zz_mignotte_bound`, `dmp_zz_mignotte_bound` — coefficient bounds for factors.
 - `dup_cyclotomic_p`, `dup_zz_cyclotomic_factor` — cyclotomic polynomial detection/factoring.
 
@@ -571,6 +581,7 @@ Gröbner basis computation algorithms.
 - `groebner_lcm(f, g)` — LCM via ideal intersection: introduces auxiliary variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
 - `groebner_gcd(f, g)` — GCD via `f*g / lcm(f, g)`.
 - `is_groebner`, `is_reduced` — basis validation.
+- `sig_cmp(u, v, order)` — compare two signatures `(monomial, index)` by extending the term order to K[X]^n: **u < v iff v's module index is greater, or indices are equal and u's monomial is smaller under `order`**.
 - `lbp`, `lbp_cmp`, `lbp_key` — labeled polynomial constructors and comparators for the F5B signature-based algorithm.
 - `lbp_sub(f, g)` — subtract labeled polynomials; **propagates signature and number from whichever operand has the larger signature** (via `sig_cmp`), not necessarily from the minuend.
 - `lbp_mul_term(f, cx)` — multiply labeled polynomial by a term; scales both signature and polynomial.
@@ -610,10 +621,13 @@ Power series arithmetic in sparse polynomial rings.
 - `rs_hadamard_exp(p1, inverse)` — coefficient-wise factorial division (`f_i/i!`) or multiplication (`f_i*i!`).
 
 ### [`dispersion.py`](dispersion.py)
-Dispersion of polynomials.
+Dispersion of polynomials — integer shift relationships between polynomial factor sets.
 
-- `dispersion(p, q)` — compute the dispersion set of two polynomials.
-- `dispersionset(p, q)` — compute all integer shifts j where gcd(p(x), q(x+j)) ≠ 1.
+- `dispersionset(p, q)` — compute all non-negative integer shifts j where gcd(p(x), q(x+j)) ≠ 1.
+  - **Constant polynomials (degree < 1) return `{0}` immediately** without factoring.
+  - Factors both inputs over the rationals, then iterates over all factor pairs of equal degree and matching leading coefficient.
+  - Candidate shift α is derived from sub-leading coefficients; **for linear factor pairs (degree 1), accepts α without further verification; for higher-degree pairs, performs full shifted-polynomial equality check** (`s == t.shift(α)`).
+- `dispersion(p, q)` — maximum of the dispersion set (returns `-oo` if set is empty).
 
 ### [`solvers.py`](solvers.py)
 Polynomial system solving.
@@ -633,7 +647,11 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
 - `Module.__mul__(e)` (in `modules.py`) — if `e` is not an `Ideal`, **coerces it to an ideal via `self.ring.ideal(e)` before delegating to `multiply_ideal`**; returns `NotImplemented` if coercion fails.
+- `ModuleElement` (in `modules.py`) — base class for module element wrappers; stores reference to containing module.
+  - `__add__`, `__sub__` — if operand is from a different module/class, **attempts `self.module.convert(om)`; returns `NotImplemented` on `CoercionFailed`** (no error raised).
+  - `__mul__` — coerces scalar to ring element via `self.module.ring.convert(o)`; returns `NotImplemented` on failure.
 - `FreeModuleElement` (in `modules.py`) — element of a free module; data stored as a **tuple of ring entries**; arithmetic (`add`, `mul`, `div`) is component-wise over the tuple.
+- `FreeModulePolyRing` (in `modules.py`) — free module over a generalized polynomial ring; **constructor requires the ring's ground domain to be a Field** (raises `NotImplementedError` for e.g. ZZ[x]).
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
@@ -666,6 +684,9 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
+- `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
+  - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
+  - For product/mixed orders given as tuples, builds the product order first, then checks `order.is_global`.
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
 - `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.

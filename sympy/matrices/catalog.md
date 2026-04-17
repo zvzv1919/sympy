@@ -15,27 +15,20 @@ The `matrices` module has two layers:
 Central base class `MatrixBase` — defines the full matrix API inherited by both dense and sparse types.
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
-- **Arithmetic**: `__add__`, `__mul__` (returns `NotImplemented` when the right operand is matrix-like but its transpose lacks `tolist`, e.g. MatrixSymbol), `__pow__` (integer exponents: square-and-multiply; symbolic/float exponents: Jordan decomposition of each cell), `multiply`, `add`.
-- `exp`: matrix exponential via Jordan decomposition; catches `MatrixError` from `jordan_cells` and raises `NotImplementedError`.
-- **Row reduction**: `rref` (reduced row echelon form with pivot tracking), `rank`.
-- **Null/column space**: `nullspace` (kernel basis via rref; handles pivot vs free variable classification, errors on unexpected pivot-column entries), `columnspace`.
+- **Arithmetic**: `__add__`, `__mul__`, `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`, `exp` (matrix exponential via Jordan).
+- **Row reduction / spaces**: `rref`, `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
-- **Diagonalization**: `is_diagonalizable` (checks P·D·P⁻¹ decomposability; supports `reals_only` flag to reject complex eigenvalues), `diagonalize`, `jordan_form`, `jordan_cells`.
-- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF` (fraction-free LU returning P, L, D, U).
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`.
-- `pinv`: Moore-Penrose pseudoinverse; raises `NotImplementedError` for rank-deficient matrices (catches `ValueError` from `inv()`). `pinv_solve`: least-squares solver via pseudoinverse.
-- **Determinant/inverse**: `det`, `det_bareis` (Bareiss fraction-free Gaussian elimination for determinant; divides by previous pivot to avoid fractions; swaps rows when current pivot is zero), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
-- **Inversion strategies** (concrete implementations): `inverse_ADJ` (adjugate/determinant method; falls back to rref diagonal check when `equals(0)` is indeterminate), `inverse_LU`, `inverse_GE`.
-- **Norms**: `norm` (vector and matrix norms — Frobenius, spectral, p-norms; for 2D matrices with default ord, reshapes to column vector via `vec()` and recurses).
-- **Structure**: `row_join` (horizontal concat; null/empty self → returns rhs), `col_join` (vertical concat; null/empty self → returns bott), `row_insert`, `col_insert`, `extract`, `reshape`.
-- **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
-- `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.
-- **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_symbolic`.
-- `is_zero`: three-valued check whether all entries are zero — returns True if all zero, False if any provably nonzero, None if any entry contains indeterminate symbols.
-- **Display**: `print_nonzero` (text-based sparsity visualization — prints configurable symbol at non-zero entry positions, space at zeros).
-- `table(printer, ...)`: string form of matrix as an aligned table (used by `StrPrinter`); returns `'[]'` for zero-row or zero-col matrices. `_format_str`: full `Matrix(...)` string representation.
-- **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
-- `is_hermitian`: checks self-adjoint property (equality to conjugate transpose) via fuzzy three-valued logic; returns None when symbolic entries make result indeterminate.
+- **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
+- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
+- **Norms**: `norm` (Frobenius, spectral, p-norms).
+- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `key2ij`, `_setitem`.
+- **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
+- **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
+- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_symmetric`, `is_hermitian`, `is_zero` (three-valued), `is_nilpotent` (tests characteristic polynomial = x^n via `charpoly`).
+- **Display**: `print_nonzero`, `table`, `_format_str`.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)

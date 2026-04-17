@@ -68,8 +68,10 @@ Solves bivariate equations by structural reduction to single-variable problems.
 
 - `_linab(arg, symbol)` — decomposes expression into `a*X + b` where `X` is symbol-dependent and `a`, `b` are independent; normalizes negative leading sign on `X` by negating both `a` and `X`.
 - `_mostfunc(lhs, func, X=None)` — selects the most deeply nested occurrence of a given function type (exp, log, Pow, etc.) in an expression; ties broken by highest nesting count; optional variable filter restricts candidates.
-- `_lambert(eq, x)` — low-level Lambert W solver for equations in the form `a*log(b*X+c) + d*X + f = 0`. Handles nested-log edge case: if the non-log remainder is itself a negated log, unwraps one layer and rewrites the equation before solving.
-- `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure. Calls `_lambert` for final resolution.
+- `_lambert(eq, x)` — low-level Lambert W solver for equations in the form `a*log(b*X+c) + d*X + f = 0`. Evaluates both real branches of LambertW (k=0 and k=-1), discarding k=-1 when the result is not real. Handles nested-log edge case: if the non-log remainder is itself a negated log, unwraps one layer and rewrites the equation before solving.
+- `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
+  - Log-dominant + additive lhs: computes log-difference differently when rhs==0 (`log(other) - log(other - lhs)`) vs nonzero (`log(lhs - other) - log(rhs - other)`).
+  - Calls `_lambert` for final resolution.
 - `bivariate_type(f, x, y)` — classifies bivariate equation structure.
 
 ### [`diophantine.py`](diophantine.py)
@@ -79,6 +81,7 @@ Solves Diophantine equations (polynomial equations over integers).
   - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
 - Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
+  - `diop_linear` / `_diop_linear` — solves linear Diophantine equations (a₁x₁+…+aₙxₙ=c) by recursively reducing n-variable problems to two-variable GCD sub-problems; returns parametric solutions with integer parameters.
   - `diop_quadratic` / `_diop_quadratic` — solves binary quadratic Diophantine equations (Ax²+Bxy+Cy²+Dx+Ey+F=0) by discriminant-based case dispatch: simple-hyperbolic (A=C=0), parabolic (B²−4AC=0, including variable-swap when A=0), square discriminant, and general case.
 - Sum-of-powers solvers: `diop_general_sum_of_squares`, `diop_general_sum_of_even_powers` — solve x₁^e+…+xₙ^e=k over integers; respects variable assumptions (e.g. nonpositive) by flipping signs on results.
 - `power_representation(n, p, k)` — generates representations of n as sum of k p-th powers. `partition(n, k)` — integer partition generator.

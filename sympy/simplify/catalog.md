@@ -178,12 +178,12 @@ Sphinx documentation generator for hypergeometric expansion formulae.
 ## Utilities
 
 ### [`epathtools.py`](epathtools.py)
-Path-based expression selection and manipulation.
+XPath-like path language for navigating and transforming nested expression trees using slash-delimited selectors (type filters, attribute checks, slice indexing).
 
-- `EPath` class — XPath-like selector for expression subparts.
-- `epath(path, expr, func)` — select or apply function to expression parts matching a path pattern.
+- `EPath` class — compiles a path string into a reusable selector; provides `.select(expr)` to retrieve matches and `.apply(expr, func)` to transform them.
+- `epath(path, expr, func)` — convenience wrapper with three-way dispatch: returns compiled path if no expr, retrieves matched sub-expressions if no func, applies func to matches otherwise.
 
 ### [`traversaltools.py`](traversaltools.py)
-Tools for applying functions at specific expression-tree levels.
+Depth-level function application on expression args (no path language or pattern matching).
 
-- `use(expr, func, level)` — apply a function at a given depth in the expression tree.
+- `use(expr, func, level)` — apply a function to all args at a fixed depth level in the expression tree.
