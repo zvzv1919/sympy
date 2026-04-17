@@ -15,7 +15,7 @@ Radial wavefunctions for hydrogen-like atoms.
 ### [`matrices.py`](matrices.py)
 Standard physics matrices as SymPy Matrix objects.
 - `msigma(i)` — 2×2 Pauli spin matrix σ_i (i = 1, 2, 3).
-- `mgamma(mu)` — 4×4 Dirac gamma matrix γ^μ.
+- `mgamma(mu, lower=False)` — 4×4 Dirac gamma matrix γ^μ (standard/Dirac representation); `lower=True` returns γ_μ by negating spatial (1,2,3) and chiral (5) indices (metric signature +−−−).
 - `pat_matrix(x, y, z, a)` — Parallel Axis Theorem inertia matrix.
 - `mdft(n)` — n×n discrete Fourier transform matrix.
 - `minkowski_tensor` — 4×4 Minkowski metric tensor.
@@ -45,6 +45,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
+- `Dagger` — Hermitian conjugate of creation/annihilation operators; `eval()` dispatches: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
 - `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products.
 - `contraction(a, b)` — evaluates the contraction of two operators.
 - `matrix_rep(op, basis)` — matrix representation in a Fock basis.
@@ -82,8 +83,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `CG` (subclass of `Wigner3j`) — Clebsch-Gordan coefficient; inherits `is_symbolic` check and ValueError guard.
   - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
-- **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
+- **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
+  - `Rotation` — Euler-angle rotation operator; `_apply_operator_uncoupled` applies to kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation.
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
@@ -94,6 +96,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids()` finds equivalent gate identities.
+  - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
@@ -107,6 +110,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
+- **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; `qapply_Mul` handles products by trying lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forming InnerProduct for Bra·Ket pairs.
 - **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.

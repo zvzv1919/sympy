@@ -45,7 +45,7 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `trig_split(a, b)` — decompose pair of trig terms for identity matching.
 - `as_f_sign_1(e)` — decompose expression as g*(f ± 1) for factored-identity rules.
 - `process_common_addends(rv, do)` — apply transform to groups sharing common factors in a sum.
-- `hyper_as_trig(rv)` — convert hyperbolic expressions to trig (Osborne's rule) with reversal function.
+- `hyper_as_trig(rv)` — unify mixed trig/hyperbolic expressions: masks pre-existing trig functions with placeholders, converts hyperbolics to trig via Osborne's rule, returns transformed expr + reversal callable that restores original trig functions and converts back.
 
 ### [`trigsimp.py`](trigsimp.py)
 High-level trigonometric simplification entry points and Gröbner-basis trig solver.

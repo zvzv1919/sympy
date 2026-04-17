@@ -101,7 +101,9 @@ SAT handler utilities, old-to-new assumption bridging, and pre-computed fact reg
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
   - Handles semantic mismatches: e.g., `Q.positive` requires both `is_finite` and `is_positive` (legacy "positive" doesn't exclude unbounded).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
-- `UnevaluatedOnFree`: base for Boolean functions unevaluated on free predicates.
+- `UnevaluatedOnFree`: base for deferred Boolean wrappers over predicates; `__new__` validates that input is either entirely free (unapplied) or singly applied to one expression.
+  - Raises `ValueError` if bare predicates are mixed with expression-bound `AppliedPredicate`s, or if applied predicates target multiple distinct expressions.
+  - On free input, stores `pred` and defers evaluation; on singly applied input, reconstructs the free form, sets `.expr`, and delegates to `apply()` hook.
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
 - `ClassFactRegistry` / `fact_registry`: maps expression classes to their logical facts; `__getitem__` unions handlers from all registered superclasses (via `issubclass`), not just the exact class.
 

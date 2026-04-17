@@ -97,6 +97,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `cancel(g, include)` — cancel common factors of f/g; when `include=False`, converts domain to its associated Ring before returning the content ratio as a SymPy expression.
   - `count_roots(inf, sup)` — count roots in interval; **if one bound is real and the other complex, converts the real bound to `(value, QQ.zero)` tuple** before delegating to complex root counter.
   - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots.
+  - `ground_roots()` — roots by factorization over the coefficient domain; **only returns roots from linear factors, silently omitting irreducible quadratic or higher-degree factors**.
   - `real_roots`, `all_roots`, `root` — root enumeration via `CRootOf`.
   - `reorder`, `inject`, `eject` — generator manipulation.
     - `inject`: **returns `self` unchanged if the coefficient domain is purely numerical** (no ground generators to promote).
@@ -125,6 +126,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
 - `PurePoly` — Poly subclass with equality ignoring generator names.
 - `GroebnerBasis` — Gröbner basis representation class.
+  - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
   - `is_zero_dimensional` — check if ideal is zero-dimensional.
   - `reduce(expr)` — reduce polynomial modulo the basis.
@@ -165,6 +167,9 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC` — degree/coefficient queries.
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
 - `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
+- `dup_reverse(f)` — compute `x^n * f(1/x)` (reciprocal transformation) by reversing the coefficient list and stripping leading zeros.
+- `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
+- `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
 - `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
@@ -276,6 +281,9 @@ Caveat: For native GF(p) polynomial square-free and factorization, see `galoisto
 ### [`galoistools.py`](galoistools.py)
 Self-contained arithmetic, square-free, irreducibility, and factorization for **univariate polynomials over GF(p)**, represented as coefficient lists.
 
+- `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
+- `gf_strip` — remove leading zeros from coefficient list (canonical form enforcement).
+- `gf_trunc` — reduce all coefficients modulo p, then strip leading zeros via `gf_strip`.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
 - Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is the zero poly (empty list) and `a % p == 0`, returns `[]`** (empty list = zero polynomial representation).
 - `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg` — ground field operations.
@@ -284,6 +292,9 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_sqf_p(f, p, K)` — **square-free test for GF(p)[x]**; after making monic, if result is empty (zero poly), returns True immediately.
 - `gf_sqf_part`, `gf_sqf_list` — square-free decomposition in GF(p).
 - `gf_irreducible_p`, `gf_irred_p_ben_or`, `gf_irred_p_rabin` — irreducibility testing.
+- `gf_ddf_zassenhaus` — deterministic distinct degree factorization (DDF); **if polynomial has a non-trivial remainder after the main loop, appends it as a factor of its own degree**.
+- `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF); splits DDF output into irreducibles.
+- `gf_ddf_shoup`, `gf_edf_shoup` — Shoup's DDF/EDF variants.
 - `gf_berlekamp`, `gf_zassenhaus`, `gf_shoup`, `gf_factor_sqf` — factorization of square-free polynomials.
 - `gf_factor(f, p, K)` — **complete factorization of possibly non-square-free polynomial**; computes square-free decomposition first, then factors each component, preserving multiplicities.
 - `gf_frobenius_monomial_base`, `gf_frobenius_map` — Frobenius automorphism.
@@ -466,6 +477,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `_minpoly_pow(ex, pw, x, dom)` — minimal polynomial of `ex**pw`; for negative exponents, **inverts the polynomial and raises `ZeroDivisionError` if `mp == x`** (element is zero); short-circuits for `pw == -1`.
 - `_minpoly_groebner(ex, x, dom)` — Gröbner-basis strategy for minimal polynomial.
   - Includes `simpler_inverse` heuristic: **inverts the expression first when it is a product of powers or a negative-exponent power with Add base**, then transforms back via `_invertx`.
+- `_minpoly_op_algebraic_element(op, ex1, ex2, x, dom)` — minimal polynomial for sum or product of two algebraic elements via resultant; **when `dom` is QQ and `op` is Add, uses fast `rs_compose_add` instead of general resultant**.
 - `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
@@ -582,13 +594,18 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial rings, fraction fields, expression domain.
 
 - `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings.
+  - `convert(element, base=None)` — coerce element to this domain; **when `base` is None, dispatches by Python type** (int → ZZ, float → RR, complex → CC, GMPY types, `DomainElement` → parent, `Basic` → `from_sympy`).
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
+- `CharacteristicZero` (in `characteristiczero.py`) — mixin for domains with infinitely many elements; `characteristic()` returns 0. Inherited by ZZ, QQ, RR, CC, algebraic fields.
 - `Ring` (in `ring.py`) — abstract base for ring domains.
   - `is_unit(a)` — test invertibility by attempting `revert`; `revert(a)` **only succeeds for the multiplicative identity** (raises `NotReversible` otherwise).
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
+- `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.
+  - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
+  - `from_GlobalPolynomialRing` — cross-ring conversion mirrors the polynomial ring's reorder logic.
 - `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.

@@ -50,7 +50,7 @@ Gaussian quadrature rules: computes nodes and weights for numerical integration 
 Symbolic integral transforms — class-based API and dispatch layer (delegates heavy computation to `meijerint.py`).
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
-- `_rewrite_gamma` — rewrites products of gamma/sin/cos/tan/cot into Meijer G-function parameters for inverse Mellin; rescales integration variable based on argument coefficients
+- `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters for inverse Mellin; raises NotImplementedError if numerator gamma poles partially overlap the fundamental strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
@@ -64,7 +64,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 ### [`risch.py`](risch.py)
 Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
-- `DifferentialExtension` — represents a tower of differential field extensions
+- `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `residue_reduce`, `laurent_series`
 

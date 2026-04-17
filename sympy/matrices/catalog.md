@@ -26,6 +26,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
+- `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.
 - **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
 - **Display**: `print_nonzero` (text-based sparsity visualization — prints configurable symbol at non-zero entry positions, space at zeros).
 - **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
@@ -39,7 +40,8 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution for lower-triangular systems), `_upper_triangular_solve` (backward substitution for upper-triangular systems), `_diagonal_solve`.
-- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `__setitem__`, `copyin_matrix`, `fill`.
+- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `copyin_matrix`, `fill`.
+- `__setitem__`: thin wrapper; actual assignment logic (including list→Matrix conversion) is `MatrixBase._setitem` in `matrices.py`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
 - Factory methods: `zeros`, `eye`, `ones`, `diag`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
@@ -109,6 +111,10 @@ Block-structured symbolic matrices.
 - `_eval_determinant`: extracts scalar coefficient and delegates to `Determinant` per square sub-factor.
 - `as_coeff_matrices`: splits args into scalar coefficient and matrix factors.
 - `validate`: checks adjacent factor dimension compatibility.
+- **Simplification rules** (module-level functions applied during canonicalization):
+  - `xxinv`: cancels adjacent matrix-inverse pairs X·X⁻¹→Identity; catches `ValueError` if a factor is not invertible.
+  - `remove_ids`: strips Identity factors. `any_zeros`: collapses product to ZeroMatrix if any factor is zero.
+  - `merge_explicit`: multiplies adjacent concrete `MatrixBase` factors. `factor_in_front`: moves scalar coefficient to front.
 
 ### [`expressions/matadd.py`](expressions/matadd.py)
 - `MatAdd`: unevaluated symbolic matrix sum A+B+C…; `doit()` evaluates.
@@ -156,7 +162,11 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 - These are internal backends; the public API lives in `MatrixBase` (`matrices.py`).
 
 ### [`densearith.py`](densearith.py)
-Low-level arithmetic on list-of-lists: `add`, `sub`, `negate`, `mulmatmat`, `mulmatscaler`.
+Low-level arithmetic on raw nested lists (list-of-lists representation, not matrix objects).
+
+- `add`, `sub`, `negate`: element-wise addition, subtraction, and negation on nested lists.
+- `mulmatmat`: matrix-matrix product — transposes the second operand (rows→columns via `zip`) then computes row-column dot products.
+- `mulmatscaler`: scalar-matrix product on nested lists.
 
 ### [`densetools.py`](densetools.py)
 Low-level matrix utilities on list-of-lists: `trace`, `transpose`, `conjugate`, `eye`, `augment`, `rowadd`, `rowmul`.

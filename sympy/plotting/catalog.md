@@ -7,7 +7,12 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 
 - `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default). Supports indexed access (`__getitem__`, `__setitem__`, `__delitem__`) and `append()`/`extend()` for series manipulation.
 - `check_arguments(args, expr_len, nb_of_free_symbols)` — argument parser that groups flat or tuple-wrapped expressions into plot series; handles ambiguity when expr_len == nb_of_free_symbols (e.g., 3D parametric lines where 3 exprs can't be distinguished from a range tuple).
-- Public API: `plot()`, `plot_parametric()`, `plot3d()`, `plot3d_parametric_line()`, `plot3d_parametric_surface()`.
+- Public API entry points (matplotlib-based):
+  - `plot()` — single-expression 2D plots over one variable.
+  - `plot_parametric()` — 2D parametric curves from two expressions over one parameter.
+  - `plot3d()` — 3D surface from one expression over two variables.
+  - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter.
+  - `plot3d_parametric_surface()` — 3D parametric surface from three coordinate expressions (x, y, z) each over two independent parameters (u, v).
 - `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.

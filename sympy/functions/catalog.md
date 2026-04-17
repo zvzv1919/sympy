@@ -43,6 +43,7 @@ Dirac delta and Heaviside step function classes.
 #### [`special/error_functions.py`](special/error_functions.py)
 Error functions and related integrals (special cases of incomplete gamma).
 - `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
+- `erf2` — two-argument error function erf(x,y); carries its own conversion methods to `uppergamma`, `expint`, Fresnel, Meijer G, and hypergeometric forms.
 - `Ei` — exponential integral Ei(x).
 - `expint` — generalized exponential integral E_n(x).
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.

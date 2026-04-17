@@ -135,7 +135,8 @@ Tensor canonicalization using double-coset representatives.
 ### [`util.py`](util.py)
 Low-level algorithms for computational group theory.
 - `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
-- `_base_ordering`, `_distribute_gens_by_base`, `_orbits_transversals_from_bsgs`.
+- `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
+- `_base_ordering`, `_orbits_transversals_from_bsgs`.
 - `_strip` — sift (strip) a permutation through a BSGS; returns residual permutation and level where sifting stopped.
 - `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
 - `_strong_gens_from_distr`, `_remove_gens`, `_check_cycles_alt_sym`.

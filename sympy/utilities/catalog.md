@@ -62,7 +62,9 @@ Interactive source code inspection and dotted-path class resolution.
 
 ### [`runtests.py`](runtests.py)
 SymPy's built-in testing framework (py.test-compatible, no external dependencies).
-- `test(*paths)` — run tests.
+- `test(*paths)` — run tests; supports `split='a/b'` to partition test files into segments for parallel CI.
+- `_test()` — internal runner; when `slow=True`, deterministically shuffles tests (fixed seed) before splitting to ensure even workload distribution across segments.
+- `split_list(l, split)` — partition a list into segment `a` of `b` (e.g. `'2/3'`); used by `_test` and `_doctest` for CI splitting.
 - `doctest(*paths)` — run doctests.
 - `SymPyDocTests.test_file` — executes docstring examples; in default (non-normal) mode, clears each function's global namespace so all imports must be explicit within docstrings.
 - `SymPyOutputChecker` — custom output checker that supports approximate float comparison in doctest output, including handling of trailing-dot ellipsis in expected values.

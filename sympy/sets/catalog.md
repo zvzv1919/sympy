@@ -30,7 +30,9 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 - `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
 - `Reals` — all reals as Interval(−∞, ∞) singleton
 - `ImageSet` — the image of a base set under a Lambda; membership via `solveset`/`diophantine`; intersection uses Diophantine solver for integer bases
+  - `_intersect` with `Interval`: inverts boundary values, restricts base set; converts finite `Range` to `FiniteSet` before remapping through the lambda
 - `Range` — discrete integer range (start, stop, step); supports slicing, iteration, and Diophantine-based intersection
+  - `_contains` — returns `S.false` for non-integers; returns `None` (propagates uncertainty) when the value's integer nature is unknown
 - `ComplexRegion` — region in the complex plane defined by product sets in rectangular (re × im) or polar (r × θ) form
   - `psets` — returns constituent ProductSets as a tuple (wraps single product; unpacks Union args for multiple)
   - `_contains` checks membership by iterating over constituent product sets; supports intersection/union of same-form regions

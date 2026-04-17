@@ -13,6 +13,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 ### [`vector.py`](vector.py)
 Concrete vector classes built on `BasisDependent`.
 - `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix`, `separate`.
+  - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
 
@@ -37,13 +38,16 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `orient_new_quaternion` — create a new system via quaternion rotation.
 - `orient_new` — generic factory accepting any `Orienter` object.
 - `locate_new` — create a translated system sharing the same orientation.
-- `rotation_matrix`, `scalar_map` — inter-system transformations.
+- `rotation_matrix` — direction cosine matrix between two systems.
+- `scalar_map` — returns substitution dict mapping this system's base scalars to another's (used internally by `express`).
 
 ### [`orienters.py`](orienters.py)
 Internal rotation-parameterization objects consumed by `CoordSysCartesian.orient_new*` methods.
 - `Orienter` — base class; `rotation_matrix(system)`.
 - `AxisOrienter` — rotation about an arbitrary axis by an angle.
-- `BodyOrienter` / `SpaceOrienter` — Euler-angle rotation parameters (body-fixed / space-fixed).
+- `ThreeAngleOrienter` — base for three-angle orienters; `_in_order` flag controls elementary rotation matrix multiplication order.
+- `BodyOrienter(_in_order=True)` — body-fixed (Euler) rotations; matrices multiplied in given order (a1·a2·a3).
+- `SpaceOrienter(_in_order=False)` — space-fixed rotations; matrices multiplied in reversed order (a3·a2·a1).
 - `QuaternionOrienter` — quaternion-based rotation parameters.
 
 ### [`point.py`](point.py)
@@ -54,7 +58,8 @@ Spatial point representation.
 
 ### [`functions.py`](functions.py)
 Vector calculus operations and coordinate re-expression.
-- `express` — re-express vectors, dyadics, or scalars in a different coordinate system.
+- `express(expr, system, variables=False)` — re-express vectors, dyadics, or scalars in a different coordinate system.
+  - When `variables=True`, substitutes foreign-frame coordinate variables (base scalars) via each foreign system's `scalar_map`.
 - `curl`, `divergence`, `gradient` — standard differential operators on fields.
 - `is_conservative`, `is_solenoidal` — field property tests.
 - `scalar_potential`, `scalar_potential_difference` — potential computations.

@@ -16,6 +16,7 @@
 Legacy general-purpose algebraic equation solver. Returns solutions as lists or dicts.
 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
+  - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
 - `_solve_system(exprs, symbols)` — internal system solver; handles:
   - Linear systems via augmented matrix construction → `solve_linear_system`.
   - Nonlinear polynomial systems via `solve_poly_system`.
@@ -32,7 +33,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
-- `_invert(eq, *symbols)` — algebraic inversion loop; rewrites `lhs = rhs` by peeling off operations (Add, Mul, Pow, Function). Handles multi-arg functions: rewrites atan2(y,x) as 2*atan(…) for single-arg inversion. Distinct from `solveset._invert`.
+- `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` tuple by recursively peeling additive/multiplicative layers and function inverses. Collects like terms, handles Pow with principal roots. Distinct from `solveset._invert` (which takes a domain argument and returns sets).
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
 - `unrad(eq, *syms)` — removes radicals from equations.
@@ -132,3 +133,4 @@ Utilities for classifying and manipulating differential equations.
 - `_desolve(eq, func, hint, ics)` — shared dispatch helper used by both `dsolve` (ODE) and `pdsolve` (PDE).
   - Delegates to `classify_ode` or `classify_pde` based on `type` kwarg.
   - On recursive calls, accepts `classify=False` to skip re-classification and reuse previously computed hints/match/order from kwargs.
+  - Validates order > 0; raises ValueError if order is 0 (not a DE). Three-way error branching when no default hint: unrecognized hint → ValueError, non-matching hint → ValueError, no method works → NotImplementedError.
