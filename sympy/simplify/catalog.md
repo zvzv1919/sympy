@@ -22,7 +22,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
 - `TR2(rv)` — replace tan/cot with sin/cos and cos/sin ratios.
-- `TR2i(rv, half)` — convert sin/cos ratios back to tan; with `half=True` also rewrites sin/(cos+1) → tan(x/2).
+- `TR2i(rv, half)` — single-pass rule: converts sin/cos ratio terms within Add sums back to tan; with `half=True` also rewrites sin/(cos+1) → tan(x/2).
+  - Does not handle Mul-level powered-product rewriting (that is `_match_div_rewrite` in trigsimp.py).
   - Exponent/base guard: only rewrites when exponent is integer or base is positive; otherwise leaves expression unchanged.
 - `TR3(rv)` — canonicalize angles via induced formulas.
 - `TR4(rv)` — evaluate trig at special angles (0, π/6, π/4, π/3, π/2).
@@ -68,7 +69,9 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
 - `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants); explicitly skips indices 6,7 (sum-and-difference-of-one factors like (cos±1)(cos∓1)) which can't be expressed as f^a·g^b.
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
-  - Multi-symbol handling: uses `separatevars` to factor; if unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
+  - Multi-symbol handling: uses `separatevars` to factor into per-variable groups (returned as dict); each factor is expanded via `expand_mul` then simplified.
+  - Hollow-factoring removal: if simplifying an expanded factor yields no improvement (result == expanded form), reverts to the original unexpanded form to prevent expression degradation.
+  - If unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
   - `recursive` option: extracts common subexpressions via CSE, simplifies the reduced expression, then re-substitutes in reverse order, re-simplifying after each substitution.
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification.
 

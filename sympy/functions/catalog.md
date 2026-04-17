@@ -51,7 +51,7 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
 - `erf2` — two-argument error function erf(x,y); carries its own conversion methods to `uppergamma`, `expint`, Fresnel, Meijer G, and hypergeometric forms.
 - `Ei` — exponential integral Ei(x).
-- `expint` — generalized exponential integral E_ν(z); `eval` extracts branch factors from z and applies order-dependent branching formulas (integer vs non-integer ν).
+- `expint` — generalized exponential integral E_ν(z); `eval` handles analytic continuation by extracting winding number (branch factor) from z and applying distinct correction formulas for integer ν vs non-integer ν.
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
 - `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
@@ -70,7 +70,7 @@ Hypergeometric and Meijer G-functions.
 - `TupleParametersBase` — base class for functions with tuple-valued arguments (e.g., numerator/denominator parameter lists); handles `_eval_derivative` by iterating over grouped parameters with tuple-indexed `fdiff`.
 - `hyper` — generalized hypergeometric function pFq.
 - `meijerg` — Meijer G-function.
-- `HyperRep` subclasses — closed-form analytic-continuation representatives for specific hypergeometric cases; each subclass defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-aware evaluation.
+- `HyperRep` subclasses — closed-form representatives for specific hypergeometric cases; each subclass defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-region evaluation of hypergeometric pFq.
 
 #### [`special/elliptic_integrals.py`](special/elliptic_integrals.py)
 Elliptic integral functions: `elliptic_k`, `elliptic_f`, `elliptic_e`, `elliptic_pi`.

@@ -27,14 +27,18 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` (Frobenius, spectral, p-norms).
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
-- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `key2ij`, `_setitem`.
+- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `_setitem`.
+- `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
-- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_hermitian`, `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
-- `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives. `is_anti_symmetric`: similar simplify flag.
+- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
+- `is_hermitian`: three-valued (True/False/None) via `fuzzy_and`; checks diagonal entries are real and off-diagonal pairs satisfy conjugate symmetry. Returns None when assumptions are insufficient (e.g. symbolic diagonal with no real assumption).
+- `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives.
+- `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
 - **Construction**: `_handle_creation_inputs` — normalizes all constructor forms (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
   - Validates uniform row lengths; skips 0×0 sub-matrices when tracking column widths.
-- **Display**: `print_nonzero` (marks non-zero entries), `table` (tabular string with alignment), `_format_str` (str representation; embeds explicit dimensions for zero-row/zero-col matrices).
+- **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; embeds explicit dimensions for zero-row/zero-col matrices).
+- `table`: tabular text formatter with per-column width alignment; returns `'[]'` for zero-row or zero-col matrices; maps alignment strings to Python justification methods.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)

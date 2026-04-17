@@ -32,6 +32,8 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables.
 - `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — solves for unknown algebraic coefficients in a polynomial identity (not ODE-related; see `ode.py` for the ODE undetermined coefficients method).
+- Post-solve assumption filtering: checks each candidate against the symbol's declared properties (e.g. positive, real) via `check_assumptions`.
+  - Drops solutions that definitively violate assumptions (test=False); keeps solutions where verification is inconclusive (test=None) with optional warning.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
@@ -56,6 +58,8 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
+  - `_invert_complex` exp handling: maps each target value to an ImageSet over Integers (adding 2nπi branches); requires `g_ys` to be a FiniteSet.
+  - Caveat: silently returns the expression unchanged for infinite target sets (Integers, Union, etc.) — exp inversion only proceeds for finite discrete inputs.
 - `_solve_as_poly`, `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
 - `_solveset(f, symbol, domain, _check=False)` — internal helper that dispatches to type-specific solvers and optionally validates results.
   - Product decomposition: decomposes `f*g == 0` into `Union(f==0, g==0)` only when all factors are verified finite for finite inputs (`_is_finite_with_finite_vars`); prevents spurious solutions where one factor diverges at zeros of another.

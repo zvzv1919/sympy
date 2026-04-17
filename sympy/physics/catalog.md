@@ -132,7 +132,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
-  - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
+  - `measure_all(qubit)` — full ensemble measurement: returns list of (basis-state, probability) pairs for all non-zero-amplitude outcomes.
+  - `measure_partial(qubit, bits)` — partial measurement on a subset of qubits: computes per-outcome probability via inner product and returns list of (post-collapse normalized state, probability) pairs.
 - **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; dispatches by expression type (Add, Mul, TensorProduct, Density, Pow).
   - `qapply_Mul` handles products: decomposes OuterProduct (ket-bra) by pushing ket onto args and using bra as new lhs; tries lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forms InnerProduct for Bra·Ket pairs.
   - Dagger fallback: if `qapply_Mul` fails to simplify a Mul and `dagger=True`, takes Hermitian conjugate of the expression, re-applies, then conjugates back.
@@ -226,4 +227,5 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.
 - `simplifiers.py` — `dim_simplify`: recursive simplification of compound `Dimension` expressions (Add, Mul, Pow). Handles the CAS rewriting `Add(L,L)→Mul(2,L)` by stripping non-Dimension numeric factors from Mul before reducing. Also `qsimplify` for Quantity expressions.
-- `systems/` — concrete unit-system definitions: `mks.py` (meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base), `mksa.py` (MKS + ampere for electromagnetism), `natural.py` (natural units with c=ℏ=1).
+- `systems/` — concrete unit-system definitions: `mks.py` (meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base), `mksa.py` (MKS + ampere for electromagnetism).
+  - `natural.py` — natural unit system (c=ℏ=1): redefines base dimensions as action, energy, velocity; length, mass, time become derived quantities. Base units: ℏ (action), eV (energy), c (velocity).

@@ -21,6 +21,7 @@ Public API surface of the `core` module. Re-exports all fundamental types and ut
 Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 
 - `Basic` — base class: `__eq__`, `__hash__`, `compare()`, `atoms()`, `subs()`, `replace()`, `rewrite()`, `dummy_eq()`, canonical ordering
+  - `atoms(*types)` — collects all leaf (atomic) subexpressions; when types given, filters by isinstance; instance args are converted via `type()` (e.g., `S(1)` filters by `One`, not `Integer`)
   - `__eq__` — structural equality; special-cases `Pow` with exponent equal to 1 (e.g., `a**1.0 == a`) by comparing base to other operand
   - `subs()` — substitution; silently drops pairs where old/new cannot be sympified (non-string, non-symbolic objects)
   - `_subs()` — internal recursive substitution; fallback traverses args and reconstructs via `self.func(*args)`; in simultaneous mode, prevents type-collapse when a Mul reconstruction loses its Mul type by manually separating numeric coefficients
@@ -84,6 +85,7 @@ All concrete numeric types and their arithmetic operations.
 ### [`add.py`](add.py)
 `Add` class — commutative n-ary sum. `flatten()` collects coefficients, separates commutative/non-commutative terms.
 
+- `as_coeff_add(*deps)` — without deps, returns `(leading_number, remaining_terms)`; with deps, partitions terms into symbol-independent sum and symbol-dependent tuple (not numeric extraction)
 - `as_numer_denom()` — converts sum to (numerator, denominator) form; collects per-term numerators/denominators; special-cases zero-denominator terms (infinity) by moving them into the numerator under denominator 1
 - `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
 - `as_content_primitive(radical, clear)` — recursive content extraction; when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
@@ -161,7 +163,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`expr.py`](expr.py)
 `Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`), ordering comparisons, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
-- `as_independent(*deps, as_Add=None)` — splits expression into (independent, dependent) parts w.r.t. given symbols
+- `as_independent(*deps, as_Add=None)` — general-purpose split into (independent, dependent) parts w.r.t. given symbols; works on any Expr
+  - Distinct from `Add.as_coeff_add(*deps)` which partitions an Add's own args by symbol dependency or extracts leading numeric coefficient
   - `as_Add` hint forces Add or Mul mode; when forced mode mismatches actual type (e.g., Add forced as Mul), returns `(identity, self)` (1 for Mul, 0 for Add)
   - For Mul, non-commutative factors after the first dependent one are all grouped as dependent
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation preserves sign properties, else None; Add requires all terms individually divisible

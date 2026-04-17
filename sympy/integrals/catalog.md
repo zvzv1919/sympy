@@ -80,6 +80,8 @@ Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
 - `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
+- `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear
+- `derivation(p, DE)` — computes Dp for polynomial p in the differential extension tower; `coefficientD=True` computes the coefficient derivation (treats top-level variable as constant)
 - Polynomial utilities: `gcdex_diophantine` (extended GCD, Diophantine version — degree-bounded Bézout coefficients), `frac_in`, `as_poly_1t`
 - `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
@@ -91,7 +93,7 @@ Risch algorithm for integration of transcendental elementary functions.
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
 - `rischDE(fa, fd, ga, gd, DE)` — main RDE solver
-- `special_denom` — non-parametric special denominator computation for exp/tan/primitive cases (cf. `prde_special_denom` in prde.py for parametric variant)
+- `special_denom` — non-parametric special denominator computation; dispatches on the already-classified case (exp/tan/primitive) to adjust denominator (cf. `prde_special_denom` in prde.py for parametric variant)
 - Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
 
 ### [`prde.py`](prde.py)

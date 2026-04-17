@@ -13,7 +13,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 ### [`vector.py`](vector.py)
 Concrete vector classes built on `BasisDependent`.
 - `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix` (vector → 3×1 column matrix of components), `separate`.
-  - `dot` dispatches on operand type: Vector → scalar, Dyadic → Vector, Del → returns a **callable** (directional derivative operator that, when applied to a scalar field, computes the directional derivative).
+  - `dot` dispatches on operand type: Vector → scalar, Dyadic → Vector (left-multiplies vector into dyadic, contracting the first basis index), Del → returns a **callable** (directional derivative operator).
   - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
@@ -21,7 +21,7 @@ Concrete vector classes built on `BasisDependent`.
 
 ### [`dyadic.py`](dyadic.py)
 Dyadic tensor classes built on `BasisDependent`.
-- `Dyadic` — superclass for dyadic tensors; `dot`, `cross`, `to_matrix`.
+- `Dyadic` — superclass for dyadic tensors; `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross`, `to_matrix`.
 - `BaseDyadic` — outer product of two base vectors.
 - `DyadicAdd`, `DyadicMul`, `DyadicZero` — sum, scalar product, and zero specializations.
 
@@ -63,7 +63,7 @@ Spatial point representation.
 Vector calculus operations and coordinate re-expression.
 - `express(expr, system, variables=False)` — re-express vectors, dyadics, or scalars in a different coordinate system.
   - When `variables=True`, substitutes foreign-frame coordinate variables (base scalars) via each foreign system's `scalar_map`.
-- `curl`, `divergence`, `gradient` — standard differential operators on fields.
+- `curl`, `divergence`, `gradient` — convenience wrappers; computation logic lives in the `Del` operator class.
 - `is_conservative`, `is_solenoidal` — field property tests.
 - `scalar_potential`, `scalar_potential_difference` — potential computations.
 - `matrix_to_vector` — inverse of `Vector.to_matrix`: takes a 3×1 column matrix and returns a Vector by combining its elements with the system's basis vectors (i, j, k).

@@ -33,6 +33,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
+    - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
@@ -151,7 +152,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
       Attempts to retract quotient/remainder back to the ring; keeps field-domain results silently if retraction fails.
     - `mul(g)` — if `g` is not a Poly, falls back to `mul_ground` (scalar multiplication); same pattern for `add`/`sub`.
     - `exquo(g)` — catches `ExactQuotientFailed` and **re-raises with `f.as_expr()`, `g.as_expr()`** so the error message contains human-readable symbolic expressions instead of internal representations.
-    - `pquo` catches `ExactQuotientFailed` and **re-raises with original input expressions**; `pexquo` lets the exception propagate directly from the internal method.
+    - `pexquo(g)` — catches `ExactQuotientFailed` and **re-raises via `exc.new(f.as_expr(), g.as_expr())`**, converting internal representations to symbolic expressions (same pattern as `exquo`).
+    - `pquo` catches `ExactQuotientFailed` and **re-raises with original input expressions**.
   - GCD/resultant: `gcd`, `lcm`, `cofactors`, `resultant`, `discriminant`, `subresultants`.
     - `resultant(g, includePRS)` — when `includePRS=True`, returns `(resultant_value, [PRS_polys])` tuple instead of a single scalar.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
@@ -237,7 +239,8 @@ Low-level dense polynomial basics: construction, conversion, queries.
 Advanced dense polynomial operations: calculus, evaluation, composition, denominator clearing.
 
 - `dup_eval(f, a, K)` — evaluate univariate polynomial at point using Horner scheme; **if `a` is zero (falsy), returns the trailing coefficient directly** instead of iterating.
-- `dmp_eval`, `dmp_eval_in`, `dmp_eval_tail` — multivariate evaluation at points.
+- `dmp_eval(f, a, u, K)` — evaluate multivariate polynomial at `x_0 = a` using Horner scheme; **if `a` is zero (falsy), returns the trailing coefficient `dmp_TC(f, K)` directly** (same shortcut as `dup_eval`).
+- `dmp_eval_in`, `dmp_eval_tail` — evaluate at specific variable or trailing variables.
 - `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation.
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
 - `dup_compose`, `dmp_compose` — polynomial composition.
@@ -419,7 +422,8 @@ Symbolic root representations and root-sum evaluation.
 ### [`polyroots.py`](polyroots.py)
 Symbolic root-finding algorithms (closed-form solutions).
 
-- `roots(f)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
+- `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
+  - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
@@ -623,7 +627,7 @@ Special polynomial constructors for testing and benchmarking.
 - `swinnerton_dyer_poly(n, x)` — Swinnerton-Dyer polynomial; **n ≤ 3 returns hardcoded expressions; n > 3 computes via `minimal_polynomial` of sum of square roots of primes**.
 - `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
 - `fateman_poly_F_1/F_2/F_3`, `dmp_fateman_poly_F_1/F_2/F_3` — Fateman GCD benchmarks (symbolic and dense multivariate).
-  - F_1 = linearly dense quartic, F_2 = quadratic, F_3 = sparse (degree ~ vars).
+  - F_1 = trivial GCD (shared factor is 1), F_2 = linearly dense quartic inputs (shared factor is squared sum of variables), F_3 = sparse (degree ~ vars).
   - **In `dmp_fateman_poly_F_3`, the GCD's constant term is added at nesting level `n-1`** (not `n` as in F_1), reflecting the sparse structure.
 
 ### [`groebnertools.py`](groebnertools.py)
@@ -725,6 +729,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
 - `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.
 - `ModuleHomomorphism.restrict_codomain(sm)` — narrow target module to submodule `sm`; **raises `ValueError` if `sm` does not contain the image**; returns `self` if `sm` equals the full codomain.
+- `ModuleHomomorphism.quotient_domain(sm)` — replace domain with `domain/sm`; **raises `ValueError` if `sm` is not contained in the kernel**; returns `self` unchanged if `sm` is zero.
+- `ModuleHomomorphism.quotient_codomain(sm)` — replace codomain with `codomain/sm`; **raises `ValueError` if `sm` is not a submodule of codomain**; returns `self` unchanged if `sm` is zero.
 - `ModuleHomomorphism.restrict_domain(sm)` — restrict source to submodule `sm`.
 - `homomorphism(domain, codomain, matrix)` — public constructor for module homomorphisms.
 

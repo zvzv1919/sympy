@@ -152,7 +152,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ### [`tableform.py`](tableform.py)
 `TableForm` — renders 2D data as aligned tables (ASCII, LaTeX, HTML).
 - `TableForm.__init__` — normalizes ragged 2D data; `pad` kwarg controls fill for short rows and None entries. When `pad=None` (default), short rows are space-filled but explicit None entries are preserved as-is; when `pad` is given, both None and short-row gaps use that character.
-- Supports column alignments (left/center/right), row/column headings ("automatic" or custom labels), per-column format strings or callables, and `wipe_zeros`.
+- Supports column alignments (left/center/right via string aliases `'l'`/`'r'`/`'c'`/`'<'`/`'>'`/`'^'`), row/column headings ("automatic" or custom labels), per-column format strings or callables, and `wipe_zeros`.
+- If row headings are present and alignment count == data columns + 1, the first alignment is peeled off as the row heading alignment; otherwise row heading defaults to right-justified.
 
 ### [`tree.py`](tree.py)
 `tree()` / `print_tree()` — recursive text display of expression tree structure with assumption metadata.
