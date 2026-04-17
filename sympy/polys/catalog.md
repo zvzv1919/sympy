@@ -217,7 +217,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
-- `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**.
+- `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**; internally dispatches to `_rr_lcm` (ring: primitive-part based) vs `_ff_lcm` (field: normalizes to monic).
 - `dmp_content`, `dmp_primitive` — multivariate content/primitive; content **negates if leading ground coeff is negative**.
 - `dup_cancel`, `dmp_cancel` — cancel common factors; **when `K.has_Field` and `K.has_assoc_Ring`, converts to ring (clears denoms) before GCD, then converts back**.
 
@@ -316,7 +316,7 @@ Caveat: All operations here are list-based GF(p)-specific. For dense polynomial 
 Symbolic root representations and root-sum evaluation.
 
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
-  - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
+  - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range. When second positional arg is an integer and no explicit `index` kwarg is given, **reinterprets it as root index** (not generator).
   - `_real_roots`, `_all_roots`, `_roots_radical` — root enumeration.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_reals_index`, `_complexes_index` — map global root index to per-factor local index; `_complexes_index` **offsets the local index by the number of real roots** of the same factor (via `_reals_cache`).
@@ -405,6 +405,7 @@ Option processing and validation for `Poly` constructors and functions.
 
 - `Options` — option container; manages `domain`, `field`, `gaussian`, `extension`, `modulus`, `order`, etc.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
+- `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
 - `build_options`, `allowed_flags` — option construction helpers.
 
 ### [`polyconfig.py`](polyconfig.py)
@@ -536,6 +537,7 @@ FGLM algorithm for Gröbner basis conversion between monomial orderings.
 ### [`distributedmodules.py`](distributedmodules.py)
 Sparse distributed module representations for submodule/syzygy computation.
 
+- Basic element operations: `sdm_add` (add two module elements with cancellation), `sdm_LC`, `sdm_from_dict`, `sdm_sort`, `sdm_strip` — element arithmetic and construction.
 - Module monomial operations: `sdm_monomial_mul`, `sdm_monomial_deg`, `sdm_monomial_lcm`, `sdm_monomial_divides`.
   - `sdm_monomial_divides(A, B)` — checks if polynomial monomial X exists such that XA = B; **returns False if A and B belong to different free module generators** (different first tuple element), even if polynomial exponents satisfy divisibility.
 - `sdm_nf_buchberger(f, G, O, K, phantom)` — weak normal form using standard Buchberger algorithm (global orderings); optional `phantom` pair tracks companion coefficient vectors in parallel; **when phantom is None, uses `itertools.repeat([])` as dummy** to avoid branching in the divisor-search loop.
@@ -577,6 +579,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `Ideal` (in `ideals.py`) — abstract base class for ideals of polynomial rings.
   - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
+  - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `ModuleHomomorphism.__init__` (in `homomorphisms.py`) — validates source/target are Module instances and **raises `ValueError` if they are defined over different base rings**.

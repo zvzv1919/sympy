@@ -43,7 +43,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order`, `random`, `random_pr`.
-  - `__mul__` — direct product of two groups; extends each group's generators to act on disjoint point sets (shifts indices).
+  - `__mul__` — pairwise direct product of exactly two groups; shifts generators to act on disjoint point sets. For N-ary products, use `DirectProduct` in `group_constructs.py`.
   - `minimal_block`, `max_div`, `lower_central_series`, `baseswap`.
 
 ---
@@ -58,7 +58,7 @@ Factory functions returning `PermutationGroup` objects for standard finite group
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
-- `DirectProduct` — N-ary direct product of permutation groups (optimized batch version of `PermutationGroup.__mul__`); deduplicates generators via `uniq` after embedding into the combined degree space.
+- `DirectProduct(*groups)` — N-ary direct product of arbitrarily many permutation groups in a single pass; shifts each group's generators onto disjoint index slices of a combined identity mapping. Faster than repeated pairwise `__mul__` calls.
 
 ### [`generators.py`](generators.py)
 Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.

@@ -109,6 +109,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, rewrites hyperbolic→exponential if no G-function match found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
+- `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)
 
 ### [`meijerint_doc.py`](meijerint_doc.py)
 Auto-generates Sphinx documentation for the Meijer G-function lookup table. No runtime logic.

@@ -9,6 +9,8 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions.
 - `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
   - `dump_c(routines, f)` — writes C source for ufunc; n_out = len(routines), assumes all routines share the same input arguments (partitioned from routines[0]).
+- `_validate_backend_language(backend, language)` — raises `ValueError` if a recognized backend is paired with an unsupported language.
+- `_infer_language(backend)` — returns the default language for a given backend; raises `ValueError` for unrecognized backends.
 
 ### [`codegen.py`](codegen.py)
 Generates source code (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions.
@@ -70,6 +72,7 @@ SymPy's built-in testing framework (py.test-compatible, no external dependencies
 - `split_list(l, split)` — partition a list into segment `a` of `b` (e.g. `'2/3'`); used by `_test` and `_doctest` for CI splitting.
 - `doctest(*paths)` — run doctests.
 - `SymPyDocTests.test_file` — executes docstring examples; in default (non-normal) mode, clears each function's global namespace so all imports must be explicit within docstrings.
+- `SymPyDocTestFinder` — recursive doctest discovery; filters classes/functions by module ownership; for properties, checks `val.fget.__module__` instead of `val.__module__`.
 - `SymPyOutputChecker` — custom output checker that supports approximate float comparison in doctest output, including handling of trailing-dot ellipsis in expected values.
 - `SymPyDocTestRunner` — custom runner that patches stdout/pdb/linecache during doctest execution.
 

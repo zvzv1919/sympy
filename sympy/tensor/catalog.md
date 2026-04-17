@@ -9,7 +9,7 @@ Symbolic objects with indices: abstract tensor algebra and indexed array express
 Defines basic indexed objects for representing array elements like `M[i, j]`.
 
 - `Indexed` — represents a complete indexed object (base + indices); properties: `base`, `indices`, `rank`, `shape`, `ranges`.
-- `IndexedBase` — the stem/base of an indexed object (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`.
+- `IndexedBase` — the stem/base of a concrete array-element expression (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`. Not related to abstract tensor algebra.
 - `Idx` — integer index with optional range; properties: `label`, `lower`, `upper`.
 - `IndexException` — raised for indexing errors.
 - No index analysis or contraction logic; purely data-model classes.
@@ -36,7 +36,8 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 
 - `TensorIndexType` — characterizes a family of indices (name, metric, dimension, delta, epsilon).
 - `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`).
-- `TensorHead` — named tensor with index types, rank, symmetry, and commutation properties.
+- `TensorHead` — named tensor ("head" of an indexed tensor expression) with index types, rank, symmetry, and commutation properties.
+  - `__new__` validates the `name` argument (must be string or Symbol; raises `ValueError` otherwise).
   - `_check_auto_matrix_indices_in_call` — when `True` is passed as an index placeholder, auto-fills slots: first occurrence of a type gets `auto_left`, second gets negated `auto_right`.
   - `__call__` — returns a `Tensor` with indices; supports auto-matrix index behavior via `True` placeholders or omitted trailing indices.
 - `TensorSymmetry` — symmetry specification for tensor indices.

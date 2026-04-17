@@ -31,7 +31,7 @@ Main inference engine for the assumptions system.
 ### [`assume.py`](assume.py)
 Predicate definitions and global assumptions context.
 - `Predicate`: base class representing a named predicate with registered handlers.
-  - `eval(expr, assumptions)`: walks the expression type's MRO across all registered handlers; raises `ValueError` on conflicting results from different resolutors.
+  - `eval(expr, assumptions)`: dispatches to `AskHandler` static methods by walking the expression type's MRO; raises `ValueError` on conflicting results. Not a registry — relies on handler classes registered via `register_handler()`.
 - `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object; delegates to `Predicate.eval` via `_eval_ask`.
   - `args` returns only the expression (`_args[1:]`), hiding the predicate; `func` returns the predicate (`_args[0]`). Public arg tuple differs from internal `_args`.
 - `AssumptionsContext` / `global_assumptions`: mutable set of globally active assumptions.
@@ -106,7 +106,7 @@ SAT handler utilities, old-to-new assumption bridging, and pre-computed fact reg
   - Raises `ValueError` if bare predicates are mixed with expression-bound `AppliedPredicate`s, or if applied predicates target multiple distinct expressions.
   - On free input, stores `pred` and defers evaluation; on singly applied input, reconstructs the free form, sets `.expr`, and delegates to `apply()` hook.
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
-- `ClassFactRegistry` / `fact_registry`: maps expression classes to their logical facts; `__getitem__` unions handlers from all registered superclasses (via `issubclass`), not just the exact class.
+- `ClassFactRegistry` / `fact_registry`: the class-to-handler **registry** for SAT facts; `__getitem__` returns the union of handlers for the looked-up class and all its registered superclasses (via `issubclass`), so subclasses inherit parent handlers. `register_fact()` populates this registry.
 
 ---
 

@@ -85,7 +85,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`octave.py`](octave.py)
 `OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
-- Similar element-wise vs scalar operator distinction as Julia printer.
+- `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether operands are numeric; handles imaginary-number shorthand.
+- `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and element-wise vs scalar division.
 
 ### [`repr.py`](repr.py)
 `ReprPrinter` — generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`.
@@ -105,6 +106,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`latex.py`](latex.py)
 `LatexPrinter` — converts expressions to LaTeX markup strings (e.g., `\frac{x}{y}`). Produces **1D markup text**, not spatial/visual rendering.
+- Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.
+- `_print_MatMul` / `_print_HadamardProduct` — parenthesize operands that are sums or mixed-type products.
 
 ### [`mathml.py`](mathml.py)
 `MathMLPrinter` — generates MathML XML markup using DOM, prioritizing content markup.

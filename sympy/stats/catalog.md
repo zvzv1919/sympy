@@ -13,14 +13,16 @@ Variable-type key: **crv** = continuous, **drv** = discrete (infinite support), 
 ## Core Infrastructure
 
 ### [`rv.py`](rv.py)
-Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSpace`, `SinglePSpace`, `RandomSymbol`.
+Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSpace`, `SinglePSpace`, `RandomSymbol`, `ProductPSpace`, `ProductDomain`.
 - Foundational probability-space and domain abstractions; handles conditioning and variable dependencies.
+- `ProductPSpace`: merges independent probability spaces; its `integrate` decomposes integration by iterating constituent spaces and integrating only each space's own variables.
+- `ProductDomain`: combined domain from independent sub-domains.
 - `SinglePSpace.__new__`: constructs a probability space for a single variable; coerces string to `Symbol`, raises `TypeError` for non-string/non-Symbol input.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
 
 ### [`crv.py`](crv.py)
 Infrastructure for continuous random variables.
-- `ContinuousDomain`, `SingleContinuousDomain`, `ProductContinuousDomain`, `ConditionalContinuousDomain`.
+- `ContinuousDomain`, `SingleContinuousDomain`, `ProductContinuousDomain` (continuous subclass of `ProductDomain`), `ConditionalContinuousDomain`.
 - Integration-based expectation and probability computation over continuous intervals.
 
 ### [`drv.py`](drv.py)

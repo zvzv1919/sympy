@@ -15,7 +15,7 @@ Generating, counting, and enumerating primes and composites.
 
 ### [`primetest.py`](primetest.py)
 Primality testing algorithms.
-- `isprime(n)` — main primality test (deterministic for small n, probabilistic otherwise)
+- `isprime(n)` — main primality test; layered strategy: trial division, Fermat test with pseudoprime exclusion for small n, sieve bisection, deterministic Miller-Rabin for n < 2^64, strong BPSW for larger
 - `mr(n, bases)` — Miller-Rabin strong pseudoprime test
 - `is_lucas_prp`, `is_strong_lucas_prp`, `is_extra_strong_lucas_prp` — Lucas probable-prime tests
 - `is_square(n)` — perfect-square check

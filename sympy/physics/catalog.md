@@ -90,7 +90,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
-  - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates valid magnetic projection configurations for numeric quantum numbers.
+  - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients.
+    - Numeric j,m: enumerates valid magnetic projection configurations explicitly. Symbolic j,m: returns symbolic Sum over CG products.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices, commutation relations, and decomposition methods.
   - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
@@ -101,12 +102,14 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
-  - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator.
+  - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).
     - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
-- **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order; when two operators belong to different independent modes, the commutation correction term is set to zero.
+- **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order via commutation/anticommutation relations.
+  - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess. Independent modes: commutation correction set to zero.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.
   - Delegates to operator `_eval_commutator_*`/`_eval_anticommutator_*` methods; falls back through NotImplementedError chain.
-- **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
+- **Algorithms**: `grover.py` (Grover's search), `qft.py` (quantum Fourier transform).
+  - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
@@ -123,7 +126,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
   - `pauli.py` — Pauli spin operators as quantum Operator subclasses (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
-    - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity).
+    - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
   - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
@@ -139,6 +142,7 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 ### [`optics/`](optics/catalog.md)
 Geometric and wave optics.
 - `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation.
+  - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
 - `waves.py` — `TWave` class for transverse electromagnetic waves.
 - `medium.py` — `Medium` class (refractive index, permittivity, permeability).
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection), `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_equation()`, `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
@@ -150,11 +154,12 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
-- `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv combining spin and translational contributions), `linear_momentum`, `kinetic_energy`, `potential_energy` methods.
-- `body.py` — unified `Body` wrapping Particle or RigidBody.
+- `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv), `linear_momentum`, `potential_energy`.
+  - `kinetic_energy(frame)` — individual body KE: ½I·ω² (rotational) + ½mv² (translational).
+- `body.py` — unified `Body` wrapping Particle or RigidBody; constructor dispatches: mass given but no inertia → initializes as Particle; otherwise → RigidBody with symbolic inertia tensor.
 - `functions.py` — system-level kinematic/dynamic functions for multi-body systems (computation, not EOM generation).
   - `angular_momentum(point, frame, *body)` — sums angular momenta of Particles/RigidBodies; validates Point and ReferenceFrame types.
-  - `linear_momentum`, `kinetic_energy`, `potential_energy` — analogous system-level aggregators.
+  - `linear_momentum`, `kinetic_energy`, `potential_energy` — system-level aggregators that sum per-body contributions (delegate to each body's own method).
   - `Lagrangian(frame, *body)` — computes T−V (kinetic minus potential energy) for a collection of Particles/RigidBodies in a given frame; returns a scalar expression.
 - `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
 - `models.py` — pre-built example multi-body systems for testing/demos. `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.

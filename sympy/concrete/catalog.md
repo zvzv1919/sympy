@@ -57,7 +57,7 @@ Unevaluated and evaluated finite/infinite products.
 
 - **`Product(ExprWithIntLimits)`** — unevaluated product.
   - `doit()` — evaluate the product; handles reversed ranges (upper < lower) by swapping bounds ±1 and inverting the term (`f → 1/f`).
-  - `_eval_product(term, limits)` — core evaluation: polynomial factoring via `RisingFactorial`, `KroneckerDelta`, direct expansion.
+  - `_eval_product(term, limits)` — core evaluation: polynomial factoring via `RisingFactorial`, direct expansion; delegates KroneckerDelta products to `delta.py`.
   - `is_convergent()` — convergence test for infinite products.
   - `reverse_order(*indices)` — reverse the order of specific limits.
   - `_eval_rewrite_as_Sum()` — rewrite as `exp(Sum(log(f), ...))`.
@@ -78,8 +78,8 @@ Gosper's algorithm for hypergeometric indefinite summation.
 ### [`delta.py`](delta.py)
 Simplification of sums and products containing Kronecker delta functions.
 
-- `deltasummation(f, limit)` — evaluate summation with KroneckerDelta terms.
-- `deltaproduct(f, limit)` — evaluate product with KroneckerDelta terms.
+- `deltasummation(f, limit)` — evaluate summation with KroneckerDelta terms; simplifies or returns piecewise results.
+- `deltaproduct(f, limit)` — evaluate product with KroneckerDelta terms; splits additive expressions into delta and non-delta parts, handles integer bounds (direct sum) vs symbolic bounds (delegating to `deltasummation`).
 - `_is_simple_delta`, `_has_simple_delta`, `_extract_delta`, `_expand_delta` — delta detection/extraction helpers.
 - `_remove_multiple_delta`, `_simplify_delta` — simplification of delta products.
 

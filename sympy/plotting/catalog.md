@@ -19,6 +19,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `SurfaceBaseSeries` — base class for 3D surfaces; `get_color_array()` dispatches callable coloring by arity and `is_parametric` flag (uses parameter meshes vs coordinate meshes).
 - `SurfaceOver2DRangeSeries`, `ParametricSurfaceSeries` — 3D surface data series.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
+- `_matplotlib_list(interval_list)` — converts bounding rectangular intervals to x/y coordinate lists for matplotlib `fill()`; returns lists of four `None`s when input is empty (workaround because matplotlib rejects empty lists for `fill`).
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
   - Implicit plot rendering: interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
 - `TextBackend` — ASCII fallback backend; `show()` raises `ValueError` if more than one series or if series is not `LineOver1DRangeSeries`. Delegates single-expression rendering to `textplot()`.

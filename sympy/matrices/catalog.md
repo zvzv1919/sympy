@@ -44,7 +44,8 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `__setitem__`: thin wrapper; actual assignment logic (including list→Matrix conversion) is `MatrixBase._setitem` in `matrices.py`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
-- Factory methods: `zeros`, `eye`, `ones`, `diag`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
+- Factory methods: `zeros`, `eye`, `ones`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
+- `diag(*values)`: builds a concrete block-diagonal matrix from a mix of scalars, plain lists, and existing Matrix objects; auto-converts lists to Matrix, accumulates total rows/cols from each block, places blocks along the diagonal of a sparse intermediate, then converts to the target class.
 
 ### [`sparse.py`](sparse.py)
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
@@ -55,7 +56,7 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `MutableSparseMatrix`: mutable variant with in-place `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`.
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
-- Sparse triangular solvers: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution), `_diagonal_solve`.
+- Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
 
 ### [`immutable.py`](immutable.py)
@@ -92,7 +93,7 @@ Block-structured symbolic matrices.
 
 - `BlockMatrix`: matrix composed of a 2D grid of sub-matrices; `blocks`, `blockshape`, `rowblocksizes`, `colblocksizes`.
 - `BlockMatrix._entry`: resolves element access by locating the correct sub-block; uses `!= False` comparisons to handle symbolic (non-concrete) row/column indices.
-- `BlockDiagMatrix`: block-diagonal specialization; `_eval_inverse` inverts each diagonal block independently.
+- `BlockDiagMatrix`: unevaluated symbolic block-diagonal expression (not a concrete constructor); `_eval_inverse` inverts each diagonal block independently.
 - Block arithmetic rules: `bc_matmul`, `bc_block_plus_ident`, `bc_dist`, `bc_transpose`.
 
 ### [`expressions/inverse.py`](expressions/inverse.py)

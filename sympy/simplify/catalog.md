@@ -21,7 +21,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
   - Uses JIT factoring: extracts common factors to attempt trig combination, discards factoring if it doesn't simplify.
 - `TR0(rv)` — simplify rational trig subexpressions (combine like terms).
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
-- `TR2(rv)` / `TR2i(rv)` — convert between tan/cot and sin/cos ratios.
+- `TR2(rv)` — replace tan/cot with sin/cos and cos/sin ratios.
+- `TR2i(rv, half)` — convert sin/cos ratios back to tan; guards against invalid rewrites when exponent is non-integer and base lacks positivity.
 - `TR3(rv)` — canonicalize angles via induced formulas.
 - `TR4(rv)` — evaluate trig at special angles (0, π/6, π/4, π/3, π/2).
 - `_TR56(rv, f, g, h, max, pow)` — helper for TR5/TR6; replaces even powers of sin/cos via Pythagorean identity.
@@ -35,8 +36,9 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `TR11(rv)` — rewrite double angles as single-angle products.
 - `TR12` / `TR12i` — expand/contract angle sums in tan arguments.
 - `TR13(rv)` — simplify products of tan/cot via addition formulas.
-- `TR14(rv)` — simplify factored sin/cos powers like (cos x−1)^a·(cos x+1)^b.
+- `TR14(rv, first)` — simplify factored sin/cos difference-of-squares like (cos x−1)·(cos x+1) → −sin²x.
   - Handles unequal exponents by taking the minimum and reinserting the remainder.
+  - Splits numer/denom and recurses with `first=False` to prevent infinite re-splitting on fractional expressions.
 - `TR15` / `TR16` — convert negative sin/cos powers to cot²/tan² forms.
 - `TR22(rv)` — convert tan²→sec²−1 and cot²→csc²−1.
 - `TRmorrie(rv)` — apply Morrie's law for cosine products.
@@ -62,6 +64,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
 - `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants).
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
+  - Multi-symbol handling: uses `separatevars` to factor; if unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification.
 
 ---
@@ -83,6 +86,9 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds.
 - `bottom_up(rv, F)` — apply function bottom-up through expression tree.
 - `clear_coefficients(expr)` — strip rational leading coefficients.
+- `sum_simplify(s)` — simplify sums of Sum objects; absorbs constants into Sum bodies and pairwise merges terms.
+- `sum_add(s1, s2, method)` — helper merging two Sums: method 0 combines matching limits; method 1 merges adjacent index ranges when bodies match and index variable is the same.
+- `product_simplify(s)` — analogous simplification for Product objects.
 
 ---
 
@@ -111,6 +117,8 @@ Radical simplification, term collection, and rationalization.
 Denests nested square root expressions.
 
 - `sqrtdenest(expr)` — main entry; denests expressions like √(2+√3).
+- `sqrt_depth(p)` — max nesting depth of square roots; only counts `is_sqrt` powers (exponent ±½), returns 0 for non-sqrt Pow nodes without recursing into their base.
+- `is_sqrt(expr)` — True if expr is a Pow with rational exponent of absolute value ½.
 
 ---
 

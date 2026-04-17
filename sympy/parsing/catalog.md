@@ -24,6 +24,9 @@ Lightweight AST-based parser that wraps literal numbers as `Integer`/`Float` and
 
 ### [`sympy_tokenize.py`](sympy_tokenize.py)
 Python tokenizer producing 5-tuples of (type, string, start, end, line). Used by `sympy_parser`.
+- Defines regex patterns for token classification: `Number`, `Floatnumber`, `Intnumber`, `Imagnumber`, `String`, `Operator`, etc.
+- Includes `Repeatedfloat` pattern for repeating decimal notation (e.g. `3.4[31]` where brackets denote the repeating portion).
+- `group()`, `any()`, `maybe()` — regex combinator helpers used to build token patterns.
 - `generate_tokens(readline)` — generator that yields token 5-tuples from a readline callable.
 - `tokenize(readline, tokeneater)` — callback-based tokenization interface.
 - `Untokenizer` — reconstructs source code from token streams. `add_whitespace()` enforces a row-ordering constraint (raises `ValueError` if row exceeds prev_row). `untokenize()` reassembles tokens into a string.
