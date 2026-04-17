@@ -124,6 +124,9 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
 Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
 - `get_symmetric_group_sgs`, `tensor_gens`, `perm_af_direct_product`, `dummy_sgs`.
+- `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal (no baseswap fallback).
+- `_is_minimal_bsgs` — checks if a BSGS has the lexicographically smallest base.
+- `get_transversals` — returns transversals for a group given its BSGS.
 
 ---
 

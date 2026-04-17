@@ -37,6 +37,7 @@ Large collection of iterable/container utility functions.
 - `flatten`, `unflatten` — recursive/structured flattening of nested iterables.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
 - `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
+- `kbins(l, k, ordered)` — partition a list into k bins; `ordered` is a 2-digit flag (00/01/10/11) controlling whether bin order and item order matter; raises `ValueError` for unsupported values.
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
 - `numbered_symbols` — infinite generator of Symbol objects.
 - `topological_sort` — Kahn's algorithm for DAG ordering.

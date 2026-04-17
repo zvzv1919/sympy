@@ -18,7 +18,8 @@ When `ask(Q.property(expr), assumptions)` is called, the engine dispatches to a 
 Main inference engine for the assumptions system.
 - `AssumptionKeys` (aliased as `Q`): defines all predicate query keys as `@predicate_memo` properties returning `Predicate` objects.
   - Each predicate property's docstring documents **semantic rules and cross-predicate implications** (the authoritative source for predicate meaning).
-  - Scalar predicates: `Q.positive`, `Q.real`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
@@ -102,7 +103,7 @@ SAT handler utilities, old-to-new assumption bridging, and pre-computed fact reg
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
 - `UnevaluatedOnFree`: base for Boolean functions unevaluated on free predicates.
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
-- `ClassFactRegistry` / `fact_registry`: maps expression classes to their logical facts.
+- `ClassFactRegistry` / `fact_registry`: maps expression classes to their logical facts; `__getitem__` unions handlers from all registered superclasses (via `issubclass`), not just the exact class.
 
 ---
 

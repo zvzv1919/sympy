@@ -52,6 +52,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
 - `_rewrite_gamma` — rewrites products of gamma/sin/cos/tan/cot into Meijer G-function parameters for inverse Mellin; rescales integration variable based on argument coefficients
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
+- `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
 - Sine/Cosine: `sine_transform`, `cosine_transform` and their inverses
 - Hankel: `hankel_transform`, `inverse_hankel_transform` with order parameter ν
@@ -104,7 +105,7 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 
 ### [`meijerint.py`](meijerint.py)
 Integration by rewriting integrands as Meijer G-functions and applying known convolution formulas.
-- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, falls back to rewriting hyperbolic functions as exponentials when initial attempts fail
+- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, rewrites hyperbolic→exponential if no G-function match found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
 

@@ -46,7 +46,9 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `TIDS.from_components_and_indices` — constructs TIDS from component list and index list.
   - `TIDS._check_matrix_indices` — handles matrix-style auto-indices during multiplication.
 - `Tensor` — single tensor (head + indices).
+  - `equals(other)` — structural equality via canonicalization: compares `(coeff, components, sorted free, sorted dum)` tuples after `canon_bp`.
 - `TensMul` — product of tensors with a scalar coefficient.
+  - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (index and its negation), rebuilds the expression so those pairs become dummy/summation indices.
 - `TensAdd` — sum of tensors in canonical form.
 - `TensExpr` — abstract base for tensor expressions.
   - `get_matrix()` — converts attached ndarray component data to a `Matrix`; supports rank ≤ 2, raises `NotImplementedError` for higher ranks.

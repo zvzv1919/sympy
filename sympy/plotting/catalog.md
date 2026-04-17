@@ -22,6 +22,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 Implicit equation/inequality data series; computes raster data via interval arithmetic (rendering handled by backends in `plot.py`).
 
 - `plot_implicit()` — public API; plots relations (Eq, And, Or, inequalities) over 2D region.
+  - Variable inference: bare expressions auto-wrapped as `Eq(expr, 0)`; single-variable expressions get a synthetic dummy symbol for the missing axis.
 - `ImplicitSeries` — data series for implicit plots; `_get_raster_interval()` recursively subdivides rectangles using interval arithmetic to determine inclusion.
 
 ### `textplot.py`

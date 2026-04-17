@@ -15,7 +15,12 @@
 ### [`solvers.py`](solvers.py)
 Legacy general-purpose algebraic equation solver. Returns solutions as lists or dicts.
 
-- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve` or `_solve_system`. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
+- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
+- `_solve_system(exprs, symbols)` — internal system solver; handles:
+  - Linear systems via augmented matrix construction → `solve_linear_system`.
+  - Nonlinear polynomial systems via `solve_poly_system`.
+  - Underdetermined systems (more unknowns than equations): enumerates variable subsets sized to match equation count, solves each subset, discards solutions that reference previously determined variables.
+  - Residual non-polynomial equations: iteratively solves remaining symbols one at a time after polynomial pass.
 - `_solve(f, symbol, **flags)` — internal single-equation solver; handles:
   - Multi-symbol sequential resolution: solves for each symbol in turn; discards solutions whose free symbols depend on a previously solved symbol.
   - Piecewise/conditional expressions: iterates branches, enforces branch-priority (earlier-branch exclusion) via `piecewise_fold`.
@@ -27,6 +32,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
+- `_invert(eq, *symbols)` — algebraic inversion loop; rewrites `lhs = rhs` by peeling off operations (Add, Mul, Pow, Function). Handles multi-arg functions: rewrites atan2(y,x) as 2*atan(…) for single-arg inversion. Distinct from `solveset._invert`.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
 - `unrad(eq, *syms)` — removes radicals from equations.
@@ -51,6 +57,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 ### [`bivariate.py`](bivariate.py)
 Solves bivariate equations by structural reduction to single-variable problems.
 
+- `_linab(arg, symbol)` — decomposes expression into `a*X + b` where `X` is symbol-dependent and `a`, `b` are independent; normalizes negative leading sign on `X` by negating both `a` and `X`.
 - `_mostfunc(lhs, func, X=None)` — selects the most deeply nested occurrence of a given function type (exp, log, Pow, etc.) in an expression; ties broken by highest nesting count; optional variable filter restricts candidates.
 - `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
 - `bivariate_type(f, x, y)` — classifies bivariate equation structure.

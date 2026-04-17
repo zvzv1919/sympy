@@ -74,6 +74,9 @@ Base class for all symbolic (unevaluated) matrix expressions.
 - **Conversion to concrete form**: `as_explicit` iterates all (i,j) entries and returns an `ImmutableMatrix`; `as_mutable` converts further to mutable dense.
 - Properties: `shape`, `rows`, `cols`, `is_square`, `T` (transpose).
 - `MatrixElement`: represents a single symbolic entry M[i,j] as an `Expr` node.
+- `Identity(n)`: symbolic n×n identity matrix (square, `is_Identity`); `_eval_inverse` returns self.
+- `ZeroMatrix(m, n)`: symbolic m×n zero matrix — additive identity (`is_ZeroMatrix`).
+- `ZeroMatrix.__pow__`: own exponent dispatch — 0→Identity, ≥1→self, <1→`ValueError` (det==0; not invertible), non-square with exp≠1→`ShapeError`.
 
 ### [`expressions/matpow.py`](expressions/matpow.py)
 Unevaluated matrix power node `MatPow(base, exp)`.

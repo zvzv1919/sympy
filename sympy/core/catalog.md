@@ -56,13 +56,14 @@ All concrete numeric types and their arithmetic operations.
 - `Zero` — additive identity singleton; `_eval_power` strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
-- `Infinity` / `NegativeInfinity` — signed unbounded sentinels; implement own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
+- `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power` (e.g., NegativeInfinity checks exponent odd/even parity to decide result sign)
+  - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
 - `NaN` — indeterminate placeholder; structurally equal to itself (`__eq__`) but mathematically unequal to everything (`_eval_Eq` returns false)
 - `ComplexInfinity` — unsigned (undirected) infinite quantity; `_eval_power`: zero exp → NaN, positive exp → zoo, negative exp → 0, zoo exp → NaN
 - `_sympify` coercion and `SympifyError` handling throughout arithmetic methods
 
-**Caveat**: Each numeric class (Integer, Rational, Float, ImaginaryUnit) implements its own `_eval_power`; Rational._eval_power handles negative-fraction-to-fractional-exponent by separating sign via `(-1)**(expt.p % expt.q / expt.q)`.
+**Caveat**: Each numeric class (Integer, Rational, Float, ImaginaryUnit, Infinity, NegativeInfinity) implements its own `_eval_power`. Rational._eval_power separates sign via `(-1)**(expt.p % expt.q / expt.q)`.
 
 ---
 
@@ -135,10 +136,12 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ## Expressions and Manipulation
 
 ### [`expr.py`](expr.py)
-`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
+`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`), ordering comparisons (`__ge__`, `__le__`, `__gt__`, `__lt__`), `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
 - `as_independent(*deps)` — splits expression into (independent, dependent) parts w.r.t. given symbols; for Mul, non-commutative factors after the first dependent one are all grouped as dependent to preserve ordering
-- `extract_multiplicatively(c)` — returns self/c if division moves all coefficients toward zero, else None; for Add expressions, requires every term to be individually divisible (all-or-nothing)
+- `extract_multiplicatively(c)` — returns self/c if division preserves sign properties, else None
+  - For Infinity/NegativeInfinity/ComplexInfinity: determines result sign based on factor sign (e.g., negative factor from -oo → +oo)
+  - For Add: requires every term to be individually divisible (all-or-nothing)
 - `extract_additively(c)` — returns self - c if subtraction moves matching coefficients toward zero, else None
 - `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first, then single-term match (returns Zero if multiple terms match individually)
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; compares minus-sign structure, then for Add counts positive vs negative args, for Mul checks parity; final tiebreaker uses `sort_key()` comparison
@@ -148,6 +151,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `lseries()` / `nseries()` — public wrappers for lazy and finite-term series expansion
 - `__int__` — converts symbolic expression to Python int; rounds to 2 decimal places, then performs off-by-one correction when rounded value lands on an integer but original expression doesn't equal it
 - `_random(n)` — evaluates expression with random complex values substituted for free symbols; progressively escalates precision if initial evaluation yields zero significant digits; returns None if no significance achieved
+- `__ge__` / `__le__` / `__gt__` / `__lt__` — ordering comparisons; raises TypeError for non-real (complex) operands or NaN; if at least one operand is real, computes difference and checks sign; otherwise returns unevaluated relational
+- `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both self and g are numbers (uses `getattr(g, 'is_number', True)` to handle plain Python ints), otherwise to polynomial `invert`
 - `_eval_is_positive` / `_eval_is_negative` — sign determination for numeric expressions; uses low-precision evalf, falls back to minimal polynomial when floating-point evaluation yields no significant digits (prec == 1)
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
 
@@ -181,7 +186,10 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments
+- `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
+- `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
+- `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
 - `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement
@@ -212,7 +220,9 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ## Comparison
 
 ### [`relational.py`](relational.py)
-`Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic equations and inequalities. `Relational` base dispatches by operator string.
+`Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic relational expression nodes (unevaluated comparison objects). `Relational` base dispatches by operator string.
+
+- These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 
 ---
 

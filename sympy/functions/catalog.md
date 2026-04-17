@@ -60,6 +60,7 @@ Bessel functions and Airy functions.
 
 #### [`special/hyper.py`](special/hyper.py)
 Hypergeometric and Meijer G-functions.
+- `TupleParametersBase` — base class for functions with tuple-valued arguments (e.g., numerator/denominator parameter lists); handles `_eval_derivative` by iterating over grouped parameters with tuple-indexed `fdiff`.
 - `hyper` — generalized hypergeometric function pFq.
 - `meijerg` — Meijer G-function.
 - `HyperRep` subclasses — closed-form representations of specific hypergeometric cases.
@@ -104,7 +105,9 @@ Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
 
 #### [`elementary/hyperbolic.py`](elementary/hyperbolic.py)
 Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those are `Chi`, `Shi` in `special/error_functions.py`).
-- `sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch`, `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch`.
+- `sinh`, `cosh`, `tanh`, `coth` — primary hyperbolic functions.
+- `ReciprocalHyperbolicFunction` — base class for reciprocal forms (`csch`, `sech`); delegates rewrites to the underlying function via `_rewrite_reciprocal`, which guards against trivial identity rewrites by returning None if the result is unchanged.
+- `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
 
 #### [`elementary/complexes.py`](elementary/complexes.py)
 Complex number component functions.

@@ -8,6 +8,7 @@ Symbolic set theory: construction, membership, and operations on mathematical se
 Foundation of all set types and operations.
 
 - `Set` — abstract base class for all sets; defines `union`, `intersect`, `contains`, `complement`, `is_subset`, `is_superset`, `is_disjoint`
+  - `contains` — returns True/False for definite membership; falls back to an unevaluated `Contains` expression when membership is indeterminate
 - `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes images via calculus; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
@@ -48,4 +49,4 @@ Sets defined by a boolean predicate over a base set.
 ### [`contains.py`](contains.py)
 Boolean expression for symbolic set membership.
 
-- `Contains` — `BooleanFunction` representing `x ∈ S`; evaluates via `S.contains(x)` or stays unevaluated
+- `Contains` — symbolic `BooleanFunction` node representing `x ∈ S`; delegates to `Set.contains` for evaluation; holds unevaluated form only

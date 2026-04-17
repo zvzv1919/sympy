@@ -39,8 +39,9 @@ Infrastructure for finite random variables (discrete, finite support).
 ## Concrete Distribution Types
 
 ### [`crv_types.py`](crv_types.py)
-All built-in continuous probability distributions (~28).
-- Includes: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
+All built-in continuous probability distributions (~28) plus a factory for user-defined ones.
+- `ContinuousRV(symbol, density, set)`: creates a custom continuous random variable from an arbitrary density expression and support interval.
+- Named distributions: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
 - Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).
 

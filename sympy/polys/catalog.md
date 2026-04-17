@@ -32,6 +32,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `__eq__` — catches `UnificationFailed` and returns `False` silently (never raises on incompatible domains).
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
+  - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
@@ -78,6 +79,7 @@ Sparse polynomial rings and their elements (dict-based representation).
 Sparse rational function fields and their elements.
 
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
+  - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
 
 ---
@@ -104,6 +106,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Content/primitive: `content`, `primitive`, `monic`.
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `mul(g)` — if `g` is not a Poly, falls back to `mul_ground` (scalar multiplication); same pattern for `add`/`sub`.
+    - `exquo(g)` — catches `ExactQuotientFailed` and **re-raises with `f.as_expr()`, `g.as_expr()`** so the error message contains human-readable symbolic expressions instead of internal representations.
     - `pquo` catches `ExactQuotientFailed` and **re-raises with original input expressions**; `pexquo` lets the exception propagate directly from the internal method.
   - GCD/resultant: `gcd`, `lcm`, `cofactors`, `resultant`, `discriminant`, `subresultants`.
     - `resultant(g, includePRS)` — when `includePRS=True`, returns `(resultant_value, [PRS_polys])` tuple instead of a single scalar.
@@ -122,6 +125,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
 - `PurePoly` — Poly subclass with equality ignoring generator names.
 - `GroebnerBasis` — Gröbner basis representation class.
+  - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
+  - `is_zero_dimensional` — check if ideal is zero-dimensional.
+  - `reduce(expr)` — reduce polynomial modulo the basis.
 
 ### [`polyfuncs.py`](polyfuncs.py)
 High-level polynomial utility functions (symbolic level).
@@ -160,6 +166,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
 - `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
+- `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
 - `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
 - `dmp_exclude(f, u, K)` — detect and remove variable dimensions unused by any term; returns `(removed_indices, reduced_poly, new_level)`.
 - `dmp_include(f, J, u, K)` — re-insert previously excluded variable dimensions at specified positions.
@@ -241,8 +248,10 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities.
-- `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing.
-- `dup_trial_division`, `dmp_trial_division` — trial division.
+- `dup_zz_irreducible_p` — integer polynomial irreducibility test via **Eisenstein's criterion** (checks if a prime divides all non-leading coefficients but its square does not divide the constant term).
+- `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing (general).
+- `dup_trial_division`, `dmp_trial_division` — determine factor multiplicities via repeated division; **includes factors with multiplicity 0** if candidate does not divide.
+- `dup_zz_diophantine`, `dmp_zz_diophantine` — Wang/EEZ Diophantine equation solvers; `dup_zz_diophantine` for >2 inputs **builds cumulative products and recursively reduces to the 2-input base case** (extended GCD).
 - `dup_zz_mignotte_bound`, `dmp_zz_mignotte_bound` — coefficient bounds for factors.
 - `dup_cyclotomic_p`, `dup_zz_cyclotomic_factor` — cyclotomic polynomial detection/factoring.
 
@@ -254,6 +263,7 @@ Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic e
   - Returns `(shift_count, shifted_poly, resultant_in_ground_domain)`.
 - `dup_sqf_part`, `dmp_sqf_part` — square-free part.
 - `dup_sqf_list`, `dmp_sqf_list` — square-free decomposition with multiplicities.
+- `dup_sqf_list_include`, `dmp_sqf_list_include` — same as `sqf_list` but folds the leading coefficient into the factor list; **if no factor has multiplicity 1, prepends a ground constant `(coeff, 1)` entry**.
 - `dup_gf_sqf_part`, `dmp_gf_sqf_part`, `dup_gf_sqf_list`, `dmp_gf_sqf_list` — GF variants (thin wrappers around `galoistools`).
 - `dup_gff_list`, `dmp_gff_list` — greatest factorial factorization.
 
@@ -323,8 +333,10 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes; **reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
 
 ### [`rootisolation.py`](rootisolation.py)
-Numerical root isolation and refinement for dense univariate polynomials.
+Numerical root isolation and refinement for dense univariate polynomials. Also defines `RealInterval` and `ComplexInterval` classes for bounding root locations.
 
+- `RealInterval` — bounding interval for a real root; stores Möbius transform for refinement.
+- `ComplexInterval` — bounding rectangle for a complex root; stores southwest/northeast corners. When `conj=True` (root in lower half-plane), **y-coordinates are reflected**: `ay` returns `-b[1]` and `by` returns `-a[1]`.
 - `dup_isolate_real_roots`, `dup_isolate_real_roots_sqf` — real root isolation via continued fractions / bisection.
 - `dup_isolate_complex_roots_sqf` — complex root isolation.
 - `dup_count_real_roots`, `dup_count_complex_roots` — count roots in intervals.
@@ -414,8 +426,10 @@ Monomial tuple arithmetic and generation.
 - `itermonomials(variables, max_degrees)` — generate monomials up to given degrees.
 - `monomial_count(n, d)` — count monomials of n variables and degree d.
 - `monomial_mul`, `monomial_div`, `monomial_ldiv`, `monomial_pow` — tuple arithmetic.
+  - `monomial_div(A, B)` — returns `None` if any resulting exponent would be negative (exact division only); `monomial_ldiv` allows negative exponents.
 - `monomial_gcd`, `monomial_lcm` — GCD/LCM of monomial tuples.
 - `monomial_divides`, `monomial_max`, `monomial_min`, `monomial_deg` — predicates and queries.
+- `term_div(a, b, domain)` — divide two `(monomial, coefficient)` terms; **over a field, only checks monomial divisibility; over a ring, additionally requires coefficient divides evenly**; returns `None` on failure.
 - `Monomial` — symbolic monomial class (pure power-product, coefficient must be 1).
   - `__init__(monom, gens)` — accepts exponent tuple or symbolic expression; **raises `ValueError` if expression has non-unit coefficient or multiple terms**.
 - `MonomialOps` — optimized monomial operation dispatcher.
@@ -512,6 +526,10 @@ FGLM algorithm for Gröbner basis conversion between monomial orderings.
 ### [`distributedmodules.py`](distributedmodules.py)
 Sparse distributed module representations for submodule/syzygy computation.
 
+- Module monomial operations: `sdm_monomial_mul`, `sdm_monomial_deg`, `sdm_monomial_lcm`, `sdm_monomial_divides`.
+  - `sdm_monomial_divides(A, B)` — checks if polynomial monomial X exists such that XA = B; **returns False if A and B belong to different free module generators** (different first tuple element), even if polynomial exponents satisfy divisibility.
+- `sdm_nf_buchberger(f, G, O, K, phantom)` — weak normal form using standard Buchberger algorithm (global orderings); optional `phantom` pair tracks companion coefficient vectors in parallel; **when phantom is None, uses `itertools.repeat([])` as dummy** to avoid branching in the divisor-search loop.
+- `sdm_nf_buchberger_reduced` — reduced normal form (unique but more expensive); does NOT support phantom tracking.
 - `sdm_nf_mora` — generalized Mora algorithm for weak normal forms with non-global orderings; **dynamically appends current element to the reducer set when the chosen reducer's ecart exceeds the element's ecart**.
 - `sdm_ecart(f)` — difference between total degree and leading monomial degree.
 - `sdm_groebner` — Gröbner basis (minimal standard basis) for submodules; uses "sugar" strategy for pair selection.
@@ -572,4 +590,5 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
+- `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
 - `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.

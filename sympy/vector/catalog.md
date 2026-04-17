@@ -29,17 +29,22 @@ Coordinate variable symbols.
 ## Coordinate Systems & Orientation
 
 ### [`coordsysrect.py`](coordsysrect.py)
-Cartesian coordinate system definition and creation.
+Cartesian coordinate system definition and creation — the **user-facing API** for building and orienting 3-D frames.
 - `CoordSysCartesian` — 3-D Cartesian frame with base vectors (i, j, k), base scalars (x, y, z), and an origin `Point`.
-- Methods to create related systems: `locate_new`, `orient_new`, `orient_new_axis`, `orient_new_body`, `orient_new_space`, `orient_new_quaternion`.
+- `orient_new_axis` — create a new system rotated about an arbitrary axis.
+- `orient_new_body` — create a new system via body-fixed (Euler) rotations; each successive rotation is about the *moving* frame's axes.
+- `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors.
+- `orient_new_quaternion` — create a new system via quaternion rotation.
+- `orient_new` — generic factory accepting any `Orienter` object.
+- `locate_new` — create a translated system sharing the same orientation.
 - `rotation_matrix`, `scalar_map` — inter-system transformations.
 
 ### [`orienters.py`](orienters.py)
-Orientation parameterizations for coordinate system rotations.
+Internal rotation-parameterization objects consumed by `CoordSysCartesian.orient_new*` methods.
 - `Orienter` — base class; `rotation_matrix(system)`.
 - `AxisOrienter` — rotation about an arbitrary axis by an angle.
-- `BodyOrienter` / `SpaceOrienter` — Euler-angle rotations (body-fixed / space-fixed).
-- `QuaternionOrienter` — quaternion-based rotation.
+- `BodyOrienter` / `SpaceOrienter` — Euler-angle rotation parameters (body-fixed / space-fixed).
+- `QuaternionOrienter` — quaternion-based rotation parameters.
 
 ### [`point.py`](point.py)
 Spatial point representation.

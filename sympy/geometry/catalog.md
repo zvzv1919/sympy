@@ -5,6 +5,7 @@
 ### [`entity.py`](entity.py)
 Base classes for all geometric entities.
 - `GeometryEntity` — abstract base; provides `intersection()`, `translate()`, `rotate()`, `scale()`, `reflect()`, `encloses_point()`, `equals()`.
+  - `encloses(o)` — type-dispatching containment check; for RegularPolygon checks center first (early exit), for Ellipse checks center + no boundary intersection, for Polygon checks all vertices.
   - `_eval_subs(old, new)` — substitution hook; converts sequence arguments to `Point3D` if entity is 3D, else `Point`.
 - `GeometrySet` — extends `GeometryEntity` with set-theoretic operations (`union`, `intersection`, `difference`, `contains`).
 
@@ -58,6 +59,7 @@ Elliptical entities in 2D.
   - `_do_line_intersection(o)` — line–ellipse intersection via quadratic discriminant; handles symbolic discriminants by allowing indeterminate-sign cases.
   - `_do_ellipse_intersection(o)` — ellipse–ellipse / ellipse–circle intersection via solving simultaneous conic equations.
 - `Circle` — `Ellipse` subclass; constructed from center+radius, three points, or center+point. Adds `radius`, `circumference`, `equation()`.
+  - Three-point construction: validates collinearity (raises `GeometryError` if collinear), then computes center/radius via `Triangle.circumcenter`/`circumradius`.
 
 ### [`parabola.py`](parabola.py)
 Parabolic entities defined by focus and directrix.

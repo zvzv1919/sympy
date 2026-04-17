@@ -21,7 +21,7 @@ Standard physics matrices as SymPy Matrix objects.
 - `minkowski_tensor` — 4×4 Minkowski metric tensor.
 
 ### [`paulialgebra.py`](paulialgebra.py)
-Pauli matrix algebra via symbolic manipulation (not Matrix class).
+Pauli matrix algebra via pure symbolic manipulation (Symbol subclass, not quantum operators or states). No kets, bras, or operator framework — for those see `quantum/pauli.py`.
 - `Pauli(i)` — Symbol subclass representing σ_i; algebraic multiplication yields products and scalar I automatically.
 - `delta(i, j)` — Kronecker delta helper; returns 1 if i == j, else 0.
 - `epsilon(i, j, k)` — Levi-Civita symbol helper; returns +1 for even permutations of (1,2,3), −1 for odd, 0 otherwise (including repeated indices).
@@ -75,6 +75,7 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
   - `state.py` — Ket/Bra/Wavefunction; `KetBase.__mul__`/`__rmul__` dispatch multiplication: Ket*Bra → OuterProduct, Bra*Ket → InnerProduct.
+    - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
   - `Wigner3j` — symbolic Wigner 3-j coefficient; `is_symbolic` property checks if any parameter is non-numeric. `doit()` raises ValueError for symbolic params.
   - `Wigner6j`, `Wigner9j` — symbolic 6-j and 9-j coefficients with analogous `doit()`.
@@ -110,7 +111,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
-  - `pauli.py` — Pauli spin operators (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
+  - `pauli.py` — Pauli spin operators as quantum Operator subclasses (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
+    - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity).
+    - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
   - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
 
@@ -131,8 +134,9 @@ Geometric and wave optics.
 
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
-- `kane.py` — `KanesMethod`: Kane's equations of motion.
+- `kane.py` — `KanesMethod`: Kane's equations of motion; computes generalized active forces (fr) and generalized inertia forces (fr*). Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
+  - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv combining spin and translational contributions), `linear_momentum`, `kinetic_energy`, `potential_energy` methods.
 - `body.py` — unified `Body` wrapping Particle or RigidBody.
