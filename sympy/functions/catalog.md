@@ -64,7 +64,7 @@ Hypergeometric and Meijer G-functions.
 - `TupleParametersBase` — base class for functions with tuple-valued arguments (e.g., numerator/denominator parameter lists); handles `_eval_derivative` by iterating over grouped parameters with tuple-indexed `fdiff`.
 - `hyper` — generalized hypergeometric function pFq.
 - `meijerg` — Meijer G-function.
-- `HyperRep` subclasses — closed-form representations of specific hypergeometric cases.
+- `HyperRep` subclasses — closed-form analytic-continuation representatives for specific hypergeometric cases; each subclass defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-aware evaluation.
 
 #### [`special/elliptic_integrals.py`](special/elliptic_integrals.py)
 Elliptic integral functions: `elliptic_k`, `elliptic_f`, `elliptic_e`, `elliptic_pi`.
@@ -100,7 +100,7 @@ Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, com
 
 #### [`elementary/trigonometric.py`](elementary/trigonometric.py)
 Trigonometric functions and their inverses.
-- `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions.
+- `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions; `sin`/`cos` have `_eval_expand_trig` for multiple-angle expansion using Chebyshev T (odd n) and Chebyshev U (even n) polynomials from `special/polynomials.py`.
 - `asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2` — inverse trig.
 - `_pi_coeff` — helper to normalize arguments by π.
 
@@ -141,5 +141,6 @@ Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFa
 - `binomial` — binomial coefficient C(n,k); `eval` handles integer, non-integer, and edge cases.
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)
-Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`.
+Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`, `stirling`.
 - `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
+- `stirling` — Stirling numbers S(n,k) of first or second kind; helpers `_stirling1`/`_stirling2` implement cached recursive computation with closed-form shortcuts for special k values (e.g., k=n−1, k=n−2, k=2).

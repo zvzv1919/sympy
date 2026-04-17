@@ -52,3 +52,11 @@ Modern iterative CDCL SAT solver (not recursive backtracking); uses clause learn
   - VSIDS (Variable State Independent Decaying Sum) branching heuristic.
   - Conflict-driven clause learning via `_simple_compute_conflict`.
 - `Level` — helper class representing a decision level in the search tree.
+
+## Utilities
+
+### [`utilities/dimacs.py`](utilities/dimacs.py)
+Parser for the DIMACS CNF file format (standard SAT benchmark text format) into SymPy boolean expressions.
+- `load(s)` — parse a DIMACS-format string into a conjunction-of-disjunctions (`And` of `Or`s).
+  - Each line is a clause of space-separated integers (negative = negated variable, zero = clause terminator); skips comment/header lines.
+- `load_file(location)` — read a DIMACS file from disk and delegate to `load`.

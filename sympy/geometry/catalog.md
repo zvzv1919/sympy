@@ -17,6 +17,8 @@ Base classes for all geometric entities.
 ### [`point.py`](point.py)
 Point representations in n-dimensional Euclidean space.
 - `Point` — n-dimensional point; supports arithmetic (`+`, `-`, `*`, `/`), `distance()`, `taxicab_distance()`, `midpoint()`, `dot()`.
+  - `intersection(o)` — returns `[self]` if `o` is an equal Point, `[]` if different Point; delegates to `o.intersection(self)` when `o` is not a Point.
+  - `equals(other)` — component-wise symbolic equality via `.equals()`; distinct from `__eq__` which does structural tuple comparison.
   - `Point.is_collinear(*points)` — static method testing if points are collinear; deduplicates inputs, returns `True` for ≤2 unique points.
   - `Point.is_concyclic(*points)` — static method testing if points are concyclic.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.

@@ -55,7 +55,8 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `R_nl(n, l, nu, r)` — radial wavefunctions with associated Laguerre polynomials.
 
 ### [`units.py`](units.py)
-Legacy physical-units module with ~200 predefined units and `find_unit()` search.
+Legacy physical-units module with ~200 predefined units, physical constants, and `find_unit()` search.
+- `find_unit(quantity)` — two modes: string input → substring match against module namespace; unit expression input → strips numeric coefficient via `as_coeff_Mul()`, compares the dimensional part against all defined symbols in the module. Results sorted by name length.
 
 ### [`wigner.py`](wigner.py)
 Exact angular-momentum coupling coefficients (returns rationals × √rational).
@@ -160,6 +161,7 @@ Geometric and wave optics.
 Classical mechanics: particles, rigid bodies, equations of motion.
 - `kane.py` — `KanesMethod`: Kane's equations of motion (Kane & Levinson 1985).
   - Constructor takes an inertial ReferenceFrame, generalized coordinates/speeds, kinematic differential equations, and optional constraint/dependent-speed specs; validates frame type.
+  - Constraint initialization: partitions velocity-constraint Jacobian into independent/dependent columns; when acceleration constraints are not explicitly provided, auto-derives them by time-differentiating the velocity constraints.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Legacy `_old_linearize` (deprecated) computes Jacobians in-place.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
@@ -179,6 +181,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
 ### [`hep/`](hep/catalog.md)
 High-energy physics.
 - `gamma_matrices.py` — `GammaMatrixHead`: Dirac gamma-matrix algebra using tensor infrastructure.
+  - `extract_type_tens(expression)` — separates gamma-matrix tensors from non-gamma tensors in an expression; accepts single `Tensor` or `TensMul` only, raises `ValueError('wrong type')` for other expression types (e.g. `TensAdd` sums).
   - `_trace_single_line` — evaluates fermion-line traces; returns hardcoded 4 (D=4 only) when the line contains only a spinor identity (delta) and no gamma matrices.
   - `_gamma_trace1` — computes trace of gamma-matrix products; returns 4 for empty trace (identity).
   - `_kahane_simplify` — cancels contracted gamma matrices using Kahane's algorithm.

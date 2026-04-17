@@ -98,7 +98,7 @@ Benchmarking framework via py.test.
 Miscellaneous text, path, and debugging utilities.
 - `filldedent(s)` — dedent + fill a string for clean error messages.
 - `rawlines(s)` — convert a string to a rawstring-safe representation.
-- `debug_decorator(func)` — decorator that prints a visual call-tree trace (nested args and return values) when `SYMPY_DEBUG` is enabled.
+- `debug_decorator(func)` — decorator that prints function arguments and return values to stderr when `SYMPY_DEBUG` is enabled; does not measure time or build duration trees.
 - `debug(*args)` — conditional stderr print when `SYMPY_DEBUG` is True.
 - `find_executable(name)` — locate an executable on `PATH`.
 
@@ -107,8 +107,9 @@ SymPy-specific exception and warning classes.
 - `SymPyDeprecationWarning`
 
 ### [`timeutils.py`](timeutils.py)
-Timing utilities independent of IPython.
-- `timed(func)` — decorator that prints execution time.
+Timing and profiling utilities independent of IPython.
+- `timed(func)` — adaptively measure execution time of a callable, auto-scaling iteration count.
+- `timethis(name)` — decorator factory that profiles recursive/nested calls by maintaining a global stack; builds a hierarchical tree of durations. Selectively enabled via `SYMPY_TIMINGS` env var (comma-separated function names); no-op for unlisted names.
 
 ### [`magic.py`](magic.py)
 Interactive convenience for polluting the user's session namespace (not related to test/doctest execution).

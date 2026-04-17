@@ -66,6 +66,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 - `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants).
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
   - Multi-symbol handling: uses `separatevars` to factor; if unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
+  - `recursive` option: extracts common subexpressions via CSE, simplifies the reduced expression, then re-substitutes in reverse order, re-simplifying after each substitution.
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification.
 
 ---
@@ -115,6 +116,9 @@ Radical simplification, term collection, and rationalization.
 - `fraction(expr, exact)` — decompose expression into (numerator, denominator) pair by splitting powers with negative exponents.
   - `exact=True`: only moves constant negative exponents to denominator; non-constant negative exponents stay in numerator; returns unevaluated Muls.
 - `numer(expr)` / `denom(expr)` — shorthand for `fraction(expr)[0]` / `[1]`.
+- `split_surds(expr)` — split a sum of square-root terms into groups by GCD of squared radicands.
+  - If all radicands share a common factor (no coprime group), divides out that factor and re-partitions.
+- `_split_gcd(*a)` — partition integers into a GCD-sharing group and a coprime remainder group.
 
 ### [`sqrtdenest.py`](sqrtdenest.py)
 Denests nested square root expressions.

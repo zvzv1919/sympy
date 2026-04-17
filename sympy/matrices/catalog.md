@@ -162,7 +162,8 @@ Block-structured symbolic matrices.
 ### [`densesolve.py`](densesolve.py)
 Low-level solvers operating on raw list-of-lists (not matrix objects).
 
-- `row_echelon`, `rref`: row reduction on raw nested lists.
+- `row_echelon`: forward elimination on raw nested lists.
+- `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
 - `LU`, `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists.
 - `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
 - `forward_substitution`: lower-triangular solve on raw nested lists. `backward_substitution`: upper-triangular solve on raw nested lists.

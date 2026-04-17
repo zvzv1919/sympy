@@ -11,12 +11,14 @@ Core symbolic integration engine and public API.
   - Rational functions via `ratint`, trig products, delta/singularity functions
   - Calls `risch_integrate` with `separate_integral=True`; if non-elementary remainder is returned, recursively evaluates it with other methods
   - Falls back to heuristic Risch, then Meijer G, then manual integration in order
+  - When `manualintegrate` partially succeeds (result still contains unevaluated `Integral` sub-expressions), recursively evaluates those remaining pieces with all other methods (manual disabled)
+- `Integral.as_sum(n, method)` — approximates a definite integral as a finite sum using rectangle-based quadrature (left, right, midpoint, trapezoid); raises NotImplementedError for multidimensional integrals
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration
 - `line_integrate(field, curve, vars)` — line integral of a vector field over a curve
 
 ### [`manualintegrate.py`](manualintegrate.py)
-Step-by-step integration emulating by-hand techniques (substitution, parts, trig rules, etc.).
+Step-by-step integration emulating by-hand techniques (substitution, parts, trig rules, etc.). May return results containing unevaluated `Integral` sub-expressions when it can only partially evaluate; the caller in `integrals.py` handles those remainders.
 - `manualintegrate(f, var)` — integrate using manual rule-based strategies
 - `integral_steps(integrand, symbol)` — returns the rule tree describing the integration steps
 - `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
@@ -34,7 +36,7 @@ Integration of pure sin^n(x)·cos^m(x) products only (no tan/sec/cot/csc).
 ## Numerical Quadrature
 
 ### [`quadrature.py`](quadrature.py)
-Gaussian quadrature rules: computes nodes and weights for numerical integration using roots of orthogonal polynomials.
+Gaussian quadrature rules: computes nodes and weights (not sums) for numerical integration using roots of orthogonal polynomials. Does not approximate specific integrals — returns reusable quadrature tables.
 - `gauss_legendre(n, n_digits)` — nodes/weights for ∫₋₁¹ f(x)dx
 - `gauss_laguerre(n, n_digits)` — nodes/weights for ∫₀^∞ e^{-x} f(x)dx
 - `gauss_hermite(n, n_digits)` — nodes/weights for ∫₋∞^∞ e^{-x²} f(x)dx

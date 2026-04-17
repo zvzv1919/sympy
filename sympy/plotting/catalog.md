@@ -96,6 +96,7 @@ Base class providing shared infrastructure for all pyglet plot modes.
 - `_get_sympy_evaluator()`, `_get_lambda_evaluator()` — abstract methods implemented by concrete modes.
 - Thread-safe rendering stack: `push_wireframe()`, `push_solid()` with `_draw_lock`.
 - `_on_calculate()` — triggers vertex/color vertex computation in background threads.
+- `style` property (`_set_style`) — auto-determines rendering appearance when no explicit style is given: computes max step count across intervals and uses a threshold heuristic to choose between 'both' (wireframe+solid) and 'solid' (filled only).
 - Class-level attributes: `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
 
 ### `plot_modes.py`
@@ -146,7 +147,8 @@ User input handling with 2D/3D mode awareness.
 OpenGL window management, rendering loop, and title-bar progress display.
 
 - `PlotWindow` — extends `ManagedWindow`; sets up GL context, coordinates camera and controller.
-- `draw()` — called each frame by `ManagedWindow.__event_loop__`; acquires the plot-level `_render_lock` (not the GL thread lock) to iterate plot functions and collect vertex/color progress in a single pass.
+- `draw()` — called each frame; acquires `_render_lock` to iterate plot functions and collect vertex/color progress in a single pass.
+  - Sets initial viewing orientation from the first rendered object's `default_rot_preset` via a `drawing_first_object` flag; only the first surface influences the default camera angle.
 - `update_caption()` — formats vertex and color calculation percentages into the window title bar.
 
 ### `plot_object.py`

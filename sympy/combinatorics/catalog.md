@@ -54,7 +54,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 
 ### [`named_groups.py`](named_groups.py)
 Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties (e.g. `_is_nilpotent`, `_is_solvable`, `_is_abelian`, `_is_transitive`). Contrast with `generators.py`, which yields individual permutation elements.
-- `SymmetricGroup`, `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
+- `SymmetricGroup(n)` — constructs Sn (full bijection group on n elements); pre-sets `_is_solvable = True` iff n < 5 (reflecting that An is simple for n ≥ 5).
+- `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
 - `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4). Pre-sets `_is_nilpotent = True` iff n is a power of 2.
 - `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0).
 
@@ -89,7 +90,8 @@ Free groups with symbolic generators.
 - `FreeGroupElement` — word (element) in a free group, stored as tuple of (generator, exponent) pairs.
   - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
   - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.
-  - Word operations: `identity_cyclic_reduction`, `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `letter_form`.
+  - `identity_cyclic_reduction` — returns the unique cyclically reduced form of a word: combines exponents of first and last syllables, stripping them if they cancel completely.
+  - Word operations: `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `letter_form`.
 
 ---
 
