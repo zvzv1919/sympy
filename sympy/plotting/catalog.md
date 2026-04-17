@@ -13,10 +13,12 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.
 - `SurfaceOver2DRangeSeries`, `ParametricSurfaceSeries` — 3D surface data series.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
-- Backend classes: `MatplotlibBackend`, `TextBackend`, `DefaultBackend`.
+- `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
+  - Implicit plot rendering: interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
+- `TextBackend`, `DefaultBackend` — alternative rendering backends (ASCII, auto-select).
 
 ### `plot_implicit.py`
-Implicit equation/inequality plotter using interval arithmetic rasterization.
+Implicit equation/inequality data series; computes raster data via interval arithmetic (rendering handled by backends in `plot.py`).
 
 - `plot_implicit()` — public API; plots relations (Eq, And, Or, inequalities) over 2D region.
 - `ImplicitSeries` — data series for implicit plots; `_get_raster_interval()` recursively subdivides rectangles using interval arithmetic to determine inclusion.

@@ -43,7 +43,8 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 `TypeA` — A_n series. Lie algebra su(n+1). Dimension n+1. Roots: n(n+1).
 
 ### [`type_b.py`](type_b.py)
-`TypeB` — B_n series. Lie algebra so(2n). Dimension n. Roots: 2n².
+`TypeB` — B_n series. Lie algebra so(2n+1). Dimension n. Roots: 2n².
+- `simple_root(i)` — first n−1 roots are difference vectors (same as A_(n−1)); last root is a single unit vector [0,…,0,1].
 
 ### [`type_c.py`](type_c.py)
 `TypeC` — C_n series. Lie algebra sp(2n). Dimension n. Roots: 2n².

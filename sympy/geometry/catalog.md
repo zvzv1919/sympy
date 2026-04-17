@@ -5,6 +5,7 @@
 ### [`entity.py`](entity.py)
 Base classes for all geometric entities.
 - `GeometryEntity` — abstract base; provides `intersection()`, `translate()`, `rotate()`, `scale()`, `reflect()`, `encloses_point()`, `equals()`.
+  - `_eval_subs(old, new)` — substitution hook; converts sequence arguments to `Point3D` if entity is 3D, else `Point`.
 - `GeometrySet` — extends `GeometryEntity` with set-theoretic operations (`union`, `intersection`, `difference`, `contains`).
 
 ### [`exceptions.py`](exceptions.py)

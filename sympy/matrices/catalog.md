@@ -15,7 +15,7 @@ The `matrices` module has two layers:
 Central base class `MatrixBase` — defines the full matrix API inherited by both dense and sparse types.
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
-- **Arithmetic**: `__add__`, `__mul__`, `__pow__`, `multiply`, `add`.
+- **Arithmetic**: `__add__`, `__mul__`, `__pow__` (integer exponents: square-and-multiply; symbolic/float exponents: Jordan decomposition of each cell), `multiply`, `add`.
 - **Row reduction**: `rref` (reduced row echelon form with pivot tracking), `rank`.
 - **Null/column space**: `nullspace` (kernel basis via rref; handles pivot vs free variable classification, errors on unexpected pivot-column entries), `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
@@ -45,7 +45,9 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `row_join`: horizontal concatenation (`[A B]`); handles both sparse (dict iteration) and dense (flat-list `_mat` iteration) operands.
 - `col_join`: vertical concatenation (`[A; B]`); similarly handles mixed sparse/dense operands.
 - `MutableSparseMatrix`: mutable variant with in-place `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`.
-- Internal solver backends: `_cholesky_sparse`, `_LDL_sparse`, `_lower_triangular_solve_sparse`, `_upper_triangular_solve_sparse`.
+- `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
+- Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
+- Sparse triangular solvers: `_lower_triangular_solve_sparse`, `_upper_triangular_solve_sparse`.
 
 ### [`immutable.py`](immutable.py)
 Hashable, immutable matrix types usable as dictionary keys and in SymPy expression trees.
@@ -69,7 +71,7 @@ Base class for all symbolic (unevaluated) matrix expressions.
 ### [`expressions/matpow.py`](expressions/matpow.py)
 Unevaluated matrix power node `MatPow(base, exp)`.
 
-- `MatPow`: symbolic representation of M^n; `doit()` evaluates when possible.
+- `MatPow`: unevaluated symbolic node for M^n; `doit()` delegates to concrete `__pow__` (actual numeric/Jordan computation lives in `matrices.py`).
 - Properties: `base`, `exp`, `shape`.
 - Note: special-case exponent handling (0, 1, -1) lives in `MatrixExpr.__pow__`, not here.
 

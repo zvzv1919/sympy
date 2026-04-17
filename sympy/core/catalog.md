@@ -35,6 +35,8 @@ All concrete numeric types and their arithmetic operations.
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats, auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
+- `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
+  - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
@@ -110,6 +112,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`expr.py`](expr.py)
 `Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
+- `__int__` — converts symbolic expression to Python int; rounds to 2 decimal places, then performs off-by-one correction when rounded value lands on an integer but original expression doesn't equal it
 - `_eval_is_positive` / `_eval_is_negative` — sign determination for numeric expressions; uses low-precision evalf, falls back to minimal polynomial when floating-point evaluation yields no significant digits (prec == 1)
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
 
@@ -119,6 +122,8 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
 - `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n`
+  - `normal()` — cancels shared base-power pairs; optimized for few overlaps; handles symbolic exponent differences via additive extraction
+  - `div()` — similar cancellation but optimized for many common factors
 
 ### [`operations.py`](operations.py)
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.
@@ -132,8 +137,12 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 ### [`function.py`](function.py)
 Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lambda`, `Derivative`, `Subs`.
 
+- `Function.__new__` — after evaluation, checks `_should_evalf` on all args; auto-calls `evalf` if any arg is floating-point
+- `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments
+- `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement
+  - When `exponent=True`, requires separate pass to float-ify Integer exponents because `Pow._eval_evalf` special-cases them
 
 ---
 

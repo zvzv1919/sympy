@@ -51,12 +51,16 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
   - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
+  - `drop_to_ground(*gens)` — remove generators and inject them into the domain; **if no generators remain after removal, returns `self` unchanged** (does not reduce to the domain).
 - `PolyElement` — element of a `PolyRing` (dict: monomial tuple → coefficient).
   - `evaluate(x, a)` — substitute scalar for one variable; **univariate case returns a plain domain scalar** (drops the ring).
   - `subs(x, a)` — substitute scalar; **univariate case wraps result via `ring.ground_new`, returning a constant polynomial still in the ring**.
   - `compose(x, a)` — substitute a polynomial expression for a variable.
   - `_iadd_monom(mc)` — in-place monomial addition; **copies self first if self is a canonical generator** to avoid mutating ring-cached generators.
   - `_iadd_poly_monom(p2, mc)` — in-place add product; same generator-copy safeguard.
+  - `coeff(element)` — return scalar multiplier for a given monomial; accepts integer `1` for constant term or a monomial element; **raises `ValueError` for non-monomial arguments**.
+  - `_term_div()` — returns a closure for term divisibility; **over non-field domains (e.g. ZZ), also checks that the coefficient divides evenly** before returning a quotient.
+  - `div(fv)`, `rem(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
 
@@ -194,6 +198,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing the algebraic element α with a formal indeterminate z.
 - `_to_ANP_poly(f, ring)` — inverse of `_to_ZZ_poly`.
 - `_interpolate_multivariate(evalpoints, hpeval, ring, i, p, ground)` — Lagrange interpolation in Z_p; **when `ground=True`, the reconstructed variable comes from `ring.domain.gens[i]`** (coefficient ring) instead of `ring.gens[i]`.
+- `_chinese_remainder_reconstruction_univariate` — CRT for univariate polynomials; combines two residue representations over coprime moduli into symmetric representation over their product.
 - `_chinese_remainder_reconstruction_multivariate` — CRT for multivariate polynomials.
 - `_rational_reconstruction_int_coeffs` — rational reconstruction of coefficients.
 - `_trial_division` — verify candidate GCD by trial division.
@@ -279,6 +284,8 @@ Symbolic root-finding algorithms (closed-form solutions).
 
 - `roots(f)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
+- `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
+- `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes; **reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
 
 ### [`rootisolation.py`](rootisolation.py)
 Numerical root isolation and refinement for dense univariate polynomials.
@@ -287,7 +294,8 @@ Numerical root isolation and refinement for dense univariate polynomials.
 - `dup_isolate_complex_roots_sqf` — complex root isolation.
 - `dup_count_real_roots`, `dup_count_complex_roots` — count roots in intervals.
 - `dup_refine_real_root` — refine root interval.
-- `dup_sturm` — Sturm sequence for real root counting.
+- `dup_sturm` — Sturm sequence for real root counting; **raises `DomainError` if the coefficient domain is not a field** (e.g. ZZ).
+- `_discard_if_outside_interval` — filter isolation intervals against user bounds; **if interval partially overlaps, repeatedly refines** until it is fully inside or fully outside.
 - `dup_root_upper_bound`, `dup_root_lower_bound` — root magnitude bounds.
 
 ---
@@ -303,7 +311,9 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS.
 - `sylvester(p, q, x)` — Sylvester matrix construction.
-- `bezout(p, q, x)` — Bézout matrix construction.
+- `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering so highest-degree coefficients appear in first row/column; `method='bz'` uses natural ordering.
+- `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
+- `quo_z(p, q, x)` — integer polynomial quotient, same absolute-value premultiplication as `rem_z`.
 
 Caveat: These are reference/theoretical implementations. For production PRS and Sturm sequences used in root isolation, see `euclidtools.py` and `rootisolation.py`.
 
@@ -425,6 +435,8 @@ Gröbner basis computation algorithms.
 
 - `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm.
 - `is_groebner`, `is_reduced` — basis validation.
+- `lbp`, `lbp_cmp`, `lbp_key` — labeled polynomial constructors and comparators for the F5B signature-based algorithm.
+- `critical_pair`, `cp_cmp`, `cp_key` — critical pair construction and ordering; `cp_cmp` uses **two-level comparison: first the dominant (signature) component, then the subordinate component as tiebreaker** when dominants are equal.
 
 ### [`fglmtools.py`](fglmtools.py)
 FGLM algorithm for Gröbner basis conversion between monomial orderings.
@@ -441,6 +453,8 @@ Sparse distributed module representations for submodule/syzygy computation.
 ### [`ring_series.py`](ring_series.py)
 Power series arithmetic in sparse polynomial rings.
 
+- `_invert_monoms(p1)` — compute `x^n * p1(1/x)` for a sparse univariate polynomial, reversing the coefficient ordering by mapping degree k to degree (n−k).
+- `rs_trunc` — truncate series to given precision.
 - `rs_add`, `rs_mul`, `rs_pow`, `rs_series_inversion` — ring series operations.
 - `rs_exp`, `rs_log`, `rs_sin`, `rs_cos`, `rs_tan`, `rs_atan` — transcendental series.
 - `rs_nth_root`, `rs_compose` — composition and roots.
@@ -467,6 +481,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
 - `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
 - `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.
+- `ModuleHomomorphism.restrict_codomain(sm)` — narrow target module to submodule `sm`; **raises `ValueError` if `sm` does not contain the image**; returns `self` if `sm` equals the full codomain.
+- `ModuleHomomorphism.restrict_domain(sm)` — restrict source to submodule `sm`.
 - `homomorphism(domain, codomain, matrix)` — public constructor for module homomorphisms.
 
 ### [`domains/`](domains/catalog.md)

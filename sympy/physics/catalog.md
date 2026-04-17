@@ -32,10 +32,10 @@ Quantum particle on a ring.
 - `wavefunction(n, x)` — eigenfunctions. `energy(n, m, r)` — energy levels.
 
 ### [`qho_1d.py`](qho_1d.py)
-One-dimensional quantum harmonic oscillator: wavefunctions, energies, and coherent-state overlaps.
+One-dimensional quantum harmonic oscillator: closed-form analytical wavefunctions and energy formulas (no operator algebra).
 - `psi_n(n, x, m, omega)` — spatial wavefunction ψ_n using Hermite polynomials.
 - `E_n(n, omega)` — energy eigenvalue ℏω(n+½).
-- `coherent_state(n, alpha)` — Fock-basis expansion coefficient ⟨n|α⟩ for a coherent (displaced vacuum / minimum-uncertainty) state; computes exp(−|α|²/2)·α^n/√(n!).
+- `coherent_state(n, alpha)` — Fock-basis expansion coefficient ⟨n|α⟩ for a coherent state; computes exp(−|α|²/2)·α^n/√(n!).
 
 ### [`secondquant.py`](secondquant.py)
 Second quantization framework for many-body quantum mechanics with bosonic and fermionic creation/annihilation operators.
@@ -78,17 +78,23 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
-- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate); each gate stores target matrices, commutation relations between gates (e.g. T–S, S–Z commute → 0), and decomposition methods (e.g. SWAP decomposes into three CNOT gates).
+  - `uncouple()`/`_uncouple()` — decomposes coupled angular-momentum eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates all valid magnetic projection configurations for numeric quantum numbers.
+- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate); each gate stores target matrices, commutation relations, and decomposition methods.
+  - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids()` finds equivalent gate identities.
-- **Second-quantized QM operators**: `boson.py` (BosonOp, Fock states), `fermion.py` (FermionOp — fermionic ladder operators with anticommutation: {a†,a}=1 for same-mode, 0/2·ab for independent modes).
+- **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
+  - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
+  - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
+  - `fermion.py` (FermionOp — fermionic ladder operators with anticommutation: {a†,a}=1 for same-mode, 0/2·ab for independent modes).
 - **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order; when two operators belong to different independent modes, the commutation correction term is set to zero.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — symbolic `Commutator` and `AntiCommutator` with `doit()` evaluation; these delegate to gate/operator `_eval_commutator_*` methods.
 - **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation and measurement.
-- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `sho1d.py` (1-D SHO operators), `constants.py` (ℏ).
+- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+  - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
   - `pauli.py` — Pauli spin operators: SigmaX/Y/Z, SigmaPlus/SigmaMinus raising/lowering operators (nilpotent under positive-integer exponentiation).
-  - `cartesian.py` — 1-D/3-D position and momentum eigenstates (XKet/XBra, PxKet/PxBra) with plane-wave inner products.
+  - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
@@ -120,5 +126,7 @@ High-energy physics.
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class, dimension system definitions.
-- `units.py` — unit definitions. `quantities.py` — physical quantity objects.
-- `prefixes.py` — SI prefixes. `simplifiers.py` — unit expression simplification.
+- `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
+- `quantities.py` — `Quantity`: physical quantity with numeric factor and unit.
+- `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches.
+- `simplifiers.py` — unit expression simplification.

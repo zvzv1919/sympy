@@ -48,7 +48,9 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - Key data: `atoms_table` (atom→Unicode mapping), `_xobj_unicode`/`_xobj_ascii` (bracket/delimiter glyph tables).
 
 ### [`pretty/stringpict.py`](pretty/stringpict.py)
-`stringPict` — 2D string canvas with baseline tracking. Methods: `above`, `below`, `left`, `right`, `stack`, `parens`. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
+`stringPict` — 2D string canvas with baseline tracking. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
+- Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other.
+- `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 
 ### [`pretty/__init__.py`](pretty/__init__.py)
 Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.

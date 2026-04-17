@@ -46,7 +46,8 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `Ei` — exponential integral Ei(x).
 - `expint` — generalized exponential integral E_n(x).
 - `li`, `Li` — logarithmic integrals.
-- `Si`, `Ci`, `Shi`, `Chi` — sine, cosine, hyperbolic sine/cosine integrals.
+- `Si`, `Ci`, `Shi`, `Chi` — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
+  - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
 - `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x).
 
 #### [`special/bessel.py`](special/bessel.py)
@@ -78,7 +79,8 @@ Discrete tensor index functions: `LeviCivita` (epsilon tensor), `KroneckerDelta`
 Mathieu functions: `mathieus`, `mathieuc`, `mathieusprime`, `mathieucprime`.
 
 #### [`special/spherical_harmonics.py`](special/spherical_harmonics.py)
-Spherical harmonics: `Ynm` (complex), `Znm` (real).
+Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).
+- `Ynm` — Y_n^m(θ,φ); `eval` auto-simplifies symmetry relations: negative order m, negated polar/azimuthal angles.
 
 #### [`special/bsplines.py`](special/bsplines.py)
 B-spline basis functions as Piecewise expressions.
@@ -99,7 +101,8 @@ Trigonometric functions and their inverses.
 Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
 
 #### [`elementary/hyperbolic.py`](elementary/hyperbolic.py)
-Hyperbolic functions and inverses: `sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch`, `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch`.
+Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those are `Chi`, `Shi` in `special/error_functions.py`).
+- `sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch`, `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch`.
 
 #### [`elementary/complexes.py`](elementary/complexes.py)
 Complex number component functions.

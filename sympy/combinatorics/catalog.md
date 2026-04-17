@@ -5,6 +5,7 @@
 - **BSGS**: Base and Strong Generating Set — a compact representation of a permutation group enabling efficient membership testing and enumeration.
 - **Coset decomposition**: Factoring a group element via Schreier-Sims transversals; used for group-level ranking/unranking (`coset_rank`/`coset_unrank` in `perm_groups.py`).
 - **Lexicographic rank/unrank**: Converting between a single permutation and its position in lex order; lives in `permutations.py` (`rank`, `unrank_lex`).
+- **Non-lex rank/unrank**: Linear-time ranking that does not enforce lexicographic order; also in `permutations.py` (`rank_nonlex`, `unrank_nonlex`).
 
 ## Notes
 
@@ -42,6 +43,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order`, `random`, `random_pr`.
+  - `__mul__` — direct product of two groups; extends each group's generators to act on disjoint point sets (shifts indices).
   - `minimal_block`, `max_div`, `lower_central_series`, `baseswap`.
 
 ---
@@ -49,12 +51,12 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 ## Named Groups and Construction
 
 ### [`named_groups.py`](named_groups.py)
-Factory functions for standard finite groups.
+Factory functions for standard finite groups. Each factory pre-sets algebraic properties (solvability, nilpotency, abelianness, transitivity) based on group-theoretic thresholds (e.g., `SymmetricGroup` marks solvable only for degree < 5).
 - `SymmetricGroup`, `AlternatingGroup`, `CyclicGroup`, `DihedralGroup`, `AbelianGroup`, `RubikGroup`.
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
-- `DirectProduct` — direct product of permutation groups.
+- `DirectProduct` — N-ary direct product of permutation groups (optimized batch version of `PermutationGroup.__mul__`).
 
 ### [`generators.py`](generators.py)
 Generates standard permutation group generators (symmetric, cyclic, alternating, dihedral, Rubik's cube).
@@ -71,7 +73,9 @@ Finitely presented groups and coset enumeration.
 
 ### [`free_group.py`](free_group.py)
 Free groups with symbolic generators.
-- `FreeGroup`, `FreeGroupElement`.
+- `FreeGroup` — finitely generated free group; generators are ordered by creation order.
+- `FreeGroupElement` — word (element) in a free group, stored as tuple of (generator, exponent) pairs.
+  - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
 
 ---
 

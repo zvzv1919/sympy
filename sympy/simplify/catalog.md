@@ -7,7 +7,7 @@
 
 ## Notes
 - Individual trig identity transforms (sin²↔cos², sum↔product, double-angle, factored-power identities) are in `fu.py`, not `trigsimp.py`.
-- `trigsimp.py` is the high-level entry point that dispatches to Fu-based or Gröbner-based strategies.
+- `trigsimp.py` is the high-level entry point that dispatches to Fu-based or Gröbner-based strategies, and also owns the product-of-powers rewrite engine (e.g. sin^a·cos^b → tan^c) with non-commutativity handling.
 - Sign canonicalization of sub-expressions (`signsimp`) lives in `simplify.py`, not `fu.py`.
 
 ---
@@ -56,6 +56,11 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - `build_ideal(x, terms)` — generates polynomial relations (Pythagorean, multiple-angle) for the ideal.
   - `parse_hints(hints)` — interprets user hints for generator selection.
 - `exptrigsimp(expr)` — simplifies mixed exponential/hyperbolic/trig expressions.
+- `_trigsimp` / `__trigsimp` — recursive helper for trig simplification of sub-expressions.
+  - For `Mul`: splits non-commutative products into commutative and non-commutative parts; simplifies only the commutative portion.
+  - For commutative products: dispatches through division-pattern matchers to rewrite trig-power products (e.g. sin^a·cos^b → tan^c).
+- `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
+- `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants).
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification.
 

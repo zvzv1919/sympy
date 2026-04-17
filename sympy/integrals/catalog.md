@@ -5,6 +5,7 @@
 ### [`integrals.py`](integrals.py)
 Core symbolic integration engine and public API.
 - `Integral` — unevaluated integral expression with limits; supports `.doit()` evaluation
+- `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration
 - `line_integrate(field, curve, vars)` — line integral of a vector field over a curve
 
@@ -38,7 +39,7 @@ Gaussian quadrature rules: computes nodes and weights for numerical integration 
 ## Integral Transforms
 
 ### [`transforms.py`](transforms.py)
-Symbolic integral transforms (closed-form evaluation, not numerical).
+Symbolic integral transforms — class-based API and dispatch layer (delegates heavy computation to `meijerint.py`).
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
@@ -65,7 +66,8 @@ Risch Differential Equation solver: Dy + f·y = g in a differential field.
 ### [`prde.py`](prde.py)
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
-- `limited_integrate`, `is_deriv_k`, `is_log_deriv_k_t_radical`
+- `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
+- `is_deriv_k`, `is_log_deriv_k_t_radical` — structure-theorem tests for derivatives and logarithmic derivatives
 
 ### [`heurisch.py`](heurisch.py)
 Heuristic (pattern-based) integration for expressions not covered by the Risch algorithm.
@@ -86,7 +88,7 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 Integration by rewriting integrands as Meijer G-functions and applying known convolution formulas.
 - `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
-- `meijerint_inversion(f, x, t)` — inverse Laplace-type integrals via G-functions
+- `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
 
 ### [`meijerint_doc.py`](meijerint_doc.py)
 Auto-generates Sphinx documentation for the Meijer G-function lookup table. No runtime logic.
