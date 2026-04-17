@@ -15,6 +15,7 @@ Variable-type key: **crv** = continuous, **drv** = discrete (infinite support), 
 ### [`rv.py`](rv.py)
 Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSpace`, `SinglePSpace`, `RandomSymbol`.
 - Foundational probability-space and domain abstractions; handles conditioning and variable dependencies.
+- `SinglePSpace.__new__`: constructs a probability space for a single variable; coerces string to `Symbol`, raises `TypeError` for non-string/non-Symbol input.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
 
 ### [`crv.py`](crv.py)

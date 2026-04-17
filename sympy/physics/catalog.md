@@ -74,8 +74,10 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression), `state.py` (Ket/Bra/Wavefunction), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
-- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan coefficient symbolic objects and simplification rules including orthogonality-relation identities that reduce CG products summed over j,m to Kronecker deltas.
-- **Spin**: `spin.py` — spin operators, coupled/uncoupled states, Wigner-D/d matrices.
+- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan coefficient symbolic expressions and simplification rules (not state construction); orthogonality-relation identities reduce CG products summed over j,m to Kronecker deltas.
+- **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
+  - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
+  - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate); each gate stores target matrices, commutation relations between gates (e.g. T–S, S–Z commute → 0), and decomposition methods (e.g. SWAP decomposes into three CNOT gates).
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids()` finds equivalent gate identities.
@@ -84,7 +86,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — symbolic `Commutator` and `AntiCommutator` with `doit()` evaluation; these delegate to gate/operator `_eval_commutator_*` methods.
 - **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation and measurement.
-- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `sho1d.py` (1-D SHO operators), `constants.py` (ℏ), `pauli.py` (Pauli operators as Operator subclasses).
+- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `sho1d.py` (1-D SHO operators), `constants.py` (ℏ).
+  - `pauli.py` — Pauli spin operators: SigmaX/Y/Z, SigmaPlus/SigmaMinus raising/lowering operators (nilpotent under positive-integer exponentiation).
+  - `cartesian.py` — 1-D/3-D position and momentum eigenstates (XKet/XBra, PxKet/PxBra) with plane-wave inner products.
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.

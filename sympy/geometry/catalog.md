@@ -68,7 +68,8 @@ Parabolic entities defined by focus and directrix.
 
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
-- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `intersection()`, `arbitrary_point()`.
+- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `intersection()`, `arbitrary_point()`, `distance(o)`.
+  - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via angular-sweep over edge pairs (rotating calipers).
 - `RegularPolygon` — `Polygon` subclass for regular n-gons; adds `radius`, `interior_angle`, `exterior_angle`, `incircle`, `circumcircle`, `spin()`, `rotate()`.
 - `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incircle`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
 
@@ -78,7 +79,7 @@ Polygonal entities in 2D.
 Standalone geometric utility functions.
 - `intersection(*entities)` — finds intersections among multiple geometry objects.
 - `convex_hull(*points)` — returns convex hull as a `Polygon`, `Segment`, or `Point`.
-- `closest_points(*points)` / `farthest_points(*points)` — brute-force pairwise distance queries.
+- `closest_points(*points)` / `farthest_points(*points)` — brute-force pairwise distance between discrete points (not polygon boundaries).
 - `are_coplanar(*entities)` — tests coplanarity of points/lines in 3D.
 - `are_similar(e1, e2)` — tests geometric similarity.
 - `centroid(*args)` — weighted centroid of geometric entities.

@@ -33,6 +33,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
+  - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
   - `per(num, den, cancel, kill, ring)` — construct new DMF; **if `kill=True` and `lev==0`, returns scalar `num/den`**.
@@ -49,6 +50,7 @@ Sparse polynomial rings and their elements (dict-based representation).
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
+  - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
 - `PolyElement` — element of a `PolyRing` (dict: monomial tuple → coefficient).
   - `evaluate(x, a)` — substitute scalar for one variable; **univariate case returns a plain domain scalar** (drops the ring).
   - `subs(x, a)` — substitute scalar; **univariate case wraps result via `ring.ground_new`, returning a constant polynomial still in the ring**.
@@ -80,7 +82,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `count_roots(inf, sup)` — count roots in interval; **if one bound is real and the other complex, converts the real bound to `(value, QQ.zero)` tuple** before delegating to complex root counter.
   - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots.
   - `real_roots`, `all_roots`, `root` — root enumeration via `CRootOf`.
-  - `reorder`, `inject`, `eject` — generator manipulation.
+  - `reorder`, `inject`, `eject` — generator manipulation; **`eject` only supports front or back generators**; raises `NotImplementedError` for middle generators.
+  - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
@@ -90,7 +93,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression; **returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1)**.
 - `cancel(f, g)`, `reduced`, `groebner`, `factor`, `sqf`, `decompose`, `sturm` — public free functions.
-- `poly_from_expr`, `parallel_poly_from_expr` — expression-to-Poly conversion.
+- `poly_from_expr` — expression-to-Poly conversion.
+- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `cofactors`, `resultant`, `discriminant` — algebraic operations.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
@@ -397,8 +401,14 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 ### [`partfrac.py`](partfrac.py)
 Partial fraction decomposition.
 
-- `apart(f, x)` — partial fraction decomposition of rational function.
+- `apart(f, x, full)` — partial fraction decomposition of rational function.
+  - Non-commutative fallback: if polynomial conversion fails, handles Mul (splits commutative/NC parts), Add (decomposes commutative terms).
+  - For other non-commutative forms, **walks the expression tree in preorder**, decomposes each sub-expression, and replaces successes in-place.
+  - `full=False` (default): uses undetermined coefficients method; `full=True`: uses Bronstein's algorithm.
+- `apart_undetermined_coeffs(P, Q)` — partial fractions via undetermined coefficients; factors denominator, assigns symbolic unknowns per factor power, builds a linear system by matching polynomial powers, and solves for unknowns.
+- `apart_full_decomposition(P, Q)` — Bronstein's full partial fraction decomposition.
 - `apart_list` — structured partial fraction representation.
+- `assemble_partfrac_list` — reassemble from structured representation.
 
 ### [`orthopolys.py`](orthopolys.py)
 Classical orthogonal polynomial generation.
@@ -454,5 +464,14 @@ Polynomial system solving.
 ### [`agca/`](agca/catalog.md)
 Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over polynomial rings.
 
+- `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
+- `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
+- `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.
+- `homomorphism(domain, codomain, matrix)` — public constructor for module homomorphisms.
+
 ### [`domains/`](domains/catalog.md)
 Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial rings, fraction fields, expression domain.
+
+- `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings; distinguishes single vs. multiple generators via iterable check.
+- `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
+- `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.

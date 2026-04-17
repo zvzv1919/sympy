@@ -40,6 +40,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_alt_sym`, `is_trivial`.
   - `center` — subgroup of elements commuting with all group elements.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
+  - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order`, `random`, `random_pr`.
   - `minimal_block`, `max_div`, `lower_central_series`, `baseswap`.
 
@@ -83,13 +84,15 @@ Set and integer partitions.
 - `RGS_enum`, `RGS_unrank`, `RGS_rank`, `RGS_generalized`, `random_integer_partition`.
 
 ### [`graycode.py`](graycode.py)
-Gray code generation for binary sequences and subsets.
-- `GrayCode` — n-bit Gray code with subset enumeration.
+Gray code representation and bit-level operations (rank/unrank, conversion).
+- `GrayCode` — n-bit Gray code object; generates all codes, supports `rank`, `unrank`, `next`, `current`.
 - `gray_to_bin`, `bin_to_gray`, `get_subset_from_bitstring`, `graycode_subsets`.
+- **Note**: For traversing *subsets* in Gray code order, see `subsets.py::Subset.iterate_graycode`.
 
 ### [`subsets.py`](subsets.py)
-Subset generation and manipulation via binary/lexicographic enumeration.
-- `Subset` — binary and lexicographic subset ranking/unranking.
+Subset generation and manipulation via binary, lexicographic, and Gray code enumeration.
+- `Subset` — subset ranking/unranking in binary, lexicographic, and Gray code orders.
+  - Gray code traversal: `iterate_graycode`, `next_gray`, `prev_gray` — step through subsets in reflected binary code order with modular wraparound.
 - `ksubsets` — k-element subsets of a set.
 
 ### [`prufer.py`](prufer.py)
@@ -115,6 +118,7 @@ Tensor canonicalization using double-coset representatives.
 
 ### [`util.py`](util.py)
 Low-level algorithms for computational group theory.
+- `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
 - `_base_ordering`, `_distribute_gens_by_base`, `_orbits_transversals_from_bsgs`.
 - `_strip`, `_strip_af` — strip an element through a BSGS.
 - `_strong_gens_from_distr`, `_remove_gens`, `_check_cycles_alt_sym`.

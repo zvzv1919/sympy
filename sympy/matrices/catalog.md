@@ -20,11 +20,12 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Null/column space**: `nullspace` (kernel basis via rref; handles pivot vs free variable classification, errors on unexpected pivot-column entries), `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable` (checks P·D·P⁻¹ decomposability; supports `reals_only` flag to reject complex eigenvalues), `diagonalize`, `jordan_form`, `jordan_cells`.
-- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`.
+- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF` (fraction-free LU returning P, L, D, U).
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`.
 - **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
-- **Predicates**: `is_square`, `is_symmetric`, `is_hermitian`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero`, `is_symbolic`.
+- **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
+- **Predicates**: `is_square`, `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions), `is_hermitian`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero`, `is_symbolic`.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
@@ -33,7 +34,9 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
 - Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve`, `_upper_triangular_solve`.
 - `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `__setitem__`, `copyin_matrix`, `fill`.
-- Factory methods: `zeros`, `eye`, `ones`, `diag`.
+- `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
+- `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
+- Factory methods: `zeros`, `eye`, `ones`, `diag`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
 
 ### [`sparse.py`](sparse.py)
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
@@ -105,7 +108,7 @@ Block-structured symbolic matrices.
 - `DotProduct`: symbolic dot product of two vectors.
 
 ### [`expressions/hadamard.py`](expressions/hadamard.py)
-- `HadamardProduct`: element-wise (Hadamard) matrix product.
+- `HadamardProduct`: unevaluated symbolic element-wise matrix product (concrete version is `matrix_multiply_elementwise` in `dense.py`).
 
 ### [`expressions/funcmatrix.py`](expressions/funcmatrix.py)
 - `FunctionMatrix`: matrix defined by a lambda `f(i,j)` for each entry.

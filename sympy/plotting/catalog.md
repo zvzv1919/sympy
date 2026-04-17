@@ -5,7 +5,7 @@
 ### `plot.py`
 Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 
-- `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default).
+- `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default). Supports indexed access (`__getitem__`, `__setitem__`, `__delitem__`) and `append()`/`extend()` for series manipulation.
 - `check_arguments(args, expr_len, nb_of_free_symbols)` — argument parser that groups flat or tuple-wrapped expressions into plot series; handles ambiguity when expr_len == nb_of_free_symbols (e.g., 3D parametric lines where 3 exprs can't be distinguished from a range tuple).
 - Public API: `plot()`, `plot_parametric()`, `plot3d()`, `plot3d_parametric_line()`, `plot3d_parametric_surface()`.
 - `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
@@ -136,6 +136,8 @@ Color mapping for curves and surfaces.
 
 - `ColorGradient` — interpolates colors across value intervals.
 - `ColorScheme` — applies color functions (including lambdified expressions) to vertices.
+  - `apply_to_curve(verts, u_set)` — assigns RGB to 1D vertex list; two-pass: compute raw channels + track bounds, then normalize to [0,1] and apply gradient. Skips None vertices.
+  - `apply_to_surface(verts, u_set, v_set)` — same two-pass normalization for 2D vertex grid (u×v mesh); skips None entries.
 
 ### `managed_window.py`
 Pyglet window lifecycle management.

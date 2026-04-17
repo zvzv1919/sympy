@@ -38,6 +38,9 @@ All concrete numeric types and their arithmetic operations.
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
+- `Infinity` / `NegativeInfinity` — signed unbounded sentinels; implement own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
+- `NaN` — indeterminate placeholder; structurally equal to itself but mathematically unequal to everything
+- `ComplexInfinity` — unsigned (undirected) infinite quantity; `_eval_power`: zero exp → NaN, positive exp → zoo, negative exp → 0, zoo exp → NaN
 - `_sympify` coercion and `SympifyError` handling throughout arithmetic methods
 
 **Caveat**: Each numeric class implements its own `_eval_power`; Rational._eval_power handles negative-fraction-to-fractional-exponent by separating sign via `(-1)**(expt.p % expt.q / expt.q)`.
@@ -107,11 +110,20 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`expr.py`](expr.py)
 `Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
+- `_eval_is_positive` / `_eval_is_negative` — sign determination for numeric expressions; uses low-precision evalf, falls back to minimal polynomial when floating-point evaluation yields no significant digits (prec == 1)
+- `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
+
 ### [`exprtools.py`](exprtools.py)
 Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_const()`, `_monotonic_sign()`.
 
+- `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
+- `decompose_power_rat(expr)` — variant preserving rational exponents
+- `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n`
+
 ### [`operations.py`](operations.py)
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.
+
+- `_matches_commutative` — pattern matching for Add/Mul; on first-pass failure, decomposes expressions to retry: for Mul, rewrites `x**n` as `x * x**(n-1)`; for Add, rewrites `c*x` as `x + (c-1)*x`; also tries `collect` on non-Wild symbols
 
 ---
 

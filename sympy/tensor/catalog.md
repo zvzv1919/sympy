@@ -37,6 +37,8 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensorIndexType` — characterizes a family of indices (name, metric, dimension, delta, epsilon).
 - `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`).
 - `TensorHead` — named tensor with index types, rank, symmetry, and commutation properties.
+  - `_check_auto_matrix_indices_in_call` — when `True` is passed as an index placeholder, auto-fills slots: first occurrence of a type gets `auto_left`, second gets negated `auto_right`.
+  - `__call__` — returns a `Tensor` with indices; supports auto-matrix index behavior via `True` placeholders or omitted trailing indices.
 - `TensorSymmetry` — symmetry specification for tensor indices.
 - `TensorType` — pairs a list of `TensorIndexType`s with a `TensorSymmetry`.
 - `TIDS` — internal tensor-index data structure holding components, free indices, and dummy indices.
@@ -47,12 +49,62 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensMul` — product of tensors with a scalar coefficient.
 - `TensAdd` — sum of tensors in canonical form.
 - `TensExpr` — abstract base for tensor expressions.
+  - `get_matrix()` — converts attached ndarray component data to a `Matrix`; supports rank ≤ 2, raises `NotImplementedError` for higher ranks.
 - `canon_bp(p)` — canonicalize tensor via Butler-Portugal algorithm.
 - `tensor_indices(s, typ)` — create tensor index objects from string.
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
 - `contract_metric(t, g)` — contract a tensor with a metric tensor.
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.
+
+---
+
+## array/ (subpackage)
+
+Concrete N-dimensional array types (dense/sparse, mutable/immutable) and array operations (product, contraction, derivative, permutation).
+
+### array/ndim_array.py
+
+Base class for all N-dim arrays.
+
+- `NDimArray` — abstract base providing shape, rank, `_parse_index`, `diff`, `applyfunc`, `tolist`.
+- `ImmutableNDimArray` — immutable base (SymPy `Basic` subclass).
+
+### array/dense_ndim_array.py
+
+Dense storage N-dim arrays backed by a flat internal list (`_array`).
+
+- `DenseNDimArray` — constructor alias, returns `ImmutableDenseNDimArray`.
+- `ImmutableDenseNDimArray` / `MutableDenseNDimArray` — immutable and mutable dense variants.
+- `__getitem__` — tuple-of-slices indexes shape-aware; a plain (non-tuple) slice operates directly on the flat `_array`.
+- `tomatrix()` — converts rank-2 array to `Matrix`; raises `ValueError` for other ranks.
+- `zeros`, `reshape`.
+
+### array/sparse_ndim_array.py
+
+Sparse storage N-dim arrays backed by a dict (`_sparse_array`).
+
+- `SparseNDimArray` — constructor alias, returns `ImmutableSparseNDimArray`.
+- `ImmutableSparseNDimArray` / `MutableSparseNDimArray` — immutable and mutable sparse variants.
+- `__getitem__` — same tuple-of-slices logic as dense; missing keys default to zero.
+- `tomatrix()`, `zeros`, `reshape`.
+
+### array/arrayop.py
+
+Standalone functions for tensor-style operations on N-dim arrays.
+
+- `tensorproduct(*args)` — outer (tensor) product of arrays/scalars; result rank = sum of input ranks.
+- `tensorcontraction(array, *contraction_axes)` — contracts (sums) over specified axis pairs; validates axes are distinct and dimensions match (raises `ValueError` on mismatch).
+- `derive_by_array(expr, dx)` — element-wise derivative of array or scalar w.r.t. array or scalar.
+- `permutedims(expr, perm)` — reorders axes of an N-dim array by a permutation.
+
+### array/mutable_ndim_array.py
+
+- `MutableNDimArray` — mixin base adding `__setitem__` for in-place element modification.
+
+### array/__init__.py
+
+Re-exports: `Array` (alias for `ImmutableDenseNDimArray`), dense/sparse array classes, `tensorproduct`, `tensorcontraction`, `derive_by_array`, `permutedims`.
 
 ---
 

@@ -24,7 +24,8 @@ Main inference engine for the assumptions system.
 ### [`assume.py`](assume.py)
 Predicate definitions and global assumptions context.
 - `Predicate`: base class representing a named predicate with registered handlers.
-- `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object.
+  - `eval(expr, assumptions)`: walks the expression type's MRO across all registered handlers; raises `ValueError` on conflicting results from different resolutors.
+- `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object; delegates to `Predicate.eval` via `_eval_ask`.
 - `AssumptionsContext` / `global_assumptions`: mutable set of globally active assumptions.
 - `assuming(*assumptions)`: context manager for temporary local assumptions.
 

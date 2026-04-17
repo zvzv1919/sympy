@@ -17,6 +17,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve` or `_solve_system`.
 - `_solve(f, symbol, **flags)` — internal single-equation solver; handles:
+  - Multi-symbol sequential resolution: solves for each symbol in turn; discards solutions whose free symbols depend on a previously solved symbol.
   - Piecewise/conditional expressions: iterates branches, enforces branch-priority (earlier-branch exclusion) via `piecewise_fold`.
   - Linear equations via `solve_linear`.
   - Polynomial dispatch via `Poly` and generator inspection.
@@ -92,7 +93,7 @@ Solves ordinary differential equations via classification and hint-based dispatc
 ### [`pde.py`](pde.py)
 Solves partial differential equations via method dispatch.
 
-- `pdsolve(eq, func, hint)` — main PDE solver.
+- `pdsolve(eq, func, hint)` — main PDE solver; supports meta-hints "all"/"all_Integral" returning a dict where failed strategies store the NotImplementedError exception object as value.
 - `classify_pde(eq, func)` — classifies PDE into applicable hints.
 - `checkpdesol(pde, sol)` — validates PDE solution.
 - `pde_separate`, `pde_separate_add`, `pde_separate_mul` — variable separation methods.
