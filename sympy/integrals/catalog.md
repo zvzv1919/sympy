@@ -139,7 +139,8 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - If all shifts yield unevaluated special functions and f contains HyperbolicFunction, rewrites hyperbolics as exponentials and retries
   - Returns the best (simplest) collected result if no clean closed-form is found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
-- `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
+- `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting
+  - Pre-processes product-form integrands by filtering out `exp(a*x)` and `base^(a*x)` factors, accumulating their exponents into a cumulative shift applied to the final result
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
 - `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)

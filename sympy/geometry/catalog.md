@@ -92,6 +92,8 @@ Polygonal entities in 2D.
   - `encloses_point(p)` — optimized containment: rejects if distance ≥ circumradius, accepts if distance < inradius, falls back to general `Polygon.encloses_point` only for the annular region between.
   - `__eq__(o)` — cross-type equality: if compared to a plain `Polygon`, delegates to `Polygon.__eq__` to resolve center/radius vs explicit-vertices mismatch.
 - `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incircle`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
+  - `is_similar(t2)` — triangle similarity test; checks all 6 side-length-ratio permutations for uniform scaling match.
+  - `is_equilateral()`, `is_isosceles()`, `is_right()`, `is_scalene()` — triangle classification predicates.
 
 ## Utilities
 

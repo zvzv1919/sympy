@@ -20,7 +20,8 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 
 ### [`root_system.py`](root_system.py)
 `RootSystem` — facade over a Cartan type for root-level operations.
-- `simple_roots()`, `all_roots()` — enumerates roots by delegating to the type class.
+- `simple_roots()` — collects simple roots from the type class.
+- `all_roots()` — builds complete root set: fetches positive roots dict from the type class, then negates each to produce negative roots in the same dict (snapshots keys first to avoid mutation during iteration).
 - `add_simple_roots()`, `add_as_roots()` — root arithmetic (sum only if result is a root).
 - `root_space()` — string description of the root space as a span of simple roots.
 

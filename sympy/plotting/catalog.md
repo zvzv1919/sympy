@@ -80,7 +80,9 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
 - `PygletPlot` — top-level plot object; manages plot objects, axes, camera, window, and rendering thread.
-- Supports indexed assignment (`p[1] = expr`) for adding/replacing plot functions.
+- `__setitem__(i, args)` — indexed assignment (`p[1] = expr`); parses args into a `PlotMode` and stores it.
+  - Wraps `GeometryEntity` in a list even though it satisfies `is_sequence()`, preventing geometry objects from being unpacked as multiple arguments.
+  - Passes `PlotObject` instances through directly without parsing.
 
 ### `plot_mode.py`
 Plot mode registry and argument interpretation.

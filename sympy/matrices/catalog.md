@@ -19,7 +19,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Row reduction / spaces**: `rref`, `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
-- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF`.
+- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`, `LUdecompositionFF`.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
@@ -143,7 +143,7 @@ Block-structured symbolic matrices.
 - `DiagonalMatrix`, `DiagMatrix`: symbolic diagonal matrix expressions.
 
 ### [`expressions/dotproduct.py`](expressions/dotproduct.py)
-- `DotProduct`: symbolic dot product of two vectors.
+- `DotProduct`: symbolic dot product of two vector matrices (1×n or n×1); `doit()` auto-transposes arguments based on row/column orientation before multiplying and extracting the scalar.
 
 ### [`expressions/hadamard.py`](expressions/hadamard.py)
 - `HadamardProduct`: unevaluated symbolic element-wise matrix product (concrete version is `matrix_multiply_elementwise` in `dense.py`).

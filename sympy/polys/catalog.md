@@ -46,7 +46,8 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `frac_unify(g)` — unify two DMFs across different domains; creates a local `per` closure that captures the unified domain and has the same kill/level-zero scalar-return behavior.
   - `poly_unify(g)` — unify DMF with a DMP; same local `per` closure pattern.
   - `half_per(rep, kill)` — create DMP from rep; if `kill=True` and `lev==0`, returns the raw rep.
-  - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `quo`, `exquo`.
+  - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `pow`, `quo`, `exquo`.
+    - `quo(f, g)` — computes fraction quotient; after computing result, **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**. `exquo` is an alias for `quo`.
   - `__rdiv__(g)` — reverse division (`g / self`); computes `invert()*g`, then **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**.
 - `ANP` — Algebraic Number Polynomial (univariate dense poly modulo a minimal polynomial over an algebraic extension).
   - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
@@ -76,9 +77,12 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `div(fv)`, `rem(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
   - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
-  - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`. Single-term (monomial) fast path handles arbitrary exponents; multi-term dispatches by degree to `square`, `_pow_multinomial`, or `_pow_generic`.
+  - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`.
+    - Single-term (monomial) fast path handles arbitrary exponents.
+    - **≤5 terms → `_pow_multinomial` (multinomial coefficient expansion); >5 terms → `_pow_generic` (repeated squaring)**.
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
+  - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
   - `__mul__` cross-ring dispatch: when `p2` is a `PolyElement` from a different ring, checks if `p2.ring.domain` is a `PolynomialRing` whose `.ring` matches `p1.ring`; if so, **delegates to `p2.__rmul__(p1)`**.
@@ -92,6 +96,8 @@ Sparse rational function fields and their elements.
   - `__new__` — caches field objects; assigns generator symbols as attributes on the field; **skips `setattr` if an attribute with that name already exists (`hasattr` guard)**, preventing generator names like `'domain'` or `'ring'` from overwriting internal attributes.
   - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
+  - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
+    - **If that fails and domain has an associated field (e.g. ZZ→QQ), retries via the field and returns `(numer, denom)` split**; returns `(0, None, None)` on total failure.
   - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
 
 ---
@@ -127,6 +133,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - Merges generator sets via `_unify_gens`, reorders monomial dicts via `_dict_reorder`, converts coefficients to unified domain.
     - **If `g` is not a Poly (e.g. a plain scalar), attempts to interpret it as a constant in `f`'s coefficient domain**; raises `UnificationFailed` if conversion fails.
   - `__eq__(other)` — equality comparison; **if generators match but coefficient domains differ, attempts domain unification; returns `False` (not an error) if `UnificationFailed`**.
+  - `__pow__(n)` — if `n` is a non-negative integer, delegates to `pow(n)`; **otherwise falls back to `as_expr()**n`** (converts to symbolic expression), enabling negative/fractional exponents at the expression level.
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.
       Attempts to retract quotient/remainder back to the ring; keeps field-domain results silently if retraction fails.
@@ -183,7 +190,9 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_mul_ground`, `dmp_mul_ground`, `dup_quo_ground`, `dmp_quo_ground` — ground element operations.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — remainder, quotient, exact quotient.
-- `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem`, `dup_pquo`, `dmp_pquo`, `dup_pexquo`, `dmp_pexquo` — pseudo-division variants; **raise `PolynomialDivisionFailed` if remainder degree fails to decrease between iterations**.
+- `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **raise `PolynomialDivisionFailed` if remainder degree fails to decrease between iterations**.
+- `dup_pquo`, `dmp_pquo` — pseudo-quotient (discards remainder).
+- `dup_pexquo`, `dmp_pexquo` — exact pseudo-quotient; **raises `ExactQuotientFailed` if pseudo-remainder is nonzero**.
 - `dup_abs` — absolute values of coefficients.
 - `dup_max_norm`, `dmp_max_norm` — maximum coefficient norm; **returns `K.zero` for zero polynomial (empty list)**.
 - `dup_l1_norm`, `dmp_l1_norm` — L1 norm (sum of absolute coefficient values); **returns `K.zero` for zero polynomial (empty list)**.
@@ -287,7 +296,8 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_chinese_remainder_reconstruction_multivariate` — CRT for multivariate polynomials; **when coefficient domain is a `PolynomialRing` (nested structure), recurses on itself to CRT-combine the polynomial coefficients**; for plain integer coefficients, uses standard number-theoretic CRT.
 - `_rational_function_reconstruction(c, p, m)` — recover rational function `a/b` in `Z_p(t)` from congruence residue `c mod m` via partial extended Euclidean algorithm with degree bounds.
   - **Returns `None` if denominator shares a common factor with modulus** (non-invertible).
-- `_rational_reconstruction_int_coeffs` — rational reconstruction of coefficients.
+- `_rational_reconstruction_int_coeffs(hm, m, ring)` — reconstruct rational coefficients from integer image. Returns `None` if any coefficient fails.
+  - **If `ring.domain` is a `PolynomialRing` (nested coefficients), recurses on itself; otherwise delegates to `_integer_rational_reconstruction`**.
 - `_trial_division` — verify candidate GCD by trial division.
 
 ---
@@ -327,7 +337,8 @@ Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic e
 - `dup_sqf_list`, `dmp_sqf_list` — square-free decomposition with multiplicities.
 - `dup_sqf_list_include`, `dmp_sqf_list_include` — same as `sqf_list` but folds the leading coefficient into the factor list; **if no factor has multiplicity 1, prepends a ground constant `(coeff, 1)` entry**.
 - `dup_gf_sqf_part`, `dmp_gf_sqf_part`, `dup_gf_sqf_list`, `dmp_gf_sqf_list` — GF variants (thin wrappers around `galoistools`).
-- `dup_gff_list`, `dmp_gff_list` — greatest factorial factorization.
+- `dup_gff_list` — greatest factorial factorization (univariate only).
+- `dmp_gff_list` — **raises `MultivariatePolynomialError` for polynomials with more than one variable**; delegates to `dup_gff_list` when univariate.
 
 Caveat: For native GF(p) polynomial square-free and factorization, see `galoistools.py`.
 
@@ -470,10 +481,11 @@ Bridge between sparse polynomial ring interface and dense function API.
 ### [`polyoptions.py`](polyoptions.py)
 Option processing and validation for `Poly` constructors and functions.
 
-- `Options` — option container; manages `domain`, `field`, `gaussian`, `extension`, `modulus`, `order`, etc.
+- `Options` — option container (dict subclass); manages `domain`, `field`, `gaussian`, `extension`, `modulus`, `order`, etc.
+  - `__init__` — preprocesses explicit args first, then **prunes defaults that conflict with already-set options via `cls.excludes` lists** before applying defaults; enforces mutual-exclusion and dependency constraints after all options are set.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
-- `build_options`, `allowed_flags` — option construction helpers.
+- `build_options(gens, args)` — if `args` has exactly one key `'opt'` and no generators, **returns the existing `Options` object directly** (reuse); otherwise constructs a new `Options`.
 
 ### [`polyconfig.py`](polyconfig.py)
 Global configuration flags for polynomial algorithms.
@@ -544,6 +556,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `_minpoly_groebner(ex, x, dom)` — Gröbner-basis strategy for minimal polynomial.
   - Includes `simpler_inverse` heuristic: **inverts the expression first when it is a product of powers or a negative-exponent power with Add base**, then transforms back via `_invertx`.
 - `_minpoly_op_algebraic_element(op, ex1, ex2, x, dom)` — minimal polynomial for sum or product of two algebraic elements via resultant; **when `dom` is QQ and `op` is Add, uses fast `rs_compose_add` instead of general resultant**.
+  - **When one input minimal polynomial is linear (degree 1), skips expensive factorization** and returns the resultant directly (already irreducible).
 - `_minimal_polynomial_sq(p, n, x)` — minimal polynomial for `p^(1/n)` where `p` is a sum of surds; eliminates square roots via repeated `_separate_sq`.
   - **When `n==1`, skips factorization and directly normalizes** (sign correction + primitive part), since elimination already yields a constant multiple of the minimal polynomial.
 - `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
@@ -675,7 +688,9 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
   - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
+- `SubModule.syzygy_module()` (in `modules.py`) — compute kernel of the map from a free module to `self`; **filters out zero relations** from the result for convenience.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
+- `QuotientModule.is_submodule(other)` (in `modules.py`) — for two QuotientModules, **requires killed submodules to be equal AND base modules to have containment**; for SubQuotientModule, checks container identity.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `ModuleHomomorphism.__init__` (in `homomorphisms.py`) — validates source/target are Module instances and **raises `ValueError` if they are defined over different base rings**.
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
@@ -716,6 +731,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
 - `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
+  - `from_FractionField(a, K0)` — convert between fraction fields: same gens → direct copy or domain conversion; source gens ⊂ target gens → reorders monomials; **incompatible gens → implicitly returns `None`** (silent conversion failure).
   - `from_GlobalPolynomialRing` — cross-ring conversion mirrors the polynomial ring's reorder logic.
 - `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.
   - `revert(a)` — compute multiplicative inverse of `a` in `R/I`; **forms the sum of the principal ideal `(a)` and the base ideal, then tests if 1 is expressible in their generators**; raises `NotReversible` if not a unit.

@@ -98,7 +98,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
   - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients.
     - Numeric j,m: enumerates valid magnetic projection configurations explicitly. Symbolic j,m: returns symbolic Sum over CG products.
-- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices, commutation relations, and decomposition methods.
+- **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices and decomposition methods.
+  - `OneQubitGate._eval_commutator` — short-circuits to zero when two single-qubit gates act on different targets OR are the same gate class; otherwise falls back to generic Operator commutator.
   - `Gate._apply_operator_Qubit` — applies a gate to a qubit state: selects a target-matrix column via bit-shifted index from target qubits, then flips bits to construct the output state superposition.
   - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
@@ -128,7 +129,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
 - **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; dispatches by expression type (Add, Mul, TensorProduct, Density, Pow).
-  - `qapply_Mul` handles products by trying lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forming InnerProduct for Bra·Ket pairs.
+  - `qapply_Mul` handles products: decomposes OuterProduct (ket-bra) by pushing ket onto args and using bra as new lhs; tries lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forms InnerProduct for Bra·Ket pairs.
   - Dagger fallback: if `qapply_Mul` fails to simplify a Mul and `dagger=True`, takes Hermitian conjugate of the expression, re-applies, then conjugates back.
 - **Density matrices**: `density.py` — `Density` class for mixed-state statistical ensembles (weighted collections of pure states).
   - `apply_op(op)` — applies an operator to each pure-state component while preserving weights; returns a new Density.
@@ -137,7 +138,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Operator–state mapping**: `operatorset.py` — bidirectional mapping between operator classes and their eigenstate classes.
   - `state_to_operators(state)` — maps a state (class or instance) to its observable operator(s); for Bra states not directly in the registry, resolves via `dual_class()` to look up the corresponding Ket entry.
   - `operators_to_state(operators)` — inverse mapping: operator(s) → eigenstate.
-- **Other**: `tensorproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+- **Circuit utilities**: `circuitutils.py` — primitive circuit manipulation: `find_subcircuit`/`replace_subcircuit` (KMP-based subsequence search/replace in gate tuples), `random_reduce(circuit, gate_ids)` (randomly removes a known gate identity from a circuit; returns original circuit unchanged if no identity is found), `random_insert` (inserts a random identity into a circuit), `flatten_ids` (expands GateIdentity objects into sorted list of equivalent sequences), `convert_to_symbolic_indices`/`convert_to_real_indices`.
+- **Other**: `tensorproduct.py`, `matrixcache.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `innerproduct.py` — `InnerProduct` expression node (unevaluated ⟨bra|ket⟩); constructor validates types and stores bra/ket.
     - Does NOT contain evaluation formulas — actual results (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
@@ -181,6 +183,9 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Legacy `_old_linearize` (deprecated) computes Jacobians in-place.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
+  - `mass_matrix` — dynamic mass matrix, augmented with Lagrange multiplier coefficients when constraints exist (n×(n+m)).
+  - `mass_matrix_full` — full block-structured coefficient matrix: identity block (kinematic qdot relations) on top, mass_matrix row in middle, differentiated constraint rows on bottom when constraints present.
+  - `forcing` / `forcing_full` — generalized forcing vector; `forcing_full` augments with qdots and differentiated constraint forcing terms.
   - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy(frame)` (computes ½mv² via velocity dot product) methods.

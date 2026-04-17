@@ -22,7 +22,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
 - `TR2(rv)` — replace tan/cot with sin/cos and cos/sin ratios.
-- `TR2i(rv, half)` — convert sin/cos ratios back to tan; guards against invalid rewrites when exponent is non-integer and base lacks positivity.
+- `TR2i(rv, half)` — convert sin/cos ratios back to tan; with `half=True` also rewrites sin/(cos+1) → tan(x/2).
+  - Exponent/base guard: only rewrites when exponent is integer or base is positive; otherwise leaves expression unchanged.
 - `TR3(rv)` — canonicalize angles via induced formulas.
 - `TR4(rv)` — evaluate trig at special angles (0, π/6, π/4, π/3, π/2).
 - `_TR56(rv, f, g, h, max, pow)` — helper for TR5/TR6; replaces even powers of sin/cos via Pythagorean identity.
@@ -78,6 +79,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 Main general-purpose simplification and miscellaneous simplification functions.
 
 - `simplify(expr, ratio, measure, fu)` — primary heuristic simplifier; tries multiple strategies and picks the shortest.
+  - For non-arithmetic functions (not Add/Mul/Pow/Exp) with an `inverse` attribute: detects and unwraps inverse-function compositions (e.g. f(f⁻¹(x)) → x) before recursing into args.
 - `signsimp(expr, evaluate)` — canonicalize sign of Add sub-expressions (e.g., y−x → −(x−y)).
   - Uses double-negation on Mul atoms to detect non-canonical signs; `evaluate` controls whether no-op transforms are kept.
 - `separatevars(expr, symbols, dict, force)` — factor expression into product of single-variable terms.
@@ -117,6 +119,8 @@ Radical simplification, term collection, and rationalization.
 - `fraction(expr, exact)` — decompose expression into (numerator, denominator) pair by splitting powers with negative exponents.
   - `exact=True`: only moves constant negative exponents to denominator; non-constant negative exponents stay in numerator; returns unevaluated Muls.
 - `numer(expr)` / `denom(expr)` — shorthand for `fraction(expr)[0]` / `[1]`.
+- `rad_rationalize(num, den)` — recursively rationalize a fraction whose denominator is a sum of square-root terms with rational squares.
+  - Each step uses `split_surds` to decompose the denominator into conjugate-like halves (a, b), multiplies by (a−b), and recurses until the denominator is no longer an Add.
 - `split_surds(expr)` — split a sum of square-root terms into groups by GCD of squared radicands.
   - If all radicands share a common factor (no coprime group), divides out that factor and re-partitions.
 - `_split_gcd(*a)` — partition integers into a GCD-sharing group and a coprime remainder group.

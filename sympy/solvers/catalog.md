@@ -126,7 +126,9 @@ Solves partial differential equations via method dispatch.
 
 - `pdsolve(eq, func, hint)` — main PDE solver; supports meta-hints "all"/"all_Integral" returning a dict where failed strategies store the NotImplementedError exception object as value.
 - `classify_pde(eq, func)` — classifies PDE into applicable hints.
-- `checkpdesol(pde, sol)` — validates PDE solution by substitution. When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.
+- `checkpdesol(pde, sol, func)` — validates PDE solution by substitution.
+  - If `func` is omitted, auto-detects via `_preprocess`; on failure, falls back to extracting applied undefined functions from the solution's atoms (raises ValueError if not exactly one found).
+  - When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.
 - `_handle_Integral(expr, func, order, hint)` — post-processes PDE solutions containing unevaluated integrals.
   - Hint suffix `_Integral` preserves raw integral form; `1st_linear_constant_coeff` triggers `doit()` + `simplify`; all others return unchanged.
 - `pde_separate`, `pde_separate_add`, `pde_separate_mul` — variable separation methods.

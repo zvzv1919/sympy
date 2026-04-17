@@ -27,6 +27,7 @@ Individual permutation representation, construction, and properties.
   - `commutator(x)` — group commutator of two individual permutations (~x·~self·x·self); raises `ValueError` if sizes differ.
   - `commutes_with` — checks if two individual permutations commute (boolean, no search).
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.
+  - `josephus(m, n, s=1)` — classmethod; simulates circular elimination (Josephus problem) where every m-th item is removed from range(n); parameter `s` switches to sequential (step-1) selection when s items remain.
 - `_af_new(perm)` — static fast-path factory; constructs a `Permutation` directly from a raw int list, skipping all input validation (no duplicate/range checks). Internal use only.
 - Low-level array-form helpers: `_af_rmul`, `_af_rmuln`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
 
@@ -78,10 +79,14 @@ Yields individual `Permutation` elements (not `PermutationGroup` objects) for st
 ## Finitely Presented and Free Groups
 
 ### [`fp_groups.py`](fp_groups.py)
-Finitely presented groups and coset enumeration.
+Finitely presented groups, coset enumeration, and subgroup presentations.
 - `FpGroup`, `CosetTable`.
 - Coset enumeration: `coset_enumeration_r`, `coset_enumeration_c`.
 - `low_index_subgroups`, `reidemeister_presentation`.
+- Subgroup presentation pipeline:
+  - `define_schreier_generators(C)` — builds Schreier generators for a subgroup from a coset table.
+  - `reidemeister_relators(C)` — computes defining relators for the subgroup; simplifies by eliminating trivial (order-1) generators and removing cyclic-conjugate duplicates (Tietze transformation TT_1).
+  - `rewrite(C, α, w)` — rewrites a word in the original generators into the Schreier generator set for a given coset.
 
 ### [`free_group.py`](free_group.py)
 Free groups with symbolic generators.
@@ -106,7 +111,9 @@ Set and integer partitions.
   - `from_rgs(rgs, elements)` — reconstructs a set partition from a sequence of block indices paired with items; validates that no block is left empty.
   - `RGS` — property returning the restricted growth string encoding which block each element belongs to.
 - `IntegerPartition` — partition of an integer.
-- `RGS_enum`, `RGS_unrank`, `RGS_rank`, `RGS_generalized`, `random_integer_partition`.
+- `RGS_enum(m)` — total count of restricted growth strings for superset size m.
+- `RGS_unrank(rank, m)` — converts a rank to a restricted growth string; raises `ValueError` if rank < 0 or rank ≥ `RGS_enum(m)`.
+- `RGS_rank`, `RGS_generalized`, `random_integer_partition`.
 
 ### [`graycode.py`](graycode.py)
 Gray code representation and bit-level operations (rank/unrank, conversion).
