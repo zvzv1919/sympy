@@ -58,6 +58,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 
 ### [`units.py`](units.py)
 Legacy physical-units module with ~200 predefined units, physical constants, and `find_unit()` search.
+- `Unit` — base class for physical units (AtomicExpr subclass); stores `name` and `abbrev`. Equality (`__eq__`) compares only `name`, ignoring `abbrev` — two units with the same name but different abbreviations are considered equal.
 - `find_unit(quantity)` — two modes: string input → substring match against module namespace; unit expression input → strips numeric coefficient via `as_coeff_Mul()`, compares the dimensional part against all defined symbols in the module. Results sorted by name length.
 
 ### [`wigner.py`](wigner.py)
@@ -98,19 +99,24 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients.
     - Numeric j,m: enumerates valid magnetic projection configurations explicitly. Symbolic j,m: returns symbolic Sum over CG products.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices, commutation relations, and decomposition methods.
+  - `Gate._apply_operator_Qubit` — applies a gate to a qubit state: selects a target-matrix column via bit-shifted index from target qubits, then flips bits to construct the output state superposition.
   - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids(gate_seq)` finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
+  - `GateIdentity` — represents a gate sequence that multiplies to a scalar; stores equivalent permutations. `is_degenerate` checks if a candidate is a permutation of an existing identity.
+  - `is_reducible(circuit, nqubits, begin, end)` — checks if a circuit interval contains a scalar subcircuit; only tests right-anchored subcircuits (grows leftward from `end`), so left-anchored-only reductions within the range may be missed.
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
   - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).
     - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
-- **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products of `BosonOp`/`FermionOp` (mode-labeled quantum/ operators) into creation-before-annihilation order.
-  - `_normal_ordered_form_factor` — core swap logic: bosonic swaps use Commutator (no sign change); fermionic swaps use AntiCommutator (with sign flip).
+- **Operator ordering**: `operatorordering.py` — two reordering modes for `BosonOp`/`FermionOp` (mode-labeled quantum/ operators):
+  - `normal_ordered_form()` — equivalent reordering: preserves operator algebra by adding commutator/anticommutator correction terms during swaps.
+  - `normal_order()` — non-equivalent reordering: simply swaps creation before annihilation, dropping commutator terms. Fermionic swaps always apply a sign flip (−1) regardless of whether operators share the same mode.
+  - `_normal_ordered_form_factor` — core swap logic for equivalent form: bosonic swaps use Commutator; fermionic swaps use AntiCommutator (with sign flip).
   - Independent modes (`independent=True`): correction term set to zero for operators on different modes.
   - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.

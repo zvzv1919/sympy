@@ -46,7 +46,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `L(rv)` — count trig functions in expression (used as complexity measure).
 - `trig_split(a, b)` — decompose pair of trig terms for identity matching.
 - `as_f_sign_1(e)` — decompose expression as g*(f ± 1) for factored-identity rules.
-- `process_common_addends(rv, do)` — apply transform to groups sharing common factors in a sum.
+- `process_common_addends(rv, do, key2, key1)` — group addends by absolute value of their coefficient (and optional `key2`), then apply `do` to each group with >1 member.
+  - Negative coefficients: negates both coefficient and argument so sign is transferred to the argument before grouping.
 - `hyper_as_trig(rv)` — unify mixed trig/hyperbolic expressions: masks pre-existing trig functions with placeholders, converts hyperbolics to trig via Osborne's rule, returns transformed expr + reversal callable that restores original trig functions and converts back.
 
 ### [`trigsimp.py`](trigsimp.py)

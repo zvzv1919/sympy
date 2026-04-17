@@ -90,7 +90,7 @@ Randomized numerical verification of symbolic expression equivalence (not doctes
 ### [`benchmarking.py`](benchmarking.py)
 Benchmarking framework via py.test.
 - `Timer(timeit.Timer)` — subclass that compiles/executes timing code using caller-provided globals instead of `timeit`'s default isolated namespace.
-- `Function` — py.test item that extracts function source, runs adaptive calibration targeting ~0.2 s measurement windows.
+- `Function` — py.test item that extracts function source, runs calibration targeting ~0.2 s measurement windows for benchmark reporting (no unit selection or standalone timing).
 
 ## Miscellaneous
 
@@ -108,7 +108,7 @@ SymPy-specific exception and warning classes.
 
 ### [`timeutils.py`](timeutils.py)
 Timing and profiling utilities independent of IPython.
-- `timed(func)` — adaptively measure execution time of a callable, auto-scaling iteration count.
+- `timed(func)` — adaptively measure execution time of a callable, auto-scaling iteration count; auto-selects display unit (s/ms/μs/ns) via log10; guards against zero-time by defaulting to ns (order=3) to avoid math domain error.
 - `timethis(name)` — decorator factory that profiles recursive/nested calls by maintaining a global stack; builds a hierarchical tree of durations. Selectively enabled via `SYMPY_TIMINGS` env var (comma-separated function names); no-op for unlisted names.
 
 ### [`magic.py`](magic.py)

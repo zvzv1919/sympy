@@ -13,7 +13,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
   - `plot_parametric()` — 2D parametric curves from two expressions over one parameter.
   - `plot3d()` — 3D surface from one expression over two variables.
   - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter.
-  - `plot3d_parametric_surface()` — 3D parametric surface from three coordinate expressions (x, y, z) each over two independent parameters (u, v).
+  - `plot3d_parametric_surface()` — 3D parametric surface from three coordinate expressions (x, y, z) each over two independent parameters (u, v). Uses `check_arguments(args, 3, 2)`, so inherits the expr_len==3 ambiguity limitation requiring explicit grouping for multiple plots.
 - `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.
@@ -185,5 +185,5 @@ OpenGL and 3D math utilities.
 
 - `get_model_matrix()`, `get_projection_matrix()`, `get_viewport()` — GL state queries.
 - `screen_to_model()`, `model_to_screen()` — coordinate transformations.
-- `billboard_matrix()` — orients geometry to face camera.
+- `billboard_matrix()` — resets the upper-left 3×3 rotation submatrix of the current modelview matrix to identity while preserving translation (row 4) and projection (column 4), so drawn primitives always face the viewer.
 - `parse_option_string()` — parses keyword arguments from string format.

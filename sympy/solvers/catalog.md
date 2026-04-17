@@ -27,6 +27,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Piecewise/conditional expressions: iterates branches, enforces branch-priority (earlier-branch exclusion) via `piecewise_fold`.
   - Linear equations via `solve_linear`.
   - Polynomial dispatch via `Poly` and generator inspection.
+  - Multi-generator same-base handling: when generators share one base but differ in power (e.g. exp(x), exp(-x)), expands powers before substituting the base with a dummy variable.
   - Transcendental fallback via `_tsolve`.
 - `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables.
 - `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
@@ -152,5 +153,7 @@ Utilities for classifying and manipulating differential equations.
 - `_preprocess(expr, func, hint)` — prepares expressions for ODE solving.
 - `_desolve(eq, func, hint, ics)` — shared dispatch helper used by both `dsolve` (ODE) and `pdsolve` (PDE).
   - Delegates to `classify_ode` or `classify_pde` based on `type` kwarg.
+  - Handles meta-hints `all`, `all_Integral`, and `best`: iterates matching hints, collects solutions into a dict.
+  - `all_Integral` filtering: removes non-Integral variants that have an `_Integral` counterpart, and explicitly excludes strategies without an `_Integral` form (e.g. power series, Lie group, homogeneous coeff best).
   - On recursive calls, accepts `classify=False` to skip re-classification and reuse previously computed hints/match/order from kwargs.
   - Validates order > 0; raises ValueError if order is 0 (not a DE). Three-way error branching when no default hint: unrecognized hint → ValueError, non-matching hint → ValueError, no method works → NotImplementedError.

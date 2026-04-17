@@ -20,7 +20,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF`.
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` (Frobenius, spectral, p-norms).
@@ -155,7 +155,9 @@ Block-structured symbolic matrices.
 - Symbolic matrix factorization nodes: `LofLU`, `UofLU`, `LofCholesky`, `UofCholesky`.
 
 ### [`expressions/slice.py`](expressions/slice.py)
-- `MatrixSlice`: symbolic submatrix slice expression M[i:j, k:l].
+- `MatrixSlice`: symbolic submatrix slice expression M[i:j, k:l]; `__new__` auto-detects when the parent is itself a `MatrixSlice` and delegates to `mat_slice_of_slice` to collapse nesting.
+- `mat_slice_of_slice`: collapses nested matrix slices into a single `MatrixSlice` referencing the original parent by composing row/col range triples.
+- `normalize`: converts various index forms (int, slice, tuple) into a canonical (start, stop, step) triple with negative-index handling.
 
 ---
 

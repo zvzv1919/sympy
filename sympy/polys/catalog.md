@@ -58,7 +58,8 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
 ### [`rings.py`](rings.py)
 Sparse polynomial rings and their elements (dict-based representation).
 
-- `ring()`, `xring()`, `vring()`, `sring()` — ring constructor functions.
+- `ring()`, `xring()`, `vring()` — ring constructor functions with explicit domain.
+- `sring(exprs, *symbols)` — construct ring from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
@@ -117,6 +118,10 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
+    - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
+  - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
+  - `homogenize(s)` — make polynomial homogeneous using symbol `s`; **if `s` is already a generator, reuses its index; if new, appends it to generators**. Raises `TypeError` if `s` is not a `Symbol`.
+  - `homogeneous_order()` — return the total degree if all terms share the same degree; `is_homogeneous` for a boolean check.
   - `unify(g)` / `_unify(g)` — reconcile two Polys to a common variable ordering and coefficient domain.
     - Merges generator sets via `_unify_gens`, reorders monomial dicts via `_dict_reorder`, converts coefficients to unified domain.
     - **If `g` is not a Poly (e.g. a plain scalar), attempts to interpret it as a constant in `f`'s coefficient domain**; raises `UnificationFailed` if conversion fails.
@@ -141,6 +146,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
+  - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
@@ -477,7 +483,7 @@ Expression-to-polynomial conversion utilities and generator management.
 - `_sort_factors` — sort polynomial factors.
 - `_dict_reorder(rep, gens, new_gens)` — reorder monomial exponent tuples to match a new generator ordering; appends zero for new generators not in the original set.
   - **Raises `GeneratorsError` if an original generator with non-zero exponent is absent from the new ordering**.
-- `_nsort` — numerical sorting of roots.
+- `_nsort(roots, separated)` — numerical sorting of roots; **raises `NotImplementedError` if any evaluated real/imaginary part has `_prec == 1`** (insufficient precision).
 - `PicklableWithSlots` — base class for picklable objects with `__slots__`.
 
 ### [`monomials.py`](monomials.py)

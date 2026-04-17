@@ -84,12 +84,15 @@ Risch algorithm for integration of transcendental elementary functions.
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
 - `rischDE(fa, fd, ga, gd, DE)` — main RDE solver
+- `special_denom` — non-parametric special denominator computation for exp/tan/primitive cases (cf. `prde_special_denom` in prde.py for parametric variant)
 - Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
 
 ### [`prde.py`](prde.py)
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
+- `prde_special_denom` — parametric special denominator; handles exp/tan/primitive cases; in hypertangent case with possible cancellation, checks `recognize_log_derivative` and `parametric_log_deriv` before adjusting degree bound
+- `real_imag` — separates a rational function into real and imaginary parts evaluated at a complex root of t²+1
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
 - `prde_linear_constraints` — generates linear constraints on undetermined constants; computes LCM denominator, divides scaled terms, returns empty Matrix when all remainders are zero (no constraints)

@@ -14,7 +14,7 @@ Main module: differential operator algebra, `HolonomicFunction` class, and conve
 - `DifferentialOperator` — element of the Weyl algebra; list of polynomial coefficients + parent.
 - `DifferentialOperators(base, generator)` — factory returning algebra and derivative operator `Dx`.
 - `HolonomicFunction` — solution to L.f = 0; holds annihilator, variable, initial-condition point and values.
-  - Arithmetic: closed under `+`, `-`, `*`, `/` (produces new holonomic functions).
+  - Arithmetic (`__add__`, `__mul__`, etc.): closure operations that build an ansatz matrix from operator derivatives, solve a homogeneous linear system, and iteratively increase matrix dimension until a nontrivial annihilator is found.
   - `integrate(limits)` / `diff()` — symbolic integral/derivative returning new `HolonomicFunction`.
   - `composition(expr)` — compose with another expression.
   - `series(n)` — power series expansion.
@@ -69,4 +69,4 @@ Custom exceptions for the holonomic module.
 ### [`linearsolver.py`](linearsolver.py)
 Matrix solving utilities for internal holonomic computations.
 
-- `NewMatrix` — extends `MutableDenseMatrix` with `gauss_jordan_solve` supporting non-Sympified elements.
+- `NewMatrix` — thin `MutableDenseMatrix` wrapper adding `gauss_jordan_solve` for non-Sympified elements. Passive utility only; all ansatz construction and dimension-increase logic lives in `holonomic.py`.

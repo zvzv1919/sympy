@@ -102,6 +102,7 @@ All concrete numeric types and their arithmetic operations.
 - `Pow.__new__` — evaluates special cases (x**0, x**1, oo**x, etc.); delegates `0**x` to `Zero._eval_power` in `numbers.py`
 - `Pow._eval_power` — simplifies nested powers like `(x**a)**b`
 - `Pow._eval_evalf(prec)` — numerical evaluation of `base**exp`; when exponent is negative and base is non-real, rewrites as `conjugate(base)/|base|²` with negated exponent to avoid complex-power precision issues
+- `Pow.as_content_primitive(radical, clear)` — extracts positive Rational from `base**exp`; when base is rational, decomposes exponent into integer + fractional parts via `divmod` and splits the power accordingly; when base is Mul, recursively extracts content from base
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag
 
 **Caveat**: `Pow` delegates to `base._eval_power(exp)` for type-specific evaluation; numeric power logic (Integer/Rational/Float raised to numeric exponents) lives in `numbers.py`, not here.
@@ -159,6 +160,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
+- `_random(n, re_min, im_min, re_max, im_max)` — evaluates self with random complex substitutions for free symbols; escalates precision from 2 up to `DEFAULT_MAXPREC` via `giant_steps` when initial evaluation yields no significant digits; returns None if no significance achieved
 - `is_constant(*wrt)` — checks if expression is constant w.r.t. given symbols; uses numerical probing (substitutes 0, 1, random values)
 - `is_polynomial(*syms)` — returns True only if expression is an exact finite-degree polynomial; rejects symbolic exponents (e.g., `x**n` where n is a symbol, even if integer/nonneg); delegates to `_eval_is_polynomial`
 - `as_terms()` — decomposes a sum into structured term list: each term becomes `(coeff, monom, ncpart)` where coeff is `(real, imag)`, monom is a tuple of commutative base exponents indexed by sorted generators, ncpart is non-commutative factors

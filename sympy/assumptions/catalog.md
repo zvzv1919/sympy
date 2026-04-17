@@ -26,7 +26,8 @@ Main inference engine for the assumptions system.
     - Docstrings document cross-predicate structural inference rules (e.g., when combining two matrix properties implies a third).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then to SAT fallback.
-- `register_handler()` / `remove_handler()`: register or remove handler classes for predicates.
+- `register_handler(key, handler)`: registers a handler class for a predicate; if the property name doesn't exist on `Q`, dynamically creates a new `Predicate` and attaches it.
+- `remove_handler(key, handler)`: removes a handler from a predicate.
 - `compute_known_facts()`, `get_known_facts()`: build logical relationship tables between predicates.
 
 ### [`assume.py`](assume.py)

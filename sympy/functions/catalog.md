@@ -118,7 +118,7 @@ Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
 
 #### [`elementary/hyperbolic.py`](elementary/hyperbolic.py)
 Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those are `Chi`, `Shi` in `special/error_functions.py`).
-- `sinh`, `cosh`, `tanh`, `coth` — primary hyperbolic functions.
+- `sinh`, `cosh`, `tanh`, `coth` — primary hyperbolic functions; `eval` converts purely imaginary arguments to circular trig equivalents (e.g., sinh(ix)→i·sin(x), cosh(ix)→cos(x)).
 - `ReciprocalHyperbolicFunction` — base class for reciprocal forms (`csch`, `sech`); delegates rewrites to the underlying function via `_rewrite_reciprocal`, which guards against trivial identity rewrites by returning None if the result is unchanged.
 - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
 
