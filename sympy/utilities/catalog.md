@@ -11,6 +11,7 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 Generates source code (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions.
 - `Routine` — represents a callable routine with inputs/outputs.
 - `CodeGen`, `CCodeGen`, `FCodeGen` — language-specific code generators.
+- `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
 - `codegen(name_expr, language)` — top-level convenience function.
 
 ### [`lambdify.py`](lambdify.py)
@@ -59,13 +60,16 @@ Interactive source code inspection and dotted-path class resolution.
 SymPy's built-in testing framework (py.test-compatible, no external dependencies).
 - `test(*paths)` — run tests.
 - `doctest(*paths)` — run doctests.
+- `SymPyDocTests.test_file` — executes docstring examples; in default (non-normal) mode, clears each function's global namespace so all imports must be explicit within docstrings.
+- `SymPyOutputChecker` — custom output checker that supports approximate float comparison in doctest output, including handling of trailing-dot ellipsis in expected values.
+- `SymPyDocTestRunner` — custom runner that patches stdout/pdb/linecache during doctest execution.
 
 ### [`pytest.py`](pytest.py)
 py.test integration helpers.
 - `raises`, `XFAIL`, `skip`
 
 ### [`randtest.py`](randtest.py)
-Randomized testing helpers.
+Randomized numerical verification of symbolic expression equivalence (not doctest output checking).
 - `random_complex_number`, `verify_numerically`, `test_derivative_numerically`
 
 ### [`benchmarking.py`](benchmarking.py)
@@ -87,8 +91,8 @@ Timing utilities independent of IPython.
 - `timed(func)` — decorator that prints execution time.
 
 ### [`magic.py`](magic.py)
-Global namespace manipulation.
-- `pollute` — inject SymPy names into the global namespace.
+Interactive convenience for polluting the user's session namespace (not related to test/doctest execution).
+- `pollute` — inject SymPy names into the caller's global namespace.
 
 ### [`pkgdata.py`](pkgdata.py)
 Resource acquisition for package data files.

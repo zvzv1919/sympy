@@ -91,6 +91,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — symbolic `Commutator` and `AntiCommutator` with `doit()` evaluation; these delegate to gate/operator `_eval_commutator_*` methods.
 - **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation and measurement.
+  - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
+  - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
 - **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
   - `pauli.py` — Pauli spin operators: SigmaX/Y/Z, SigmaPlus/SigmaMinus raising/lowering operators (nilpotent under positive-integer exponentiation).
@@ -115,8 +117,12 @@ Geometric and wave optics.
 Classical mechanics: particles, rigid bodies, equations of motion.
 - `kane.py` — `KanesMethod`: Kane's equations of motion.
 - `lagrange.py` — `LagrangesMethod`: Lagrangian mechanics.
-- `particle.py` — `Particle`. `rigidbody.py` — `RigidBody`. `body.py` — unified `Body`.
-- `functions.py` — kinematic/dynamic helper functions.
+- `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
+- `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv combining spin and translational contributions), `linear_momentum`, `kinetic_energy`, `potential_energy` methods.
+- `body.py` — unified `Body` wrapping Particle or RigidBody.
+- `functions.py` — system-level kinematic/dynamic functions for multi-body systems.
+  - `angular_momentum(point, frame, *body)` — sums angular momenta of Particles/RigidBodies; validates Point and ReferenceFrame types.
+  - `linear_momentum`, `kinetic_energy`, `Lagrangian` — analogous system-level aggregators.
 - `linearize.py` — linearization around operating points.
 
 ### [`hep/`](hep/catalog.md)

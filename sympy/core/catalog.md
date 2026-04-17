@@ -13,7 +13,10 @@ The `core` module is SymPy's foundation. `basic.py` defines the object model (`B
 ### [`basic.py`](basic.py)
 Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 
-- `Basic` — base class: `__eq__`, `__hash__`, `compare()`, `atoms()`, `subs()`, `rewrite()`, canonical ordering
+- `Basic` — base class: `__eq__`, `__hash__`, `compare()`, `atoms()`, `subs()`, `replace()`, `rewrite()`, `dummy_eq()`, canonical ordering
+  - `subs()` — substitution; silently drops pairs where old/new cannot be sympified (non-string, non-symbolic objects)
+  - `replace(query, value, simultaneous)` — wildcard-capable replacement; in simultaneous mode, creates Dummy placeholders defaulting commutativity to True when replacement's `is_commutative` is None
+  - `dummy_eq()` — structural comparison tolerant of anonymous placeholder variables; raises ValueError if left side has more than one Dummy
 - `Atom` — parent for indivisible expressions (Symbol, Number); has no `.args`
 - `_aresame(a, b)` — structural identity check (not mathematical equality); traverses both trees in preorder comparing type and value at each node; special-cases `UndefinedFunction`/`AppliedUndef` using `class_key()`
 - `_atomic(e)` — returns atom-like quantities (Derivatives, Functions, Symbols) for substitution purposes
@@ -32,12 +35,14 @@ Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicM
 ### [`numbers.py`](numbers.py)
 All concrete numeric types and their arithmetic operations.
 
-- `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic
+- `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats, auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
 - `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
+  - `_eval_power` — handles negative-base sign branching differently for integer vs fractional exponents
+- `Zero` — additive identity singleton; `_eval_power` strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
 - `Infinity` / `NegativeInfinity` — signed unbounded sentinels; implement own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
@@ -54,13 +59,16 @@ All concrete numeric types and their arithmetic operations.
 ### [`add.py`](add.py)
 `Add` class — commutative n-ary sum. `flatten()` collects coefficients, separates commutative/non-commutative terms.
 
+- `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
+- `as_content_primitive(radical, clear)` — recursive content extraction; when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
+
 ### [`mul.py`](mul.py)
 `Mul` class — commutative n-ary product. `flatten()` handles coefficient extraction and commutativity separation.
 
 ### [`power.py`](power.py)
 `Pow` class — symbolic `base**exp` expression and simplification rules.
 
-- `Pow.__new__` — evaluates special cases (x**0, x**1, 0**x, oo**x, etc.)
+- `Pow.__new__` — evaluates special cases (x**0, x**1, oo**x, etc.); delegates `0**x` to `Zero._eval_power` in `numbers.py`
 - `Pow._eval_power` — simplifies nested powers like `(x**a)**b`
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag
 
@@ -112,12 +120,18 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`expr.py`](expr.py)
 `Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
+- `sort_key()` — ordering key for expressions; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
+- `_eval_lseries(x)` — default lazy series iterator; adaptively increases n in `_eval_nseries`, yields incremental term differences; loops past pure-Order results until concrete terms appear
+- `taylor_term(n, x)` — n-th Taylor coefficient by n-fold differentiation (slow default; subclasses override)
+- `lseries()` / `nseries()` — public wrappers for lazy and finite-term series expansion
 - `__int__` — converts symbolic expression to Python int; rounds to 2 decimal places, then performs off-by-one correction when rounded value lands on an integer but original expression doesn't equal it
 - `_eval_is_positive` / `_eval_is_negative` — sign determination for numeric expressions; uses low-precision evalf, falls back to minimal polynomial when floating-point evaluation yields no significant digits (prec == 1)
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
 
 ### [`exprtools.py`](exprtools.py)
-Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_const()`, `_monotonic_sign()`.
+Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_const()`, `_monotonic_sign()`, `factor_nc()`.
+
+- `factor_nc(expr)` — factors expressions with non-commutative symbols; extracts common NC prefixes/suffixes, then tries permutations of NC factors to find correct ordering
 
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
@@ -141,6 +155,8 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments
+- `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
+- `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement
   - When `exponent=True`, requires separate pass to float-ify Integer exponents because `Pow._eval_evalf` special-cases them
 

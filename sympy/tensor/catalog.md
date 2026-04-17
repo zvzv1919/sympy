@@ -55,6 +55,9 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
 - `contract_metric(t, g)` — contract a tensor with a metric tensor.
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
+- `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
+  - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
+  - Handles metric tensors specially via covariant/contravariant signature lookup.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.
 
 ---

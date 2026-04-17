@@ -86,7 +86,11 @@ Continued fraction operations for rationals and quadratic irrationals.
 
 ### [`egyptian_fraction.py`](egyptian_fraction.py)
 Egyptian fraction (unit-fraction sum) decomposition.
-- `egyptian_fraction(r, algorithm)` — decompose rational r into sum of unit fractions
+- `egyptian_fraction(r, algorithm)` — decompose rational r into sum of distinct unit fractions
+- Algorithms: Greedy (default), Graham-Jewett, Takenouchi, Golomb
+- Each algorithm differs in how duplicate denominators are resolved during expansion
+- Takenouchi: resolves duplicates via even/odd parity check on the repeated denominator
+- Graham-Jewett: resolves duplicates by incrementing one copy and appending a product term
 
 ## Special Computations
 

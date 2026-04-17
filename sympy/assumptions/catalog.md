@@ -16,7 +16,10 @@ When `ask(Q.property(expr), assumptions)` is called, the engine dispatches to a 
 
 ### [`ask.py`](ask.py)
 Main inference engine for the assumptions system.
-- `AssumptionKeys` (aliased as `Q`): container of all supported predicates (`Q.positive`, `Q.real`, `Q.prime`, …).
+- `AssumptionKeys` (aliased as `Q`): defines all predicate query keys as `@predicate_memo` properties returning `Predicate` objects.
+  - Scalar predicates: `Q.positive`, `Q.real`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
+  - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements`.
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then to SAT fallback.
 - `register_handler()` / `remove_handler()`: register or remove handler classes for predicates.
 - `compute_known_facts()`, `get_known_facts()`: build logical relationship tables between predicates.
@@ -36,7 +39,7 @@ Auto-generated pre-computed inference tables (CNF facts and implication dictiona
 
 ## Handlers — Direct Predicate Evaluation
 
-Each handler class owns a predicate and provides static methods keyed by expression type (e.g., `Symbol`, `Add`, `Mul`, `Pow`, `log`, `exp`).
+Each handler class **evaluates** (not defines) a predicate via static methods keyed by expression type. Predicate query keys are **defined** in `ask.py`.
 
 ### [`handlers/__init__.py`](handlers/__init__.py)
 Re-exports common handler base classes: `AskHandler`, `CommonHandler`, `AskCommutativeHandler`, `TautologicalHandler`, `test_closed_group`.

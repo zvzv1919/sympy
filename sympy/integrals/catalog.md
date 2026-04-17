@@ -13,11 +13,13 @@ Core symbolic integration engine and public API.
 Step-by-step integration emulating by-hand techniques (substitution, parts, trig rules, etc.).
 - `manualintegrate(f, var)` — integrate using manual rule-based strategies
 - `integral_steps(integrand, symbol)` — returns the rule tree describing the integration steps
-- Rule infrastructure: `Rule()` factory, `@evaluates` decorator, pattern matchers for trig/exp/power forms
+- `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
+- Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); each normalizes reciprocal forms (e.g. 1/sin→csc, cos/tan→cot) before pattern matching
+- Rule infrastructure: `Rule()` factory, `@evaluates` decorator, `trig_rewriter`, substitution/parts strategies
 
 ### [`trigonometry.py`](trigonometry.py)
-Integration of products of trigonometric functions sin^n(x)·cos^m(x).
-- `trigintegrate(f, x)` — integrates trigonometric products using reduction formulas
+Integration of pure sin^n(x)·cos^m(x) products only (no tan/sec/cot/csc).
+- `trigintegrate(f, x)` — integrates sin/cos power products using reduction formulas
 
 ---
 
@@ -42,6 +44,7 @@ Gaussian quadrature rules: computes nodes and weights for numerical integration 
 Symbolic integral transforms — class-based API and dispatch layer (delegates heavy computation to `meijerint.py`).
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
+- `_rewrite_gamma` — rewrites products of gamma/sin/cos/tan/cot into Meijer G-function parameters for inverse Mellin; rescales integration variable based on argument coefficients
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
 - Sine/Cosine: `sine_transform`, `cosine_transform` and their inverses
@@ -68,6 +71,7 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
 - `is_deriv_k`, `is_log_deriv_k_t_radical` — structure-theorem tests for derivatives and logarithmic derivatives
+- `is_log_deriv_k_t_radical_in_field` — checks if f is the log-derivative of a k(t)-radical; uses `splitfactor` to test denominator simplicity, then `residue_reduce`
 
 ### [`heurisch.py`](heurisch.py)
 Heuristic (pattern-based) integration for expressions not covered by the Risch algorithm.

@@ -25,14 +25,14 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
-- **Predicates**: `is_square`, `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions), `is_hermitian`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero`, `is_symbolic`.
+- **Predicates**: `is_square`, `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions), `is_hermitian`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
 Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
-- Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve`, `_upper_triangular_solve`.
+- Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution for lower-triangular systems), `_upper_triangular_solve` (backward substitution for upper-triangular systems), `_diagonal_solve`.
 - `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `__setitem__`, `copyin_matrix`, `fill`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
@@ -47,7 +47,8 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `MutableSparseMatrix`: mutable variant with in-place `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`.
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
-- Sparse triangular solvers: `_lower_triangular_solve_sparse`, `_upper_triangular_solve_sparse`.
+- Sparse triangular solvers: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution), `_diagonal_solve`.
+- Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
 
 ### [`immutable.py`](immutable.py)
 Hashable, immutable matrix types usable as dictionary keys and in SymPy expression trees.
@@ -132,7 +133,9 @@ Block-structured symbolic matrices.
 Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`, `rref`: row reduction on raw nested lists.
-- `rref_solve`, `LU_solve`, `cholesky_solve`: solver routines on raw data.
+- `LU`, `cholesky`: decomposition routines on raw nested lists.
+- `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
+- `forward_substitution`: lower-triangular solve on raw nested lists. `backward_substitution`: upper-triangular solve on raw nested lists.
 - These are internal backends; the public API lives in `MatrixBase` (`matrices.py`).
 
 ### [`densearith.py`](densearith.py)

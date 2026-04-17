@@ -53,12 +53,18 @@ Interval-aware math function library and ternary logic operators for implicit pl
 
 ## Pyglet 3D Plotting (`plotting/pygletplot/`)
 
+### `__init__.py`
+Public entry point for pyglet plotting; defines the `PygletPlot` factory function that wraps the class in `plot.py`.
+
+- `PygletPlot(*args, **kwargs)` — factory function whose docstring documents the full user-facing API:
+  - Flexible variable interval syntax: `[var, min, max, steps]` with partial specification — `[]` uses all defaults, `[100]` sets only step count, `[-13, 13]` sets only bounds; omitted args filled from coordinate mode defaults.
+  - Coordinate mode selection (Cartesian, parametric, polar, cylindrical, spherical); auto-detected from expression/variable count.
+  - Calculator-like indexed interface (`p[1] = expr`), per-slot style/color, keyboard controls.
+
 ### `plot.py`
-Main `PygletPlot` class for interactive 3D visualization with OpenGL/pyglet.
+`PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
 - `PygletPlot` — top-level plot object; manages plot objects, axes, camera, window, and rendering thread.
-- Flexible variable interval syntax: `[var, min, max, steps]` with partial specification — e.g., `[100]` sets only steps, `[-13, 13]` sets only bounds, `[]` uses all defaults from the coordinate mode.
-- Coordinate modes: Cartesian, parametric, polar, cylindrical, spherical; auto-detected from argument count.
 - Supports indexed assignment (`p[1] = expr`) for adding/replacing plot functions.
 
 ### `plot_mode.py`

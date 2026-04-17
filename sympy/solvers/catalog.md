@@ -15,7 +15,7 @@
 ### [`solvers.py`](solvers.py)
 Legacy general-purpose algebraic equation solver. Returns solutions as lists or dicts.
 
-- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve` or `_solve_system`.
+- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve` or `_solve_system`. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
 - `_solve(f, symbol, **flags)` — internal single-equation solver; handles:
   - Multi-symbol sequential resolution: solves for each symbol in turn; discards solutions whose free symbols depend on a previously solved symbol.
   - Piecewise/conditional expressions: iterates branches, enforces branch-priority (earlier-branch exclusion) via `piecewise_fold`.
@@ -27,7 +27,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
-- `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions).
+- `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
 - `unrad(eq, *syms)` — removes radicals from equations.
 - `denoms(eq, symbols)` — extracts denominators for solution validation.
 
@@ -37,7 +37,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `solveset(f, symbol, domain=S.Complexes)` — core solver; dispatches by domain.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — linear system solver returning set of solution tuples.
-- `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form.
+- `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form (A, b). Accepts both expressions (implicit =0) and Eq() relations.
 - `_invert(f_x, y, x, domain)` — function inversion core; reduces f(x)=y to simpler form.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
 - `_solve_as_poly`, `_solve_as_rational`, `_solve_trig`, `_solve_radical`, `_solve_abs` — type-specific internal solvers.
@@ -51,7 +51,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 Solves bivariate equations by structural reduction to single-variable problems.
 
 - `bivariate_type(f, x, y)` — classifies bivariate equation structure.
-- `_solve_lambert(f, symbol, gens)` — Lambert W function equations.
+- `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
 
 ### [`diophantine.py`](diophantine.py)
 Solves Diophantine equations (polynomial equations over integers).

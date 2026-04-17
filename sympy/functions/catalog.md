@@ -46,7 +46,7 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `Ei` — exponential integral Ei(x).
 - `expint` — generalized exponential integral E_n(x).
 - `li`, `Li` — logarithmic integrals.
-- `Si`, `Ci`, `Shi`, `Chi` — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
+- `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
   - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
 - `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x).
 

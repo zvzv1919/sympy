@@ -51,15 +51,19 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 ## Named Groups and Construction
 
 ### [`named_groups.py`](named_groups.py)
-Factory functions for standard finite groups. Each factory pre-sets algebraic properties (solvability, nilpotency, abelianness, transitivity) based on group-theoretic thresholds (e.g., `SymmetricGroup` marks solvable only for degree < 5).
-- `SymmetricGroup`, `AlternatingGroup`, `CyclicGroup`, `DihedralGroup`, `AbelianGroup`, `RubikGroup`.
+Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties. Contrast with `generators.py`, which yields individual permutation elements.
+- `SymmetricGroup`, `CyclicGroup`, `DihedralGroup`, `AbelianGroup`, `RubikGroup`.
+- `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0).
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
 - `DirectProduct` — N-ary direct product of permutation groups (optimized batch version of `PermutationGroup.__mul__`).
 
 ### [`generators.py`](generators.py)
-Generates standard permutation group generators (symmetric, cyclic, alternating, dihedral, Rubik's cube).
+Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.
+- `symmetric(n)`, `cyclic(n)`, `alternating(n)` — yield all permutations of Sn, Cn, An respectively. `alternating` filters by `is_even`.
+- `dihedral(n)` — yields all 2n elements of Dn. Special-case embeddings for n=1 (in S2) and n=2 (Klein 4-group in S4) where Dn is not a subgroup of Sn.
+- `rubik_cube_generators()`, `rubik(n)` — Rubik's cube face-turn permutations.
 
 ---
 
@@ -105,7 +109,9 @@ Prufer sequence correspondence for labeled trees.
 
 ### [`polyhedron.py`](polyhedron.py)
 Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedron).
-- `Polyhedron` — polyhedron with face-permutation symmetry group.
+- `Polyhedron` — 3D solid defined by named corners, faces, and a permutation group (`pgroup`).
+  - `rotate(perm)` — apply a permutation to vertices in place. Accepts `Permutation` or int index into `pgroup`. Validates permutation size matches vertex count; raises `ValueError` on mismatch.
+  - Properties: `corners`, `faces`, `edges`, `pgroup`, `size`, `array_form`, `cyclic_form`.
 
 ---
 

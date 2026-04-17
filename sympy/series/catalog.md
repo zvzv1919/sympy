@@ -46,7 +46,7 @@ Thin wrapper delegating to `expr.series()`.
 Formal Power Series (FPS) computation and representation.
 - `fps(f, x, x0, dir, ...)` — main interface; returns `FormalPowerSeries`.
 - `FormalPowerSeries(SeriesBase)` — formal power series object; `.polynomial()`, `.truncate()`, `.infinite`.
-- `rational_algorithm(f, x, k, order, full)` — FPS coefficients when f or derivatives are rational.
+- `rational_algorithm(f, x, k, order, full)` — derive closed-form FPS coefficient formulas when f or derivatives are rational functions of x.
 - `hyper_algorithm(f, x, k, order)` — hypergeometric FPS solving.
 - `solve_de()`, `compute_fps()` — internal FPS computation pipeline.
 
@@ -85,8 +85,9 @@ Residue computation via Laurent series coefficient extraction.
 - `residue(expr, x, x0)` — compute residue at x=x0 using series expansion with adaptive precision.
 
 ### [`approximants.py`](approximants.py)
-Padé approximant generation for rational function approximation of series.
-- `approximants(l, X, simplify)` — generator yielding consecutive Padé approximants.
+Generator for consecutive Padé approximants from an input coefficient list; also computes rational generating functions of series.
+- `approximants(l, X, simplify)` — generator taking a coefficient list `l`; yields rational approximants.
+- Terminates early when the internal coefficient list becomes all zeros (no further approximants producible).
 
 ### [`acceleration.py`](acceleration.py)
 Convergence acceleration methods for slowly converging series.

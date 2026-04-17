@@ -41,7 +41,12 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `poly_unify(g)` — unify DMF with a DMP; same local `per` closure pattern.
   - `half_per(rep, kill)` — create DMP from rep; if `kill=True` and `lev==0`, returns the raw rep.
   - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `quo`, `exquo`.
-- `ANP` — Algebraic Number Polynomial (univariate over algebraic extension).
+- `ANP` — Algebraic Number Polynomial (univariate dense poly modulo a minimal polynomial over an algebraic extension).
+  - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
+  - `div(f, g)` — returns `(quotient, zero)`; `rem` always returns zero (field-like semantics via modular inverse).
+  - `unify(g)` — reconcile two ANPs to a common domain/modulus; builds a local `per` closure.
+  - `LC`, `TC` — leading/trailing coefficient.
+  - Conversion: `to_dict`, `to_sympy_dict`, `to_list`, `to_sympy_list`, `to_tuple`, `from_list`.
 
 ### [`rings.py`](rings.py)
 Sparse polynomial rings and their elements (dict-based representation).
@@ -160,7 +165,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 ## GCD & Euclidean Algorithms
 
 ### [`euclidtools.py`](euclidtools.py)
-Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all operating on dense coefficient lists.
+Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all operating on **dense coefficient lists** (`dup_*`/`dmp_*` API).
 
 - `dup_half_gcdex`, `dmp_half_gcdex` — half extended Euclidean algorithm.
 - `dup_gcdex`, `dmp_gcdex` — extended Euclidean algorithm.
@@ -305,17 +310,20 @@ Numerical root isolation and refinement for dense univariate polynomials.
 ### [`subresultants_qq_zz.py`](subresultants_qq_zz.py)
 Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theoretical/reference implementations** using Sylvester/Bézout matrices.
 
+- `sign_seq(poly_seq, x)` — extract the sequence of signs of leading coefficients from a polynomial remainder sequence.
 - `sturm_q(p, q, x)` — **generalized Sturm sequence in Q[x]** using polynomial remainder; if LC(p) < 0, negates both inputs and flips the final sequence; removes trailing zero/NaN entry if GCD has degree > 0.
-- `sturm_pg`, `sturm_amv` — Sturm sequences via alternative methods.
-- `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS.
-- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods).
-- `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS.
+- `sturm_pg`, `sturm_amv` — Sturm sequences via alternative methods (Pell-Gordon / AMV theorems).
+- `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
+- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q).
+- `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
 - `sylvester(p, q, x)` — Sylvester matrix construction.
 - `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering so highest-degree coefficients appear in first row/column; `method='bz'` uses natural ordering.
 - `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
 - `quo_z(p, q, x)` — integer polynomial quotient, same absolute-value premultiplication as `rem_z`.
 
-Caveat: These are reference/theoretical implementations. For production PRS and Sturm sequences used in root isolation, see `euclidtools.py` and `rootisolation.py`.
+- `find_degree`, `create_ma`, `rotate_r`, `rotate_l`, `row2poly`, `final_touches` — helper functions for the Van Vleck triangularization method.
+
+Caveat: These are reference/theoretical implementations operating on symbolic expressions (not dense coefficient lists). For production PRS/subresultant/Sturm computation on dense lists, see `euclidtools.py` and `rootisolation.py`.
 
 ---
 
@@ -370,7 +378,8 @@ Monomial tuple arithmetic and generation.
 - `monomial_mul`, `monomial_div`, `monomial_ldiv`, `monomial_pow` — tuple arithmetic.
 - `monomial_gcd`, `monomial_lcm` — GCD/LCM of monomial tuples.
 - `monomial_divides`, `monomial_max`, `monomial_min`, `monomial_deg` — predicates and queries.
-- `Monomial` — symbolic monomial class.
+- `Monomial` — symbolic monomial class (pure power-product, coefficient must be 1).
+  - `__init__(monom, gens)` — accepts exponent tuple or symbolic expression; **raises `ValueError` if expression has non-unit coefficient or multiple terms**.
 - `MonomialOps` — optimized monomial operation dispatcher.
 
 ### [`orderings.py`](orderings.py)
@@ -425,10 +434,22 @@ Classical orthogonal polynomial generation.
 
 - `jacobi_poly`, `gegenbauer_poly`, `chebyshevt_poly`, `chebyshevu_poly`, `hermite_poly`, `legendre_poly`, `laguerre_poly` — generate orthogonal polynomials.
 
+### [`polyquinticconst.py`](polyquinticconst.py)
+Precomputed coefficient arrays and resolvent parameters for solving solvable quintic equations (Dummit's algorithm).
+
+- `PolyQuintic` — encapsulates the resolvent computation for a monic solvable quintic `x^5 + px^3 + qx^2 + rx + s`.
+  - Properties `b`, `o`, `a`, `c` — large coefficient arrays (polynomials in p, q, r, s) used in resolvent construction.
+  - `F` — discriminant-related invariant (sextic resolvent discriminant factor).
+  - `T(theta, d)` — compute resolvent T-values by evaluating `b` arrays at a root `theta` and dividing by `F`.
+  - `l0(theta)` — evaluate the `a` array at `theta` divided by `F`.
+  - `order(theta, d)` — determine ordering of Lagrange resolvents using `o` array.
+  - `uv(theta, d)` — compute u, v parameters for the radical solution.
+
 ### [`specialpolys.py`](specialpolys.py)
 Special polynomial constructors for testing and benchmarking.
 
-- `swinnerton_dyer_poly`, `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
+- `swinnerton_dyer_poly(n, x)` — Swinnerton-Dyer polynomial; **n ≤ 3 returns hardcoded expressions; n > 3 computes via `minimal_polynomial` of sum of square roots of primes**.
+- `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
 
 ### [`groebnertools.py`](groebnertools.py)
 Gröbner basis computation algorithms.
@@ -490,4 +511,6 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 
 - `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings; distinguishes single vs. multiple generators via iterable check.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
+- `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
+- `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.

@@ -59,6 +59,7 @@ Vector calculus operations and coordinate re-expression.
 ### [`deloperator.py`](deloperator.py)
 Vector differential operator (∇).
 - `Del` — symbolic nabla; `gradient`, `dot` (divergence), `cross` (curl).
+- `_diff_conditional` — re-expresses an expr into a coordinate system, returns `S(0)` if the base scalar is absent, else returns `Derivative`. Used only by `Del.dot` (divergence).
 
 ## Package Init
 
