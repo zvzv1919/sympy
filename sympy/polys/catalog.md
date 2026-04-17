@@ -36,6 +36,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
+  - Root isolation: `intervals(all, eps, sqf)` — isolate roots; **raises `PolynomialError` if multivariate (`lev > 0`)**; dispatches to 4 variants based on `all`/`sqf` flags. `refine_root`, `count_real_roots`, `count_complex_roots` — also univariate-only.
   - `cancel(g, include)` — cancel common factors in f/g; when `include=False`, returns `(cF, cG, F, G)` (content factors + reduced polys); when `include=True`, returns only `(F, G)`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
   - `per(num, den, cancel, kill, ring)` — construct new DMF; **if `kill=True` and `lev==0`, returns scalar `num/den`**.
@@ -78,6 +79,8 @@ Sparse polynomial rings and their elements (dict-based representation).
 ### [`fields.py`](fields.py)
 Sparse rational function fields and their elements.
 
+- `field()`, `xfield()`, `vfield()` — construct rational function field with explicit domain.
+- `sfield(exprs, *symbols)` — construct field from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
   - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
@@ -213,7 +216,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS), `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` (heuristic over Z).
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
-- `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points.
+- `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
 - `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**.
 - `dmp_content`, `dmp_primitive` — multivariate content/primitive; content **negates if leading ground coeff is negative**.
 - `dup_cancel`, `dmp_cancel` — cancel common factors; **when `K.has_Field` and `K.has_assoc_Ring`, converts to ring (clears denoms) before GCD, then converts back**.
@@ -249,7 +252,8 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_zz_zassenhaus`, `dup_zz_factor_sqf`, `dup_zz_factor` — Zassenhaus factorization over Z.
 - `dmp_zz_wang` — Wang's Enhanced Extended Zassenhaus multivariate factorization; **selects evaluation-point config with smallest univariate max-norm**; restarts with incremented modulus on `ExtraneousFactors` from Hensel lifting.
 - `dmp_zz_factor` — top-level multivariate factorization over Z.
-- `dup_zz_hensel_step`, `dup_zz_hensel_lift` — Hensel lifting.
+- `dup_zz_hensel_step`, `dup_zz_hensel_lift` — univariate Hensel lifting.
+- `dmp_zz_wang_hensel_lifting` — **parallel Hensel lifting for multivariate factorization**; iteratively lifts univariate factor approximations to full multivariate factors; verifies final product matches original, raises `ExtraneousFactors` on mismatch.
 - `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities.
@@ -282,30 +286,24 @@ Caveat: For native GF(p) polynomial square-free and factorization, see `galoisto
 Self-contained arithmetic, square-free, irreducibility, and factorization for **univariate polynomials over GF(p)**, represented as coefficient lists.
 
 - `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
-- `gf_strip` — remove leading zeros from coefficient list (canonical form enforcement).
-- `gf_trunc` — reduce all coefficients modulo p, then strip leading zeros via `gf_strip`.
+- `gf_strip`, `gf_trunc` — canonical form: strip leading zeros / reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
-- Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is the zero poly (empty list) and `a % p == 0`, returns `[]`** (empty list = zero polynomial representation).
-- `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg` — ground field operations.
-- `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval` — standard operations.
-- `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — GCD/LCM.
-- `gf_sqf_p(f, p, K)` — **square-free test for GF(p)[x]**; after making monic, if result is empty (zero poly), returns True immediately.
-- `gf_sqf_part`, `gf_sqf_list` — square-free decomposition in GF(p).
+- Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is zero poly and `a % p == 0`, returns `[]`**. Also `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg`.
+- `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval`, `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — standard operations and GCD/LCM.
+- `gf_sqf_p`, `gf_sqf_part`, `gf_sqf_list` — square-free testing and decomposition in GF(p).
 - `gf_irreducible_p`, `gf_irred_p_ben_or`, `gf_irred_p_rabin` — irreducibility testing.
-- `gf_ddf_zassenhaus` — deterministic distinct degree factorization (DDF); **if polynomial has a non-trivial remainder after the main loop, appends it as a factor of its own degree**.
-- `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF); splits DDF output into irreducibles.
-- `gf_ddf_shoup`, `gf_edf_shoup` — Shoup's DDF/EDF variants.
+- `gf_ddf_zassenhaus` — distinct degree factorization (DDF); **appends non-trivial remainder as a factor of its own degree**.
+- `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF). Also `gf_ddf_shoup`, `gf_edf_shoup` (Shoup variants).
+- `gf_Qmatrix` — compute Berlekamp's Q matrix (rows are `x^(ip) mod f` for each i).
+- `gf_Qbasis` — find kernel (null space) of `Q - I` via Gaussian elimination over GF(p); returns basis vectors for Berlekamp factorization.
 - `gf_berlekamp`, `gf_zassenhaus`, `gf_shoup`, `gf_factor_sqf` — factorization of square-free polynomials.
-- `gf_factor(f, p, K)` — **complete factorization of possibly non-square-free polynomial**; computes square-free decomposition first, then factors each component, preserving multiplicities.
+- `gf_factor(f, p, K)` — **complete factorization of possibly non-square-free polynomial**; square-free decomposition first, then factors each component.
 - `gf_frobenius_monomial_base`, `gf_frobenius_map` — Frobenius automorphism.
 - `gf_compose`, `gf_compose_mod` — polynomial composition and modular composition.
-- `gf_trace_map(a, b, c, n, f, p, K)` — compute trace map `a + a^t + a^t^2 + … + a^t^n` in `GF(p)[x]/(f)` using **binary doubling**; initializes accumulators differently for even vs odd `n`.
-- `_gf_trace_map` — simpler iterative trace map (utility for `gf_edf_shoup`).
-- `gf_expand(F, p, K)` — reconstruct polynomial from factored form; **accepts either a `(lc, factors)` tuple or a plain list of `(factor, multiplicity)` pairs** (defaults leading coefficient to `K.one` for the list form).
-- `gf_random`, `gf_irreducible` — random/irreducible polynomial generation.
-- `gf_value` — evaluate polynomial at integer point.
-- `gf_crt`, `gf_crt1`, `gf_crt2` — Chinese Remainder Theorem.
-- `linear_congruence`, `csolve_prime`, `gf_csolve` — congruence solving.
+- `gf_trace_map` / `_gf_trace_map` — trace map computation using **binary doubling**; initializes differently for even vs odd `n`.
+- `gf_expand(F, p, K)` — reconstruct polynomial from factored form; **accepts `(lc, factors)` tuple or plain list of `(factor, mult)` pairs**.
+- `gf_random`, `gf_irreducible`, `gf_value` — random/irreducible polynomial generation and evaluation.
+- `gf_crt`, `gf_crt1`, `gf_crt2` — Chinese Remainder Theorem. Also `linear_congruence`, `csolve_prime`, `gf_csolve`.
 - Conversion: `gf_from_dict`, `gf_to_dict`, `gf_from_int_poly`, `gf_to_int_poly`.
 
 Caveat: All operations here are list-based GF(p)-specific. For dense polynomial operations over general domains, see `densearith.py`/`densetools.py`. For square-free decomposition over Z/Q, see `sqfreetools.py`.

@@ -74,7 +74,8 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
-- **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
+- **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces).
+  - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
   - `state.py` — Ket/Bra/Wavefunction; `KetBase.__mul__`/`__rmul__` dispatch multiplication: Ket*Bra → OuterProduct, Bra*Ket → InnerProduct.
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
@@ -87,7 +88,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; `_apply_operator_uncoupled` applies to kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
-  - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation.
+  - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
   - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates valid magnetic projection configurations for numeric quantum numbers.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices, commutation relations, and decomposition methods.
@@ -110,8 +111,14 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
-- **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; `qapply_Mul` handles products by trying lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forming InnerProduct for Bra·Ket pairs.
-- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+- **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; dispatches by expression type (Add, Mul, TensorProduct, Density, Pow).
+  - `qapply_Mul` handles products by trying lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forming InnerProduct for Bra·Ket pairs.
+  - Dagger fallback: if `qapply_Mul` fails to simplify a Mul and `dagger=True`, takes Hermitian conjugate of the expression, re-applies, then conjugates back.
+- **Density matrices**: `density.py` — `Density` class for mixed-state statistical ensembles (weighted collections of pure states).
+  - `apply_op(op)` — applies an operator to each pure-state component while preserving weights; returns a new Density.
+  - `doit()` — expands into outer-product form (Σ pᵢ|ψᵢ⟩⟨ψᵢ|). `states()`, `probs()` — extract components.
+  - Module-level `entropy()` — von Neumann entropy; `fidelity()` — quantum state fidelity.
+- **Other**: `tensorproduct.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
@@ -140,6 +147,7 @@ Geometric and wave optics.
 Classical mechanics: particles, rigid bodies, equations of motion.
 - `kane.py` — `KanesMethod`: Kane's equations of motion; computes generalized active forces (fr) and generalized inertia forces (fr*). Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
+  - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv combining spin and translational contributions), `linear_momentum`, `kinetic_energy`, `potential_energy` methods.

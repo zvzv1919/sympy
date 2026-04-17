@@ -35,20 +35,20 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `orient_new_axis` — create a new system rotated about an arbitrary axis.
 - `orient_new_body` — create a new system via body-fixed (Euler) rotations; each successive rotation is about the *moving* frame's axes.
 - `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors.
-- `orient_new_quaternion` — create a new system via quaternion rotation.
+- `orient_new_quaternion` — create a new system oriented by quaternion parameters; wrapper that accepts four scalars and returns a new frame.
 - `orient_new` — generic factory accepting any `Orienter` object.
 - `locate_new` — create a translated system sharing the same orientation.
 - `rotation_matrix` — direction cosine matrix between two systems.
 - `scalar_map` — returns substitution dict mapping this system's base scalars to another's (used internally by `express`).
 
 ### [`orienters.py`](orienters.py)
-Internal rotation-parameterization objects consumed by `CoordSysCartesian.orient_new*` methods.
+Rotation-parameterization objects that construct direction cosine matrices from rotation parameters.
 - `Orienter` — base class; `rotation_matrix(system)`.
 - `AxisOrienter` — rotation about an arbitrary axis by an angle.
 - `ThreeAngleOrienter` — base for three-angle orienters; `_in_order` flag controls elementary rotation matrix multiplication order.
 - `BodyOrienter(_in_order=True)` — body-fixed (Euler) rotations; matrices multiplied in given order (a1·a2·a3).
 - `SpaceOrienter(_in_order=False)` — space-fixed rotations; matrices multiplied in reversed order (a3·a2·a1).
-- `QuaternionOrienter` — quaternion-based rotation parameters.
+- `QuaternionOrienter` — constructs a 3×3 direction cosine matrix from four quaternion parameters (finite rotation about a unit axis).
 
 ### [`point.py`](point.py)
 Spatial point representation.

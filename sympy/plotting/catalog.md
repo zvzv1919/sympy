@@ -21,7 +21,8 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
   - Implicit plot rendering: interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
-- `TextBackend`, `DefaultBackend` — alternative rendering backends (ASCII, auto-select).
+- `TextBackend` — ASCII fallback backend; `show()` raises `ValueError` if more than one series or if series is not `LineOver1DRangeSeries`. Delegates single-expression rendering to `textplot()`.
+- `DefaultBackend` — auto-selects `MatplotlibBackend` if matplotlib is available, otherwise `TextBackend`.
 
 ### `plot_implicit.py`
 Implicit equation/inequality data series; computes raster data via interval arithmetic (rendering handled by backends in `plot.py`).
@@ -31,9 +32,9 @@ Implicit equation/inequality data series; computes raster data via interval arit
 - `ImplicitSeries` — data series for implicit plots; `_get_raster_interval()` recursively subdivides rectangles using interval arithmetic to determine inclusion.
 
 ### `textplot.py`
-ASCII art plotting for terminal output.
+Low-level ASCII art grid renderer (called by `TextBackend`; does not validate input count).
 
-- `textplot(expr, a, b, W=55, H=21)` — evaluates expression and renders as text grid.
+- `textplot(expr, a, b, W=55, H=21)` — evaluates a single expression over [a, b] and prints a text grid.
 
 ### `experimental_lambdify.py`
 Custom expression-to-function converter for internal plotting use.
@@ -109,6 +110,8 @@ Bounded interval representation for pyglet variable ranges.
 Curve rendering for 1D pyglet plots.
 
 - `PlotCurve` — calculates and caches vertices for wireframe curve drawing.
+  - `_on_calculate_verts()` — evaluates parametric positions; catches `NameError`/`ZeroDivisionError` and stores `None` for failed points.
+  - `draw_verts(use_cverts)` — emits OpenGL `GL_LINE_STRIP` segments; breaks the strip at `None` vertices to create visual discontinuities at undefined points.
 
 ### `plot_surface.py`
 Surface rendering for 2D pyglet plots.

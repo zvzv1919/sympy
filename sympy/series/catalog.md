@@ -16,7 +16,9 @@ The `series` module handles series expansions, limits, sequences, and asymptotic
 General limit computation interface. Tries heuristics first, falls back to Gruntz algorithm.
 - `limit(e, z, z0, dir)` — compute limit of expression; main entry point.
 - `Limit(Expr)` — unevaluated limit object; `.doit()` evaluates via heuristics or Gruntz; also detects sequence limits via `limit_seq()`.
-- `heuristics(e, z, z0, dir)` — quick checks for Mul/Add/Pow/Function forms.
+- `heuristics(e, z, z0, dir)` — fast-path that evaluates sub-expressions individually and reconstructs the result.
+  - Returns `None` (bailing out to Gruntz) if any sub-limit is unevaluated (`Limit`), indeterminate (infinite with unknown finiteness), `NaN`, or if the reconstructed expression is `NaN`.
+  - For infinite target points, substitutes reciprocal variable and re-evaluates at zero.
 
 ### [`gruntz.py`](gruntz.py)
 Gruntz algorithm for computing limits via most-rapidly-varying (MRV) subexpression analysis.

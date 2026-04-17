@@ -53,8 +53,9 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters for inverse Mellin; raises NotImplementedError if numerator gamma poles partially overlap the fundamental strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
+- `_fourier_transform(f, x, k, a, b)` — backend computing generalized F(k) = a·∫exp(b·i·x·k)f(x)dx over (−∞,∞); extracts first branch if result is Piecewise
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
-- Sine/Cosine: `sine_transform`, `cosine_transform` and their inverses
+- Sine/Cosine: `sine_transform`, `cosine_transform` and inverses — unitary half-range [0,∞) transforms with prefactor sqrt(2/π); odd-parity (sine) and even-parity (cosine)
 - Hankel: `hankel_transform`, `inverse_hankel_transform` with order parameter ν
 
 ---
@@ -95,9 +96,9 @@ Heuristic (pattern-based) integration for expressions not covered by the Risch a
 
 ### [`rationaltools.py`](rationaltools.py)
 Integration of rational functions p(x)/q(x) via partial fractions and logarithmic parts.
-- `ratint(f, x)` — main rational function integrator
-- `ratint_ratpart`, `ratint_logpart` — rational and logarithmic part sub-routines
-- `log_to_atan(f, g)` — converts complex logarithms to real arctangent form
+- `ratint(f, x)` — main rational function integrator; auto-detects real/complex context from atom assumptions and selects between real arctangent/log forms vs RootSum over algebraic roots for the logarithmic part
+- `ratint_ratpart`, `ratint_logpart` — rational and logarithmic part sub-routines (Horowitz-Ostrogradsky decomposition)
+- `log_to_real`, `log_to_atan` — convert complex logarithmic terms to real arctangent/logarithm forms
 
 ---
 

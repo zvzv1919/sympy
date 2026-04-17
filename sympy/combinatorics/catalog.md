@@ -39,7 +39,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Stabilizers: `stabilizer`, `pointwise_stabilizer`.
   - Subgroup/normality: `is_subgroup`, `is_normal`, `normal_closure`, `commutator`, `derived_subgroup`, `derived_series`.
   - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_alt_sym`, `is_trivial`.
-  - `center` — subgroup of elements commuting with all group elements.
+  - `center` — subgroup of permutation group elements commuting with all group elements; computed via subgroup search.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order`, `random`, `random_pr`.
@@ -58,7 +58,7 @@ Factory functions returning `PermutationGroup` objects for standard finite group
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
-- `DirectProduct` — N-ary direct product of permutation groups (optimized batch version of `PermutationGroup.__mul__`).
+- `DirectProduct` — N-ary direct product of permutation groups (optimized batch version of `PermutationGroup.__mul__`); deduplicates generators via `uniq` after embedding into the combined degree space.
 
 ### [`generators.py`](generators.py)
 Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.
@@ -79,6 +79,8 @@ Finitely presented groups and coset enumeration.
 ### [`free_group.py`](free_group.py)
 Free groups with symbolic generators.
 - `FreeGroup` — finitely generated free group; generators are ordered by creation order.
+  - `center` — returns the center of the free group (always `{identity}`, since free groups of rank ≥ 2 are non-abelian).
+  - `contains`, `is_subgroup`, `identity`.
 - `FreeGroupElement` — word (element) in a free group, stored as tuple of (generator, exponent) pairs.
   - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
   - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.

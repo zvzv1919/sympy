@@ -87,7 +87,10 @@ Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex
 - `Ynm` — Y_n^m(θ,φ); `eval` auto-simplifies symmetry relations: negative order m, negated polar/azimuthal angles.
 
 #### [`special/bsplines.py`](special/bsplines.py)
-B-spline basis functions as Piecewise expressions.
+B-spline basis functions constructed as Piecewise expressions via recursive Cox-de Boor algorithm.
+- `bspline_basis(d, knots, n, x)` — n-th B-spline of degree d; recursively combines left/right branches with endpoint-closure propagation to ensure partition-of-unity.
+- `bspline_basis_set` — returns the full set of `len(knots)-d-1` B-splines for given degree and knot vector.
+- `_add_splines` — helper that combines two spline Piecewise expressions.
 
 #### [`special/singularity_functions.py`](special/singularity_functions.py)
 `SingularityFunction` — generalized singularity function <x-a>^n for beam/structural analysis.

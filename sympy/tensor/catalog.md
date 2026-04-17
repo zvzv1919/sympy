@@ -53,7 +53,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensExpr` — abstract base for tensor expressions.
   - `get_matrix()` — converts attached ndarray component data to a `Matrix`; supports rank ≤ 2, raises `NotImplementedError` for higher ranks.
 - `canon_bp(p)` — canonicalize tensor via Butler-Portugal algorithm.
-- `tensor_indices(s, typ)` — create tensor index objects from string.
+- `tensor_indices(s, typ)` — create `TensorIndex` objects from comma-separated string; returns a **single object** for one name, a **list** for multiple.
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
 - `contract_metric(t, g)` — contract a tensor with a metric tensor.
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
@@ -72,7 +72,8 @@ Concrete N-dimensional array types (dense/sparse, mutable/immutable) and array o
 
 Base class for all N-dim arrays.
 
-- `NDimArray` — abstract base providing shape, rank, `_parse_index`, `diff`, `applyfunc`, `tolist`.
+- `NDimArray` — abstract base providing shape, rank, `_parse_index`, `applyfunc`, `tolist`.
+  - `diff(*args)` — differentiates each element w.r.t. given symbol(s); returns a new array of the **same shape**.
 - `ImmutableNDimArray` — immutable base (SymPy `Basic` subclass).
 
 ### array/dense_ndim_array.py
@@ -100,7 +101,7 @@ Standalone functions for tensor-style operations on N-dim arrays.
 
 - `tensorproduct(*args)` — outer (tensor) product of arrays/scalars; result rank = sum of input ranks.
 - `tensorcontraction(array, *contraction_axes)` — contracts (sums) over specified axis pairs; validates axes are distinct and dimensions match (raises `ValueError` on mismatch).
-- `derive_by_array(expr, dx)` — element-wise derivative of array or scalar w.r.t. array or scalar.
+- `derive_by_array(expr, dx)` — partial derivative of array w.r.t. array/scalar; result rank = rank(dx) + rank(expr) (shape is **extended**, not preserved).
 - `permutedims(expr, perm)` — reorders axes of an N-dim array by a permutation.
 
 ### array/mutable_ndim_array.py

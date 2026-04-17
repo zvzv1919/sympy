@@ -15,7 +15,7 @@ The `matrices` module has two layers:
 Central base class `MatrixBase` — defines the full matrix API inherited by both dense and sparse types.
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
-- **Arithmetic**: `__add__`, `__mul__`, `__pow__` (integer exponents: square-and-multiply; symbolic/float exponents: Jordan decomposition of each cell), `multiply`, `add`.
+- **Arithmetic**: `__add__`, `__mul__` (returns `NotImplemented` when the right operand is matrix-like but its transpose lacks `tolist`, e.g. MatrixSymbol), `__pow__` (integer exponents: square-and-multiply; symbolic/float exponents: Jordan decomposition of each cell), `multiply`, `add`.
 - **Row reduction**: `rref` (reduced row echelon form with pivot tracking), `rank`.
 - **Null/column space**: `nullspace` (kernel basis via rref; handles pivot vs free variable classification, errors on unexpected pivot-column entries), `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
@@ -23,7 +23,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF` (fraction-free LU returning P, L, D, U).
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`.
 - `pinv`: Moore-Penrose pseudoinverse; raises `NotImplementedError` for rank-deficient matrices (catches `ValueError` from `inv()`). `pinv_solve`: least-squares solver via pseudoinverse.
-- **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Determinant/inverse**: `det`, `det_bareis` (Bareiss fraction-free Gaussian elimination for determinant; divides by previous pivot to avoid fractions; swaps rows when current pivot is zero), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
 - `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.

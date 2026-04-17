@@ -4,8 +4,11 @@
 
 ### [`autowrap.py`](autowrap.py)
 Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cython, or Ufuncify backends.
-- `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments, re-raises if any missing arg is not output-only.
+- `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments.
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
+- `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions.
+- `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
+  - `dump_c(routines, f)` — writes C source for ufunc; n_out = len(routines), assumes all routines share the same input arguments (partitioned from routines[0]).
 
 ### [`codegen.py`](codegen.py)
 Generates source code (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions.

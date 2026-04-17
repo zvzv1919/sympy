@@ -57,7 +57,9 @@ All concrete numeric types and their arithmetic operations.
 - `Zero` — additive identity singleton; `_eval_power` strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
-- `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power` (e.g., NegativeInfinity checks exponent odd/even parity to decide result sign)
+- `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power`
+  - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN; complex (non-real) numeric exponent: extracts real part — positive real part → ComplexInfinity, negative → 0, zero → NaN
+  - `NegativeInfinity._eval_power` — checks exponent odd/even parity to decide result sign
   - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
 - `NaN` — indeterminate placeholder; structurally equal to itself (`__eq__`) but mathematically unequal to everything (`_eval_Eq` returns false)
@@ -73,6 +75,7 @@ All concrete numeric types and their arithmetic operations.
 ### [`add.py`](add.py)
 `Add` class — commutative n-ary sum. `flatten()` collects coefficients, separates commutative/non-commutative terms.
 
+- `as_numer_denom()` — converts sum to (numerator, denominator) form; collects per-term numerators/denominators; special-cases zero-denominator terms (infinity) by moving them into the numerator under denominator 1
 - `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
 - `as_content_primitive(radical, clear)` — recursive content extraction; when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
 
@@ -177,7 +180,8 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.
 
 - `_eval_evalf(prec)` — numerical evaluation for Add/Mul; splits into numeric-independent and dependent parts; guards against infinite recursion when the independent part is itself an AssocOp Function
-- `_matches_commutative` — pattern matching for Add/Mul; on first-pass failure, decomposes expressions to retry: for Mul, rewrites `x**n` as `x * x**(n-1)`; for Add, rewrites `c*x` as `x + (c-1)*x`; also tries `collect` on non-Wild symbols
+- `_matches_commutative` — pattern matching for Add/Mul; after removing exact (non-wild) parts, rejects match if inverse-combined expression has more ops than original (count_ops guard)
+  - On first-pass failure, decomposes to retry: Mul rewrites `x**n` as `x * x**(n-1)`; Add rewrites `c*x` as `x + (c-1)*x`; also tries `collect` on non-Wild symbols
 
 ---
 
@@ -190,6 +194,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Function.fdiff(argindex)` — first derivative w.r.t. the given argument position; if target arg is a plain Symbol that also appears free in another argument, falls through to Dummy-substitution path (returns `Subs(Derivative(...))`) to avoid incorrect results
 - `Function._eval_nseries` — series expansion for symbolic functions; handles infinite-argument cases via leading-term substitution; general algorithm uses repeated differentiation at zero with NaN→limit fallback and PoleError on infinite results
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
+- `Lambda` — anonymous function expression `Lambda(x, expr)`; `__eq__` performs alpha-equivalence (renames bound variables before comparing bodies, so `Lambda(x, x**2) == Lambda(y, y**2)`)
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
@@ -241,16 +246,20 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 `Transform` — immutable callable mapping (key→value with optional filter predicate).
 
 ### [`cache.py`](cache.py)
-`cacheit` — LRU memoization decorator; integrates with fastcache.
+`cacheit` — SymPy-specific memoization wrapper; selects between `fastcache.clru_cache` (if installed) or the backported `lru_cache` from `compatibility.py` as the underlying cache engine.
 
-- `__cacheit` — fallback decorator (used when fastcache unavailable); catches `TypeError` on unhashable args and silently falls back to calling the original uncached function
+- `__cacheit` — fallback decorator (used when fastcache unavailable); wraps `compatibility.lru_cache`; catches `TypeError` on unhashable args and silently falls back to calling the original uncached function
 - `CACHE` — global registry (`_cache` list) with `print_cache()` and `clear_cache()` helpers
 
 ### [`decorators.py`](decorators.py)
 `_sympifyit` — auto-converts arguments to SymPy types; `deprecated` — deprecation warnings.
 
 ### [`compatibility.py`](compatibility.py)
-Python 2/3 polyfills: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`.
+Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`.
+
+- `lru_cache` — backported LRU memoization decorator (used when `functools.lru_cache` unavailable); three branches by maxsize: 0 (no cache), None (unbounded), else size-limited with doubly-linked-list eviction
+  - Size-limited branch catches `TypeError` on unhashable args (e.g., lists) and falls through to uncached call
+- `_make_key` — builds hashable cache key from args/kwds; fast-path: single positional arg of primitive type (int, str, frozenset, NoneType) with no kwds returns the raw arg directly, avoiding wrapper allocation
 
 ---
 

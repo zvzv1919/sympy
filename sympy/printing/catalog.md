@@ -52,6 +52,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 `stringPict` — 2D string canvas with baseline tracking. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
 - Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other.
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
+- `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 
 ### [`pretty/__init__.py`](pretty/__init__.py)
 Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
@@ -68,6 +69,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`ccode.py`](ccode.py)
 `CCodePrinter` — generates C code, mapping SymPy functions to C math library equivalents.
+- `_print_Pow` — special-cases: exp==-1 → `1.0/x`, exp==0.5 → `sqrt(x)`, otherwise `pow(x, y)`.
+- `_print_Rational` — emits long-double literals (`p.0L/q.0L`).
 
 ### [`fcode.py`](fcode.py)
 `FCodePrinter` — generates Fortran code with language-specific operators and formatting (source format, precision, contraction).
@@ -90,6 +93,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`lambdarepr.py`](lambdarepr.py)
 `LambdaPrinter` — generates Python lambda-compatible string representations for use with `lambdify`.
+- `_print_Piecewise` — converts to nested ternary expressions (`(e1) if (c1) else (e2) if (c2) else None`); final fallback is `None`.
+- `NumPyPrinter` subclass — vectorized NumPy output; prints sequences as tuples (for numba nopython compatibility).
 
 ### [`python.py`](python.py)
 `PythonPrinter` — generates executable Python code strings.

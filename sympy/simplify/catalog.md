@@ -103,6 +103,9 @@ Radical simplification, term collection, and rationalization.
 - `collect(expr, syms)` — collect terms by powers of specified symbols.
 - `rcollect(expr, *vars)` — recursive collect.
 - `collect_sqrt(expr)` — collect terms sharing square-root factors.
+- `fraction(expr, exact)` — decompose expression into (numerator, denominator) pair by splitting powers with negative exponents.
+  - `exact=True`: only moves constant negative exponents to denominator; non-constant negative exponents stay in numerator; returns unevaluated Muls.
+- `numer(expr)` / `denom(expr)` — shorthand for `fraction(expr)[0]` / `[1]`.
 
 ### [`sqrtdenest.py`](sqrtdenest.py)
 Denests nested square root expressions.

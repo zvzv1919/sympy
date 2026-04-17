@@ -33,7 +33,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
-- `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` tuple by recursively peeling additive/multiplicative layers and function inverses. Collects like terms, handles Pow with principal roots. Distinct from `solveset._invert` (which takes a domain argument and returns sets).
+- `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
 - `unrad(eq, *syms)` — removes radicals from equations.
@@ -46,7 +46,8 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — linear system solver returning set of solution tuples.
 - `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form (A, b). Accepts both expressions (implicit =0) and Eq() relations.
-- `_invert(f_x, y, x, domain)` — function inversion core; reduces f(x)=y to simpler form.
+- `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
+- `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
 - `_solve_as_poly`, `_solve_as_rational`, `_solve_trig`, `_solve_radical`, `_solve_abs` — type-specific internal solvers.
 - Represents unsolved/conditional results as ConditionSet (not Piecewise).

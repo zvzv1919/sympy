@@ -22,6 +22,7 @@ Main inference engine for the assumptions system.
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
+    - Docstrings document cross-predicate structural inference rules (e.g., when combining two matrix properties implies a third).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then to SAT fallback.
 - `register_handler()` / `remove_handler()`: register or remove handler classes for predicates.
