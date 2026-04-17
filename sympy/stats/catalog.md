@@ -61,7 +61,7 @@ Built-in discrete distributions with infinite support.
 ### [`frv_types.py`](frv_types.py)
 Built-in finite random variable distributions (discrete, finite support). Each has a `pdf(x)` returning probability mass.
 - `DieDistribution` / `Die(name, sides)`: fair multi-faced die; `pdf` branches on numeric vs symbolic input (returns Rational for valid integers, Zero otherwise; for symbols constructs a Sum with KroneckerDelta).
-- `DiscreteUniformDistribution` / `DiscreteUniform()`: uniform distribution over a finite set of items.
+- `DiscreteUniformDistribution` / `DiscreteUniform()`: uniform distribution over a finite set of symbolic or numeric items; `pdf(x)` returns `Rational(1, n)` if x is in the item set, `S.Zero` otherwise.
 - `BernoulliDistribution` / `Bernoulli()`: two-outcome process with probability p.
 - `Coin(name, p)`: fair or unfair coin toss (wrapper around Bernoulli with 'H'/'T').
 - `BinomialDistribution` / `Binomial()`: number of successes in n independent Bernoulli trials. `__new__` validates n (nonneg integer) and p (0 ≤ p ≤ 1), raises `ValueError` on invalid args.

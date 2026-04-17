@@ -16,10 +16,12 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
 - **Arithmetic**: `__add__`, `__mul__`, `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`, `exp` (matrix exponential via Jordan).
+- **Dot / element-wise products**: `dot` (relaxed-dimension inner product — auto-transposes when row/column counts match the length of b; returns scalar for vectors, list otherwise), `multiply_elementwise`, `cross`.
 - **Row reduction / spaces**: `rref`, `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
-- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`, `LUdecompositionFF`.
+- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`.
+- `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.

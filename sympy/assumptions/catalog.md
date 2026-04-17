@@ -25,6 +25,7 @@ Main inference engine for the assumptions system.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
     - Docstrings document structural requirements (e.g., squareness — non-square matrices immediately return False for orthogonal/unitary/positive_definite) and cross-predicate inference rules.
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
+- `_extract_facts(expr, symbol)`: extracts assumption predicates relevant to a given symbol from a compound Boolean expression; applies De Morgan's law to push negations inward (converting negated And/Or).
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then falls back in two tiers.
 - `ask_full_inference(proposition, assumptions, known_facts_cnf)`: first-tier SAT fallback inside `ask.py`; checks satisfiability of proposition (and its negation) against known predicate relationships to return True/False/None.
   - If indeterminate, `ask()` escalates to `satask()` (in `satask.py`) which gathers expression-specific facts.

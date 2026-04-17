@@ -49,6 +49,8 @@ All concrete numeric types and their arithmetic operations.
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats; normalizes string inputs before parsing (prepends '0' to '.5', converts '-.5' to '-0.5'); auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
   - `_eval_power` — negative Float base with rational exponent p/q where p=1 and q is odd: factors out `(-1)**(1/q)` and recurses on positive base, avoiding spurious complex result
   - `__eq__` — equality comparison; short-circuits to False when other is an irrational `NumberSymbol` (e.g., pi, E) without numerical comparison
+  - `__gt__`/`__ge__` — ordering comparisons; checks `other.is_comparable` to decide whether to numerically evaluate the other operand before mpf comparison
+  - `__lt__`/`__le__` — ordering comparisons; checks `other.is_real and other.is_number` (different predicate from `__gt__`/`__ge__`) to decide whether to evalf the other operand
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
   - `as_content_primitive()` — returns `(|self|, sign)` for nonzero; returns `(1, self)` when self is zero
 - `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
@@ -193,7 +195,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 - `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n` as a dict mapping bases to exponents
   - `as_expr()` — converts dict back to symbolic Mul; dispatches on exponent type: Python int → wraps in Integer, Rational → keeps as-is, symbolic → multiplies into existing base exponent
   - `normal()` — cancels shared base-power pairs; optimized for few overlaps; handles symbolic exponent differences via additive extraction
-  - `div()` — similar cancellation but optimized for many common factors
+  - `div()` — cancels shared base-power pairs optimized for many common factors; for non-numeric exponents, tries `extract_additively` first, then decomposes exponents via `as_coeff_Add` to partially cancel symbolic exponent remainders
 
 ### [`operations.py`](operations.py)
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.

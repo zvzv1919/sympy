@@ -15,6 +15,7 @@ The **pretty** subpackage (2D ASCII/Unicode output) has a strict layered archite
 
 ### [`printer.py`](printer.py)
 Base `Printer` class with `_print` dispatch mechanism routing expressions to `_print_*` methods. Manages settings and print-level tracking.
+- `_print` walks the expression's MRO looking for `_print_<ClassName>` handlers; if none found, falls back to `self.emptyPrinter(expr)` (defaults to `str(expr)`).
 
 ### [`precedence.py`](precedence.py)
 Operator precedence values (`PRECEDENCE` dict) and functions for determining when parentheses are needed.
@@ -34,12 +35,13 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 `PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
 - `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty. Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
 - `_print_MatrixElement` — renders matrix element access; when parent is a `MatrixSymbol` with numeric indices, produces a subscripted symbol (e.g., `A₁₂`); otherwise uses function-like bracket notation `A[i, j]`.
+- `_print_MatrixSlice` — renders sub-range access with start:stop:step notation; simplifies by omitting unit step, collapsing single-element ranges, and dropping zero start index.
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
 - `_print_Integral` — builds integral signs with limits and spacing.
 - Special-case `_print_*` overrides for functions whose names collide with Greek/Unicode symbols (e.g., `_print_Chi` keeps Latin "Chi" instead of Greek χ, `_print_gamma`/`_print_lowergamma`/`_print_uppergamma` use explicit Γ/γ glyphs).
 - `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
-- Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions.
+- Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.
 - `_print_Float` — when `full_prec` setting is `"auto"`, shows full precision only at the top print level (`_print_level == 1`); nested floats use reduced precision.
 
@@ -70,6 +72,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`str.py`](str.py)
 `StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
+- `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and formatting hooks.

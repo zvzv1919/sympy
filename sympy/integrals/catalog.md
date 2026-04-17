@@ -5,6 +5,10 @@
 ### [`integrals.py`](integrals.py)
 Core symbolic integration engine and public API.
 - `Integral` — unevaluated integral expression with limits; supports `.doit()` evaluation
+- `Integral.doit` — evaluates the integral using a strategy cascade over each limit set:
+  - For definite integrals with infinite bounds, tries Meijer G via `meijerint_definite`; handles `conds` parameter for convergence conditions
+  - Raises `ValueError` when `conds='separate'` is used with multiple integration limits (multi-dimensional integrals)
+  - Falls back to `_eval_integral` for antiderivative + interval evaluation
 - `Integral._eval_integral` — strategy cascade for antiderivative computation:
   - Fast paths: polynomial, piecewise, constant integrands
   - Inline power rule for `(a*x+b)^c`: returns log when c==-1, general power otherwise; in `conds='piecewise'` mode emits a Piecewise distinguishing exp==-1 from general case
@@ -141,6 +145,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting
   - Pre-processes product-form integrands by filtering out `exp(a*x)` and `base^(a*x)` factors, accumulating their exponents into a cumulative shift applied to the final result
+  - When coefficient extraction from a power exponent fails (`_CoeffExpValueError`), treats the factor as non-exponential (keeps it in the integrand unchanged)
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
 - `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)

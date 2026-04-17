@@ -2,6 +2,12 @@
 
 ## Core / Base
 
+### [`__init__.py`](__init__.py)
+Package entry point; re-exports all public geometric entities and utility functions into the top-level `sympy.geometry` namespace.
+- Exports: `Point`, `Point2D`, `Point3D`, `Line`, `Ray`, `Segment`, `Line3D`, `Ray3D`, `Segment3D`, `Plane`, `Ellipse`, `Circle`, `Polygon`, `RegularPolygon`, `Triangle`, `Curve`, `Parabola`.
+- Utility exports: `are_similar`, `centroid`, `convex_hull`, `idiff`, `intersection`, `closest_points`, `farthest_points`.
+- Also exports: `GeometryError`, `rad`, `deg`.
+
 ### [`entity.py`](entity.py)
 Base classes for all geometric entities.
 - `GeometryEntity` — abstract base; provides `intersection()`, `translate()`, `rotate()`, `scale()`, `reflect()`, `encloses_point()`, `equals()`.

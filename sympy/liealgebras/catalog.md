@@ -30,7 +30,7 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 ### [`weyl_group.py`](weyl_group.py)
 `WeylGroup` — represents the Weyl group (reflection symmetry group) of a Lie algebra.
 - `generators()` — lists generating reflections (r1, r2, …).
-- `group_order()` — order of the full Weyl group.
+- `group_order()` — order of the full Weyl group; dispatches per series: factorial formulas for A/B/C/D, hardcoded constants for E (ranks 6/7/8 only), F, G.
 - `group_name()` — descriptive name and geometric interpretation.
 - `element_order(weylelt)` — order of a specific element given as a product of generators.
 - `matrix_form(weylelt)` — converts a product-of-reflections string into its matrix representation; builds standard matrices for each generating reflection per series (A, B, C, D, F, G) with series-specific special cases (e.g. D-type last reflection differs from transpositions).

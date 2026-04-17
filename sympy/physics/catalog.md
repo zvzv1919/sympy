@@ -82,6 +82,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
+    - `_sympy_to_scalar` — converts SymPy scalar expressions to native Python types (int/float/complex) for numpy/scipy compatibility; handles Integer, Float, Rational, Number, NumberSymbol, and imaginary unit I (→ complex). Raises TypeError for non-numeric expressions.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
@@ -92,7 +93,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
-  - `Rotation` — Euler-angle rotation operator; `_apply_operator_uncoupled` applies to kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j.
+  - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
     - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
@@ -141,13 +142,14 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `state_to_operators(state)` — maps a state (class or instance) to its observable operator(s); for Bra states not directly in the registry, resolves via `dual_class()` to look up the corresponding Ket entry.
   - `operators_to_state(operators)` — inverse mapping: operator(s) → eigenstate.
 - **Circuit utilities**: `circuitutils.py` — primitive circuit manipulation: `find_subcircuit`/`replace_subcircuit` (KMP-based subsequence search/replace in gate tuples), `random_reduce(circuit, gate_ids)` (randomly removes a known gate identity from a circuit; returns original circuit unchanged if no identity is found), `random_insert` (inserts a random identity into a circuit), `flatten_ids` (expands GateIdentity objects into sorted list of equivalent sequences), `convert_to_symbolic_indices`/`convert_to_real_indices`.
+- **QASM parser**: `qasm.py` — `Qasm` class: parses text-based gate descriptions into a quantum circuit. `add()` dispatches each command: user-defined custom operations (`self.defs`) take priority over built-in methods; unrecognized commands are skipped with a print warning. Built-in commands: `x`, `z`, `h`, `s`, `t`, `measure`, `cnot`, `swap`, `cphase`, `toffoli`, `cx`.
 - **Other**: `tensorproduct.py`, `matrixcache.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `innerproduct.py` — `InnerProduct` expression node (unevaluated ⟨bra|ket⟩); constructor validates types and stores bra/ket.
     - `_eval_conjugate` — conjugate of ⟨a|b⟩ returns InnerProduct(Dagger(ket), Dagger(bra)), i.e. swaps and daggers both components.
     - Does NOT contain evaluation formulas — actual results (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
-  - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
+  - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
   - `pauli.py` — Pauli spin operators as quantum Operator subclasses (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
@@ -187,6 +189,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Constructor takes an inertial ReferenceFrame, generalized coordinates/speeds, kinematic differential equations, and optional constraint/dependent-speed specs; validates frame type.
   - Constraint initialization: partitions velocity-constraint Jacobian into independent/dependent columns; when acceleration constraints are not explicitly provided, auto-derives them by time-differentiating the velocity constraints.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
+  - `to_linearizer()` — converts Kane's EOM into `Linearizer` form; validates that kinematic/constraint coefficient matrices contain no unexpected dynamic symbols, raises ValueError if time-dependent symbols appear outside the forcing vector.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Legacy `_old_linearize` (deprecated) computes Jacobians in-place.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
   - `mass_matrix` — dynamic mass matrix, augmented with Lagrange multiplier coefficients when constraints exist (n×(n+m)).

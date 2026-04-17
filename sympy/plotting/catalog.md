@@ -119,6 +119,9 @@ Bounded interval representation for pyglet variable ranges.
 
 - `PlotInterval` — stores [variable, min, max, steps] with property accessors and validation.
 - `fill_from(b)` — merges defaults from another interval for partial specifications.
+- `vrange()` — yields v_steps+1 evenly-spaced sympy numbers from v_min to v_max (individual sample points).
+- `vrange2()` — yields v_steps consecutive adjacent (a, b) pairs sharing endpoints, covering v_min to v_max (used for line segments/mesh cells).
+- `frange()` — float version of `vrange()`; evaluates each sympy number to float.
 
 ### `plot_curve.py`
 Curve rendering for 1D pyglet plots.

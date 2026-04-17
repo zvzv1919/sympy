@@ -35,7 +35,7 @@ Functions that **analyze indices** on `Indexed`/`IndexedBase` expressions: shape
 Abstract index notation tensors (Penrose-style) with Einstein summation, canonicalization, and symmetry.
 
 - `TensorIndexType` — characterizes a family of indices (name, metric, dimension, delta, epsilon).
-- `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`).
+- `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`). Negation (`-idx`) returns a new index with flipped variance (upper ↔ lower).
 - `TensorHead` — named tensor ("head" of an indexed tensor expression) with index types, rank, symmetry, and commutation properties.
   - `__new__` validates the `name` argument (must be string or Symbol; raises `ValueError` otherwise).
   - `_check_auto_matrix_indices_in_call` — when `True` is passed as an index placeholder, auto-fills slots: first occurrence of a type gets `auto_left`, second gets negated `auto_right`.
@@ -64,6 +64,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
 - `contract_metric(t, g)` — contract a tensor with a metric tensor.
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
+- `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components. Raises `NotImplementedError` when contraction pattern requires transposition.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
   - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.

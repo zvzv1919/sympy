@@ -162,7 +162,7 @@ Low-level algorithms for computational group theory.
 - `_base_ordering` — reorders `{0..n-1}` so that base points appear first; produces an index mapping, does not verify or compute minimal bases.
 - `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
 - `_strip` — single-pass sift of one permutation through an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
-- `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
+- `_strip_af` — optimized array-form variant of `_strip`; skips levels already known to be fixed (parameter `j`), and exits early when the residual equals a coset representative mid-chain, returning `(False, base_len + 1)` instead of computing further products.
 - `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.
 - `_strong_gens_from_distr`, `_check_cycles_alt_sym`.
 

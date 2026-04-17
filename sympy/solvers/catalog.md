@@ -44,6 +44,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 Modern set-based solver with explicit domain handling. Returns FiniteSet, Interval, ConditionSet, or ImageSet.
 
 - `solveset(f, symbol, domain=S.Complexes)` — core solver; dispatches by domain.
+  - Constant (variable-free) expressions: returns domain if equal to 0, EmptySet if nonzero; raises NotImplementedError if equality to zero is undetermined.
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`; falls back to ConditionSet on NotImplementedError.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.

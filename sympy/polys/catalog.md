@@ -99,6 +99,7 @@ Sparse rational function fields and their elements.
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
   - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
     - **If that fails and domain has an associated field (e.g. ZZ→QQ), retries via the field and returns `(numer, denom)` split**; returns `(0, None, None)` on total failure.
+  - Arithmetic (`__add__`, `__sub__`, `__mul__`, etc.): when the other operand is a `FracElement` from a different field, **checks nested domain relationships**: if `g.field` matches `self.field.domain.field`, treats `g` as a ground element; if `self.field` matches `g.field.domain.field`, **delegates to `g.__rsub__`/`g.__rmul__`** (the outer field handles the operation).
   - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
 
 ---
@@ -136,6 +137,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - **If `g` is not a Poly (e.g. a plain scalar), attempts to interpret it as a constant in `f`'s coefficient domain**; raises `UnificationFailed` if conversion fails.
   - `__eq__(other)` — equality comparison; **if generators match but coefficient domains differ, attempts domain unification; returns `False` (not an error) if `UnificationFailed`**.
   - `__pow__(n)` — if `n` is a non-negative integer, delegates to `pow(n)`; **otherwise falls back to `as_expr()**n`** (converts to symbolic expression), enabling negative/fractional exponents at the expression level.
+  - Ground arithmetic: `add_ground`, `sub_ground`, `mul_ground`, `quo_ground` (truncating scalar division), `exquo_ground` (exact scalar division; **raises `ExactQuotientFailed` if any coefficient is not evenly divisible**).
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.
       Attempts to retract quotient/remainder back to the ring; keeps field-domain results silently if retraction fails.
@@ -300,6 +302,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_chinese_remainder_reconstruction_multivariate` — CRT for multivariate polynomials; **when coefficient domain is a `PolynomialRing` (nested structure), recurses on itself to CRT-combine the polynomial coefficients**; for plain integer coefficients, uses standard number-theoretic CRT.
 - `_rational_function_reconstruction(c, p, m)` — recover rational function `a/b` in `Z_p(t)` from congruence residue `c mod m` via partial extended Euclidean algorithm with degree bounds.
   - **Returns `None` if denominator shares a common factor with modulus** (non-invertible).
+- `_integer_rational_reconstruction(c, m, domain)` — reconstruct rational `a/b` from `c ≡ a/b mod m` via Euclidean algorithm; **returns `None` if denominator coefficient is zero (`s1 == 0`) or `|s1| ≥ bound`** (non-invertible); negates both `a, b` when `s1 < 0` to ensure positive denominator.
 - `_rational_reconstruction_int_coeffs(hm, m, ring)` — reconstruct rational coefficients from integer image. Returns `None` if any coefficient fails.
   - **If `ring.domain` is a `PolynomialRing` (nested coefficients), recurses on itself; otherwise delegates to `_integer_rational_reconstruction`**.
 - `_trial_division` — verify candidate GCD by trial division.
@@ -338,7 +341,7 @@ Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic e
 - `dup_sqf_norm`, `dmp_sqf_norm` — square-free norm over algebraic extensions; iteratively shifts input by the algebraic generator until the resultant is square-free.
   - Returns `(shift_count, shifted_poly, resultant_in_ground_domain)`.
 - `dup_sqf_part`, `dmp_sqf_part` — square-free part; **over fields, normalizes result to monic; over rings, extracts primitive part** (content-free form).
-- `dup_sqf_list`, `dmp_sqf_list` — square-free decomposition with multiplicities.
+- `dup_sqf_list`, `dmp_sqf_list` — square-free decomposition with multiplicities; **over fields, makes `f` monic; over rings (e.g. ZZ), extracts primitive part and negates `f` (adjusting content sign) if leading coefficient is negative** after content extraction.
 - `dup_sqf_list_include`, `dmp_sqf_list_include` — same as `sqf_list` but folds the leading coefficient into the factor list; **if no factor has multiplicity 1, prepends a ground constant `(coeff, 1)` entry**.
 - `dup_gf_sqf_part`, `dmp_gf_sqf_part`, `dup_gf_sqf_list`, `dmp_gf_sqf_list` — GF variants (thin wrappers around `galoistools`).
 - `dup_gff_list` — greatest factorial factorization (univariate only).
@@ -570,7 +573,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
 - `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
 - `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial.
-- `_choose_factor` — select factor of a polynomial that has a specific root.
+- `_choose_factor(factors, x, v)` — select factor of a polynomial that has a specific root; **accepts factor-multiplicity tuple pairs (e.g. from `factor_list`), stripping to plain polynomials first**.
 
 ### [`partfrac.py`](partfrac.py)
 Partial fraction decomposition.
@@ -612,7 +615,7 @@ Special polynomial constructors for testing and benchmarking.
 ### [`groebnertools.py`](groebnertools.py)
 Gröbner basis computation algorithms.
 
-- `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm.
+- `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm; **if domain is not a field, clones ring with `domain.get_field()`, computes in the field, then clears denominators and resets ring** on each result.
 - `red_groebner(G, ring)` — compute reduced Gröbner basis; selects a generating subset, then reduces each polynomial by taking its remainder w.r.t. all others — **silently drops any polynomial that reduces to zero**.
 - `groebner_lcm(f, g)` — LCM via ideal intersection: introduces variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
   - **When both inputs are single-term (monomial) polynomials**, bypasses Gröbner computation and directly returns componentwise monomial/coefficient LCM.
