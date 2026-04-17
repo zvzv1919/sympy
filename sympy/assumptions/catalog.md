@@ -81,7 +81,8 @@ Handlers that **evaluate** set-membership predicates for specific expression typ
   - `log`: checks realness/positivity of argument; has hardcoded workaround for `exp(I)` / `exp(-I)` when general `Q.nonpositive` query is insufficient.
   - `Pow`: handles imaginary bases, imaginary exponents, and real base/exponent combinations including half-integer exponents.
   - `exp`: checks if argument is an odd multiple of `I*pi/2`.
-- `AskHermitianHandler`, `AskAntiHermitianHandler` (extends `AskImaginaryHandler`), `AskAlgebraicHandler`.
+- `AskHermitianHandler` (extends `AskRealHandler`): evaluates `Q.hermitian` for `Add`, `Mul`, and scalar types; `Mul` tracks noncommutative factor count and returns indeterminate if more than one noncommutative term.
+- `AskAntiHermitianHandler` (extends `AskImaginaryHandler`), `AskAlgebraicHandler`.
 
 ### [`handlers/ntheory.py`](handlers/ntheory.py)
 Handlers for **number-theory predicates**: prime, composite, even, odd.

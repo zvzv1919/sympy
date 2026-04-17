@@ -32,7 +32,8 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 
 ### [`pretty/pretty.py`](pretty/pretty.py)
 `PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
-- `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty.
+- `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty. Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
+- `_print_MatrixElement` — renders matrix element access; when parent is a `MatrixSymbol` with numeric indices, produces a subscripted symbol (e.g., `A₁₂`); otherwise uses function-like bracket notation `A[i, j]`.
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
 - `_print_Integral` — builds integral signs with limits and spacing.
@@ -57,7 +58,8 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
-- `prettyForm.__add__` / `__mul__` — binding-aware addition and multiplication of pretty-printed forms.
+- `prettyForm.__add__` — binding-aware addition; reuses existing minus signs to simplify `+ -x` forms.
+- `prettyForm.__mul__` — binding-aware multiplication; detects `-1` factors and substitutes `-1 * x` → `-x`; inserts a space when consecutive leading minus signs would collide.
 
 ### [`pretty/__init__.py`](pretty/__init__.py)
 Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
@@ -71,7 +73,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and formatting hooks.
-- `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as `a*b/c` or `a*b/(c*d)`.
+- `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as flat 1D text `a*b/c` or `a*b/(c*d)` (no 2D fraction bars).
 
 ### [`ccode.py`](ccode.py)
 `CCodePrinter` — generates C code, mapping SymPy functions to C math library equivalents.
@@ -108,6 +110,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `LambdaPrinter` — generates Python lambda-compatible string representations for use with `lambdify`.
 - `_print_Piecewise` — converts to nested ternary expressions (`(e1) if (c1) else (e2) if (c2) else None`); final fallback is `None`.
 - `NumPyPrinter` subclass — vectorized NumPy output; prints sequences as tuples (for numba nopython compatibility).
+  - `_print_DotProduct` — emits `dot(a, b)` with automatic transpose to ensure 1×n by n×1 orientation when vector shapes don't match.
+  - `_print_MatMul` — chains `.dot()` calls for matrix multiplication.
 
 ### [`python.py`](python.py)
 `PythonPrinter` — generates executable Python code strings.

@@ -232,6 +232,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_sign_variations` — count sign changes in coefficient sequence.
 - `dup_revert(f, n, K)` — compute `f⁻¹ mod x^n` (power series inversion) via **Newton iteration** (`g ← 2g − f·g²` mod increasing powers of x); distinct from `dup_invert` in `euclidtools.py` which computes modular inverse via extended GCD.
 - `dmp_revert` — multivariate variant of `dup_revert`.
+- `dmp_lift(f, u, K)` — convert algebraic coefficients to integers by multiplying conjugate permutations; **raises `DomainError` if `K` is not an algebraic domain** (e.g. plain QQ).
 
 ---
 
@@ -707,6 +708,8 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
+  - `GeneralizedPolynomialRing.new(a)` — construct element; **validates that the denominator's leading term under the ring's ordering has all-zero exponents** (i.e., denominator is a unit in the localization); raises `CoercionFailed` otherwise.
+  - `PolynomialRingBase.from_AlgebraicField(a, K0)` — convert algebraic number field element; **returns `None` (silent failure) if `K1.dom != K0`** (ground domain mismatch), unlike other `from_*` methods which always attempt conversion.
   - `GeneralizedPolynomialRing._vector_to_sdm` — converts a vector of rational function elements to sparse distributed module form.
     **Clears all denominators first** by computing the product of all entry denominators, making entries integral before delegation.
   - For product/mixed orders given as tuples, builds the product order first, then checks `order.is_global`.

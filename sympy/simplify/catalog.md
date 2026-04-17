@@ -85,7 +85,7 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
 - `logcombine(expr, force)` — combine/split logarithms using log rules.
 - `nsimplify(expr, constants, tolerance)` — find simple closed-form for numerical expressions.
-- `hypersimp(f, k)` — compute consecutive-term ratio of hypergeometric sequences.
+- `hypersimp(f, k)` — simplify consecutive-term ratio f(k+1)/f(k); rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
 - `besselsimp(expr)` — simplify Bessel function expressions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds.
   - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial. For power-of-2 `n`, repeatedly sqrtdenests and halves `n`, returning early without polynomial solving.

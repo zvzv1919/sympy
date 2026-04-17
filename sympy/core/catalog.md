@@ -172,9 +172,9 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `leadterm(x)` — returns leading term as `(coeff, exponent)` tuple; temporarily replaces `log(x)` with a Dummy before decomposition to avoid variable leaking into the coefficient
 - `extract_branch_factor(allow_half)` — decomposes products of `exp_polar` into `(residual, n)` where n is the integer winding number; collects `pi*I` multiples and rounds down to nearest even integer via `ceiling`
 - `primitive()` — extracts positive Rational from expression non-recursively (treats self as Add); returns `(S.One, S.Zero)` for zero-valued expressions (content is 1, not 0); if `as_coeff_Mul(rational=True)` yields negative coefficient, negates both parts to guarantee positive result
-- `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure; lazy iterator, n-th Taylor coefficient, public wrappers
-- `__int__` — converts to Python int; rounds to 2 decimal places with off-by-one correction
-- `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for non-real/NaN; otherwise computes difference and checks sign or returns unevaluated relational
+- `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure; `__int__` converts to Python int with off-by-one correction
+- `Expr.round(p)` — rounds numeric expression to `p` decimal places; for negative values, detects when adding the rounding half-unit flips sign of the scaled intermediate and reverses direction; uses `_mag` for digit counting
+- `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for complex non-real operands, operands containing ComplexInfinity (via `.has()`), or NaN; otherwise computes difference and checks sign or returns unevaluated relational
 - `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both are numbers, otherwise to polynomial `invert`
 - `_eval_is_positive` / `_eval_is_negative` — sign determination; uses low-precision evalf, falls back to minimal polynomial when no significant digits
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values

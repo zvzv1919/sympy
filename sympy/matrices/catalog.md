@@ -20,7 +20,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF`.
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` (Frobenius, spectral, p-norms).
@@ -63,13 +63,14 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
-- `_eval_inverse`: sparse inversion; symmetrizes non-symmetric matrices via M^T·M before LDL/Cholesky solve, then applies scaling correction to the result.
+- `_eval_inverse`: sparse inversion dispatch (internal to sparse storage layer); symmetrizes via M^T·M when needed.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
 
 ### [`immutable.py`](immutable.py)
 Hashable, immutable matrix types usable as dictionary keys and in SymPy expression trees.
 
 - `ImmutableMatrix` (`ImmutableDenseMatrix`): combines `MatrixExpr` and `DenseMatrix`; hashable concrete dense matrix.
+- `_eval_Eq`: three-way equality — returns False for shape mismatch, None (defer to default `Eq` handling) when comparing against a non-immutable `MatrixExpr`, otherwise `sympify(diff.is_zero)`.
 - `ImmutableSparseMatrix`: hashable concrete sparse matrix.
 
 ---
@@ -135,7 +136,8 @@ Block-structured symbolic matrices.
 - `refine_Determinant`: assumption-based simplification — returns 1 for orthogonal/unit-triangular, 0 for singular matrices.
 
 ### [`expressions/trace.py`](expressions/trace.py)
-- `Trace`: unevaluated symbolic trace tr(M).
+- `Trace`: unevaluated symbolic trace tr(M); `doit(deep=True)` recursively evaluates arg then delegates to `_eval_trace`; `doit(deep=False)` returns concrete trace for `MatrixBase` instances or unevaluated `Trace` otherwise.
+- `trace(expr)`: convenience function returning `Trace(expr).doit()`.
 
 ### [`expressions/diagonal.py`](expressions/diagonal.py)
 - `DiagonalMatrix`, `DiagMatrix`: symbolic diagonal matrix expressions.

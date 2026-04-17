@@ -94,7 +94,9 @@ Risch Differential Equation solver: solves Dy + f·y = g for y in a differential
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
-- `prde_special_denom` — parametric special denominator; handles exp/tan/primitive cases; in hypertangent case with possible cancellation, checks `recognize_log_derivative` and `parametric_log_deriv` before adjusting degree bound
+- `prde_special_denom` — parametric special denominator; handles exp/tan/primitive/base cases
+  - For primitive/base: short-circuits with `(a, ba.quo(bd), G, 1)` — no order computation or cancellation checks needed since k<t>==k[t]
+  - For exp/tan: computes order at special polynomial; in hypertangent case with possible cancellation, checks `recognize_log_derivative` and `parametric_log_deriv` before adjusting degree bound
 - `real_imag` — separates a rational function into real and imaginary parts evaluated at a complex root of t²+1
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
@@ -132,7 +134,10 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 
 ### [`meijerint.py`](meijerint.py)
 Integration by rewriting integrands as Meijer G-functions and applying known convolution formulas.
-- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, rewrites hyperbolic→exponential if no G-function match found
+- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting
+  - Tries multiple splitting-point shifts; if a result still contains unevaluated `hyper`/`meijerg`, collects it as a fallback candidate rather than returning immediately
+  - If all shifts yield unevaluated special functions and f contains HyperbolicFunction, rewrites hyperbolics as exponentials and retries
+  - Returns the best (simplest) collected result if no clean closed-form is found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
@@ -151,6 +156,9 @@ Integration of expressions involving Dirac delta and Heaviside step functions.
 - `deltaintegrate(f, x)` — integrates DiracDelta/Heaviside expressions by case analysis
   - For higher-order DiracDelta (derivatives), performs repeated integration by parts; returns the largest non-zero hyperreal term to ensure correct results under nested integration
   - For products, extracts a simple DiracDelta term via `change_mul`, evaluates the remaining factor at the delta's root
+- `change_mul(node, x)` — rearranges a multiplicative term to extract one simple DiracDelta factor
+  - Sorts commutative args for deterministic collapse; when a factor is DiracDelta raised to a power, decrements the exponent by 1 and keeps the base for extraction
+  - If no simple DiracDelta is found, falls back to expanding all DiracDelta terms with `diracdelta=True`
 
 ### [`singularityfunctions.py`](singularityfunctions.py)
 Integration of SingularityFunction expressions (beam/structural mechanics notation).

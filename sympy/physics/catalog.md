@@ -110,7 +110,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
-  - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
+  - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; operator application computes ladder action: annihilation → √n|n−1⟩, creation → √(n+1)|n+1⟩. `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
   - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).
     - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
 - **Operator ordering**: `operatorordering.py` — two reordering modes for `BosonOp`/`FermionOp` (mode-labeled quantum/ operators):

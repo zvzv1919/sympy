@@ -13,13 +13,15 @@ Variable-type key: **crv** = continuous, **drv** = discrete (infinite support), 
 ## Core Infrastructure
 
 ### [`rv.py`](rv.py)
-Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSpace`, `SinglePSpace`, `RandomSymbol`, `ProductPSpace`, `ProductDomain`.
-- Foundational probability-space and domain abstractions; handles conditioning and variable dependencies.
+Base classes and core query functions for all random variable types.
+- Base classes: `RandomDomain`, `SingleDomain`, `PSpace`, `SinglePSpace`, `RandomSymbol`, `ProductPSpace`, `ProductDomain`.
 - `ProductPSpace`: merges independent probability spaces; its `integrate` decomposes integration by iterating constituent spaces and integrating only each space's own variables.
-- `ProductDomain`: combined domain from independent sub-domains.
 - `SinglePSpace.__new__`: constructs a probability space for a single variable; coerces string to `Symbol`, raises `TypeError` for non-string/non-Symbol input.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
-- Monte Carlo sampling utilities: `sample_iter` generates realizations from a probability space; `sampling_E`, `sampling_P`, `sampling_density` approximate expectation, probability, and density by averaging over a finite number of drawn samples.
+- `Density` class + `density()`: compute probability density of a random expression. `Density.doit()` returns a DiracDelta-based Lambda for deterministic (non-stochastic) expressions.
+- `cdf()`: computes cumulative distribution function; delegates to `pspace().compute_cdf()`, returns raw result if it lacks a `doit` method.
+- `where()`, `given()`, `sample()`, `sample_iter()`: query domain of conditions, condition expressions, and draw realizations.
+- `sampling_E`, `sampling_P`, `sampling_density`: Monte Carlo approximations of expectation, probability, and density.
 
 ### [`crv.py`](crv.py)
 Infrastructure for continuous random variables.
@@ -71,8 +73,7 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 ## User-Facing API
 
 ### [`rv_interface.py`](rv_interface.py)
-Convenience functions that **directly evaluate** probability and statistics queries by calling into probability-space integration/summation.
-- `P()`, `E()`, `density()`, `where()`, `given()`, `sample()`, `pspace()`.
+Statistical convenience functions; re-exports core query functions (`P`, `E`, `density`, `cdf`, `where`, `given`, `sample`, `pspace`) from `rv.py` and defines additional ones.
 - `moment()`, `variance()`, `std()`, `covariance()`, `correlation()`, `cmoment()`, `smoment()`, `skewness()`.
 - `covariance(X, Y)`: computes `E((X-E(X))*(Y-E(Y)))` by calling `expectation()` for each argument independently, then for the product.
 - `variance(X)`: delegates to `cmoment(X, 2)` (second central moment).

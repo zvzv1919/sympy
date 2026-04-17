@@ -27,6 +27,7 @@ Individual permutation representation, construction, and properties.
   - `commutator(x)` — group commutator of two individual permutations (~x·~self·x·self); raises `ValueError` if sizes differ.
   - `commutes_with` — checks if two individual permutations commute (boolean, no search).
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.
+- `_af_new(perm)` — static fast-path factory; constructs a `Permutation` directly from a raw int list, skipping all input validation (no duplicate/range checks). Internal use only.
 - Low-level array-form helpers: `_af_rmul`, `_af_rmuln`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
 
 ### [`perm_groups.py`](perm_groups.py)

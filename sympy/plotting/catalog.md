@@ -99,6 +99,7 @@ Base class providing shared infrastructure for all pyglet plot modes.
 - `_get_evaluator()` — tries fast lambda evaluator first; on exception, falls back to sympy substitution evaluator with a warning.
 - `_get_sympy_evaluator()`, `_get_lambda_evaluator()` — abstract methods implemented by concrete modes.
 - Thread-safe rendering stack: `push_wireframe()`, `push_solid()` with `_draw_lock`.
+- `_render_stack_top()` — consumes top of render stack: compiles callable into GL display list, returns cached list if valid, or regenerates via `_create_display_list()` if `glIsList()` reports the list invalid (e.g., after context loss).
 - `_on_calculate()` — triggers vertex/color vertex computation in background threads.
 - `style` property (`_set_style`) — when style is set to empty string, auto-selects rendering appearance: computes max v_steps across intervals and picks 'both' (wireframe+solid) if ≤ 40, or 'solid' (filled only) if > 40.
 - Class-level attributes: `styles` (render style bitmask dict), `style_override` (forces rendering style when non-empty), `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
