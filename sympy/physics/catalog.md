@@ -153,7 +153,7 @@ Geometric and wave optics.
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
   - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
   - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
-- `waves.py` — `TWave` class for transverse electromagnetic waves.
+- `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index). Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
 - `medium.py` — `Medium` class (refractive index, permittivity, permeability).
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection), `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_equation()`, `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
 

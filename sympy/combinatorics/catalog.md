@@ -134,7 +134,7 @@ Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
 - `get_symmetric_group_sgs`, `tensor_gens`, `perm_af_direct_product`, `dummy_sgs`.
 - `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal (no baseswap fallback).
-- `_is_minimal_bsgs` — checks if a BSGS has the lexicographically smallest base.
+- `_is_minimal_bsgs` — verifies a BSGS has the lexicographically smallest base by reconstructing the base from generators and comparing to the given one.
 - `get_transversals` — returns transversals for a group given its BSGS.
 
 ---
@@ -145,7 +145,7 @@ Tensor canonicalization using double-coset representatives.
 Low-level algorithms for computational group theory.
 - `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
 - `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
-- `_base_ordering`.
+- `_base_ordering` — reorders `{0..n-1}` so that base points appear first; produces an index mapping, does not verify or compute minimal bases.
 - `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
 - `_strip` — single-pass sift of one permutation through an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
 - `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.

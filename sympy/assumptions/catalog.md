@@ -18,7 +18,7 @@ When `ask(Q.property(expr), assumptions)` is called, the engine dispatches to a 
 Main inference engine for the assumptions system.
 - `AssumptionKeys` (aliased as `Q`): defines all predicate query keys as `@predicate_memo` properties returning `Predicate` objects.
   - Each predicate property's docstring documents **semantic rules and cross-predicate implications** (the authoritative source for predicate meaning).
-  - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.composite`, `Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.finite`, …
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive` and `Q.negative` each document the asymmetry between negation (`~Q.positive`) and "non" counterparts (`Q.nonpositive`): `~Q.positive(I)` is `True` but `Q.nonpositive(I)` is `False`, because "non" predicates require realness.

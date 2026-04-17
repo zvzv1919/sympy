@@ -11,6 +11,7 @@ Core symbolic integration engine and public API.
   - Rational functions via `ratint`, trig products, delta/singularity functions
   - Calls `risch_integrate` with `separate_integral=True`; if non-elementary remainder is returned, recursively evaluates it with other methods
   - Falls back to heuristic Risch, then Meijer G, then manual integration in order
+  - When `manual=True` is explicitly set and `manualintegrate` returns a fully unevaluated `Integral`, that result is discarded and other strategies are tried
   - When `manualintegrate` partially succeeds (result still contains unevaluated `Integral` sub-expressions), recursively evaluates those remaining pieces with all other methods (manual disabled)
 - `Integral.as_sum(n, method)` — approximates a definite integral as a finite sum using rectangle-based quadrature (left, right, midpoint, trapezoid); raises NotImplementedError for multidimensional integrals
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
@@ -30,6 +31,7 @@ Integration of pure sin^n(x)·cos^m(x) products only (no tan/sec/cot/csc).
 - `trigintegrate(f, x)` — integrates sin/cos power products via u-substitution and reduction formulas
   - When both exponents are odd, selects the smaller exponent for substitution to minimize result complexity
   - Handles piecewise output when the frequency coefficient may be zero
+- `_sin_pow_integrate(n, x)` / `_cos_pow_integrate(n, x)` — recursive reduction formulas for sin^n / cos^n; base cases: n=1 (trig identity), n=0 (returns x), n=−1 (delegates to `trigintegrate(1/sin(x))` to break recursion)
 
 ---
 
@@ -74,7 +76,9 @@ Risch algorithm for integration of transcendental elementary functions.
 - `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - Polynomial utilities: `gcdex_diophantine` (extended GCD, Diophantine version — degree-bounded Bézout coefficients), `frac_in`, `as_poly_1t`
-- Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `laurent_series`
+- `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
+- `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
+- `laurent_series` — contribution of a factor to the full partial fraction decomposition
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
 
 ### [`rde.py`](rde.py)
@@ -104,7 +108,7 @@ Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Int
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
 - `heurisch_wrapper(f, x)` — wrapper with retry logic for edge cases
 - `DiffCache` — caches derivatives during integration; for cylindrical (Bessel-type) functions, simultaneously stores derivatives for orders n and n−1 to avoid introducing a third algebraically dependent transcendental
-- `components(f, x)` — collects the functional building blocks (atoms) of an expression that depend on x
+- `components(f, x)` — collects the functional building blocks (atoms) of an expression that depend on x; for power expressions: integer exponents yield only base components, rational non-integer exponents add base^(1/denominator), symbolic/irrational exponents add both full power and exponent components
 
 ### [`rationaltools.py`](rationaltools.py)
 Integration of rational functions p(x)/q(x) via partial fractions and logarithmic parts.

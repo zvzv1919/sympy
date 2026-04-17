@@ -32,6 +32,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `__eq__` — catches `UnificationFailed` and returns `False` silently (never raises on incompatible domains).
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
+    - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
@@ -40,6 +41,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Root isolation: `intervals(all, eps, sqf)` — isolate roots; **raises `PolynomialError` if multivariate (`lev > 0`)**; dispatches to 4 variants based on `all`/`sqf` flags. `refine_root`, `count_real_roots`, `count_complex_roots` — also univariate-only.
   - `cancel(g, include)` — cancel common factors in f/g; when `include=False`, returns `(cF, cG, F, G)` (content factors + reduced polys); when `include=True`, returns only `(F, G)`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
+  - `_parse(rep, dom, lev)` — input normalization; when rep is a (num, den) tuple, **negates both numerator and denominator if the denominator has a negative leading coefficient**, enforcing a canonical positive-denominator sign convention. Sets denominator to one if numerator is zero.
   - `per(num, den, cancel, kill, ring)` — construct new DMF; **if `kill=True` and `lev==0`, returns scalar `num/den`**.
   - `frac_unify(g)` — unify two DMFs across different domains; creates a local `per` closure that captures the unified domain and has the same kill/level-zero scalar-return behavior.
   - `poly_unify(g)` — unify DMF with a DMP; same local `per` closure pattern.
@@ -73,6 +75,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `div(fv)`, `rem(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
   - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
+  - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`. Single-term (monomial) fast path handles arbitrary exponents; multi-term dispatches by degree to `square`, `_pow_multinomial`, or `_pow_generic`.
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
@@ -85,6 +88,7 @@ Sparse rational function fields and their elements.
 - `field()`, `xfield()`, `vfield()` — construct rational function field with explicit domain.
 - `sfield(exprs, *symbols)` — construct field from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
+  - `__new__` — caches field objects; assigns generator symbols as attributes on the field; **skips `setattr` if an attribute with that name already exists (`hasattr` guard)**, preventing generator names like `'domain'` or `'ring'` from overwriting internal attributes.
   - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
   - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
@@ -186,6 +190,8 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
+- `dmp_nest(f, l, K)` — wrap a multivariate value in `l` additional nesting levels; **if `f` is not a list (plain scalar), delegates to `dmp_ground`** instead of wrapping in nested lists.
+- `dmp_ground_nth(f, N, u, K)` — extract ground-level coefficient at multi-index N from nested lists; **if polynomial at some level has degree −∞ (zero polynomial), sets degree to −1** to avoid indexing errors; returns `K.zero` if index exceeds length.
 - `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
 - `dmp_exclude(f, u, K)` — detect and remove variable dimensions unused by any term; returns `(removed_indices, reduced_poly, new_level)`.
 - `dmp_include(f, J, u, K)` — re-insert previously excluded variable dimensions at specified positions.
@@ -325,6 +331,7 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_random`, `gf_irreducible`, `gf_value` — random/irreducible polynomial generation and evaluation.
 - `gf_crt`, `gf_crt1`, `gf_crt2` — Chinese Remainder Theorem. Also `linear_congruence`, `csolve_prime`, `gf_csolve`.
 - Conversion: `gf_from_dict`, `gf_to_dict`, `gf_from_int_poly`, `gf_to_int_poly`.
+  - `gf_from_dict` — **accepts both plain integer keys and single-element tuple keys** (e.g. `{10: c}` or `{(10,): c}`), dispatching by `isinstance(max_key, int)`.
 
 Caveat: All operations here are list-based GF(p)-specific. For dense polynomial operations over general domains, see `densearith.py`/`densetools.py`. For square-free decomposition over Z/Q, see `sqfreetools.py`.
 
@@ -425,6 +432,7 @@ Bridge between sparse polynomial ring interface and dense function API.
   - `dup_sqf_norm`, `dmp_sqf_norm` — bridge methods; the resultant (third return value) is converted via `self.to_ground().from_dense()` (ground domain ring), not `self.from_dense()`.
   - `to_gf_dense(element)` — convert sparse element to dense coefficient list for GF(p) arithmetic; **converts each coefficient through `domain.dom`** (the base integer domain of the finite field).
   - `from_gf_dense(element)` — convert dense GF(p) list back to sparse representation via `dmp_to_dict`.
+  - `dup_clear_denoms(f, convert)` / `dmp_clear_denoms(f, convert)` — clear fractional coefficients; **when `convert=True`, clones the ring with `domain.get_ring()` (e.g. QQ→ZZ) and reconstructs the result in that new ring**; otherwise reconstructs in the original ring.
   - `gf_*` wrapper methods (e.g. `gf_trunc`, `gf_normal`, `gf_neg`, `gf_add`, …) — convert sparse ↔ dense via `to_gf_dense`/`from_gf_dense` and pass through domain modulus/base to the corresponding `galoistools` functions.
 - Re-exports all `dup_*`/`dmp_*`/`gf_*` functions from dense modules.
 
@@ -505,6 +513,8 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `_minpoly_groebner(ex, x, dom)` — Gröbner-basis strategy for minimal polynomial.
   - Includes `simpler_inverse` heuristic: **inverts the expression first when it is a product of powers or a negative-exponent power with Add base**, then transforms back via `_invertx`.
 - `_minpoly_op_algebraic_element(op, ex1, ex2, x, dom)` — minimal polynomial for sum or product of two algebraic elements via resultant; **when `dom` is QQ and `op` is Add, uses fast `rs_compose_add` instead of general resultant**.
+- `_minimal_polynomial_sq(p, n, x)` — minimal polynomial for `p^(1/n)` where `p` is a sum of surds; eliminates square roots via repeated `_separate_sq`.
+  - **When `n==1`, skips factorization and directly normalizes** (sign correction + primitive part), since elimination already yields a constant multiple of the minimal polynomial.
 - `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
@@ -580,6 +590,7 @@ Sparse distributed module representations for submodule/syzygy computation.
 - `sdm_nf_mora` — generalized Mora algorithm for weak normal forms with non-global orderings; **dynamically appends current element to the reducer set when the chosen reducer's ecart exceeds the element's ecart**.
 - `sdm_ecart(f)` — difference between total degree and leading monomial degree.
 - `sdm_groebner` — Gröbner basis (minimal standard basis) for submodules; uses "sugar" strategy for pair selection.
+  - Sugar priority: `max(degree_i − deg(LM_i), degree_j − deg(LM_j)) + deg(lcm(LM_i, LM_j))`, combining element degrees and leading monomial LCM degree.
   - Inner `update` applies **chain criterion to prune critical pairs** whose LCM is divisible by the new element's LCM with both pair members.
 - `sdm_spoly` — S-polynomial of two module elements; returns zero if leading terms involve different basis generators.
 
@@ -656,3 +667,4 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
   - `from_GlobalPolynomialRing` — cross-ring conversion mirrors the polynomial ring's reorder logic.
 - `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.
+  - `revert(a)` — compute multiplicative inverse of `a` in `R/I`; **forms the sum of the principal ideal `(a)` and the base ideal, then tests if 1 is expressible in their generators**; raises `NotReversible` if not a unit.

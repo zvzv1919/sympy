@@ -65,7 +65,8 @@ Fourier series decomposition into sine/cosine components.
 ### [`sequences.py`](sequences.py)
 Discrete sequence representations and term-wise arithmetic operations (not limits of sequences).
 - `sequence(seq, limits)` — factory function to create sequence objects.
-- `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`.
+- `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`, `._ith_point(i)`.
+- `_ith_point(i)` — position of i-th element in a sequence; iterates backward from stop when start is negative infinity.
 - `EmptySequence(SeqBase)` — singleton trivial/empty sequence; interval is the empty set.
 - `SeqFormula(SeqExpr)` — formula-defined sequence (e.g., n²).
 - `SeqPer(SeqExpr)` — periodic sequence from a tuple of repeating values.
@@ -107,8 +108,7 @@ Finite difference operators for symbolic sums.
 
 ### [`series_class.py`](series_class.py)
 Abstract base class for all series representations.
-- `SeriesBase(Expr)` — abstract properties: `.interval`, `.start`, `.stop`, `.length`; `.term(pt)`.
-- `_ith_point(i)` — returns position of i-th element; when start is negative infinity, iterates backward from stop (step = -1).
+- `SeriesBase(Expr)` — abstract base for series (not sequences); `.interval`, `.start`, `.stop`, `.length`, `.term(pt)`, `._ith_point(i)`.
 
 ### [`__init__.py`](__init__.py)
 Package initialization; aggregates public API exports from all submodules.

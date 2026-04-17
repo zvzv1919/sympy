@@ -19,6 +19,7 @@ Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSp
 - `ProductDomain`: combined domain from independent sub-domains.
 - `SinglePSpace.__new__`: constructs a probability space for a single variable; coerces string to `Symbol`, raises `TypeError` for non-string/non-Symbol input.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
+- Monte Carlo sampling utilities: `sample_iter` generates realizations from a probability space; `sampling_E`, `sampling_P`, `sampling_density` approximate expectation, probability, and density by averaging over a finite number of drawn samples.
 
 ### [`crv.py`](crv.py)
 Infrastructure for continuous random variables.

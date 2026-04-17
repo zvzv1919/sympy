@@ -101,6 +101,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ### [`repr.py`](repr.py)
 `ReprPrinter` — generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`.
 - `_print_Symbol` — includes declared assumption properties (e.g., `positive=True`, `commutative=False`) in output so symbols round-trip with their metadata.
+- `_print_MatrixBase` — emits constructor-call strings for matrices; special-cases matrices with zero rows XOR zero cols (emits explicit dimension args with empty list).
 
 ### [`lambdarepr.py`](lambdarepr.py)
 `LambdaPrinter` — generates Python lambda-compatible string representations for use with `lambdify`.
@@ -128,6 +129,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`preview.py`](preview.py)
 `preview()` — compiles LaTeX to PNG/DVI/PS/PDF via system LaTeX and displays with a viewer.
+- Viewer selection/validation: auto-detects system viewers; handles deprecated `"StringIO"` viewer name (warns, converts to `"BytesIO"`); requires `outputbuffer` for BytesIO viewers.
+- Supports `viewer="file"` for file output and `outputbuffer` for in-memory stream output.
 
 ### [`dot.py`](dot.py)
 `dotprint()` — generates Graphviz DOT notation for expression tree visualization.

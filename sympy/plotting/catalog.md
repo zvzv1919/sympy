@@ -6,7 +6,8 @@
 Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 
 - `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default). Supports indexed access (`__getitem__`, `__setitem__`, `__delitem__`) and `append()`/`extend()` for series manipulation.
-- `check_arguments(args, expr_len, nb_of_free_symbols)` — argument parser that groups flat or tuple-wrapped expressions into plot series; handles ambiguity when expr_len == nb_of_free_symbols (e.g., 3D parametric lines where 3 exprs can't be distinguished from a range tuple).
+- `check_arguments(args, expr_len, nb_of_free_symbols)` — argument parser that groups flat or tuple-wrapped expressions into plot series with three branches: multiple expressions with same range, series of plots with same range, and multiple plots with different ranges.
+  - Explicitly excludes the "series of plots with same range" branch when expr_len == 3, because 3-element tuples are ambiguous between expression groups and range tuples.
 - Public API entry points (matplotlib-based):
   - `plot()` — single-expression 2D plots over one variable.
   - `plot_parametric()` — 2D parametric curves from two expressions over one parameter.
@@ -96,7 +97,7 @@ Base class providing shared infrastructure for all pyglet plot modes.
 - `_get_sympy_evaluator()`, `_get_lambda_evaluator()` — abstract methods implemented by concrete modes.
 - Thread-safe rendering stack: `push_wireframe()`, `push_solid()` with `_draw_lock`.
 - `_on_calculate()` — triggers vertex/color vertex computation in background threads.
-- `style` property (`_set_style`) — auto-determines rendering appearance when no explicit style is given: computes max step count across intervals and uses a threshold heuristic to choose between 'both' (wireframe+solid) and 'solid' (filled only).
+- `style` property (`_set_style`) — when style is set to empty string, auto-selects rendering appearance: computes max v_steps across intervals and picks 'both' (wireframe+solid) if ≤ 40, or 'solid' (filled only) if > 40.
 - Class-level attributes: `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
 
 ### `plot_modes.py`

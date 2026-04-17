@@ -39,7 +39,9 @@ Point representations in n-dimensional Euclidean space.
   - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.
   - `random_point()`, `contains()`.
 - `Line` — infinite 2D line through two points.
-- `Ray` — 2D ray from a point in a direction.
+- `Ray` — 2D ray (half-line) from a source point in a direction.
+  - `distance(o)` — shortest distance to a point; falls back to distance from the ray's source when the perpendicular foot lies outside the ray.
+  - `contains(o)` — membership test using direction-consistency; raises `Undecidable` for unresolvable symbolic coordinates.
 - `Segment` — 2D segment between two endpoints; `length`, `midpoint`, `perpendicular_bisector()`.
 
 ### [`line3d.py`](line3d.py)

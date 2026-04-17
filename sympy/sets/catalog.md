@@ -35,6 +35,7 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
   - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation
   - `_intersect` with `Interval`: inverts boundary values, restricts base set; converts finite `Range` to `FiniteSet` before remapping through the lambda
 - `Range` — discrete integer range (start, stop, step); supports slicing, iteration, and Diophantine-based intersection
+  - `__new__` — constructor normalizes bounds; handles infinite bounds (collapses equal-infinite start/stop to null range); requires finite integer step
   - `_contains` — returns `S.false` for non-integers; returns `None` (propagates uncertainty) when the value's integer nature is unknown
 - `ComplexRegion` — region in the complex plane defined by product sets in rectangular (re × im) or polar (r × θ) form
   - `psets` — returns constituent ProductSets as a tuple (wraps single product; unpacks Union args for multiple)
