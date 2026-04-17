@@ -25,13 +25,16 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
-- **Predicates**: `is_square`, `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions), `is_hermitian`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
+- **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
+- **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
+- `is_hermitian`: checks equality to conjugate transpose via fuzzy three-valued logic; returns None when free-variable entries make result indeterminate.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
 Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
+- `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution for lower-triangular systems), `_upper_triangular_solve` (backward substitution for upper-triangular systems), `_diagonal_solve`.
 - `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `__setitem__`, `copyin_matrix`, `fill`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
@@ -80,7 +83,8 @@ Unevaluated matrix power node `MatPow(base, exp)`.
 Block-structured symbolic matrices.
 
 - `BlockMatrix`: matrix composed of a 2D grid of sub-matrices; `blocks`, `blockshape`, `rowblocksizes`, `colblocksizes`.
-- `BlockDiagMatrix`: block-diagonal specialization.
+- `BlockMatrix._entry`: resolves element access by locating the correct sub-block; uses `!= False` comparisons to handle symbolic (non-concrete) row/column indices.
+- `BlockDiagMatrix`: block-diagonal specialization; `_eval_inverse` inverts each diagonal block independently.
 - Block arithmetic rules: `bc_matmul`, `bc_block_plus_ident`, `bc_dist`, `bc_transpose`.
 
 ### [`expressions/inverse.py`](expressions/inverse.py)

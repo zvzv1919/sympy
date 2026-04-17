@@ -43,7 +43,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `xobj(symb, length)` — constructs multi-line spatial objects (brackets, braces, integral signs) of a given height; handles even-height adjustment for centered middle pieces (e.g., curly braces).
 - `pretty_atom(atom_name, default=None)` — returns pretty representation of named atoms (pi, infinity, etc.); raises `KeyError('only unicode')` in ASCII mode when no default is provided.
 - `pretty_symbol(symb_name)` — translates symbol names to Unicode with Greek letters, sub/superscripts.
-- `xsym(sym)` — maps operator characters to Unicode/ASCII equivalents.
+- `xsym(sym)` — resolves operator characters (comparison `<=`/`>=`/`!=`, arithmetic `*`/`.`, arrows `-->`/`==>`, assignment `:=`/`+=`) to Unicode or ASCII display form via `_xsym` lookup table.
 - `vobj(symb, height)` / `hobj(symb, width)` — vertical/horizontal object constructors.
 - Key data: `atoms_table` (atom→Unicode mapping), `_xobj_unicode`/`_xobj_ascii` (bracket/delimiter glyph tables).
 

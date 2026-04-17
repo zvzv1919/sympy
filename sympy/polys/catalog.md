@@ -41,6 +41,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `poly_unify(g)` — unify DMF with a DMP; same local `per` closure pattern.
   - `half_per(rep, kill)` — create DMP from rep; if `kill=True` and `lev==0`, returns the raw rep.
   - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `quo`, `exquo`.
+  - `__rdiv__(g)` — reverse division (`g / self`); computes `invert()*g`, then **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**.
 - `ANP` — Algebraic Number Polynomial (univariate dense poly modulo a minimal polynomial over an algebraic extension).
   - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
   - `div(f, g)` — returns `(quotient, zero)`; `rem` always returns zero (field-like semantics via modular inverse).
@@ -67,6 +68,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `_term_div()` — returns a closure for term divisibility; **over non-field domains (e.g. ZZ), also checks that the coefficient divides evenly** before returning a quotient.
   - `div(fv)`, `rem(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
+  - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
 
 ### [`fields.py`](fields.py)
@@ -91,7 +93,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `count_roots(inf, sup)` — count roots in interval; **if one bound is real and the other complex, converts the real bound to `(value, QQ.zero)` tuple** before delegating to complex root counter.
   - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots.
   - `real_roots`, `all_roots`, `root` — root enumeration via `CRootOf`.
-  - `reorder`, `inject`, `eject` — generator manipulation; **`eject` only supports front or back generators**; raises `NotImplementedError` for middle generators.
+  - `reorder`, `inject`, `eject` — generator manipulation.
+    - `inject`: **returns `self` unchanged if the coefficient domain is purely numerical** (no ground generators to promote).
+    - `eject`: **only supports front or back generators**; raises `NotImplementedError` for middle generators.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
@@ -140,6 +144,9 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC` — degree/coefficient queries.
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
+- `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
+- `dmp_exclude(f, u, K)` — detect and remove variable dimensions unused by any term; returns `(removed_indices, reduced_poly, new_level)`.
+- `dmp_include(f, J, u, K)` — re-insert previously excluded variable dimensions at specified positions.
 
 ### [`densetools.py`](densetools.py)
 Advanced dense polynomial operations: calculus, evaluation, composition, denominator clearing.
@@ -273,8 +280,12 @@ Caveat: All operations here are list-based GF(p)-specific. For dense polynomial 
 Symbolic root representations and root-sum evaluation.
 
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
+  - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
   - `_real_roots`, `_all_roots`, `_roots_trivial`, `_roots_radical` — root enumeration.
   - `_get_interval`, `_refine_interval`, `_eval_evalf` — numerical evaluation.
+  - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
+    - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
+    - **Refines bounding rectangles until non-imaginary roots have boxes fully to one side of the y-axis**.
   - `real_roots(poly)`, `all_roots(poly)` — class methods for root lists.
 - `RootSum` — represents ∑ f(rᵢ) over all roots rᵢ of a polynomial.
   - `_rational_case(poly, func)` — **evaluates sum of a rational function over all roots using Viète's formulas and symmetric function decomposition**.
@@ -312,12 +323,13 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 
 - `sign_seq(poly_seq, x)` — extract the sequence of signs of leading coefficients from a polynomial remainder sequence.
 - `sturm_q(p, q, x)` — **generalized Sturm sequence in Q[x]** using polynomial remainder; if LC(p) < 0, negates both inputs and flips the final sequence; removes trailing zero/NaN entry if GCD has degree > 0.
-- `sturm_pg`, `sturm_amv` — Sturm sequences via alternative methods (Pell-Gordon / AMV theorems).
+- `sturm_pg`, `sturm_amv` — Sturm sequences via alternative methods (Pell-Gordon / AMV theorems); `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence to ensure correctness.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
 - `sylvester(p, q, x)` — Sylvester matrix construction.
-- `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering so highest-degree coefficients appear in first row/column; `method='bz'` uses natural ordering.
+- `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering; `method='bz'` uses natural ordering.
+  - **Identity: `bezout(..., 'prs') = backward_eye(n) * bezout(..., 'bz') * backward_eye(n)`**, connecting to Sylvester's 1853 matrix.
 - `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
 - `quo_z(p, q, x)` — integer polynomial quotient, same absolute-value premultiplication as `rem_z`.
 
@@ -341,6 +353,8 @@ Bridge between sparse polynomial ring interface and dense function API.
 - `IPolys` — mixin class providing dense polynomial operations as methods on ring objects.
   - `wrap(element)` — coerce a `PolyElement` into this ring; **raises `NotImplementedError("domain conversions")` if the element belongs to a different ring**.
   - `ground_new`, `domain_new`, `from_dict`, `clone`, `drop` — ring interface methods.
+  - Multivariate result methods (`dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
+    - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
 - Re-exports all `dup_*`/`dmp_*`/`gf_*` functions from dense modules.
 
 ### [`polyoptions.py`](polyoptions.py)
@@ -410,10 +424,10 @@ Exception classes for polynomial operations.
 ### [`numberfields.py`](numberfields.py)
 Computational algebraic number theory: minimal polynomials, field isomorphisms, primitive elements.
 
-- `minimal_polynomial(expr, x)` — compute minimal polynomial of an algebraic expression.
+- `minimal_polynomial(expr, x)` — compute minimal polynomial of an algebraic expression; **auto-switches from compositional (resultant) to Gröbner strategy when any `AlgebraicNumber` subexpression is detected** in the expression tree.
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
-- `to_number_field(expr)` — convert expression to algebraic number field element.
+- `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
 - `isolate(expr)` — numerically isolate an algebraic number.
 - `_choose_factor` — select factor of a polynomial that has a specific root.
 
@@ -427,7 +441,7 @@ Partial fraction decomposition.
 - `apart_undetermined_coeffs(P, Q)` — partial fractions via undetermined coefficients; factors denominator, assigns symbolic unknowns per factor power, builds a linear system by matching polynomial powers, and solves for unknowns.
 - `apart_full_decomposition(P, Q)` — Bronstein's full partial fraction decomposition.
 - `apart_list` — structured partial fraction representation.
-- `assemble_partfrac_list` — reassemble from structured representation.
+- `assemble_partfrac_list` — reassemble from structured representation; **if roots are given as a `Poly`, constructs a `RootSum`; if roots are an explicit list of algebraic numbers, directly evaluates numerator/denominator at each root**.
 
 ### [`orthopolys.py`](orthopolys.py)
 Classical orthogonal polynomial generation.
@@ -463,13 +477,15 @@ Gröbner basis computation algorithms.
 FGLM algorithm for Gröbner basis conversion between monomial orderings.
 
 - `matrix_fglm(F, ring, O_to)` — convert Gröbner basis from one ordering to another.
+- `_basis(G, ring)` — enumerate standard monomials (not divisible by any leading monomial of G); forms the vector-space basis of the quotient ring `K[X]/(G)`.
 
 ### [`distributedmodules.py`](distributedmodules.py)
 Sparse distributed module representations for submodule/syzygy computation.
 
-- `sdm_nf_mora` — Mora normal form for module elements.
+- `sdm_nf_mora` — generalized Mora algorithm for weak normal forms with non-global orderings; **dynamically appends current element to the reducer set when the chosen reducer's ecart exceeds the element's ecart**.
+- `sdm_ecart(f)` — difference between total degree and leading monomial degree.
 - `sdm_groebner` — Gröbner basis for submodules.
-- `sdm_spoly` — S-polynomial computation.
+- `sdm_spoly` — S-polynomial of two module elements; returns zero if leading terms involve different basis generators.
 
 ### [`ring_series.py`](ring_series.py)
 Power series arithmetic in sparse polynomial rings.
@@ -499,6 +515,9 @@ Polynomial system solving.
 ### [`agca/`](agca/catalog.md)
 Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over polynomial rings.
 
+- `Ideal.__add__(e)` (in `ideals.py`) — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
+- `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
+- `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
 - `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
 - `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.

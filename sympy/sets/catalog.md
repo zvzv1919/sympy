@@ -8,7 +8,7 @@ Symbolic set theory: construction, membership, and operations on mathematical se
 Foundation of all set types and operations.
 
 - `Set` — abstract base class for all sets; defines `union`, `intersect`, `contains`, `complement`, `is_subset`, `is_superset`, `is_disjoint`
-- `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes images via calculus
+- `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes images via calculus; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
 - `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic

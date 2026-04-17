@@ -45,7 +45,8 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
 - `Ei` — exponential integral Ei(x).
 - `expint` — generalized exponential integral E_n(x).
-- `li`, `Li` — logarithmic integrals.
+- `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
+- `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
 - `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
   - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
 - `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x).
@@ -67,7 +68,8 @@ Hypergeometric and Meijer G-functions.
 Elliptic integral functions: `elliptic_k`, `elliptic_f`, `elliptic_e`, `elliptic_pi`.
 
 #### [`special/zeta_functions.py`](special/zeta_functions.py)
-Riemann zeta and related functions: `zeta`, `lerchphi`, `polylog`, `dirichlet_eta`, `stieltjes`.
+Riemann zeta and related functions: `zeta`, `lerchphi`, `polylog` (Li_s(z)), `dirichlet_eta`, `stieltjes`.
+- `polylog` — polylogarithm Li_s(z) = Σ z^k/k^s. `_eval_expand_func` reduces to elementary rational form for non-positive integer order s via iterated u·d/du on u/(1−u).
 
 #### [`special/beta_functions.py`](special/beta_functions.py)
 Euler beta function `beta(x, y)`. NOT probability beta distribution (that's `stats/`).

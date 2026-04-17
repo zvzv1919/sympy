@@ -17,9 +17,11 @@ When `ask(Q.property(expr), assumptions)` is called, the engine dispatches to a 
 ### [`ask.py`](ask.py)
 Main inference engine for the assumptions system.
 - `AssumptionKeys` (aliased as `Q`): defines all predicate query keys as `@predicate_memo` properties returning `Predicate` objects.
+  - Each predicate property's docstring documents **semantic rules and cross-predicate implications** (the authoritative source for predicate meaning).
   - Scalar predicates: `Q.positive`, `Q.real`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
-  - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements`.
+  - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then to SAT fallback.
 - `register_handler()` / `remove_handler()`: register or remove handler classes for predicates.
 - `compute_known_facts()`, `get_known_facts()`: build logical relationship tables between predicates.
@@ -29,6 +31,7 @@ Predicate definitions and global assumptions context.
 - `Predicate`: base class representing a named predicate with registered handlers.
   - `eval(expr, assumptions)`: walks the expression type's MRO across all registered handlers; raises `ValueError` on conflicting results from different resolutors.
 - `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object; delegates to `Predicate.eval` via `_eval_ask`.
+  - `args` returns only the expression (`_args[1:]`), hiding the predicate; `func` returns the predicate (`_args[0]`). Public arg tuple differs from internal `_args`.
 - `AssumptionsContext` / `global_assumptions`: mutable set of globally active assumptions.
 - `assuming(*assumptions)`: context manager for temporary local assumptions.
 
@@ -53,7 +56,7 @@ Base classes and utilities shared by all handlers.
 - `test_closed_group()`: tests membership in a group under an operation.
 
 ### [`handlers/order.py`](handlers/order.py)
-Handlers for **ordering / sign predicates**: positive, negative, zero, nonzero, nonnegative, nonpositive.
+Handlers that **evaluate** ordering / sign predicates for specific expression types. Predicate semantics (e.g., why "non" facts require realness) are defined in `ask.py`.
 - `AskNegativeHandler`: evaluates `Q.negative` for `Basic`, `Add`, `Mul`, `Pow`, `ImaginaryUnit`, etc.
 - `AskNonNegativeHandler`, `AskNonZeroHandler`, `AskZeroHandler`, `AskNonPositiveHandler`: sign-boundary predicates.
 - `AskPositiveHandler`: evaluates `Q.positive` with expression-type dispatch:
@@ -63,7 +66,7 @@ Handlers for **ordering / sign predicates**: positive, negative, zero, nonzero, 
   - Matrix-related: `Trace`, `Determinant`, `MatrixElement`.
 
 ### [`handlers/sets.py`](handlers/sets.py)
-Handlers for **set-membership predicates**: integer, rational, irrational, real, complex, imaginary, algebraic, Hermitian, anti-Hermitian, extended real.
+Handlers that **evaluate** set-membership predicates for specific expression types. Predicate definitions and implication rules are in `ask.py`.
 - `AskIntegerHandler`, `AskRationalHandler`, `AskIrrationalHandler`.
 - `AskRealHandler`, `AskExtendedRealHandler`, `AskComplexHandler`, `AskImaginaryHandler`.
 - `AskHermitianHandler`, `AskAntiHermitianHandler`, `AskAlgebraicHandler`.

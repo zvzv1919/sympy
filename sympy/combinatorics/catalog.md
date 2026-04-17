@@ -52,7 +52,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 
 ### [`named_groups.py`](named_groups.py)
 Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties. Contrast with `generators.py`, which yields individual permutation elements.
-- `SymmetricGroup`, `CyclicGroup`, `DihedralGroup`, `AbelianGroup`, `RubikGroup`.
+- `SymmetricGroup`, `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
+- `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4).
 - `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0).
 
 ### [`group_constructs.py`](group_constructs.py)

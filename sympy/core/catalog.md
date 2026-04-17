@@ -65,6 +65,10 @@ All concrete numeric types and their arithmetic operations.
 ### [`mul.py`](mul.py)
 `Mul` class — commutative n-ary product. `flatten()` handles coefficient extraction and commutativity separation.
 
+- `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
+- `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
+- `_eval_is_rational`, `_eval_is_algebraic` — assumption handlers with zero-fallback for mixed cases
+
 ### [`power.py`](power.py)
 `Pow` class — symbolic `base**exp` expression and simplification rules.
 
@@ -120,6 +124,9 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`expr.py`](expr.py)
 `Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
+- `as_independent(*deps)` — splits expression into (independent, dependent) parts w.r.t. given symbols; for Mul, non-commutative factors after the first dependent one are all grouped as dependent to preserve ordering
+- `extract_multiplicatively(c)` — returns self/c if division moves all coefficients toward zero, else None; for Add expressions, requires every term to be individually divisible (all-or-nothing)
+- `extract_additively(c)` — returns self - c if subtraction moves matching coefficients toward zero, else None
 - `sort_key()` — ordering key for expressions; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
 - `_eval_lseries(x)` — default lazy series iterator; adaptively increases n in `_eval_nseries`, yields incremental term differences; loops past pure-Order results until concrete terms appear
 - `taylor_term(n, x)` — n-th Taylor coefficient by n-fold differentiation (slow default; subclasses override)
@@ -199,6 +206,9 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 
 ### [`cache.py`](cache.py)
 `cacheit` — LRU memoization decorator; integrates with fastcache.
+
+- `__cacheit` — fallback decorator (used when fastcache unavailable); catches `TypeError` on unhashable args and silently falls back to calling the original uncached function
+- `CACHE` — global registry (`_cache` list) with `print_cache()` and `clear_cache()` helpers
 
 ### [`decorators.py`](decorators.py)
 `_sympifyit` — auto-converts arguments to SymPy types; `deprecated` — deprecation warnings.

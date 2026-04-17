@@ -90,7 +90,7 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 
 ### [`meijerint.py`](meijerint.py)
 Integration by rewriting integrands as Meijer G-functions and applying known convolution formulas.
-- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting
+- `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, falls back to rewriting hyperbolic functions as exponentials when initial attempts fail
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
 

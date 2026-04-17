@@ -4,7 +4,7 @@
 
 ### [`autowrap.py`](autowrap.py)
 Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cython, or Ufuncify backends.
-- `autowrap(expr)` — compile an expression to a binary callable.
+- `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments, re-raises if any missing arg is not output-only.
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
 
 ### [`codegen.py`](codegen.py)
@@ -36,7 +36,7 @@ Memoization decorators optimized for recurrence relations.
 Large collection of iterable/container utility functions.
 - `flatten`, `unflatten` — recursive/structured flattening of nested iterables.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
-- `subsets`, `variations`, `cartes` — combinatoric generators.
+- `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
 - `numbered_symbols` — infinite generator of Symbol objects.
 - `topological_sort` — Kahn's algorithm for DAG ordering.
 - `has_dups`, `has_variety` — duplicate/uniqueness checks.
@@ -44,7 +44,9 @@ Large collection of iterable/container utility functions.
 ### [`enumerative.py`](enumerative.py)
 Algorithms for enumerative combinatorics (multiset partitions).
 - `multiset_partitions_taocp` — Knuth's algorithm for multiset partitions.
-- `MultisetPartitionTraverser` — breadth-first enumeration with size/count constraints.
+- `MultisetPartitionTraverser` — stateful traverser for multiset partition enumeration with size/count constraints.
+  - `count_partitions(multiplicities)` — fast partition counting via dynamic programming with a persistent cross-call cache.
+  - `enum_all`, `enum_small`, `enum_range` — generate partitions with optional size bounds.
 
 ## Inspection & Source
 
@@ -78,9 +80,12 @@ Benchmarking framework via py.test.
 ## Miscellaneous
 
 ### [`misc.py`](misc.py)
-Miscellaneous text and path utilities.
+Miscellaneous text, path, and debugging utilities.
 - `filldedent(s)` — dedent + fill a string for clean error messages.
 - `rawlines(s)` — convert a string to a rawstring-safe representation.
+- `debug_decorator(func)` — decorator that prints a visual call-tree trace (nested args and return values) when `SYMPY_DEBUG` is enabled.
+- `debug(*args)` — conditional stderr print when `SYMPY_DEBUG` is True.
+- `find_executable(name)` — locate an executable on `PATH`.
 
 ### [`exceptions.py`](exceptions.py)
 SymPy-specific exception and warning classes.

@@ -78,8 +78,11 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
-  - `uncouple()`/`_uncouple()` — decomposes coupled angular-momentum eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates all valid magnetic projection configurations for numeric quantum numbers.
+  - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation.
+  - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
+  - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients; enumerates valid magnetic projection configurations for numeric quantum numbers.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate); each gate stores target matrices, commutation relations, and decomposition methods.
+  - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids()` finds equivalent gate identities.
@@ -93,7 +96,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation and measurement.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all`/`measure_partial` — ensemble and partial qubit measurement.
-- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixutils.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+- **Other**: `tensorproduct.py`, `density.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+  - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
+  - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
   - `pauli.py` — Pauli spin operators: SigmaX/Y/Z, SigmaPlus/SigmaMinus raising/lowering operators (nilpotent under positive-integer exponentiation).
   - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
@@ -123,7 +128,8 @@ Classical mechanics: particles, rigid bodies, equations of motion.
 - `functions.py` — system-level kinematic/dynamic functions for multi-body systems.
   - `angular_momentum(point, frame, *body)` — sums angular momenta of Particles/RigidBodies; validates Point and ReferenceFrame types.
   - `linear_momentum`, `kinetic_energy`, `Lagrangian` — analogous system-level aggregators.
-- `linearize.py` — linearization around operating points.
+- `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
+- `models.py` — pre-built example multi-body systems for testing/demos. `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
 
 ### [`hep/`](hep/catalog.md)
 High-energy physics.
@@ -131,8 +137,8 @@ High-energy physics.
 
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
-- `dimensions.py` — `Dimension` class, dimension system definitions.
+- `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches.
-- `simplifiers.py` — unit expression simplification.
+- `simplifiers.py` — `dim_simplify`: algebraic simplification of compound `Dimension` expressions (products/powers); does not alter individual Dimension construction or equality.

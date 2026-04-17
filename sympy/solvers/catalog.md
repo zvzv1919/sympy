@@ -118,4 +118,6 @@ Utilities for classifying and manipulating differential equations.
 
 - `ode_order(expr, func)` — returns the order of a differential equation.
 - `_preprocess(expr, func, hint)` — prepares expressions for ODE solving.
-- `_desolve(f, func, ics)` — internal helper for differential equation solving.
+- `_desolve(eq, func, hint, ics)` — shared dispatch helper used by both `dsolve` (ODE) and `pdsolve` (PDE).
+  - Delegates to `classify_ode` or `classify_pde` based on `type` kwarg.
+  - On recursive calls, accepts `classify=False` to skip re-classification and reuse previously computed hints/match/order from kwargs.

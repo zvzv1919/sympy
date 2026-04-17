@@ -124,9 +124,11 @@ User input handling.
 - `PlotController` — maps keyboard/mouse events to camera actions (rotate, zoom, reset).
 
 ### `plot_window.py`
-OpenGL window management.
+OpenGL window management, rendering loop, and title-bar progress display.
 
 - `PlotWindow` — extends `ManagedWindow`; sets up GL context, coordinates camera and controller.
+- `draw()` — main render loop; acquires render lock, iterates plot functions to draw them, and collects vertex/color computation progress in the same pass to avoid locking twice per frame.
+- `update_caption()` — formats vertex and color calculation percentages into the window title bar.
 
 ### `plot_object.py`
 Base renderable object.
