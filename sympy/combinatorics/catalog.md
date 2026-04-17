@@ -31,7 +31,8 @@ Individual permutation representation, construction, and properties.
 ### [`perm_groups.py`](perm_groups.py)
 Permutation group (set of permutations) with group-theoretic algorithms.
 - `PermutationGroup` — the main group class, constructed from generating permutations.
-  - **BSGS framework**: `schreier_sims`, `schreier_sims_incremental`, `schreier_sims_random`, `schreier_vector`.
+  - **BSGS framework**: `schreier_sims`, `schreier_sims_incremental`, `schreier_vector`.
+  - `schreier_sims_random` — randomized BSGS computation: orchestrates a sifting loop that samples random elements, decides when to extend the base sequence (new anchor points), and amends stabilizer chains/orbits when sifting fails. Uses `_strip` from `util.py` as a subroutine.
   - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`, `basic_stabilizers`.
   - **Coset-based ranking/unranking** (group-level, via Schreier-Sims): `coset_rank`, `coset_unrank`, `coset_factor`.
     - `coset_unrank` returns `None` when rank is negative or ≥ group order.
@@ -80,6 +81,8 @@ Finitely presented groups and coset enumeration.
 
 ### [`free_group.py`](free_group.py)
 Free groups with symbolic generators.
+- Constructor entry points: `free_group(symbols)`, `xfree_group`, `vfree_group` — create a `FreeGroup` from a string, Symbol/Expr, or sequence thereof.
+  - `_parse_symbols` — normalizes the `symbols` argument; accepts str, Expr, sequence of str, or sequence of Expr. Mixed-type sequences (e.g. str and Symbol together) raise `ValueError`.
 - `FreeGroup` — finitely generated free group; generators are ordered by creation order.
   - `center` — returns the center of the free group (always `{identity}`, since free groups of rank ≥ 2 are non-abelian).
   - `contains`, `is_subgroup`, `identity`.
@@ -142,7 +145,7 @@ Low-level algorithms for computational group theory.
 - `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
 - `_base_ordering`.
 - `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
-- `_strip` — sift (strip) a permutation through a BSGS; returns residual permutation and level where sifting stopped.
+- `_strip` — single-pass sift of one permutation through an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
 - `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
 - `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.
 - `_strong_gens_from_distr`, `_check_cycles_alt_sym`.

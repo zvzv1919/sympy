@@ -142,3 +142,4 @@ Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFa
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)
 Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`.
+- `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.

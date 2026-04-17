@@ -72,6 +72,7 @@ SymPy's built-in testing framework (py.test-compatible, no external dependencies
 - `_test()` — internal runner; when `slow=True`, deterministically shuffles tests (fixed seed) before splitting to ensure even workload distribution across segments.
 - `split_list(l, split)` — partition a list into segment `a` of `b` (e.g. `'2/3'`); used by `_test` and `_doctest` for CI splitting.
 - `doctest(*paths)` — run doctests.
+- `SymPyDocTests.get_test_files(dir)` — collects `.py` source files for doctest verification; determines importability by checking for `__init__.py` in the file's immediate parent directory only (does not verify ancestor dirs).
 - `SymPyDocTests.test_file` — executes docstring examples; in default (non-normal) mode, clears each function's global namespace so all imports must be explicit within docstrings.
 - `SymPyDocTestFinder` — recursive doctest discovery; filters classes/functions by module ownership; for properties, checks `val.fget.__module__` instead of `val.__module__`.
   - `_get_test` — extracts doctest from an object; for property descriptors, resolves source line number via `obj.fget` and skips the property entirely if `obj.fget.__doc__` is None.

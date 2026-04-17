@@ -72,6 +72,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
   - Flexible variable interval syntax: `[var, min, max, steps]` with partial specification — `[]` uses all defaults, `[100]` sets only step count, `[-13, 13]` sets only bounds; omitted args filled from coordinate mode defaults.
   - Coordinate mode selection (Cartesian, parametric, polar, cylindrical, spherical); auto-detected from expression/variable count.
   - Calculator-like indexed interface (`p[1] = expr`), per-slot style/color, keyboard controls.
+- Caveat: defined inside a try/except block; if pyglet (or any dependency) is not importable, a fallback `PygletPlot` is defined that re-raises the captured exception on every call (lazy-error-raising pattern for optional dependencies).
 
 ### `plot.py`
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
@@ -119,9 +120,11 @@ Curve rendering for 1D pyglet plots.
   - `draw_verts(use_cverts)` — emits OpenGL `GL_LINE_STRIP` segments; breaks the strip at `None` vertices to create visual discontinuities at undefined points.
 
 ### `plot_surface.py`
-Surface rendering for 2D pyglet plots.
+Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
 
 - `PlotSurface` — OpenGL vertex grid for pyglet surface rendering; supports wireframe and solid draw styles (not used by matplotlib-based plotting).
+  - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points; tracks bounding box.
+  - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points.
 
 ### `plot_axes.py`
 Coordinate axes rendering.
@@ -134,9 +137,10 @@ Coordinate axes rendering.
 - `PlotCamera` — handles perspective/orthographic projection, position, rotation, zoom, and preset angles.
 
 ### `plot_controller.py`
-User input handling.
+User input handling with 2D/3D mode awareness.
 
 - `PlotController` — maps keyboard/mouse events to camera actions (rotate, zoom, reset).
+  - `update(dt)` — applies accumulated input each frame; branches on `is_2D()`: in 2D mode, arrow keys become translations instead of rotations, and model-Z-axis rotation keys are suppressed entirely.
 
 ### `plot_window.py`
 OpenGL window management, rendering loop, and title-bar progress display.

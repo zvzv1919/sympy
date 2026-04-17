@@ -15,6 +15,7 @@ Defines all category-theory primitives: objects, morphisms, categories, and diag
 - `Category` — a named category containing objects and commutative diagrams; `hom`/`all_morphisms` not yet implemented.
 - `Diagram` — a commutative diagram built from **premises** (assumed morphisms) and **conclusions** (derived morphisms), each mapping morphisms → property sets.
   - `__new__` — constructs diagram; conclusions that reference objects absent from premises are **silently discarded**.
+  - `_add_morphism_closure` — adds a morphism and auto-generates identity morphisms and composites; raises `ValueError` if properties are assigned to an `IdentityMorphism`.
   - `premises`, `conclusions` — `Dict` of morphism → `FiniteSet` of properties.
   - `objects` — `FiniteSet` of all objects appearing in the diagram.
   - `hom(A, B)` — returns (premise morphisms, conclusion morphisms) between two objects.
@@ -26,7 +27,7 @@ Defines all category-theory primitives: objects, morphisms, categories, and diag
 ### [`diagram_drawing.py`](diagram_drawing.py)
 Lays out diagram objects on a 2-D grid and renders to Xy-pic LaTeX strings. Handles only **visual presentation**, not diagram semantics.
 - `DiagramGrid` — places objects of a `Diagram` onto a grid using triangle-welding layout algorithm.
-  - Preprocessing: strips identity/composite morphisms without properties, merges premises and conclusions for layout purposes only.
+  - Preprocessing: for layout only, removes identity/composite morphisms that have no properties and merges premises with conclusions.
   - Builds skeleton of edges, decomposes into triangles, and sorts triangles by a size metric before welding.
   - `_morphism_length` — returns 1 for simple morphisms, component count for `CompositeMorphism`; used to compute triangle min sizes.
   - Supports `groups` (object groupings) and layout `hints` (e.g. transpose, sequential layout for linear diagrams).

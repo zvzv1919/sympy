@@ -109,7 +109,7 @@ Radical simplification, term collection, and rationalization.
 - `radsimp(expr)` — rationalize denominators containing radicals.
   - Recursively reduces `1/d` forms: splits Mul denominators, denests sqrt powers via `sqrtdenest`, decomposes `1/d**i → (1/d)**i` for integer/positive-base powers before recursing on the base.
   - For Add denominators with up to 4 radical terms, multiplies by algebraic conjugate to eliminate radicals.
-- `collect(expr, syms)` — collect terms by powers of specified symbols.
+- `collect(expr, syms)` — collect terms by powers of specified symbols; also collects by derivative orders, traversing nested derivative towers.
 - `rcollect(expr, *vars)` — recursive collect.
 - `collect_sqrt(expr)` — collect terms sharing square-root factors.
 - `fraction(expr, exact)` — decompose expression into (numerator, denominator) pair by splitting powers with negative exponents.

@@ -50,6 +50,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `Tensor` — single tensor (head + indices).
   - `equals(other)` — structural equality via canonicalization: compares `(coeff, components, sorted free, sorted dum)` tuples after `canon_bp`.
 - `TensMul` — product of tensors with a scalar coefficient.
+  - `equals(other)` — structural equality: handles zero (checks coeff), plain scalars (asserts no components), and general expressions via canonicalization tuple `(coeff, components, sorted free, sorted dum)`.
   - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (index and its negation), rebuilds the expression so those pairs become dummy/summation indices.
 - `TensAdd` — sum of tensors in canonical form.
 - `TensExpr` — abstract base for tensor expressions.

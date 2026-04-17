@@ -141,12 +141,14 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 - `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation.
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
 - `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
+  - `get_motion_params(frame, **kwargs)` — computes acceleration/velocity/position from any one given; integrates using `_process_vector_differential`, which short-circuits when the input vector is zero (returns boundary condition directly without integrating).
 - `fieldfunctions.py` — scalar/vector field operations: gradient, divergence, curl.
 
 ### [`optics/`](optics/catalog.md)
 Geometric and wave optics.
 - `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation, and paraxial conjugation utilities.
   - `RayTransferMatrix.__mul__` — type-dispatching multiplication: Matrix×BeamParameter extracts q, applies ABCD transform, reconstructs BeamParameter from real/imaginary parts; Matrix×GeometricRay returns GeometricRay.
+  - `GeometricRay` — 2×1 column vector (height, angle) for geometric ray; constructor accepts two scalars or a single 2×1 Matrix. Raises ValueError if a single argument has wrong dimensions (e.g. 2×2).
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
   - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
   - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
@@ -186,6 +188,6 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit.
-- `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches.
-- `simplifiers.py` — `dim_simplify`: algebraic simplification of compound `Dimension` expressions (products/powers); does not alter individual Dimension construction or equality.
+- `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.
+- `simplifiers.py` — `dim_simplify`: recursive simplification of compound `Dimension` expressions (Add, Mul, Pow). Handles the CAS rewriting `Add(L,L)→Mul(2,L)` by stripping non-Dimension numeric factors from Mul before reducing. Also `qsimplify` for Quantity expressions.
 - `systems/` — concrete unit-system definitions: `mks.py` (meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base), `mksa.py` (MKS + ampere for electromagnetism), `natural.py` (natural units with c=ℏ=1).

@@ -75,6 +75,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `CCodePrinter` — generates C code, mapping SymPy functions to C math library equivalents.
 - `_print_Pow` — special-cases: exp==-1 → `1.0/x`, exp==0.5 → `sqrt(x)`, otherwise `pow(x, y)`.
 - `_print_Rational` — emits long-double literals (`p.0L/q.0L`).
+- `_print_Indexed` — flattens multi-dimensional array access into a single linear index using row-major (C-style) linearization.
 
 ### [`fcode.py`](fcode.py)
 `FCodePrinter` — generates Fortran code with language-specific operators and formatting (source format, precision, contraction).
@@ -83,14 +84,15 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `JavascriptCodePrinter` — generates JavaScript code from expressions.
 
 ### [`julia.py`](julia.py)
-`JuliaCodePrinter` — generates Julia code from expressions.
-- Distinguishes element-wise (`.^`, `./`, `.*`) vs scalar (`^`, `/`, `*`) operators based on whether operands are numeric.
+`JuliaCodePrinter` — generates Julia code from expressions for a scientific computing language.
+- Emits element-wise dot operators (`.^`, `./`, `.*`) **by default** for regular `Symbol` operands to support vectorized code; uses standard operators (`^`, `/`, `*`) only for pure numbers or `MatrixSymbol` operands.
+- `julia_code()` — top-level API; returns Julia-syntax string with dot-operator rules, assignment support, and custom function dispatch.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested ternary `(cond) ? (expr) :` chains; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 
 ### [`octave.py`](octave.py)
 `OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
-- `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether operands are numeric; handles imaginary-number shorthand.
+- `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether each operand is a pure number; handles imaginary-number shorthand.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and element-wise vs scalar division.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested element-wise multiply `(cond).*(expr) + (~cond).*(...)`; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 

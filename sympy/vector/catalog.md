@@ -4,7 +4,7 @@
 
 ### [`basisdependent.py`](basisdependent.py)
 Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
-- `BasisDependent(Expr)` — superclass providing arithmetic (+, -, *, /), `evalf`/`n` (numerical evaluation), `simplify`, `trigsimp`, `factor`, `diff`, `doit`.
+- `BasisDependent(Expr)` — superclass providing arithmetic (+, -, *, /), `evalf`/`n` (numerical evaluation), `simplify`, `trigsimp`, `factor`, `diff` (rejects `BasisDependent` args with `TypeError`), `doit`.
 - `evalf` decomposes into scalar coefficients and basis units, evaluates each scalar via `components` mapping, then reassembles.
 - `BasisDependentAdd` — represents sums of basis-dependent terms.
 - `BasisDependentMul` — represents scalar × basis-dependent products.
@@ -16,6 +16,7 @@ Concrete vector classes built on `BasisDependent`.
   - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
+- `_vect_div` — division dispatch helper; raises `TypeError` if both operands are vectors, `ValueError` on divide-by-zero, otherwise returns `VectorMul` with inverse scalar.
 
 ### [`dyadic.py`](dyadic.py)
 Dyadic tensor classes built on `BasisDependent`.
@@ -36,7 +37,7 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `orient_new_body` — create a new system via body-fixed (Euler) rotations; each successive rotation is about the *moving* frame's axes.
 - `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors.
 - `orient_new_quaternion` — create a new system oriented by quaternion parameters; wrapper that accepts four scalars and returns a new frame.
-- `orient_new` — generic factory accepting any `Orienter` object.
+- `orient_new` — generic factory accepting a single `Orienter` or an iterable of orienters; composes multiple rotation matrices sequentially. Applies `trigsimp` only for a single orienter (not for iterable case).
 - `locate_new` — create a translated system sharing the same orientation.
 - `rotation_matrix` — direction cosine matrix between two systems.
 - `scalar_map` — returns substitution dict mapping this system's base scalars to another's (used internally by `express`).

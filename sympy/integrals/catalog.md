@@ -71,6 +71,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
 - `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
+- Polynomial utilities: `gcdex_diophantine` (extended GCD, Diophantine version — degree-bounded Bézout coefficients), `frac_in`, `as_poly_1t`
 - Sub-algorithms: `hermite_reduce`, `polynomial_reduce`, `laurent_series`
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
 
@@ -118,6 +119,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `meijerint_indefinite(f, x)` — indefinite integral via G-function rewriting; tries multiple splitting-point shifts, rewrites hyperbolic→exponential if no G-function match found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
+- `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)
 
 ### [`meijerint_doc.py`](meijerint_doc.py)
