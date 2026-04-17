@@ -48,7 +48,7 @@ Unevaluated and evaluated finite/infinite summations.
   - `eval_zeta_function(f, limits)` — detect Riemann zeta function form.
   - `_eval_derivative`, `_eval_difference_delta`, `_eval_simplify`.
 - `summation(f, *symbols)` — convenience wrapper that calls `Sum(...).doit()`.
-- `eval_sum(f, limits)` — main evaluation dispatcher (finite direct, symbolic, hypergeometric).
+- `eval_sum(f, limits)` — main evaluation dispatcher; handles Piecewise summands (folds when conditions are index-independent, bails out for index-dependent conditions with symbolic/large ranges), KroneckerDelta, finite direct, symbolic, and hypergeometric paths.
 - `telescopic(L, R, limits)` / `telescopic_direct` — telescopic summation.
 - `_eval_sum_hyper` / `eval_sum_hyper` — hypergeometric series evaluation.
 
@@ -78,7 +78,7 @@ Gosper's algorithm for hypergeometric indefinite summation.
 ### [`delta.py`](delta.py)
 Simplification of sums and products containing Kronecker delta functions.
 
-- `deltasummation(f, limit)` — evaluate summation with KroneckerDelta terms; simplifies or returns piecewise results.
+- `deltasummation(f, limit)` — evaluate summation with KroneckerDelta terms; simplifies deltas or returns piecewise results encoding delta conditions. Called by `eval_sum` only when KroneckerDelta is detected.
 - `deltaproduct(f, limit)` — evaluate product with KroneckerDelta terms; splits additive expressions into delta and non-delta parts, handles integer bounds (direct sum) vs symbolic bounds (delegating to `deltasummation`).
 - `_is_simple_delta`, `_has_simple_delta`, `_extract_delta`, `_expand_delta` — delta detection/extraction helpers.
 - `_remove_multiple_delta`, `_simplify_delta` — simplification of delta products.

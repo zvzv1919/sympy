@@ -20,7 +20,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `_solve_system(exprs, symbols)` — internal system solver; handles:
   - Linear systems via augmented matrix construction → `solve_linear_system`.
   - Nonlinear polynomial systems via `solve_poly_system`.
-  - Underdetermined systems (more unknowns than equations): enumerates variable subsets sized to match equation count, solves each subset, discards solutions that reference previously determined variables.
+  - Underdetermined nonlinear systems: enumerates variable subsets sized to match equation count, solves each subset; does **not** produce parametric infinite-family solutions (see `linsolve` for that).
   - Residual non-polynomial equations: iteratively solves remaining symbols one at a time after polynomial pass.
 - `_solve(f, symbol, **flags)` — internal single-equation solver; handles:
   - Multi-symbol sequential resolution: solves for each symbol in turn; discards solutions whose free symbols depend on a previously solved symbol.
@@ -48,7 +48,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
-  - Underdetermined systems return parametric solutions; free variables appear as themselves in the result tuple.
+  - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
 - `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form (A, b). Accepts both expressions (implicit =0) and Eq() relations.
 - `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.

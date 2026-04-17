@@ -121,6 +121,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
   - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
   - `homogenize(s)` — make polynomial homogeneous using symbol `s`; **if `s` is already a generator, reuses its index; if new, appends it to generators**. Raises `TypeError` if `s` is not a `Symbol`.
+  - `is_univariate`, `is_multivariate` — determined purely by **number of declared generators** (`len(gens)`), not by which symbols actually appear in the expression; e.g. `Poly(x**2, x, y).is_multivariate` returns `True`.
   - `homogeneous_order()` — return the total degree if all terms share the same degree; `is_homogeneous` for a boolean check.
   - `unify(g)` / `_unify(g)` — reconcile two Polys to a common variable ordering and coefficient domain.
     - Merges generator sets via `_unify_gens`, reorders monomial dicts via `_dict_reorder`, converts coefficients to unified domain.
@@ -161,7 +162,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 ### [`polyfuncs.py`](polyfuncs.py)
 High-level polynomial utility functions (symbolic level).
 
-- `symmetrize(poly)` — rewrite in terms of elementary symmetric polynomials.
+- `symmetrize(poly)` — rewrite in terms of elementary symmetric polynomials; returns `(symmetric_part, non_symmetric_remainder)` pair.
+  - **Non-homogeneous inputs have their constant term extracted first**; iterative decomposition then operates on the homogeneous remainder.
 - `horner(poly)` — convert polynomial to Horner form (symbolic rewriting, not evaluation).
 - `interpolate(data, x)` — construct interpolating polynomial.
 - `rational_interpolate(data, degnum, X)` — rational function interpolation.
@@ -245,7 +247,8 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dmp_zz_collins_resultant` / `dmp_qq_collins_resultant` — Collins's modular resultant in Z[X] / Q[X]; iterates over primes, **catches `HomomorphismFailed` from per-prime `dmp_zz_modular_resultant` and `continue`s to the next prime**; accumulates via CRT.
 - `dup_discriminant`, `dmp_discriminant` — discriminant computation.
-- GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS), `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` (heuristic over Z).
+- GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS).
+  - `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` — heuristic over Z; same triple-fallback verification as `heugcd` in `heuristicgcd.py` but on dense coefficient lists.
   - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover univariate/multivariate polynomial from integer GCD image using **symmetric remainder**.
     - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
@@ -259,15 +262,18 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 Heuristic polynomial GCD at the **Poly-object level** (not dense lists).
 
 - `heugcd(f, g)` — heuristic GCD for `PolyElement` objects in `ZZ[x₁,…,xₙ]`; evaluates at points, computes integer GCD, and interpolates back.
+  - **Triple-fallback verification**: after interpolating the candidate GCD, if trial division fails, tries interpolating the first cofactor and dividing, then the second cofactor and dividing — two alternative recovery paths before advancing to the next evaluation point.
 - `_gcd_interpolate` — helper for Lagrange interpolation step.
 
-Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, which operate on raw dense coefficient lists.
+Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, which implement the same triple-fallback algorithm but operate on raw dense coefficient lists (not `PolyElement` objects).
 
 ### [`modulargcd.py`](modulargcd.py)
 Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolation.
 
 - `_trivial_gcd(f, g)` — handle zero-polynomial GCD cases; **negates the non-zero input if its leading coefficient is negative** to ensure the result has a positive leading coefficient; returns `(ring.zero, ring.zero, ring.zero)` if both are zero.
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
+- `_primitive_in_x0(f)` — content and primitive part of `f ∈ Q(α)[x₀,…,xₙ₋₁]` viewed as univariate in x₀; iteratively GCDs coefficients via `func_field_modgcd`.
+  - **Returns the original polynomial immediately (early exit) if running content becomes unit**.
 - `func_field_modgcd` — modular GCD over algebraic function fields.
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
   - **Branches on `isinstance(ring.domain, PolynomialRing)`**: if yes (has parameter vars), extracts inner domain for LCM and multiplies by `monom[1:]`; if no, uses `ring.domain` directly.
@@ -313,7 +319,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 ### [`sqfreetools.py`](sqfreetools.py)
 Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic extensions).
 
-- `dup_sqf_p`, `dmp_sqf_p` — square-free predicate (checks gcd(f, f') == 1).
+- `dup_sqf_p`, `dmp_sqf_p` — square-free predicate (checks gcd(f, f') == 1); **returns `True` for the zero polynomial** (special-cased before GCD computation).
 - `dup_sqf_norm`, `dmp_sqf_norm` — square-free norm over algebraic extensions; iteratively shifts input by the algebraic generator until the resultant is square-free.
   - Returns `(shift_count, shifted_poly, resultant_in_ground_domain)`.
 - `dup_sqf_part`, `dmp_sqf_part` — square-free part; **over fields, normalizes result to monic; over rings, extracts primitive part** (content-free form).
@@ -373,6 +379,7 @@ Symbolic root representations and root-sum evaluation.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
     - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
     - **Refines bounding rectangles until non-imaginary roots have boxes fully to one side of the y-axis**.
+  - `_reals_sorted(reals)` — makes real root isolating intervals from different irreducible factors disjoint by pairwise refinement, then sorts by left endpoint; updates `_reals_cache` with the refined intervals.
   - `real_roots(poly)`, `all_roots(poly)` — class methods for root lists.
 - `RootSum` — represents ∑ f(rᵢ) over all roots rᵢ of a polynomial.
   - `_rational_case(poly, func)` — **evaluates sum of a rational function over all roots using Viète's formulas and symmetric function decomposition**.
@@ -399,6 +406,9 @@ Numerical root isolation and refinement for dense univariate polynomials. Also d
 - `ComplexInterval` — bounding rectangle for a complex root; stores southwest/northeast corners. When `conj=True` (root in lower half-plane), **y-coordinates are reflected**: `ay` returns `-b[1]` and `by` returns `-a[1]`.
 - `dup_isolate_real_roots`, `dup_isolate_real_roots_sqf` — real root isolation via continued fractions / bisection.
 - `dup_isolate_complex_roots_sqf` — complex root isolation.
+- `dup_isolate_all_roots(f, K)` — isolate both real and complex roots of a non-square-free polynomial; performs square-free factorization.
+  - **Raises `NotImplementedError` if more than one distinct irreducible factor exists** (only handles the single-factor case).
+- `dup_isolate_all_roots_sqf` — isolate real and complex roots of a square-free polynomial (delegates to the individual real/complex isolators).
 - `dup_count_real_roots`, `dup_count_complex_roots` — count roots in intervals.
 - `dup_refine_real_root` — refine root interval.
 - `dup_sturm` — Sturm sequence for real root counting; **raises `DomainError` if the coefficient domain is not a field** (e.g. ZZ).
@@ -584,7 +594,8 @@ Gröbner basis computation algorithms.
 
 - `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm.
 - `red_groebner(G, ring)` — compute reduced Gröbner basis; selects a generating subset, then reduces each polynomial by taking its remainder w.r.t. all others — **silently drops any polynomial that reduces to zero**.
-- `groebner_lcm(f, g)` — LCM via ideal intersection: introduces auxiliary variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
+- `groebner_lcm(f, g)` — LCM via ideal intersection: introduces variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
+  - **When both inputs are single-term (monomial) polynomials**, bypasses Gröbner computation and directly returns componentwise monomial/coefficient LCM.
 - `groebner_gcd(f, g)` — GCD via `f*g / lcm(f, g)`.
 - `is_groebner`, `is_reduced` — basis validation.
 - `sig_cmp(u, v, order)` — compare two signatures `(monomial, index)` by extending the term order to K[X]^n: **u < v iff v's module index is greater, or indices are equal and u's monomial is smaller under `order`**.
@@ -652,12 +663,16 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
+- `Module.__eq__(other)` (in `modules.py`) — equality via **mutual submodule inclusion**: returns True iff `self.is_submodule(other)` and `other.is_submodule(self)`.
 - `Module.__mul__(e)` (in `modules.py`) — if `e` is not an `Ideal`, **coerces it to an ideal via `self.ring.ideal(e)` before delegating to `multiply_ideal`**; returns `NotImplemented` if coercion fails.
 - `ModuleElement` (in `modules.py`) — base class for module element wrappers; stores reference to containing module.
   - `__add__`, `__sub__` — if operand is from a different module/class, **attempts `self.module.convert(om)`; returns `NotImplemented` on `CoercionFailed`** (no error raised).
   - `__mul__` — coerces scalar to ring element via `self.module.ring.convert(o)`; returns `NotImplemented` on failure.
+  - `__eq__` — attempts coercion; **returns `False` (not `NotImplemented`) on `CoercionFailed`**, unlike arithmetic operators which return `NotImplemented`.
 - `FreeModuleElement` (in `modules.py`) — element of a free module; data stored as a **tuple of ring entries**; arithmetic (`add`, `mul`, `div`) is component-wise over the tuple.
 - `FreeModulePolyRing` (in `modules.py`) — free module over a generalized polynomial ring; **constructor requires the ring's ground domain to be a Field** (raises `NotImplementedError` for e.g. ZZ[x]).
+- `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
+  - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
@@ -692,6 +707,8 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
+  - `GeneralizedPolynomialRing._vector_to_sdm` — converts a vector of rational function elements to sparse distributed module form.
+    **Clears all denominators first** by computing the product of all entry denominators, making entries integral before delegation.
   - For product/mixed orders given as tuples, builds the product order first, then checks `order.is_global`.
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
 - `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.

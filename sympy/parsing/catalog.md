@@ -18,7 +18,8 @@ Primary string-to-SymPy parser for Python-like expressions.
 
 ### [`ast_parser.py`](ast_parser.py)
 Lightweight AST-based parser that wraps literal numbers as `Integer`/`Float` and undefined names as `Symbol`.
-- `Transform` — NodeTransformer: `visit_Num` wraps numeric literals, `visit_Name` wraps unknown names as Symbols, `visit_Lambda` wraps lambdas.
+- `Transform` — NodeTransformer: `visit_Num` wraps numeric literals; `visit_Lambda` wraps lambdas.
+- `Transform.visit_Name` — identifier classification: passes through local-dict names, global-dict names that are types/callables/Basic, and boolean literals (`True`/`False`); all other names become `Symbol`.
 - `parse_expr()` — simplified parse entry point (no token transformations, no `evaluate=False` support).
 - **Caveat**: Does NOT support token-level transformations or `evaluate=False`; use `sympy_parser.parse_expr` for those.
 

@@ -94,12 +94,14 @@ Plot mode registry and argument interpretation.
 Base class providing shared infrastructure for all pyglet plot modes.
 
 - `PlotModeBase` — common parent for all mode implementations.
+- `draw()` — main rendering entry point; checks `style_override` first (class-level, wins if non-empty), else uses instance `_style`.
+  - Uses bitmask dispatch (wireframe=1, solid=2, both=3) to selectively draw wireframe and/or solid display lists.
 - `_get_evaluator()` — tries fast lambda evaluator first; on exception, falls back to sympy substitution evaluator with a warning.
 - `_get_sympy_evaluator()`, `_get_lambda_evaluator()` — abstract methods implemented by concrete modes.
 - Thread-safe rendering stack: `push_wireframe()`, `push_solid()` with `_draw_lock`.
 - `_on_calculate()` — triggers vertex/color vertex computation in background threads.
 - `style` property (`_set_style`) — when style is set to empty string, auto-selects rendering appearance: computes max v_steps across intervals and picks 'both' (wireframe+solid) if ≤ 40, or 'solid' (filled only) if > 40.
-- Class-level attributes: `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
+- Class-level attributes: `styles` (render style bitmask dict), `style_override` (forces rendering style when non-empty), `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
 
 ### `plot_modes.py`
 Concrete plot mode implementations for various coordinate systems.

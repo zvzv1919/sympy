@@ -47,7 +47,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order`, `random`, `random_pr`.
   - `__mul__` — pairwise direct product of exactly two groups; shifts generators to act on disjoint point sets. For N-ary products, use `DirectProduct` in `group_constructs.py`.
-  - `minimal_block`, `max_div`, `lower_central_series`, `baseswap`.
+  - `minimal_block`, `max_div`, `lower_central_series`.
+  - `baseswap` — swaps two consecutive base points in a BSGS; deterministic branch iterates transversal elements, pruning orbit candidates or adding stabilizer generators; randomized branch samples random stabilizer elements.
 
 ---
 
@@ -101,6 +102,8 @@ Free groups with symbolic generators.
 ### [`partitions.py`](partitions.py)
 Set and integer partitions.
 - `Partition` — set partition with RGS (restricted growth string) representation.
+  - `from_rgs(rgs, elements)` — reconstructs a set partition from a sequence of block indices paired with items; validates that no block is left empty.
+  - `RGS` — property returning the restricted growth string encoding which block each element belongs to.
 - `IntegerPartition` — partition of an integer.
 - `RGS_enum`, `RGS_unrank`, `RGS_rank`, `RGS_generalized`, `random_integer_partition`.
 
@@ -135,7 +138,7 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
 Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
 - `get_symmetric_group_sgs`, `tensor_gens`, `perm_af_direct_product`, `dummy_sgs`.
-- `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal (no baseswap fallback).
+- `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal.
 - `_is_minimal_bsgs` — verifies a BSGS has the lexicographically smallest base by reconstructing the base from generators and comparing to the given one.
 - `get_transversals` — returns transversals for a group given its BSGS.
 

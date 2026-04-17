@@ -183,7 +183,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
   - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
-- `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
+- `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy(frame)` (computes ½mv² via velocity dot product) methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv), `linear_momentum`, `potential_energy`.
   - `kinetic_energy(frame)` — individual body KE: ½I·ω² (rotational) + ½mv² (translational).
 - `body.py` — unified `Body` wrapping Particle or RigidBody; constructor dispatches: mass given but no inertia → initializes as Particle; otherwise → RigidBody with symbolic inertia tensor.

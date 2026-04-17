@@ -45,6 +45,7 @@ Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicM
 All concrete numeric types and their arithmetic operations.
 
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
+  - `as_coeff_Mul(rational)` — coefficient extraction; returns `(self, S.One)` for nonzero values but `(S.One, self)` when self is zero (zero goes into the "rest" term, not the coefficient)
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats; normalizes string inputs before parsing (prepends '0' to '.5', converts '-.5' to '-0.5'); auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
   - `_eval_power` — negative Float base with rational exponent p/q where p=1 and q is odd: factors out `(-1)**(1/q)` and recurses on positive base, avoiding spurious complex result
   - `__eq__` — equality comparison; short-circuits to False when other is an irrational `NumberSymbol` (e.g., pi, E) without numerical comparison
@@ -63,6 +64,7 @@ All concrete numeric types and their arithmetic operations.
 - `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power`
   - `Infinity.__add__`/`__sub__`/`__mul__` — arithmetic operators; when operand is Float, returns `Float('inf')`/`Float('-inf')` (preserving float type) except Float zero × infinity → NaN; when operand is exact zero (S.Zero), also returns NaN; when operand is non-Float Number, returns symbolic `S.Infinity`/`S.NegativeInfinity`
   - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN; complex (non-real) numeric exponent: extracts real part — positive real part → ComplexInfinity, negative → 0, zero → NaN
+  - `NegativeInfinity.__add__`/`__sub__`/`__mul__`/`__div__` — same float-vs-symbolic branching as Infinity; Float operands yield Float results, exact operands yield symbolic singletons; zero × -oo → NaN for both exact and Float zero
   - `NegativeInfinity._eval_power` — checks exponent odd/even parity to decide result sign
   - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
@@ -94,6 +96,9 @@ All concrete numeric types and their arithmetic operations.
 - `as_coeff_mul(*deps, rational=True)` — splits leading numeric coefficient from remaining factors; with `rational=True`, non-rational negative leading numbers return `(-1, (abs_num, ...))` instead of the number itself
 - `_eval_power(b, e)` — raising a product to a power; separates commutative from non-commutative factors; NC factors stay grouped (not distributed) to preserve ordering
 - `_eval_evalf(prec)` — numerical evaluation; when coefficient is -1 and remainder is non-Mul, individually evaluates remainder (falls back to original if None); otherwise delegates to AssocOp
+- `_eval_conjugate` — conjugate of product preserves factor order: `conjugate(a*b) = conjugate(a)*conjugate(b)`
+- `_eval_transpose` — transpose of product reverses factor order: `transpose(a*b) = transpose(b)*transpose(a)` (non-commutative algebra rule)
+- `_eval_adjoint` — adjoint of product reverses factor order (like transpose)
 - `_eval_is_rational`, `_eval_is_algebraic` — assumption handlers with zero-fallback for mixed cases
 
 ### [`power.py`](power.py)
@@ -216,6 +221,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
+- `diff(f, *symbols)` — top-level convenience function for symbolic differentiation; dispatches to `f._eval_diff()` if available, falls back to constructing `Derivative(f, ...)` on `AttributeError`; sets `evaluate=True` by default
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
 - `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement

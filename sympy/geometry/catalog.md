@@ -33,7 +33,8 @@ Point representations in n-dimensional Euclidean space.
 2D linear entities: lines, rays, and segments.
 - `LinearEntity` — abstract base for 2D linear entities; constructed from two distinct points (raises error on coincident points).
   - `are_concurrent(*lines)` — static; tests concurrency.
-  - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`, `angle_between(l1, l2)`.
+  - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)` — compare via `coefficients`; return `False` (no error) if either entity lacks `coefficients`.
+  - `angle_between(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`, `projection(o)`.
   - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
   - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.

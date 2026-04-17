@@ -56,6 +56,7 @@ Gaussian quadrature rules: computes nodes and weights (not sums) for numerical i
 Symbolic integral transforms — class-based API and dispatch layer (delegates heavy computation to `meijerint.py`).
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
+  - `InverseMellinTransform._compute_transform` validates input by traversing the expression and checking each function against a whitelist of allowed types (exp, gamma, sin, cos, tan, etc.); raises `IntegralTransformError` for unrecognized functions
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters for inverse Mellin; raises NotImplementedError if numerator gamma poles partially overlap the fundamental strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
@@ -80,6 +81,8 @@ Risch algorithm for integration of transcendental elementary functions.
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
+- `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
+  - In piecewise mode, emits a Piecewise to handle the case where the exponential monomial equals 1 (zero exponent), avoiding division by zero by substituting t=1 and integrating separately
 
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
@@ -109,6 +112,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 ### [`heurisch.py`](heurisch.py)
 Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert).
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
+  - Substitutes subexpressions with placeholder symbols; tries all permutations of the substitution ordering until the result is rational in placeholders
+  - If no permutation yields a rational function, falls back to rewriting the integrand in terms of tan/tanh and retries
   - `_exponent` helper computes upper degree bound for the polynomial ansatz; handles fractional rational powers specially (p/q with q≠1 yields p+q−1 or |p+q|)
   - `_splitter` recursively decomposes polynomials via derivation and GCD for denominator factoring
 - `heurisch_wrapper(f, x)` — wrapper with retry logic for edge cases
@@ -131,6 +136,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting; extracts exponential/power shifts from the integrand
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
+- `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)
 
 ### [`meijerint_doc.py`](meijerint_doc.py)
@@ -143,6 +149,8 @@ Auto-generates Sphinx documentation for the Meijer G-function lookup table. No r
 ### [`deltafunctions.py`](deltafunctions.py)
 Integration of expressions involving Dirac delta and Heaviside step functions.
 - `deltaintegrate(f, x)` — integrates DiracDelta/Heaviside expressions by case analysis
+  - For higher-order DiracDelta (derivatives), performs repeated integration by parts; returns the largest non-zero hyperreal term to ensure correct results under nested integration
+  - For products, extracts a simple DiracDelta term via `change_mul`, evaluates the remaining factor at the delta's root
 
 ### [`singularityfunctions.py`](singularityfunctions.py)
 Integration of SingularityFunction expressions (beam/structural mechanics notation).

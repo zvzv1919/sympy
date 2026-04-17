@@ -24,6 +24,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` (Frobenius, spectral, p-norms).
+- **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
 - **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `key2ij`, `_setitem`.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
@@ -100,7 +101,7 @@ Block-structured symbolic matrices.
 
 - `BlockMatrix`: matrix composed of a 2D grid of sub-matrices; `blocks`, `blockshape`, `rowblocksizes`, `colblocksizes`.
 - `BlockMatrix._entry`: resolves element access by locating the correct sub-block; uses `!= False` comparisons to handle symbolic (non-concrete) row/column indices.
-- `BlockDiagMatrix`: unevaluated symbolic block-diagonal expression (not a concrete constructor); `_eval_inverse` inverts each diagonal block independently.
+- `BlockDiagMatrix`: unevaluated symbolic block-diagonal expression (does NOT detect/extract blocks from concrete matrices — see `get_diag_blocks` in `matrices.py`); `_eval_inverse` inverts each pre-declared diagonal block independently.
 - Block arithmetic rules: `bc_matmul`, `bc_block_plus_ident`, `bc_dist`, `bc_transpose`.
 
 ### [`expressions/inverse.py`](expressions/inverse.py)

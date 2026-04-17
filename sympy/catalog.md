@@ -59,7 +59,8 @@ Foundational expression tree: base classes, arithmetic operations, and evaluatio
   - `as_ordered_terms`: sort terms with O(...) handling; when Order terms present, always uses reverse=True regardless of order spec.
   - `expand`: applies rewriting hints in sorted order; special key ensures multinomial runs before mul; fixed-point loop for full convergence.
 - `power.py` — `Pow` class: `_eval_power`, `_eval_subs` (exponent splitting for substitution), `_eval_expand_power_base` (distribute exponent over product; imaginary unit count mod 4), `_eval_transpose` (checks `is_complex` first — differs from adjoint/conjugate which check `is_positive`; complex base → return unchanged, integer exp → wrap base in transpose), `_eval_adjoint`, `_eval_conjugate`.
-- `add.py` — `Add` class: `flatten` (infinity filtering, order processing), `_eval_as_leading_term`, `primitive` (extract rational GCD content from sum; special-cases ComplexInfinity/zoo terms by filtering zero-denominator entries from GCD/LCM computation), `as_content_primitive` (radical factoring: extracts common nth-root factors from integer bases raised to fractional exponents across additive terms).
+- `add.py` — `Add` class: `flatten` (infinity filtering, order processing), `_eval_as_leading_term`, `primitive`, `as_content_primitive` (radical factoring: extracts common nth-root factors from integer bases raised to fractional exponents across additive terms).
+  - `_unevaluated_Add`: construct well-formed unevaluated sum; flattens nested Adds, collects numeric constants into slot 0, sorts remaining args. Used when args changed but evaluation is unwanted.
 - `mul.py` — `Mul` class: `flatten`, `as_content_primitive`, `as_two_terms`.
 - `numbers.py` — `Integer`, `Rational` (`__new__`: string input with `/` splits via rsplit and converts each side through `fractions.Fraction`, e.g. `'1e-2/3.2'` → 1/320; rejects >1 slash), `Float` (tuple+hex-string reconstruction from pickle), `ImaginaryUnit`, `AlgebraicNumber`, `Exp1`, `_eval_power`, `mod_inverse`; `igcd`, `igcdex` (extended Euclidean returning Bézout coefficients x,y and gcd; handles zero inputs), `ilcm`.
   - `NumberSymbol` constants (`Pi`, `EulerGamma`, `Catalan`, `GoldenRatio`, `NegativeInfinity`, `Infinity`): `approximation_interval` returns bounding rational/integer intervals for efficient comparison without full numerical evaluation.
@@ -73,6 +74,8 @@ Foundational expression tree: base classes, arithmetic operations, and evaluatio
   - `_mask_nc`: replace non-commutative entities with Dummy placeholders before polynomial factoring; single nc-entity → commutative Dummy (standard factor works), multiple → non-commutative Dummies preserving order.
   - `factor_nc`: non-commutative factoring; delegates to standard `factor` when `_mask_nc` returns substitutions, else manual common-prefix/suffix extraction.
 - `evalf.py` — `hypsum` (infinite hypergeometric series summation; polynomial convergence with exponent p==1 only converges if alternating), `evalf_sum`, `evalf_prod` (numerical product evaluation; non-integer-width bounds → rewrite as Sum): numerical evaluation, precision.
+  - `pure_complex`: decompose symbolic expression into (real, imag) numeric pair via as_coeff_Add + as_coeff_Mul; returns None for irrational/non-numeric terms like √2; `or_real` flag returns (h, 0) for purely real inputs.
+  - `evalf_trig`: numerical sin/cos of complex args; zero-argument dispatch returns (1, None) for cos, (None, None) for sin; iterative precision refinement loop near multiples of π.
   - `do_integral`: numerical definite integration; optimizes constant-integrand case by simplifying bounds difference.
   - `get_integer_part`: floor/ceiling with near-integer handling.
 - `mod.py` — `Mod`: symbolic modulo operation; `eval` handles float coefficient extraction (e.g. `Mod(.6*x, .3*y)` → `0.3*Mod(2*x, y)`), GCD simplification, denesting, and Add-term reduction.
@@ -115,18 +118,22 @@ Polynomial algebra, domains, Gröbner bases, factorization, root isolation, and 
 - `specialpolys.py` — `swinnerton_dyer_poly` (benchmark poly from sums of √primes; orders 1–3 use hardcoded expressions, n>3 computes via `minimal_polynomial`), `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
 - `solvers.py` — low-level linear system solver over polynomial rings; `solve_lin_sys` (row-reduces to RREF; underdetermined systems express pivot variables in terms of free generators), `eqs_to_matrix`.
 - `subresultants_qq_zz.py` — subresultant PRS algorithms: `sturm_pg`/`sturm_q`/`sturm_amv` (generalized Sturm sequences via Pell-Gordon/quotient/AMV methods), `euclid_pg`/`euclid_q`/`euclid_amv`, `subresultants_bezout`, `subresultants_rem`.
-- `ring_series.py` — `rs_tanh`, `rs_exp`, `rs_asin`, `rs_atan` (arctangent via differentiate-invert-integrate strategy for nonzero constant terms), `rs_atanh` (inverse hyperbolic tangent; three-way constant-term dispatch: EX domain, PolyElement, or generic; raises DomainError on unconvertible constants), `rs_LambertW`, `rs_series_inversion`: formal power series via polynomial rings.
+- `ring_series.py` — formal power series via polynomial rings: `rs_tanh`, `rs_exp`, `rs_asin`, `rs_atan`, `rs_atanh`, `rs_LambertW`, `rs_series_inversion`.
+  - `rs_series_from_list`: evaluate sum c[n]*p^n mod O(x^prec); baby-step/giant-step √n block decomposition to reduce multiplications.
   - `rs_puiseux`: adapter for fractional-exponent (Puiseux) series; computes LCM of exponent denominators, rescales to integer exponents, delegates, rescales back.
 - `polytools.py` also has `terms_gcd` (extract shared monomial factor from addends, with `deep` flag for recursive traversal into function args).
 - `agca/` — abstract algebra: `modules.py` (free modules, `SubModule`: `is_submodule` checks containment including FreeModule/QuotientModule via `is_full_module`).
   - `homomorphisms.py` — `ModuleHomomorphism`: `__eq__` (equality via `(self - other).is_zero()`), `quotient_domain` (replace domain with domain/sm; validates sm ⊆ kernel; trivial sm → identity), `restrict_codomain`, `quotient_codomain`, `_compose`; `homomorphism` factory function.
-- `rings.py` — `PolyElement`: multivariate polynomial ring elements; `__pow__` (monomial→direct, n≤3→special, ≤5 terms→multinomial coefficient expansion `_pow_multinomial`, else binary exponentiation `_pow_generic`), `__mul__`, `square`.
-- `densebasic.py` — dense polynomial representation utilities; `dup_deflate` (compress univariate coefficient list by GCD of nonzero-term exponent positions; slices by stride), `dmp_deflate` (multivariate), `dup_degree`, `dmp_to_dict`, `dmp_raise`, `dmp_nest`.
+- `rings.py` — `PolyElement`: multivariate polynomial ring elements; `__pow__`, `__mul__`, `square`.
+  - `__add__`: same-ring poly addition with zero-entry cleanup; scalar addition coerces to domain and deletes zero-monom key on exact cancellation.
+- `densebasic.py` — dense polynomial representation utilities; `dup_deflate`, `dmp_deflate`, `dup_degree`, `dmp_to_dict`, `dmp_raise`, `dmp_nest`.
+  - `dmp_ground_p`: check if nested-list poly is constant; c=None → any constant, c falsy → delegates to zero check, c truthy → exact match. Also `dmp_ground`, `dmp_zero_p`.
 - `fields.py` — `FracElement` arithmetic: dispatch for nested quotient-of-quotient domain operations.
 - `euclidtools.py` — `dmp_cancel`, `dup_cancel` (cancel common factors in rational functions; clears denominators for field domains before GCD), `dmp_content`, `dmp_primitive`, `dmp_gcd`, `dmp_inner_gcd`.
 - `rationaltools.py` — `together`: combine fractional subexpressions into a single quotient (always recurses into Pow base, but only recurses into exponent when `deep=True`).
 - `partfrac.py` — `apart`: partial fraction decomposition; handles non-commutative expressions by splitting commutative/non-commutative factors.
 - `modulargcd.py` — modular GCD algorithms; `_integer_rational_reconstruction` (recover a/b from residue mod composite via extended Euclidean).
+- `orderings.py` — monomial orderings: `LexOrder`, `GradedLexOrder`, `ReversedGradedLexOrder`, `ProductOrder`, `InverseOrder` (reverses any ordering for local rings; recursively negates nested tuple output), `ilex`, `igrlex`, `igrevlex`.
 - `monomials.py` — `Monomial`: product-of-powers representation with `__mul__`, `__div__`, `gcd`, `lcm`; `MonomialOps` (code-generated fast operations).
 - `domains/` — coefficient domains: `Domain` base class (`map`: recursively convert nested lists, distinguishing sublists from leaf values).
   - `ExpressionDomain` (auto-cancels via `.cancel()` after every arithmetic op), `IntegerRing`, `RationalField`.
@@ -162,6 +169,7 @@ Mathematical function classes (symbolic, unevaluated). Defines the functions, do
   - `meijerg` parameter accessors: `an`, `aother`, `bm`, `bother`, `ap`, `bq`.
   - `HyperRep`: base for branched pFq representations; `_eval_rewrite_as_nonrep` converts to Piecewise (|x|<1 vs |x|>1) for analytic continuation.
   - `hyper.radius_of_convergence`: checks non-positive integer parameter cancellation between numerator/denominator lists; returns 0 if denominator entries can't be cancelled.
+  - `hyper.convergence_statement`: returns symbolic condition on argument variable under which series converges; finite radius → three-case Or based on real part of eta (sum of upper minus lower params) vs |z|≤1/|z|<1.
 - `special/gamma_functions.py` — `gamma`, `loggamma`, `digamma`, `trigamma`, `polygamma` (iterated log-derivative of Γ), `uppergamma`, `lowergamma`.
   - `polygamma._eval_aseries`: asymptotic expansion at ∞ via Bernoulli numbers; intentionally returns extra terms for higher orders.
 - `special/error_functions.py` — `TrigonometricIntegral` (base for `Si`, `Ci`, `Shi`, `Chi`), `FresnelIntegral` (base for `fresnels`/`fresnelc`), `Ei`, `li`, `Li`; Fresnel integrals with `taylor_term` recurrence using previous terms.
@@ -188,7 +196,9 @@ Expression transformation and simplification algorithms. Operates ON functions, 
   - `collect`: group additive terms by pattern (supports derivatives, exact-match flag); nested `parse_term` decomposes bases/exponents including `exp()` (rational arg → E base, product arg → split coeff from tail). `collect_sqrt` (groups by second-order radicals AND imaginary unit; unevaluated mode returns term tuple + radical count; no radicals found → collapses to single sum), `collect_const`.
 - `combsimp.py` — `combsimp`, `_rf` (rising factorial simplification for combinatorial expressions).
 - `powsimp.py` — `powsimp`, `powdenest`: power/exponent simplification.
-- `simplify.py` — `simplify()`: general-purpose dispatch; `logcombine`; `separatevars`, `_separatevars_dict` (split expression into per-variable factor dict; returns None if any term depends on multiple specified symbols); `bottom_up`; `nthroot`; `sum_add` (merge Sums: same-limits adds functions, same-function merges adjacent ranges).
+- `simplify.py` — `simplify()`: general-purpose dispatch; `logcombine`; `separatevars`; `bottom_up`; `nthroot`; `sum_add`.
+  - `signsimp`: canonicalize Add signs via sub_pre/sub_post; `evaluate=True` restores original if no net change to avoid hollow transformations.
+  - `clear_coefficients`: strip rational additive/multiplicative prefactors from expression, applying inverse ops to RHS; iterates content_primitive + coeff_Add until stable.
   - `besselsimp` (Bessel simplification: half-integer order→trig via spherical rewrite, imaginary arg rewrites between J/I types).
 - `cse_main.py` — `cse` (common subexpression elimination), `opt_cse` (pre-optimization: extracts shared args between Add/Mul pairs; asymmetric handling when first expr becomes empty).
 - `traversaltools.py` — `use`: apply a function at a specified depth in the expression tree; returns atoms unchanged if target depth not reached.
@@ -238,7 +248,8 @@ Utility functions: numeric code generation, iterables, source inspection, multis
 - `autowrap.py` — `autowrap`, `ufuncify`, `CythonCodeWrapper._partition_args`: compile to binary.
 - `codegen.py` — `Routine`, `CCodeGen`, `OctaveCodeGen`: generate Fortran/C/Octave source files; `Variable` (typed variable with `get_datatype` for language-specific type lookup; raises error listing supported languages on unknown language).
   - `OutputArgument` (write-back parameter; multiple inheritance from `Argument` + `ResultBase`, explicitly calls both parent `__init__`s for name/type and expr/result_var), `InputArgument`, `InOutArgument`.
-- `iterables.py` — `partitions`, `generate_bell`, `generate_involutions` (enumerate self-inverse permutations via p[p[i]]==i check), `generate_derangements`, `generate_oriented_forest` (enumerate oriented forests via parent-pointer array; for/else termination when all entries are zero), `_set_partitions`, `topological_sort`, `numbered_symbols`, `minlex`.
+- `iterables.py` — `partitions`, `generate_bell`, `generate_involutions`, `generate_derangements`, `generate_oriented_forest`, `_set_partitions`, `topological_sort`, `numbered_symbols`, `minlex`.
+  - `variations`: n-sized ordered selections from a sequence; without repetition: empty generator when n > len(seq); with repetition: Cartesian product. Also `subsets`.
   - `runs`: group sequence into monotonic sublists by comparison operator (default `gt`); returns `[]` for empty input.
   - `ordered_partitions`: integer partitions in lexicographic order; when `m` given, yields lists in-place (caller must copy to avoid duplicates).
   - `interactive_traversal`: user-guided step-by-step navigation through expression tree with re-prompt on invalid input.
@@ -472,7 +483,9 @@ Set theory: intervals, finite sets, unions, complements, images.
 
 ### [`calculus/`](calculus/catalog.md)
 Calculus utilities: finite differences, Euler equations, singularities, accumulation bounds.
-- `util.py` — `AccumBounds`: symbolic interval arithmetic for limit computation (`__pow__`, `__add__`, `__sub__` (∞−∞ returns full real line), `__contains__` with ±∞ pairing semantics); `function_range` (find output range over a domain; uses limits at open endpoints, direct substitution at closed endpoints); `continuous_domain`; `not_empty_in`. NOT plotting interval math (that's `plotting/intervalmath/`).
+- `util.py` — `AccumBounds`: symbolic interval arithmetic for limit computation; `__pow__`, `__add__`, `__sub__` (∞−∞ returns full real line), `__contains__` with ±∞ pairing semantics.
+  - `__lt__`/`__le__`/`__gt__`/`__ge__`: compare ranges; overlapping → None; unknown finiteness/sign falls through to Expr base class.
+  - `function_range` (output range over a domain; limits at open endpoints, substitution at closed); `continuous_domain`; `not_empty_in`. NOT plotting interval math.
 - `singularities.py` — `singularities`: find singularities of a function.
   - `is_increasing`, `is_decreasing`, `is_strictly_increasing`, `is_strictly_decreasing`, `is_monotonic`: monotonicity tests via derivative sign analysis.
   - Constants (no free symbols): non-strict variants return True, strict variants return False.
