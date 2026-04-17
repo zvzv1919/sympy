@@ -111,7 +111,8 @@ Gray code representation and bit-level operations (rank/unrank, conversion).
 
 ### [`subsets.py`](subsets.py)
 Subset generation and manipulation via binary, lexicographic, and Gray code enumeration.
-- `Subset` — subset ranking/unranking in binary, lexicographic, and Gray code orders.
+- `Subset` — subset of a superset with ranking/unranking in binary, lexicographic, and Gray code orders.
+  - Ranking properties: `rank_binary`, `rank_lex`, `rank_gray` — compute the position of a subset relative to its parent set in each ordering.
   - Gray code traversal: `iterate_graycode`, `next_gray`, `prev_gray` — step through subsets in reflected binary code order with modular wraparound.
 - `ksubsets` — k-element subsets of a set.
 

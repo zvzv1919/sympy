@@ -36,7 +36,8 @@ Infrastructure for discrete random variables with infinite support.
 Infrastructure for finite random variables (discrete, finite support).
 - `FiniteDensity`, `FiniteDomain`, `SingleFiniteDomain`, `ProductFiniteDomain`, `ConditionalFiniteDomain`.
 - `SingleFiniteDistribution`: base class whose subclasses define a `.dict` mapping outcomes to probabilities.
-- Iteration-based probability computation over `FiniteSet`.
+- `FinitePSpace`: probability space for finitely many outcomes; `integrate` computes expected values as the weighted sum Σ f(x)·P(x) over all domain elements.
+- `compute_density`, `compute_cdf`, `sorted_cdf`: derive density/CDF dicts by iterating the finite domain.
 
 ---
 

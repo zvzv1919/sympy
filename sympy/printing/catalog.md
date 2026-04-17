@@ -46,7 +46,7 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not** a printer — it provides building blocks that `pretty.py` consumes.
 - `xobj(symb, length)` — constructs multi-line spatial objects (brackets, braces, integral signs) of a given height; handles even-height adjustment for centered middle pieces (e.g., curly braces).
 - `pretty_atom(atom_name, default=None)` — returns pretty representation of named atoms (pi, infinity, etc.); raises `KeyError('only unicode')` in ASCII mode when no default is provided.
-- `pretty_symbol(symb_name)` — translates symbol names to Unicode glyphs (Greek letters, sub/superscripts). Passive lookup only — does not decide when to suppress a translation; rendering overrides live in `pretty.py`'s `_print_*` methods.
+- `pretty_symbol(symb_name)` — translates symbol names to Unicode glyphs (Greek letters, sub/superscripts). If any superscript character fails Unicode mapping, **both** super- and subscript prettification are abandoned and the name falls back to underscore-delimited ASCII. Passive lookup only — rendering overrides live in `pretty.py`'s `_print_*` methods.
 - `xsym(sym)` — resolves operator characters (comparison `<=`/`>=`/`!=`, arithmetic `*`/`.`, arrows `-->`/`==>`, assignment `:=`/`+=`) to Unicode or ASCII display form via `_xsym` lookup table.
 - `vobj(symb, height)` / `hobj(symb, width)` — vertical/horizontal object constructors.
 - Key data: `atoms_table` (atom→Unicode mapping), `_xobj_unicode`/`_xobj_ascii` (bracket/delimiter glyph tables).
@@ -84,6 +84,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`jscode.py`](jscode.py)
 `JavascriptCodePrinter` — generates JavaScript code from expressions.
+- `jscode()` — top-level API; `human=False` returns a tuple `(symbols_to_declare, not_supported_functions, code_text)` instead of a single string.
 
 ### [`julia.py`](julia.py)
 `JuliaCodePrinter` — generates Julia code from expressions for a scientific computing language.
@@ -117,6 +118,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`latex.py`](latex.py)
 `LatexPrinter` — converts expressions to LaTeX markup strings (e.g., `\frac{x}{y}`). Produces **1D markup text**, not spatial/visual rendering.
+- `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.
 - Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.
 - `_print_MatMul` / `_print_HadamardProduct` — parenthesize operands that are sums or mixed-type products.
 

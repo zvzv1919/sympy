@@ -30,7 +30,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Structure**: `row_join` (horizontal concat; null/empty self → returns rhs), `col_join` (vertical concat; null/empty self → returns bott), `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
 - `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.
-- **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
+- **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_symbolic`.
+- `is_zero`: three-valued check whether all entries are zero — returns True if all zero, False if any provably nonzero, None if any entry contains indeterminate symbols.
 - **Display**: `print_nonzero` (text-based sparsity visualization — prints configurable symbol at non-zero entry positions, space at zeros).
 - `table(printer, ...)`: string form of matrix as an aligned table (used by `StrPrinter`); returns `'[]'` for zero-row or zero-col matrices. `_format_str`: full `Matrix(...)` string representation.
 - **Predicates (symmetry)**: `is_symmetric` (simplifies entries before comparison to avoid false negatives on algebraically equivalent expressions).
@@ -54,6 +55,9 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - Factory methods: `zeros`, `eye`, `ones`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
 - `hessian(f, varlist, constraints=[])`: computes the (bordered) Hessian matrix of `f` wrt `varlist`; optionally bordered by constraint gradients. Validates differentiability of `f` and each constraint (raises `ValueError`).
 - `diag(*values)`: builds a concrete block-diagonal matrix from a mix of scalars, plain lists, and existing Matrix objects; auto-converts lists to Matrix, accumulates total rows/cols from each block, places blocks along the diagonal of a sparse intermediate, then converts to the target class.
+- `wronskian(functions, var, method)`: computes the Wronskian determinant (derivatives matrix det) for testing linear independence of differential functions; returns 1 for an empty input list.
+- `casoratian(seqs, n)`: computes the Casoratian determinant for testing linear independence of sequences (used in recurrence solving).
+- `randMatrix(r, c, ...)`: generates a random matrix with optional symmetry and sparsity control.
 
 ### [`sparse.py`](sparse.py)
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
@@ -126,6 +130,7 @@ Block-structured symbolic matrices.
   - `xxinv`: cancels adjacent matrix-inverse pairs X·X⁻¹→Identity; catches `ValueError` if a factor is not invertible.
   - `remove_ids`: strips Identity factors. `any_zeros`: collapses product to ZeroMatrix if any factor is zero.
   - `merge_explicit`: multiplies adjacent concrete `MatrixBase` factors. `factor_in_front`: moves scalar coefficient to front.
+- `refine_MatMul`: assumption-based simplification of matrix products — reduces X·Xᵀ→Identity when X is orthogonal, X·conjugate(X)→Identity when X is unitary. Registered as `handlers_dict['MatMul']` for the refine system.
 
 ### [`expressions/matadd.py`](expressions/matadd.py)
 - `MatAdd`: unevaluated symbolic matrix sum A+B+C…; `doit()` evaluates.

@@ -63,7 +63,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - For `Mul`: splits non-commutative products into commutative and non-commutative parts; simplifies only the commutative portion.
   - For commutative products: dispatches through division-pattern matchers to rewrite trig-power products (e.g. sin^a·cos^b → tan^c).
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
-- `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants).
+- `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants); explicitly skips indices 6,7 (sum-and-difference-of-one factors like (cos±1)(cos∓1)) which can't be expressed as f^a·g^b.
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
   - Multi-symbol handling: uses `separatevars` to factor; if unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
   - `recursive` option: extracts common subexpressions via CSE, simplifies the reduced expression, then re-substitutes in reverse order, re-simplifying after each substitution.

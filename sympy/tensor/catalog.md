@@ -53,6 +53,8 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `equals(other)` — structural equality: handles zero (checks coeff), plain scalars (asserts no components), and general expressions via canonicalization tuple `(coeff, components, sorted free, sorted dum)`.
   - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (index and its negation), rebuilds the expression so those pairs become dummy/summation indices.
 - `TensAdd` — sum of tensors in canonical form.
+  - `__new__` flattens nested sums, coerces plain-scalar addends into index-free tensor products, canonicalizes each term, sorts and collects like terms.
+  - `_tensAdd_flatten` — separates scalar (non-tensor-expression) addends from indexed ones, sums the scalars, wraps result as an index-free product, and flattens any nested `TensAdd`.
 - `TensExpr` — abstract base for tensor expressions.
   - `get_matrix()` — converts attached ndarray component data to a `Matrix`; supports rank ≤ 2, raises `NotImplementedError` for higher ranks.
 - `canon_bp(p)` — canonicalize tensor via Butler-Portugal algorithm.

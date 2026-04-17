@@ -23,6 +23,7 @@ Standard physics matrices as SymPy Matrix objects.
 ### [`paulialgebra.py`](paulialgebra.py)
 Pauli matrix algebra via pure symbolic manipulation (Symbol subclass, not quantum operators or states). No kets, bras, or operator framework — for those see `quantum/pauli.py`.
 - `Pauli(i)` — Symbol subclass representing σ_i; algebraic multiplication yields products and scalar I automatically.
+  - `_eval_power` reduces exponent mod 2 for positive integers (σ²=1); returns None (Symbol fallback) for non-positive/non-integer exponents.
 - `delta(i, j)` — Kronecker delta helper; returns 1 if i == j, else 0.
 - `epsilon(i, j, k)` — Levi-Civita symbol helper; returns +1 for even permutations of (1,2,3), −1 for odd, 0 otherwise (including repeated indices).
 - `evaluate_pauli_product(arg)` — simplifies a product of Pauli matrices using algebraic rules.
@@ -89,6 +90,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; `_apply_operator_uncoupled` applies to kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j.
+  - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
@@ -126,7 +128,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Operator–state mapping**: `operatorset.py` — bidirectional mapping between operator classes and their eigenstate classes.
   - `state_to_operators(state)` — maps a state (class or instance) to its observable operator(s); for Bra states not directly in the registry, resolves via `dual_class()` to look up the corresponding Ket entry.
   - `operators_to_state(operators)` — inverse mapping: operator(s) → eigenstate.
-- **Other**: `tensorproduct.py`, `innerproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+- **Other**: `tensorproduct.py`, `matrixcache.py`, `circuitutils.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+  - `innerproduct.py` — `InnerProduct` expression node (unevaluated ⟨bra|ket⟩); constructor validates types and stores bra/ket.
+    - Does NOT contain evaluation formulas — actual results (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). `LoweringOp` applied to ground state returns zero.
@@ -134,7 +138,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
-  - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) with DiracDelta and plane-wave inner products; 3-D position eigenstates (PositionKet3D/PositionBra3D) with three-dimensional DiracDelta orthogonality.
+  - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) and 3-D position eigenstates (PositionKet3D/PositionBra3D).
+    - `PxKet._eval_innerproduct_XBra` — computes Fourier-kernel plane-wave overlap exp(i·p·x/ℏ)/√(2πℏ). `XKet._eval_innerproduct_PxBra` — conjugate overlap.
+    - Same-basis inner products return DiracDelta; 3-D position states return product of three DiracDeltas.
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
@@ -148,6 +154,7 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 ### [`optics/`](optics/catalog.md)
 Geometric and wave optics.
 - `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation, and paraxial conjugation utilities.
+  - `RayTransferMatrix` subclasses for optical elements: `FreeSpace(d)`, `FlatRefraction(n1,n2)`, `CurvedRefraction(R,n1,n2)` (lower-left element = (n1−n2)/(R·n2)), `FlatMirror`, `CurvedMirror(R)`, `ThinLens(f)`.
   - `RayTransferMatrix.__mul__` — type-dispatching multiplication: Matrix×BeamParameter extracts q, applies ABCD transform, reconstructs BeamParameter from real/imaginary parts; Matrix×GeometricRay returns GeometricRay.
   - `GeometricRay` — 2×1 column vector (height, angle) for geometric ray; constructor accepts two scalars or a single 2×1 Matrix. Raises ValueError if a single argument has wrong dimensions (e.g. 2×2).
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).

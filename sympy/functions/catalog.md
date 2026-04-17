@@ -80,7 +80,10 @@ Euler beta function `beta(x, y)`. NOT probability beta distribution (that's `sta
 Discrete tensor index functions: `LeviCivita` (epsilon tensor), `KroneckerDelta`.
 
 #### [`special/mathieu_functions.py`](special/mathieu_functions.py)
-Mathieu functions: `mathieus`, `mathieuc`, `mathieusprime`, `mathieucprime`.
+Mathieu functions — solutions to the Mathieu differential equation y'' + (a − 2q·cos(2x))·y = 0.
+- `mathieus` — sine-type Mathieu solution S(a,q,z); odd parity (`eval` negates on z → −z). Reduces to sin(√a·z) when q=0.
+- `mathieuc` — cosine-type Mathieu solution C(a,q,z); even parity (`eval` preserves sign on z → −z). Reduces to cos(√a·z) when q=0.
+- `mathieusprime`, `mathieucprime` — derivatives of mathieus and mathieuc w.r.t. z.
 
 #### [`special/spherical_harmonics.py`](special/spherical_harmonics.py)
 Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).

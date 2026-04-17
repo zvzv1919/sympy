@@ -261,10 +261,14 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
   - **Branches on `isinstance(ring.domain, PolynomialRing)`**: if yes (has parameter vars), extracts inner domain for LCM and multiplies by `monom[1:]`; if no, uses `ring.domain` directly.
 - `_euclidean_algorithm(f, g, minpoly, p)` — monic GCD in Z_p[z]/(m(z))[x] via Euclidean algorithm; **returns `None` if a leading coefficient is not invertible mod m(z)** (detected via extended GCD when m(z) is not irreducible).
-- `_to_ANP_poly(f, ring)` — inverse of `_to_ZZ_poly`.
+- `_degree_bound_bivariate(f, g)` — estimate upper degree bounds for bivariate GCD; reduces mod a prime, evaluates at points.
+  - **Falls back to `min(deg(f), deg(g))` if no evaluation point avoids vanishing of the leading coefficient GCD**.
+- `_to_ANP_poly(f, ring)` — convert from `Z[…][x₀, z]` back to `Q(α)[x₀,…,xₙ₋₁]`; reconstructs algebraic number field coefficients from the z-exponent in each monomial tuple.
 - `_interpolate_multivariate(evalpoints, hpeval, ring, i, p, ground)` — Lagrange interpolation in Z_p; **when `ground=True`, the reconstructed variable comes from `ring.domain.gens[i]`** (coefficient ring) instead of `ring.gens[i]`.
 - `_chinese_remainder_reconstruction_univariate` — CRT for univariate polynomials; combines two residue representations over coprime moduli into symmetric representation over their product.
 - `_chinese_remainder_reconstruction_multivariate` — CRT for multivariate polynomials; **when coefficient domain is a `PolynomialRing` (nested structure), recurses on itself to CRT-combine the polynomial coefficients**; for plain integer coefficients, uses standard number-theoretic CRT.
+- `_rational_function_reconstruction(c, p, m)` — recover rational function `a/b` in `Z_p(t)` from congruence residue `c mod m` via partial extended Euclidean algorithm with degree bounds.
+  - **Returns `None` if denominator shares a common factor with modulus** (non-invertible).
 - `_rational_reconstruction_int_coeffs` — rational reconstruction of coefficients.
 - `_trial_division` — verify candidate GCD by trial division.
 
