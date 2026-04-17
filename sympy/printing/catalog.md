@@ -85,11 +85,13 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `JuliaCodePrinter` — generates Julia code from expressions.
 - Distinguishes element-wise (`.^`, `./`, `.*`) vs scalar (`^`, `/`, `*`) operators based on whether operands are numeric.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.
+- `_print_Piecewise` — dual-mode conditional output: inline emits nested ternary `(cond) ? (expr) :` chains; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 
 ### [`octave.py`](octave.py)
 `OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
 - `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether operands are numeric; handles imaginary-number shorthand.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and element-wise vs scalar division.
+- `_print_Piecewise` — dual-mode conditional output: inline emits nested element-wise multiply `(cond).*(expr) + (~cond).*(...)`; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 
 ### [`repr.py`](repr.py)
 `ReprPrinter` — generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`.

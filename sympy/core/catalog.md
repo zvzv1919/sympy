@@ -54,6 +54,7 @@ All concrete numeric types and their arithmetic operations.
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
   - `_eval_power` — handles negative-base sign branching differently for integer vs fractional exponents
+- `NegativeOne` — singleton `-1`; `_eval_power`: odd exp → -1, even → 1; rational exp with denominator 2 → `I**p` (imaginary unit); general rational exponents decomposed via `divmod` into integer and fractional parts
 - `Zero` — additive identity singleton; `_eval_power` strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)
 - `igcd`, `ilcm` — integer GCD/LCM utilities
 - `NumberSymbol` — base for named constants (pi, E, etc.)
@@ -66,7 +67,7 @@ All concrete numeric types and their arithmetic operations.
 - `ComplexInfinity` — unsigned (undirected) infinite quantity; `_eval_power`: zero exp → NaN, positive exp → zoo, negative exp → 0, zoo exp → NaN
 - `_sympify` coercion and `SympifyError` handling throughout arithmetic methods
 
-**Caveat**: Each numeric class (Integer, Rational, Float, ImaginaryUnit, Infinity, NegativeInfinity) implements its own `_eval_power`. Rational._eval_power separates sign via `(-1)**(expt.p % expt.q / expt.q)`.
+**Caveat**: Each numeric class (Integer, Rational, Float, NegativeOne, ImaginaryUnit, Infinity, NegativeInfinity) implements its own `_eval_power`. Rational._eval_power separates sign via `(-1)**(expt.p % expt.q / expt.q)`.
 
 ---
 
@@ -141,26 +142,27 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ## Expressions and Manipulation
 
 ### [`expr.py`](expr.py)
-`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`), ordering comparisons (`__ge__`, `__le__`, `__gt__`, `__lt__`), `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
+`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`), ordering comparisons, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
 
-- `as_independent(*deps)` — splits expression into (independent, dependent) parts w.r.t. given symbols; for Mul, non-commutative factors after the first dependent one are all grouped as dependent to preserve ordering
-- `extract_multiplicatively(c)` — returns self/c if division preserves sign properties, else None
-  - For Infinity/NegativeInfinity/ComplexInfinity: determines result sign based on factor sign (e.g., negative factor from -oo → +oo)
-  - For Add: requires every term to be individually divisible (all-or-nothing)
-- `extract_additively(c)` — returns self - c if subtraction moves matching coefficients toward zero, else None
-- `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first, then single-term match (returns Zero if multiple terms match individually)
-- `could_extract_minus_sign()` — canonical choice between `{e, -e}`; compares minus-sign structure, then for Add counts positive vs negative args, for Mul checks parity; final tiebreaker uses `sort_key()` comparison
+- `as_independent(*deps)` — splits expression into (independent, dependent) parts w.r.t. given symbols; for Mul, non-commutative factors after the first dependent one are all grouped as dependent
+- `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation preserves sign properties, else None; Add requires all terms individually divisible
+- `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first
+- `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — ordering key for expressions; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
-- `is_constant(*wrt)` — checks if expression is constant w.r.t. given symbols; uses numerical probing (substitutes 0, 1, random values); if substituting zeros yields NaN, falls back to `_random` evaluation; ZeroDivisionError during substitution skips that probe entirely
-- `_eval_lseries(x)` — default lazy series iterator; adaptively increases n in `_eval_nseries`, yields incremental term differences; loops past pure-Order results until concrete terms appear
-- `taylor_term(n, x)` — n-th Taylor coefficient by n-fold differentiation (slow default; subclasses override)
-- `lseries()` / `nseries()` — public wrappers for lazy and finite-term series expansion
-- `__int__` — converts symbolic expression to Python int; rounds to 2 decimal places, then performs off-by-one correction when rounded value lands on an integer but original expression doesn't equal it
-- `_random(n)` — evaluates expression with random complex values substituted for free symbols; progressively escalates precision if initial evaluation yields zero significant digits; returns None if no significance achieved
-- `__ge__` / `__le__` / `__gt__` / `__lt__` — ordering comparisons; raises TypeError for non-real (complex) operands or NaN; if at least one operand is real, computes difference and checks sign; otherwise returns unevaluated relational
-- `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both self and g are numbers (uses `getattr(g, 'is_number', True)` to handle plain Python ints), otherwise to polynomial `invert`
-- `_eval_is_positive` / `_eval_is_negative` — sign determination for numeric expressions; uses low-precision evalf, falls back to minimal polynomial when floating-point evaluation yields no significant digits (prec == 1)
+- `is_constant(*wrt)` — checks if expression is constant w.r.t. given symbols; uses numerical probing (substitutes 0, 1, random values)
+- `is_polynomial(*syms)` — returns True only if expression is an exact finite-degree polynomial; rejects symbolic exponents (e.g., `x**n` where n is a symbol, even if integer/nonneg); delegates to `_eval_is_polynomial`
+- `as_terms()` — decomposes a sum into structured term list: each term becomes `(coeff, monom, ncpart)` where coeff is `(real, imag)`, monom is a tuple of commutative base exponents indexed by sorted generators, ncpart is non-commutative factors
+- `leadterm(x)` — returns leading term as `(coeff, exponent)` tuple; temporarily replaces `log(x)` with a Dummy before decomposition to avoid variable leaking into the coefficient
+- `extract_branch_factor(allow_half)` — decomposes products of `exp_polar` into `(residual, n)` where n is the integer winding number; collects `pi*I` multiples and rounds down to nearest even integer via `ceiling`
+- `primitive()` — extracts positive Rational from expression non-recursively (treats self as Add); if `as_coeff_Mul(rational=True)` yields negative coefficient, negates both parts to guarantee positive result
+- `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure; lazy iterator, n-th Taylor coefficient, public wrappers
+- `__int__` — converts to Python int; rounds to 2 decimal places with off-by-one correction
+- `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for non-real/NaN; otherwise computes difference and checks sign or returns unevaluated relational
+- `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both are numbers, otherwise to polynomial `invert`
+- `_eval_is_positive` / `_eval_is_negative` — sign determination; uses low-precision evalf, falls back to minimal polynomial when no significant digits
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
+- `AtomicExpr` — parent class for objects that are both Atom and Expr (Symbol, Number, etc.)
+- `_mag(x)` — module-level helper returning base-10 order of magnitude (`i` such that `.1 <= x/10**i < 1`); uses `math.log10` with fallback to multi-precision `mpf_log` on overflow
 
 ### [`exprtools.py`](exprtools.py)
 Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_const()`, `_monotonic_sign()`, `factor_nc()`.

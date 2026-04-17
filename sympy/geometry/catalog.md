@@ -91,7 +91,9 @@ Polygonal entities in 2D.
 Standalone geometric utility functions.
 - `intersection(*entities)` — convenience dispatcher; delegates to each entity's own `.intersection()` method. Contains no intersection math itself.
 - `convex_hull(*points)` — returns convex hull as a `Polygon`, `Segment`, or `Point`.
-- `closest_points(*points)` / `farthest_points(*points)` — brute-force pairwise distance between discrete points (not polygon boundaries).
+- `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
+  - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
+- `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
 - `are_coplanar(*entities)` — tests coplanarity of points/lines in 3D.
 - `are_similar(e1, e2)` — tests geometric similarity.
 - `centroid(*args)` — weighted centroid of geometric entities.

@@ -169,11 +169,12 @@ Low-level dense polynomial arithmetic on coefficient lists.
 Low-level dense polynomial basics: construction, conversion, queries.
 
 - `dmp_validate`, `dmp_normal`, `dmp_convert` — validation and domain conversion.
-- `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy`, `dmp_to_tuple` — format conversions.
+- `dup_from_dict`, `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy`, `dmp_to_tuple` — format conversions; `dup_from_dict` **accepts both integer keys and single-element tuple keys** `{(k,): c}`, dispatching by `type(max_key) is int`.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC` — degree/coefficient queries.
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
 - `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
 - `dup_reverse(f)` — compute `x^n * f(1/x)` (reciprocal transformation) by reversing the coefficient list and stripping leading zeros.
+- `dup_deflate`, `dmp_deflate` — map `x^m → y` by computing the GCD of all nonzero-coefficient exponents and slicing; **returns stride 1 unchanged for degree ≤ 0**.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
@@ -203,7 +204,8 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_decompose(f, K)` — functional decomposition into `[g, h]` where `f = g(h)` and `deg(g), deg(h) > 1`.
   - Iterates degree divisors, computes candidate inner part, validates outer part via repeated division (**rejects split if any remainder has positive degree**).
 - `dup_sign_variations` — count sign changes in coefficient sequence.
-- `dup_revert`, `dmp_revert` — compute polynomial inverse modulo x^n.
+- `dup_revert(f, n, K)` — compute `f⁻¹ mod x^n` (power series inversion) via **Newton iteration** (`g ← 2g − f·g²` mod increasing powers of x); distinct from `dup_invert` in `euclidtools.py` which computes modular inverse via extended GCD.
+- `dmp_revert` — multivariate variant of `dup_revert`.
 
 ---
 
@@ -219,6 +221,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dup_discriminant`, `dmp_discriminant` — discriminant computation.
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS), `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` (heuristic over Z).
+  - `_dup_zz_gcd_interpolate` — recover polynomial from integer GCD image using **symmetric remainder** (remainders > x//2 are shifted negative).
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
@@ -348,6 +351,7 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `roots(f)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
+- `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes; **reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
 
 ### [`rootisolation.py`](rootisolation.py)
@@ -408,7 +412,9 @@ Bridge between sparse polynomial ring interface and dense function API.
   - Multivariate result methods (`dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
     - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
   - `dup_sqf_norm`, `dmp_sqf_norm` — bridge methods; the resultant (third return value) is converted via `self.to_ground().from_dense()` (ground domain ring), not `self.from_dense()`.
-  - `gf_*` wrapper methods (e.g. `gf_trunc`, `gf_normal`, `gf_neg`, `gf_add`, …) — convert sparse ↔ dense and pass through domain modulus/base to the corresponding `galoistools` functions.
+  - `to_gf_dense(element)` — convert sparse element to dense coefficient list for GF(p) arithmetic; **converts each coefficient through `domain.dom`** (the base integer domain of the finite field).
+  - `from_gf_dense(element)` — convert dense GF(p) list back to sparse representation via `dmp_to_dict`.
+  - `gf_*` wrapper methods (e.g. `gf_trunc`, `gf_normal`, `gf_neg`, `gf_add`, …) — convert sparse ↔ dense via `to_gf_dense`/`from_gf_dense` and pass through domain modulus/base to the corresponding `galoistools` functions.
 - Re-exports all `dup_*`/`dmp_*`/`gf_*` functions from dense modules.
 
 ### [`polyoptions.py`](polyoptions.py)
@@ -492,7 +498,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
 - `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
-- `isolate(expr)` — numerically isolate an algebraic number.
+- `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial.
 - `_choose_factor` — select factor of a polynomial that has a specific root.
 
 ### [`partfrac.py`](partfrac.py)
@@ -595,6 +601,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
+- `FreeModuleElement` (in `modules.py`) — element of a free module; data stored as a **tuple of ring entries**; arithmetic (`add`, `mul`, `div`) is component-wise over the tuple.
+- `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `ModuleHomomorphism.__init__` (in `homomorphisms.py`) — validates source/target are Module instances and **raises `ValueError` if they are defined over different base rings**.

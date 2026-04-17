@@ -51,6 +51,8 @@ Core interval class for bounded floating-point interval computations.
 
 - `interval` — represents [start, end] with `is_valid` ternary flag (True/False/None for partial validity).
 - Supports arithmetic operators (+, -, *, /, **) and ternary comparison operators.
+- `__rpow__` — handles scalar**interval (reverse power); negative-base logic: invalidates wide exponents, rationalizes point exponents to check denominator parity.
+- `_pow_float` — interval raised to float power; rationalizes exponent to check numerator/denominator parity for domain validity.
 
 ### `lib_interval.py`
 Interval-aware math function library and ternary logic operators for implicit plotting.
@@ -83,6 +85,7 @@ Plot mode registry and argument interpretation.
 - `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes.
 - `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
 - `_find_i_vars()`, `_find_d_vars()` — infer independent/dependent variables from expressions.
+- `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.
 
 ### `plot_mode_base.py`
 Base class providing shared infrastructure for all pyglet plot modes.

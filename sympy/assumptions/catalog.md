@@ -32,7 +32,7 @@ Main inference engine for the assumptions system.
 ### [`assume.py`](assume.py)
 Predicate definitions and global assumptions context.
 - `Predicate`: base class representing a named predicate with registered handlers.
-  - `eval(expr, assumptions)`: dispatches to `AskHandler` static methods by walking the expression type's MRO; raises `ValueError` on conflicting results. Not a registry — relies on handler classes registered via `register_handler()`.
+  - `eval(expr, assumptions)`: dispatches to `AskHandler` static methods (not logical inference rules) by walking the expression type's MRO; raises `ValueError` on conflicting results. Relies on handler classes registered via `register_handler()`.
 - `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object; delegates to `Predicate.eval` via `_eval_ask`.
   - `args` returns only the expression (`_args[1:]`), hiding the predicate; `func` returns the predicate (`_args[0]`). Public arg tuple differs from internal `_args`.
 - `AssumptionsContext` / `global_assumptions`: mutable set of globally active assumptions.
@@ -99,7 +99,7 @@ Fallback SAT-based query system used when direct handlers are inconclusive.
 - `get_relevant_facts()`, `get_all_relevant_facts()`: extract and expand relevant facts for a proposition.
 
 ### [`sathandlers.py`](sathandlers.py)
-SAT handler utilities, old-to-new assumption bridging, and pre-computed fact registry.
+Registry of logical inference rules (implications, equivalences) keyed by expression type, plus old-to-new assumption bridging utilities for SAT solving.
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
   - Handles semantic mismatches: e.g., `Q.positive` requires both `is_finite` and `is_positive` (legacy "positive" doesn't exclude unbounded).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
@@ -107,7 +107,8 @@ SAT handler utilities, old-to-new assumption bridging, and pre-computed fact reg
   - Raises `ValueError` if bare predicates are mixed with expression-bound `AppliedPredicate`s, or if applied predicates target multiple distinct expressions.
   - On free input, stores `pred` and defers evaluation; on singly applied input, reconstructs the free form, sets `.expr`, and delegates to `apply()` hook.
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
-- `ClassFactRegistry` / `fact_registry`: the class-to-handler **registry** for SAT facts; `__getitem__` returns the union of handlers for the looked-up class and all its registered superclasses (via `issubclass`), so subclasses inherit parent handlers. `register_fact()` populates this registry.
+- `ClassFactRegistry` / `fact_registry`: the expression-type-keyed **registry** of logical inference rules for SAT solving; `__getitem__` returns the union of rules for the queried class and all its registered superclasses (via `issubclass`), so child types inherit parent-type rules. `register_fact()` populates this registry.
+- Module-level loop registers ~40 inference rules (e.g., `Mul` → `Implies(AllArgs(Q.positive), Q.positive)`) covering `Add`, `Mul`, `Pow`, `Abs`, `Number`, `Integer`, `MatMul`.
 
 ---
 

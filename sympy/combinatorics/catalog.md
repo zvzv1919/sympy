@@ -65,7 +65,8 @@ Composite group construction.
 Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.
 - `symmetric(n)`, `cyclic(n)`, `alternating(n)` — yield all permutations of Sn, Cn, An respectively. `alternating` filters by `is_even`.
 - `dihedral(n)` — yields all 2n elements of Dn. Special-case embeddings for n=1 (in S2) and n=2 (Klein 4-group in S4) where Dn is not a subgroup of Sn.
-- `rubik_cube_generators()`, `rubik(n)` — Rubik's cube face-turn permutations.
+- `rubik_cube_generators()` — standard 3×3 Rubik's cube face-turn permutations.
+- `rubik(n)` — NxN Rubik's cube permutation generator; builds all plane-rotation permutations for each face direction.
 
 ---
 

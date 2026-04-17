@@ -16,6 +16,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
 - **Arithmetic**: `__add__`, `__mul__` (returns `NotImplemented` when the right operand is matrix-like but its transpose lacks `tolist`, e.g. MatrixSymbol), `__pow__` (integer exponents: square-and-multiply; symbolic/float exponents: Jordan decomposition of each cell), `multiply`, `add`.
+- `exp`: matrix exponential via Jordan decomposition; catches `MatrixError` from `jordan_cells` and raises `NotImplementedError`.
 - **Row reduction**: `rref` (reduced row echelon form with pivot tracking), `rank`.
 - **Null/column space**: `nullspace` (kernel basis via rref; handles pivot vs free variable classification, errors on unexpected pivot-column entries), `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
@@ -58,6 +59,7 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
+- `_eval_inverse`: sparse inversion; symmetrizes non-symmetric matrices via M^T·M before LDL/Cholesky solve, then applies scaling correction to the result.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
 
 ### [`immutable.py`](immutable.py)
@@ -73,6 +75,7 @@ Hashable, immutable matrix types usable as dictionary keys and in SymPy expressi
 ### [`expressions/matexpr.py`](expressions/matexpr.py)
 Base class for all symbolic (unevaluated) matrix expressions.
 
+- `_sympifyit`: module-level decorator wrapping matrix arithmetic operators; always attempts strict `sympify` on the second operand (unlike core `_sympifyit` which skips objects with `_op_priority`); returns `retval` on `SympifyError`.
 - `MatrixExpr`: abstract symbolic matrix type; defines shape, arithmetic operators, and conversion.
 - **Operator dispatch**: `__pow__` handles special exponents (0→Identity, 1→self, -1→Inverse, non-square→ShapeError) before delegating to `MatPow`.
 - **Conversion to concrete form**: `as_explicit` iterates all (i,j) entries and returns an `ImmutableMatrix`; `as_mutable` converts further to mutable dense.
@@ -171,7 +174,7 @@ Low-level arithmetic on raw nested lists (list-of-lists representation, not matr
 - `mulmatscaler`: scalar-matrix product on nested lists.
 
 ### [`densetools.py`](densetools.py)
-Low-level matrix utilities on list-of-lists: `trace`, `transpose`, `conjugate`, `eye`, `augment`, `rowadd`, `rowmul`.
+Low-level matrix utilities on list-of-lists: `trace`, `transpose`, `conjugate`, `conjugate_row` (element-wise conjugation with AttributeError fallback for entries lacking `.conjugate()`), `conjugate_transpose`, `eye`, `augment`, `rowadd`, `rowmul`.
 
 ### [`sparsetools.py`](sparsetools.py)
 Sparse format conversion utilities: `_doktocsr` (DOK→CSR), `_csrtodok` (CSR→DOK).

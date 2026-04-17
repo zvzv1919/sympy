@@ -8,6 +8,7 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions.
 - `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
+  - `wrap_code(routines)` — compiles multiple expression routines into a single binary; generates a unique exported function name (not derived from routine names) via `id()`.
   - `dump_c(routines, f)` — writes C source for ufunc; n_out = len(routines), assumes all routines share the same input arguments (partitioned from routines[0]).
 - `_validate_backend_language(backend, language)` — raises `ValueError` if a recognized backend is paired with an unsupported language.
 - `_infer_language(backend)` — returns the default language for a given backend; raises `ValueError` for unrecognized backends.

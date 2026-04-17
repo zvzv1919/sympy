@@ -29,7 +29,7 @@ Orthogonal polynomial families. Base class `OrthogonalPolynomial`; each subclass
 - `jacobi` — Jacobi polynomials P_n^(a,b)(x).
 - `gegenbauer` — Gegenbauer (ultraspherical) polynomials C_n^a(x); `eval` handles special reductions (a=1/2→Legendre, a=1→Chebyshev U) and x=−1 branching.
 - `chebyshevt`, `chebyshevu` — Chebyshev polynomials of first and second kind; `chebyshevt_root`, `chebyshevu_root` for roots.
-- `legendre`, `assoc_legendre` — Legendre and associated Legendre polynomials.
+- `legendre`, `assoc_legendre` — Legendre and associated Legendre polynomials P_n^m(x); `eval` converts negative order m to positive via factorial-ratio identity.
 - `hermite` — Hermite polynomials H_n(x).
 - `laguerre`, `assoc_laguerre` — Laguerre and generalized Laguerre polynomials.
 
@@ -84,7 +84,7 @@ Mathieu functions: `mathieus`, `mathieuc`, `mathieusprime`, `mathieucprime`.
 
 #### [`special/spherical_harmonics.py`](special/spherical_harmonics.py)
 Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).
-- `Ynm` — Y_n^m(θ,φ); `eval` auto-simplifies symmetry relations: negative order m, negated polar/azimuthal angles.
+- `Ynm` — Y_n^m(θ,φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity.
 
 #### [`special/bsplines.py`](special/bsplines.py)
 B-spline basis functions constructed as Piecewise expressions via recursive Cox-de Boor algorithm.

@@ -97,7 +97,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
-- **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids()` finds equivalent gate identities.
+- **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids(gate_seq)` finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
@@ -145,6 +145,7 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 ### [`optics/`](optics/catalog.md)
 Geometric and wave optics.
 - `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation.
+  - `RayTransferMatrix.__mul__` — type-dispatching multiplication: Matrix×BeamParameter extracts q, applies ABCD transform, reconstructs BeamParameter from real/imaginary parts; Matrix×GeometricRay returns GeometricRay.
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
 - `waves.py` — `TWave` class for transverse electromagnetic waves.
 - `medium.py` — `Medium` class (refractive index, permittivity, permeability).
@@ -152,7 +153,7 @@ Geometric and wave optics.
 
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
-- `kane.py` — `KanesMethod`: Kane's equations of motion; computes generalized active forces (fr) and generalized inertia forces (fr*). Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
+- `kane.py` — `KanesMethod`: Kane's equations of motion; computes generalized active forces (fr) and generalized inertia forces (fr*). Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Also contains legacy `_old_linearize` method (deprecated in favor of `linearize.py`) that computes Jacobians for linearized EOM in-place.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
   - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
@@ -165,7 +166,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `linear_momentum`, `kinetic_energy`, `potential_energy` — system-level aggregators that sum per-body contributions (delegate to each body's own method).
   - `Lagrangian(frame, *body)` — computes T−V (kinetic minus potential energy) for a collection of Particles/RigidBodies in a given frame; returns a scalar expression.
 - `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
-- `models.py` — pre-built example multi-body systems for testing/demos. `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
+- `models.py` — pre-built example multi-body systems for testing/demos; **not exported by `__init__.py`** — must be imported explicitly (`from sympy.physics.mechanics.models import ...`). `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
 
 ### [`hep/`](hep/catalog.md)
 High-energy physics.
@@ -181,3 +182,4 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches.
 - `simplifiers.py` — `dim_simplify`: algebraic simplification of compound `Dimension` expressions (products/powers); does not alter individual Dimension construction or equality.
+- `systems/` — concrete unit-system definitions: `mks.py` (meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base), `mksa.py` (MKS + ampere for electromagnetism), `natural.py` (natural units with c=ℏ=1).

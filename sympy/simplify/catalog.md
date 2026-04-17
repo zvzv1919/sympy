@@ -6,7 +6,7 @@
 - **Gröbner trig simplification** (`trigsimp.py`): Uses polynomial ideal / Gröbner basis over trig generators to simplify trig expressions.
 
 ## Notes
-- Individual trig identity transforms (sin²↔cos², sum↔product, double-angle, factored-power identities) are in `fu.py`, not `trigsimp.py`.
+- Individual trig identity transforms (sin²↔cos², sum↔product, double-angle rewrite, factored-power identities) are in `fu.py` as named TR rules; `trigsimp_groebner` in `trigsimp.py` can also produce double-angle forms via degree-minimizing ideal reduction.
 - `trigsimp.py` is the high-level entry point that dispatches to Fu-based or Gröbner-based strategies, and also owns the product-of-powers rewrite engine (e.g. sin^a·cos^b → tan^c) with non-commutativity handling.
 - Sign canonicalization of sub-expressions (`signsimp`) lives in `simplify.py`, not `fu.py`.
 
@@ -53,7 +53,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 High-level trigonometric simplification entry points and Gröbner-basis trig solver.
 
 - `trigsimp(expr, **opts)` — main entry point; dispatches to Gröbner, Fu-based, or old pattern-matching strategies.
-- `trigsimp_groebner(expr, hints)` — simplifies trig expressions via polynomial Gröbner basis over trig generators.
+- `trigsimp_groebner(expr, hints)` — simplifies trig expressions via polynomial Gröbner basis over trig generators; minimizes total degree of the result.
+  - Numeric hints (e.g. `2`) expand search space to find double-angle/multiple-angle forms like sin(x)·cos(x) → sin(2x)/2.
   - `analyse_gens(gens, hints)` — groups generators by argument, computes GCD base frequency, ensures complementary functions (sin/cos/tan) are included.
   - `build_ideal(x, terms)` — generates polynomial relations (Pythagorean, multiple-angle) for the ideal.
   - `parse_hints(hints)` — interprets user hints for generator selection.
@@ -85,6 +86,7 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `hypersimp(f, k)` — compute consecutive-term ratio of hypergeometric sequences.
 - `besselsimp(expr)` — simplify Bessel function expressions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds.
+  - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial. For power-of-2 `n`, repeatedly sqrtdenests and halves `n`, returning early without polynomial solving.
 - `bottom_up(rv, F)` — apply function bottom-up through expression tree.
 - `clear_coefficients(expr)` — strip rational leading coefficients.
 - `sum_simplify(s)` — simplify sums of Sum objects; absorbs constants into Sum bodies and pairwise merges terms.

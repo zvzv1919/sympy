@@ -30,7 +30,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Transcendental fallback via `_tsolve`.
 - `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables.
 - `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
-- `solve_undetermined_coeffs(equ, coeffs, sym)` — determines polynomial coefficients.
+- `solve_undetermined_coeffs(equ, coeffs, sym)` — solves for unknown algebraic coefficients in a polynomial identity (not ODE-related; see `ode.py` for the ODE undetermined coefficients method).
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
@@ -50,7 +50,9 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
-- `_solve_as_poly`, `_solve_as_rational`, `_solve_trig`, `_solve_radical`, `_solve_abs` — type-specific internal solvers.
+- `_solve_as_poly`, `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
+- `_solve_radical(f, symbol, solveset_solver)` — solves equations with radicals via `unrad`; when a cover (substitution) variable is returned, tests whether it can equal I — if not, replaces it with a real-constrained dummy before solving.
+- `_solve_abs(f, symbol, domain)` — solves equations involving Abs; real domain only.
 - Represents unsolved/conditional results as ConditionSet (not Piecewise).
 
 ---
@@ -103,6 +105,8 @@ Solves ordinary differential equations via classification and hint-based dispatc
 - `checkodesol(ode, sol)` — validates ODE solution by substitution.
 - `homogeneous_order(expr, *symbols)` — computes homogeneity order.
 - Methods: separable, exact, linear (1st/nth), Bernoulli, Lie group, variation of parameters, undetermined coefficients, power series.
+- `_undetermined_coefficients_match(expr, x)` — tests applicability and builds trial solution terms for the undetermined coefficients method.
+  - `_get_trial_set` generates candidate terms by repeated differentiation until the set stabilizes; dispatches recursively when a derivative produces a sum.
 
 ### [`pde.py`](pde.py)
 Solves partial differential equations via method dispatch.

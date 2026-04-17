@@ -57,6 +57,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
 - `_sine_cosine_transform` — backend for sine/cosine transforms; integrates over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
 - Sine/Cosine: `sine_transform`, `cosine_transform` and inverses — unitary half-range [0,∞) transforms with prefactor sqrt(2/π); odd-parity (sine) and even-parity (cosine)
+- `_hankel_transform` — backend for Hankel transforms; integrates f·Jν(kr)·r over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
 - Hankel: `hankel_transform`, `inverse_hankel_transform` with order parameter ν
 
 ---
