@@ -27,6 +27,8 @@ Defines all category-theory primitives: objects, morphisms, categories, and diag
 Lays out diagram objects on a 2-D grid and renders to Xy-pic LaTeX strings. Handles only **visual presentation**, not diagram semantics.
 - `DiagramGrid` — places objects of a `Diagram` onto a grid using triangle-welding layout algorithm.
   - Preprocessing: strips identity/composite morphisms without properties, merges premises and conclusions for layout purposes only.
+  - Builds skeleton of edges, decomposes into triangles, and sorts triangles by a size metric before welding.
+  - `_morphism_length` — returns 1 for simple morphisms, component count for `CompositeMorphism`; used to compute triangle min sizes.
   - Supports `groups` (object groupings) and layout `hints` (e.g. transpose, sequential layout for linear diagrams).
 - `ArrowStringDescription` — data class describing a single arrow's visual attributes (label, curve, style, direction offsets).
 - `XypicDiagramDrawer` — converts a `DiagramGrid` into Xy-pic markup; handles arrow styling, label placement, looped morphisms.

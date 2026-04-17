@@ -7,8 +7,10 @@ Core symbolic integration engine and public API.
 - `Integral` — unevaluated integral expression with limits; supports `.doit()` evaluation
 - `Integral._eval_integral` — strategy cascade for antiderivative computation:
   - Fast paths: polynomial, piecewise, constant integrands
+  - Inline power rule for `(a*x+b)^c`: returns log when c==-1, general power otherwise; in `conds='piecewise'` mode emits a Piecewise distinguishing exp==-1 from general case
+  - Rational functions via `ratint`, trig products, delta/singularity functions
   - Calls `risch_integrate` with `separate_integral=True`; if non-elementary remainder is returned, recursively evaluates it with other methods
-  - Falls back to term-wise splitting (Add terms), then manual, Meijer G, and heuristic Risch in order
+  - Falls back to heuristic Risch, then Meijer G, then manual integration in order
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration
 - `line_integrate(field, curve, vars)` — line integral of a vector field over a curve
@@ -74,6 +76,9 @@ Risch Differential Equation solver: solves Dy + f·y = g for y in a differential
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
+- `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
+- `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
+- `prde_spde` — parametric Special Polynomial Differential Equation; reduces degree bound via Diophantine step
 - `is_deriv_k` — structure-theorem test for derivatives in a differential extension
 - `is_log_deriv_k_t_radical` — verifies if an expression is the log-derivative of a radical in a tower of transcendental extensions:
   - Checks elementary extension validity (logarithmic/exponential monomial counts)

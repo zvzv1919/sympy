@@ -36,13 +36,14 @@ Memoization decorators optimized for recurrence relations.
 Large collection of iterable/container utility functions.
 - `flatten`, `unflatten` — recursive/structured flattening of nested iterables.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
+- `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
 - `numbered_symbols` — infinite generator of Symbol objects.
 - `topological_sort` — Kahn's algorithm for DAG ordering.
 - `has_dups`, `has_variety` — duplicate/uniqueness checks.
 
 ### [`enumerative.py`](enumerative.py)
-Algorithms for enumerative combinatorics (multiset partitions).
+Low-level algorithms for enumerative combinatorics (multiset partition traversal/counting); called by `iterables.multiset_partitions` for the general multiset case.
 - `multiset_partitions_taocp` — Knuth's algorithm for multiset partitions.
 - `MultisetPartitionTraverser` — stateful traverser for multiset partition enumeration with size/count constraints.
   - `count_partitions(multiplicities)` — fast partition counting via dynamic programming with a persistent cross-call cache.
@@ -76,6 +77,8 @@ Randomized numerical verification of symbolic expression equivalence (not doctes
 
 ### [`benchmarking.py`](benchmarking.py)
 Benchmarking framework via py.test.
+- `Timer(timeit.Timer)` — subclass that compiles/executes timing code using caller-provided globals instead of `timeit`'s default isolated namespace.
+- `Function` — py.test item that extracts function source, runs adaptive calibration targeting ~0.2 s measurement windows.
 
 ## Miscellaneous
 

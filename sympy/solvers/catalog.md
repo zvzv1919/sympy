@@ -61,6 +61,8 @@ Solves Diophantine equations (polynomial equations over integers).
 - `diophantine(eq, param, syms)` — main entry; classifies and dispatches to type-specific solvers.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
 - Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
+- Sum-of-powers solvers: `diop_general_sum_of_squares`, `diop_general_sum_of_even_powers` — solve x₁^e+…+xₙ^e=k over integers; respects variable assumptions (e.g. nonpositive) by flipping signs on results.
+- `power_representation(n, p, k)` — generates representations of n as sum of k p-th powers. `partition(n, k)` — integer partition generator.
 
 ### [`inequalities.py`](inequalities.py)
 Solves inequality constraints and returns interval-based solutions.

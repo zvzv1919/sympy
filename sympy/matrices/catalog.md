@@ -21,7 +21,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - **Diagonalization**: `is_diagonalizable` (checks P·D·P⁻¹ decomposability; supports `reals_only` flag to reject complex eigenvalues), `diagonalize`, `jordan_form`, `jordan_cells`.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition`, `LUdecomposition`, `LUdecompositionFF` (fraction-free LU returning P, L, D, U).
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`.
+- `pinv`: Moore-Penrose pseudoinverse; raises `NotImplementedError` for rank-deficient matrices (catches `ValueError` from `inv()`). `pinv_solve`: least-squares solver via pseudoinverse.
 - **Determinant/inverse**: `det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
@@ -35,6 +36,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
+- `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution for lower-triangular systems), `_upper_triangular_solve` (backward substitution for upper-triangular systems), `_diagonal_solve`.
 - `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `__setitem__`, `copyin_matrix`, `fill`.

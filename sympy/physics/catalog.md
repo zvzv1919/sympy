@@ -38,11 +38,11 @@ One-dimensional quantum harmonic oscillator: closed-form analytical wavefunction
 - `coherent_state(n, alpha)` — Fock-basis expansion coefficient ⟨n|α⟩ for a coherent state; computes exp(−|α|²/2)·α^n/√(n!).
 
 ### [`secondquant.py`](secondquant.py)
-Second quantization framework for many-body quantum mechanics with bosonic and fermionic creation/annihilation operators.
+Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
 - `BosonicOperator`, `CreateBoson` (B†), `AnnihilateBoson` (B) — bosonic ladder operators with commutation relations.
-- `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — fermionic ladder operators with anticommutation relations.
+- `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules (not mode-labeled like `quantum/fermion.py`).
 - `NO` — normal-ordering bracket; constructor reorders operators into creation-before-annihilation form, returns S.Zero if identical fermion operators violate Pauli exclusion.
-- `Commutator`, `AntiCommutator` — symbolic (anti)commutator expressions.
+- `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
 - `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products.
@@ -75,8 +75,10 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces), `represent.py` (matrix representations).
   - `state.py` — Ket/Bra/Wavefunction; `KetBase.__mul__`/`__rmul__` dispatch multiplication: Ket*Bra → OuterProduct, Bra*Ket → InnerProduct.
-- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan coefficient symbolic expressions, evaluation, and simplification (not state construction).
-  - `CG.doit()` — numerically evaluates a CG coefficient; raises ValueError if any angular momentum parameter is symbolic (non-numeric).
+- **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
+  - `Wigner3j` — symbolic Wigner 3-j coefficient; `is_symbolic` property checks if any parameter is non-numeric. `doit()` raises ValueError for symbolic params.
+  - `Wigner6j`, `Wigner9j` — symbolic 6-j and 9-j coefficients with analogous `doit()`.
+  - `CG` (subclass of `Wigner3j`) — Clebsch-Gordan coefficient; inherits `is_symbolic` check and ValueError guard.
   - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices.
@@ -94,9 +96,11 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
-  - `fermion.py` (FermionOp — fermionic ladder operators with anticommutation: {a†,a}=1 for same-mode, 0/2·ab for independent modes).
+  - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator.
+    - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
 - **Operator ordering**: `operatorordering.py` — `normal_ordered_form()` rearranges products into creation-before-annihilation order; when two operators belong to different independent modes, the commutation correction term is set to zero.
-- **Commutator algebra**: `commutator.py`, `anticommutator.py` — symbolic `Commutator` and `AntiCommutator` with `doit()` evaluation; these delegate to gate/operator `_eval_commutator_*` methods.
+- **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.
+  - Delegates to operator `_eval_commutator_*`/`_eval_anticommutator_*` methods; falls back through NotImplementedError chain.
 - **Algorithms**: `grover.py` (Grover's search), `shor.py` (Shor's factoring), `qft.py` (quantum Fourier transform).
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
@@ -128,19 +132,23 @@ Geometric and wave optics.
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
 - `kane.py` — `KanesMethod`: Kane's equations of motion.
-- `lagrange.py` — `LagrangesMethod`: Lagrangian mechanics.
+- `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy` methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv combining spin and translational contributions), `linear_momentum`, `kinetic_energy`, `potential_energy` methods.
 - `body.py` — unified `Body` wrapping Particle or RigidBody.
-- `functions.py` — system-level kinematic/dynamic functions for multi-body systems.
+- `functions.py` — system-level kinematic/dynamic functions for multi-body systems (computation, not EOM generation).
   - `angular_momentum(point, frame, *body)` — sums angular momenta of Particles/RigidBodies; validates Point and ReferenceFrame types.
-  - `linear_momentum`, `kinetic_energy`, `Lagrangian` — analogous system-level aggregators.
+  - `linear_momentum`, `kinetic_energy`, `potential_energy` — analogous system-level aggregators.
+  - `Lagrangian(frame, *body)` — computes T−V (kinetic minus potential energy) for a collection of Particles/RigidBodies in a given frame; returns a scalar expression.
 - `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
 - `models.py` — pre-built example multi-body systems for testing/demos. `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
 
 ### [`hep/`](hep/catalog.md)
 High-energy physics.
-- `gamma_matrices.py` — Dirac gamma-matrix algebra and trace evaluation.
+- `gamma_matrices.py` — `GammaMatrixHead`: Dirac gamma-matrix algebra using tensor infrastructure.
+  - `_trace_single_line` — evaluates fermion-line traces; returns hardcoded 4 (D=4 only) when the line contains only a spinor identity (delta) and no gamma matrices.
+  - `_gamma_trace1` — computes trace of gamma-matrix products; returns 4 for empty trace (identity).
+  - `_kahane_simplify` — cancels contracted gamma matrices using Kahane's algorithm.
 
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).

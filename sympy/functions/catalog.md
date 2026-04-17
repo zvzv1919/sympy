@@ -18,7 +18,7 @@ Special mathematical functions: gamma, error, Bessel, orthogonal polynomials, di
 
 #### [`special/gamma_functions.py`](special/gamma_functions.py)
 Gamma function family: complete, incomplete, polygamma, loggamma.
-- `gamma` — complete gamma function Γ(x), the generalized factorial.
+- `gamma` — complete gamma function Γ(x); evaluates special values. The `factorial` class (in `combinatorial/factorials.py`) handles n! computation and negative-integer edge cases.
 - `lowergamma` — lower incomplete gamma function γ(s, x).
 - `uppergamma` — upper incomplete gamma function Γ(s, x); `fdiff` uses Meijer G-function for derivative w.r.t. order parameter.
 - `polygamma` — polygamma function ψ^(n)(z), includes `digamma` (n=0) and `trigamma` (n=1).
@@ -130,6 +130,8 @@ Combinatorial functions and number sequences.
 
 #### [`combinatorial/factorials.py`](combinatorial/factorials.py)
 Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFactorial`, `FallingFactorial`, `binomial`.
+- `factorial` — n! computation class; `eval` returns ComplexInfinity for negative integers (consistent with gamma function poles), 1 for zero, and uses optimized algorithms for positive integers. Rewrites to `gamma(n+1)`.
+- `binomial` — binomial coefficient C(n,k); `eval` handles integer, non-integer, and edge cases.
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)
 Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`.

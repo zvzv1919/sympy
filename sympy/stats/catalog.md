@@ -42,6 +42,7 @@ Infrastructure for finite random variables (discrete, finite support).
 All built-in continuous probability distributions (~28).
 - Includes: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
+- Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).
 
 ### [`drv_types.py`](drv_types.py)
 Built-in discrete distributions with infinite support.
@@ -72,14 +73,16 @@ Convenience functions for probability and statistics queries.
 Symbolic (unevaluated) representations of probabilistic expressions.
 - `Probability`, `Expectation`, `Variance`, `Covariance`: subclasses of `Expr`.
 - Support `rewrite()` to Integral/Sum forms and `doit()` for evaluation.
+- `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients (Var(aX)=a²·Var(X)).
+- `Covariance.doit()`: expands covariance of sums/products using linearity properties.
 
 ---
 
 ## Utilities
 
 ### [`error_prop.py`](error_prop.py)
-Symbolic arithmetic error (uncertainty) propagation.
-- `variance_prop(expr, consts, include_covar)`: propagates variance through symbolic expressions.
+Derivative-based arithmetic error (uncertainty) propagation for general expressions (not probability-space algebra).
+- `variance_prop(expr, consts, include_covar)`: computes total variance via partial-derivative formula; all non-const symbols are treated as variant.
 
 ### [`__init__.py`](__init__.py)
 Package init; re-exports public API (distributions, query functions) from submodules.

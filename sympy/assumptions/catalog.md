@@ -96,7 +96,10 @@ Fallback SAT-based query system used when direct handlers are inconclusive.
 - `get_relevant_facts()`, `get_all_relevant_facts()`: extract and expand relevant facts for a proposition.
 
 ### [`sathandlers.py`](sathandlers.py)
-SAT handler utilities and pre-computed fact registry.
+SAT handler utilities, old-to-new assumption bridging, and pre-computed fact registry.
+- `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
+  - Handles semantic mismatches: e.g., `Q.positive` requires both `is_finite` and `is_positive` (legacy "positive" doesn't exclude unbounded).
+  - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
 - `UnevaluatedOnFree`: base for Boolean functions unevaluated on free predicates.
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
 - `ClassFactRegistry` / `fact_registry`: maps expression classes to their logical facts.

@@ -16,7 +16,7 @@ Finite and infinite sums, products, and related algorithms.
 ### [`expr_with_limits.py`](expr_with_limits.py)
 Abstract base for any expression with limits (integrals, sums, products).
 
-- `_process_limits(*symbols)` — canonicalize limit specifications.
+- `_process_limits(*symbols)` — canonicalize limit specifications into `(sym, lo, hi)` triples; coerces symbols and bounds.
 - **`ExprWithLimits`** — base class providing `function`, `limits`, `variables`, `free_symbols`, `is_number`.
   - `as_dummy()` — replace dummy variables with explicit dummies.
   - `_eval_interval`, `_eval_subs` — substitution helpers.
@@ -30,7 +30,7 @@ Base class for expressions with **integer** limits — shared by Sum and Product
 - **`ExprWithIntLimits(ExprWithLimits)`**:
   - `change_index(var, trafo, newvar)` — apply a linear transformation to a summation/product index variable.
   - `index(x)` — return the positional index of a dummy variable in the limits list.
-  - `reorder(*arg)` — reorder limits by swapping pairs; each pair can mix numeric positions and symbolic variable names.
+  - `reorder(*arg)` — reorder limits by swapping pairs; each pair can mix numeric positions and symbolic variable names. Raises `ValueError` if any pair has length ≠ 2.
   - `reorder_limit(x, y)` — interchange two specific limit tuples.
 
 ---

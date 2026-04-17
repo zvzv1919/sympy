@@ -83,6 +83,10 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
 - Similar element-wise vs scalar operator distinction as Julia printer.
 
+### [`repr.py`](repr.py)
+`ReprPrinter` — generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`.
+- `_print_Symbol` — includes declared assumption properties (e.g., `positive=True`, `commutative=False`) in output so symbols round-trip with their metadata.
+
 ### [`lambdarepr.py`](lambdarepr.py)
 `LambdaPrinter` — generates Python lambda-compatible string representations for use with `lambdify`.
 
@@ -118,9 +122,6 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ---
 
 ## Other
-
-### [`repr.py`](repr.py)
-`ReprPrinter` — generates eval-able `repr()` strings for expressions.
 
 ### [`mathematica.py`](mathematica.py)
 `MathematicaCodePrinter` — generates Mathematica code from expressions.

@@ -31,7 +31,8 @@ Point representations in n-dimensional Euclidean space.
   - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`, `angle_between(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`, `projection(o)`.
   - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
-  - `arbitrary_point()`, `random_point()`, `contains()`.
+  - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.
+  - `random_point()`, `contains()`.
 - `Line` — infinite 2D line through two points.
 - `Ray` — 2D ray from a point in a direction.
 - `Segment` — 2D segment between two endpoints; `length`, `midpoint`, `perpendicular_bisector()`.
@@ -53,6 +54,7 @@ Parametric curves in 2D space.
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
 - `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `is_tangent()`, `equation()`.
+  - `__contains__(o)` — Python `in` operator: for `Point` checks if point satisfies ellipse equation; for another `Ellipse` checks equality only (not geometric containment).
   - `_do_line_intersection(o)` — line–ellipse intersection via quadratic discriminant; handles symbolic discriminants by allowing indeterminate-sign cases.
   - `_do_ellipse_intersection(o)` — ellipse–ellipse / ellipse–circle intersection via solving simultaneous conic equations.
 - `Circle` — `Ellipse` subclass; constructed from center+radius, three points, or center+point. Adds `radius`, `circumference`, `equation()`.
