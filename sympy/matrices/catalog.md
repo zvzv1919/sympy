@@ -26,7 +26,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `pinv`: Moore-Penrose pseudoinverse; raises `NotImplementedError` for rank-deficient matrices (catches `ValueError` from `inv()`). `pinv_solve`: least-squares solver via pseudoinverse.
 - **Determinant/inverse**: `det`, `det_bareis` (Bareiss fraction-free Gaussian elimination for determinant; divides by previous pivot to avoid fractions; swaps rows when current pivot is zero), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies** (concrete implementations): `inverse_ADJ` (adjugate/determinant method; falls back to rref diagonal check when `equals(0)` is indeterminate), `inverse_LU`, `inverse_GE`.
-- **Structure**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`.
+- **Norms**: `norm` (vector and matrix norms — Frobenius, spectral, p-norms; for 2D matrices with default ord, reshapes to column vector via `vec()` and recurses).
+- **Structure**: `row_join` (horizontal concat; null/empty self → returns rhs), `col_join` (vertical concat; null/empty self → returns bott), `row_insert`, `col_insert`, `extract`, `reshape`.
 - **Indexing helpers**: `key2bounds` (converts mixed int/slice keys to row/col boundaries; handles zero-dimension edge case), `key2ij`.
 - `_setitem`: item-assignment logic shared by all mutable subclasses; for integer keys with a plain sequence value, auto-wraps into a dense `Matrix` then delegates to `copyin_matrix`. Slice keys delegate to `copyin_matrix`/`copyin_list` directly.
 - **Predicates (shape)**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_upper_hessenberg` (zero below first subdiagonal), `is_lower_hessenberg` (zero above first superdiagonal), `is_zero`, `is_symbolic`.
@@ -39,6 +40,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
+- `as_immutable`: converts to `ImmutableMatrix`; special-cases zero-row or zero-col matrices (passes shape+empty list instead of `tolist`). `as_mutable`: converts to mutable `Matrix`.
 - `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - Internal solver backends: `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution for lower-triangular systems), `_upper_triangular_solve` (backward substitution for upper-triangular systems), `_diagonal_solve`.

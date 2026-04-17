@@ -21,7 +21,7 @@ Main inference engine for the assumptions system.
   - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.integer`, `Q.rational`, `Q.finite`, …
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
-  - `Q.negative` (and other sign predicates) document the asymmetry between `~Q.negative` and `Q.nonnegative` — negation doesn't require realness, "non" predicates do.
+  - `Q.positive` and `Q.negative` each document the asymmetry between negation (`~Q.positive`) and "non" counterparts (`Q.nonpositive`): `~Q.positive(I)` is `True` but `Q.nonpositive(I)` is `False`, because "non" predicates require realness.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
     - Docstrings document cross-predicate structural inference rules (e.g., when combining two matrix properties implies a third).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).

@@ -202,6 +202,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
 - `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
+  - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
 - `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
@@ -257,8 +258,10 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 `_sympifyit` — auto-converts arguments to SymPy types; `deprecated` — deprecation warnings.
 
 ### [`compatibility.py`](compatibility.py)
-Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`.
+Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`, `as_int()`.
 
+- `as_int(n)` — converts argument to Python `int` with strict equality validation; raises `ValueError` if `int(n) != n` (e.g., `sqrt(10)` → 3 but not equal)
+  - Catches `TypeError` from the equality check (e.g., objects where `int(x) != x` is undefined) and re-raises as `ValueError`
 - `iterable(i, exclude=(str, dict, NotIterable))` — checks if object is iterable in the SymPy sense; if object has `_iterable` boolean attribute, returns it directly (bypasses both `iter()` check and type exclusion); otherwise calls `iter()` then applies `exclude` filter
 
 - `lru_cache` — backported LRU memoization decorator (used when `functools.lru_cache` unavailable); three branches by maxsize: 0 (no cache), None (unbounded), else size-limited with doubly-linked-list eviction

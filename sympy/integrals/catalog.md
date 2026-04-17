@@ -25,7 +25,9 @@ Step-by-step integration emulating by-hand techniques (substitution, parts, trig
 
 ### [`trigonometry.py`](trigonometry.py)
 Integration of pure sin^n(x)·cos^m(x) products only (no tan/sec/cot/csc).
-- `trigintegrate(f, x)` — integrates sin/cos power products using reduction formulas
+- `trigintegrate(f, x)` — integrates sin/cos power products via u-substitution and reduction formulas
+  - When both exponents are odd, selects the smaller exponent for substitution to minimize result complexity
+  - Handles piecewise output when the frequency coefficient may be zero
 
 ---
 
@@ -92,11 +94,14 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
   - Verifies rationality of solution coefficients; raises NotImplementedError for non-rational coefficients
   - Computes multiplicative constant correction between exp(f) and the radical
 - `is_log_deriv_k_t_radical_in_field` — field-level variant; checks if f is Du/u for some k(t)-radical u; uses `splitfactor` for denominator simplicity, then `residue_reduce`
+- `parametric_log_deriv_heu` — heuristic for n·f = Dv/v + m·Dθ/θ (n,m∈ℤ, v∈k(t)*); branches on whether deg(q) exceeds a derivation-degree bound B, solving coefficient equations in each branch
 
 ### [`heurisch.py`](heurisch.py)
-Heuristic (pattern-based) integration for expressions not covered by the Risch algorithm.
-- `heurisch(f, x)` — main heuristic integrator using Bernstein/Bronstein approach
+Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert).
+- `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
 - `heurisch_wrapper(f, x)` — wrapper with retry logic for edge cases
+- `DiffCache` — caches derivatives during integration; for cylindrical (Bessel-type) functions, simultaneously stores derivatives for orders n and n−1 to avoid introducing a third algebraically dependent transcendental
+- `components(f, x)` — collects the functional building blocks (atoms) of an expression that depend on x
 
 ### [`rationaltools.py`](rationaltools.py)
 Integration of rational functions p(x)/q(x) via partial fractions and logarithmic parts.

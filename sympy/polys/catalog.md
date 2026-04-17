@@ -127,7 +127,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
-- `gcd`, `lcm`, `gcd_list`, `lcm_list`, `cofactors`, `resultant`, `discriminant` — algebraic operations.
+- `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
+- `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
 - `PurePoly` — Poly subclass with equality ignoring generator names.
 - `GroebnerBasis` — Gröbner basis representation class.
@@ -221,7 +222,8 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dup_discriminant`, `dmp_discriminant` — discriminant computation.
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS), `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` (heuristic over Z).
-  - `_dup_zz_gcd_interpolate` — recover polynomial from integer GCD image using **symmetric remainder** (remainders > x//2 are shifted negative).
+  - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover univariate/multivariate polynomial from integer GCD image using **symmetric remainder**.
+    - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
@@ -240,6 +242,7 @@ Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, whi
 ### [`modulargcd.py`](modulargcd.py)
 Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolation.
 
+- `_trivial_gcd(f, g)` — handle zero-polynomial GCD cases; **negates the non-zero input if its leading coefficient is negative** to ensure the result has a positive leading coefficient; returns `(ring.zero, ring.zero, ring.zero)` if both are zero.
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `func_field_modgcd` — modular GCD over algebraic function fields.
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
@@ -343,7 +346,6 @@ Symbolic root representations and root-sum evaluation.
   - `_is_func_rational` — checks if the lambda is a rational function.
   - `doit` — attempts to evaluate the root sum.
 - `rootof(poly, index)` — factory function creating `CRootOf` instances.
-- `preprocess_roots` — preprocessing for root computation.
 
 ### [`polyroots.py`](polyroots.py)
 Symbolic root-finding algorithms (closed-form solutions).
@@ -352,6 +354,8 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
+- `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
+  - **When one exponent in a base/generator pair is zero but the other is not, breaks** (no consistent ratio), preventing elimination of that generator.
 - `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes; **reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
 
 ### [`rootisolation.py`](rootisolation.py)
@@ -554,6 +558,7 @@ FGLM algorithm for Gröbner basis conversion between monomial orderings.
 
 - `matrix_fglm(F, ring, O_to)` — convert Gröbner basis from one ordering to another.
 - `_basis(G, ring)` — enumerate standard monomials (not divisible by any leading monomial of G); forms the vector-space basis of the quotient ring `K[X]/(G)`.
+- `_update(s, _lambda, P)` — row-reduce projection matrix P so that `P' v = e_s` (s-th unit vector); pivots on the first non-zero entry at index ≥ s in `_lambda`, eliminates other rows, then swaps pivot row into position s.
 
 ### [`distributedmodules.py`](distributedmodules.py)
 Sparse distributed module representations for submodule/syzygy computation.
@@ -619,6 +624,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 
 - `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings.
   - `convert(element, base=None)` — coerce element to this domain; **when `base` is None, dispatches by Python type** (int → ZZ, float → RR, complex → CC, GMPY types, `DomainElement` → parent, `Basic` → `from_sympy`).
+    - **For unknown non-Basic, non-sequence types, attempts `sympify(element)` then retries via `from_sympy`**; raises `CoercionFailed` if all strategies fail.
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.

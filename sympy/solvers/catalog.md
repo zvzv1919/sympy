@@ -45,7 +45,9 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `solveset(f, symbol, domain=S.Complexes)` — core solver; dispatches by domain.
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`; falls back to ConditionSet on NotImplementedError.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
-- `linsolve(system, *symbols)` — linear system solver returning set of solution tuples.
+- `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.
+  - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
+  - Underdetermined systems return parametric solutions; free variables appear as themselves in the result tuple.
 - `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form (A, b). Accepts both expressions (implicit =0) and Eq() relations.
 - `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
@@ -70,7 +72,8 @@ Solves bivariate equations by structural reduction to single-variable problems.
 ### [`diophantine.py`](diophantine.py)
 Solves Diophantine equations (polynomial equations over integers).
 
-- `diophantine(eq, param, syms)` — main entry; classifies and dispatches to type-specific solvers.
+- `diophantine(eq, param, syms)` — main entry; factors equation into terms, dispatches each to `diop_solve()`, and merges results.
+  - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
 - Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
 - Sum-of-powers solvers: `diop_general_sum_of_squares`, `diop_general_sum_of_even_powers` — solve x₁^e+…+xₙ^e=k over integers; respects variable assumptions (e.g. nonpositive) by flipping signs on results.

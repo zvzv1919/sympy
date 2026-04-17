@@ -12,12 +12,14 @@ Foundation of all set types and operations.
 - `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes images via calculus; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
-- `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic
+- `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic that classifies each element via fuzzy three-valued containment (definitely in / unknown / dropped)
 - `Complement` — relative complement (set difference A − B)
 - `SymmetricDifference` — elements in either set but not both
 - `EmptySet` — singleton empty set
 - `UniversalSet` — singleton universal set
 - `FiniteSet` — finite collection of discrete symbolic elements; supports powerset
+  - `_contains` — three-valued membership: iterates elements, evaluates `Eq`, returns true/false/None when equality is indeterminate
+  - `as_relational` — converts to `Or(*[Eq(symbol, elem) ...])` disjunction of equality predicates
 - **`imageset(*args)`** — standalone function; computes the image of a set under a transformation (Lambda, function, or lambda)
   - Composes nested transformations when the input is already an ImageSet; returns unevaluated `ImageSet` if it cannot simplify
 
@@ -52,4 +54,4 @@ Sets defined by a boolean predicate over a base set.
 ### [`contains.py`](contains.py)
 Boolean expression for symbolic set membership.
 
-- `Contains` — symbolic `BooleanFunction` node representing `x ∈ S`; delegates to `Set.contains` for evaluation; holds unevaluated form only
+- `Contains` — unevaluated `BooleanFunction` wrapper node for `x ∈ S`; delegates to `Set.contains` but does not implement any membership logic itself (all containment/three-valued logic lives in each Set subclass in `sets.py`)

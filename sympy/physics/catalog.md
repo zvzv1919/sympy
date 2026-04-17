@@ -16,7 +16,7 @@ Radial wavefunctions for hydrogen-like atoms.
 Standard physics matrices as SymPy Matrix objects.
 - `msigma(i)` — 2×2 Pauli spin matrix σ_i (i = 1, 2, 3).
 - `mgamma(mu, lower=False)` — 4×4 Dirac gamma matrix γ^μ (standard/Dirac representation); `lower=True` returns γ_μ by negating spatial (1,2,3) and chiral (5) indices (metric signature +−−−).
-- `pat_matrix(x, y, z, a)` — Parallel Axis Theorem inertia matrix.
+- `pat_matrix(m, dx, dy, dz)` — 3×3 Parallel Axis Theorem correction matrix for translating an inertia tensor by displacement (dx, dy, dz) for a body of mass m; returns m·[off-diagonal: −dᵢdⱼ, diagonal: sum of squared perpendicular components].
 - `mdft(n)` — n×n discrete Fourier transform matrix.
 - `minkowski_tensor` — 4×4 Minkowski metric tensor.
 
@@ -74,7 +74,8 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
-- **Core**: `qexpr.py` (base quantum expression), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces).
+- **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces).
+  - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
@@ -144,16 +145,21 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 
 ### [`optics/`](optics/catalog.md)
 Geometric and wave optics.
-- `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation.
+- `gaussopt.py` — ray transfer matrices, geometric/Gaussian beam propagation, and paraxial conjugation utilities.
   - `RayTransferMatrix.__mul__` — type-dispatching multiplication: Matrix×BeamParameter extracts q, applies ABCD transform, reconstructs BeamParameter from real/imaginary parts; Matrix×GeometricRay returns GeometricRay.
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
+  - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
+  - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
 - `waves.py` — `TWave` class for transverse electromagnetic waves.
 - `medium.py` — `Medium` class (refractive index, permittivity, permeability).
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection), `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_equation()`, `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
 
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
-- `kane.py` — `KanesMethod`: Kane's equations of motion; computes generalized active forces (fr) and generalized inertia forces (fr*). Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Also contains legacy `_old_linearize` method (deprecated in favor of `linearize.py`) that computes Jacobians for linearized EOM in-place.
+- `kane.py` — `KanesMethod`: Kane's equations of motion (Kane & Levinson 1985).
+  - Constructor takes an inertial ReferenceFrame, generalized coordinates/speeds, kinematic differential equations, and optional constraint/dependent-speed specs; validates frame type.
+  - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
+  - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Legacy `_old_linearize` (deprecated) computes Jacobians in-place.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
   - `solve_multipliers(op_point)` — solves for Lagrange multiplier values at a given operating point by composing the mass matrix with constraint coefficients and LU-solving.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.

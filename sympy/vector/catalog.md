@@ -12,7 +12,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 
 ### [`vector.py`](vector.py)
 Concrete vector classes built on `BasisDependent`.
-- `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix`, `separate`.
+- `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix` (vector → 3×1 column matrix of components), `separate`.
   - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
@@ -63,7 +63,7 @@ Vector calculus operations and coordinate re-expression.
 - `curl`, `divergence`, `gradient` — standard differential operators on fields.
 - `is_conservative`, `is_solenoidal` — field property tests.
 - `scalar_potential`, `scalar_potential_difference` — potential computations.
-- `matrix_to_vector` — convert a matrix to a vector in a given system.
+- `matrix_to_vector` — inverse of `Vector.to_matrix`: takes a 3×1 column matrix and returns a Vector by combining its elements with the system's basis vectors (i, j, k).
 - `orthogonalize` — Gram-Schmidt orthogonalization of vectors.
 - `_path(from_object, to_object)` — traverses the parent-hierarchy tree to find the route between two coordinate systems/points; raises `ValueError` if they don't share a common root.
 

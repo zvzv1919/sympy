@@ -37,6 +37,7 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
 - `_print_Integral` — builds integral signs with limits and spacing.
 - Special-case `_print_*` overrides for functions whose names collide with Greek/Unicode symbols (e.g., `_print_Chi` keeps Latin "Chi" instead of Greek χ, `_print_gamma`/`_print_lowergamma`/`_print_uppergamma` use explicit Γ/γ glyphs).
+- `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
 - Handles matrices, piecewise, sequences, sets, relational operators, and all standard math expressions.
 
 ### [`pretty/pretty_symbology.py`](pretty/pretty_symbology.py)

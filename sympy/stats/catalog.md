@@ -23,6 +23,7 @@ Base classes for all random variable types: `RandomDomain`, `SingleDomain`, `PSp
 ### [`crv.py`](crv.py)
 Infrastructure for continuous random variables.
 - `ContinuousDomain`, `SingleContinuousDomain`, `ProductContinuousDomain` (continuous subclass of `ProductDomain`), `ConditionalContinuousDomain`.
+- `ContinuousDistributionHandmade`: internal distribution wrapper used by `ContinuousRV` (in `crv_types.py`); accepts a Lambda pdf and a set.
 - Integration-based expectation and probability computation over continuous intervals.
 
 ### [`drv.py`](drv.py)
@@ -42,7 +43,7 @@ Infrastructure for finite random variables (discrete, finite support).
 
 ### [`crv_types.py`](crv_types.py)
 All built-in continuous probability distributions (~28) plus a factory for user-defined ones.
-- `ContinuousRV(symbol, density, set)`: creates a custom continuous random variable from an arbitrary density expression and support interval.
+- `ContinuousRV(symbol, density, set)`: user-facing factory for custom continuous random variables from an arbitrary density; defaults support to `(-oo, oo)` (entire real line) when `set` is omitted.
 - Named distributions: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
 - Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).

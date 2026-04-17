@@ -52,9 +52,9 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 ## Named Groups and Construction
 
 ### [`named_groups.py`](named_groups.py)
-Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties. Contrast with `generators.py`, which yields individual permutation elements.
+Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties (e.g. `_is_nilpotent`, `_is_solvable`, `_is_abelian`, `_is_transitive`). Contrast with `generators.py`, which yields individual permutation elements.
 - `SymmetricGroup`, `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
-- `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4).
+- `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4). Pre-sets `_is_nilpotent = True` iff n is a power of 2.
 - `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0).
 
 ### [`group_constructs.py`](group_constructs.py)
@@ -144,7 +144,8 @@ Low-level algorithms for computational group theory.
 - `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
 - `_strip` — sift (strip) a permutation through a BSGS; returns residual permutation and level where sifting stopped.
 - `_strip_af` — optimized array-form variant of `_strip`; returns `False` (instead of identity) when element is fully sifted.
-- `_strong_gens_from_distr`, `_remove_gens`, `_check_cycles_alt_sym`.
+- `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.
+- `_strong_gens_from_distr`, `_check_cycles_alt_sym`.
 
 ### [`testutil.py`](testutil.py)
 Testing utilities for permutation groups (excluded from localization targets).

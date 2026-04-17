@@ -142,7 +142,7 @@ User input handling.
 OpenGL window management, rendering loop, and title-bar progress display.
 
 - `PlotWindow` — extends `ManagedWindow`; sets up GL context, coordinates camera and controller.
-- `draw()` — main render loop; acquires render lock, iterates plot functions to draw them, and collects vertex/color computation progress in the same pass to avoid locking twice per frame.
+- `draw()` — called each frame by `ManagedWindow.__event_loop__`; acquires the plot-level `_render_lock` (not the GL thread lock) to iterate plot functions and collect vertex/color progress in a single pass.
 - `update_caption()` — formats vertex and color calculation percentages into the window title bar.
 
 ### `plot_object.py`
@@ -166,9 +166,11 @@ Color mapping for curves and surfaces.
   - `apply_to_surface(verts, u_set, v_set)` — same two-pass normalization for 2D vertex grid (u×v mesh); skips None entries.
 
 ### `managed_window.py`
-Pyglet window lifecycle management.
+Pyglet window lifecycle and threaded event loop with thread-safe GL lock management.
 
-- `ManagedWindow` — wraps pyglet Window with auto event loop in a separate thread; FPS-limited rendering.
+- `ManagedWindow` — wraps pyglet Window; spawns a separate thread running `__event_loop__` for FPS-limited rendering.
+- `__event_loop__()` — the thread function: acquires/releases module-level `gl_lock` via try/finally for both initialization and each per-frame cycle (dispatch, update, draw, flip), ensuring the lock is always released even on uncaught exceptions.
+- `gl_lock` — module-level `threading.Lock` guarding all OpenGL calls; distinct from the plot-level `_render_lock` used in `PlotWindow.draw()`.
 
 ### `util.py`
 OpenGL and 3D math utilities.
