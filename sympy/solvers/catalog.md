@@ -37,6 +37,8 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
+  - Lambert W fallback orchestration: classifies generators into exp/log vs algebraic, factors polynomial part, attempts `_solve_lambert`.
+  - On Lambert W failure with exactly 2 generators, falls back to `bivariate_type` reduction within `_tsolve` itself (not in bivariate.py).
 - `unrad(eq, *syms)` — removes radicals from equations.
 - `denoms(eq, symbols)` — extracts denominators for solution validation.
 
@@ -143,7 +145,9 @@ Solves partial differential equations via method dispatch.
 Solves recurrence (difference) equations with polynomial/rational coefficients.
 
 - `rsolve(f, y, init)` — main entry; dispatches to type solver.
-- `rsolve_poly`, `rsolve_ratio`, `rsolve_hyper` — polynomial, rational, and hypergeometric RHS solvers.
+- `rsolve_poly`, `rsolve_ratio` — polynomial and rational RHS solvers.
+- `rsolve_hyper` — hypergeometric RHS solver. Groups pairwise hyper-similar terms (consecutive-term ratio is rational) in the forcing function.
+  - Finds particular solutions for each group via Abramov's algorithm. Returns None if any summand is not hypergeometric.
 
 ---
 

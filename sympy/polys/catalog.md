@@ -41,6 +41,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Root isolation: `intervals(all, eps, sqf)` — isolate roots; **raises `PolynomialError` if multivariate (`lev > 0`)**; dispatches to 4 variants based on `all`/`sqf` flags. `refine_root`, `count_real_roots`, `count_complex_roots` — also univariate-only.
   - `cancel(g, include)` — cancel common factors in f/g; when `include=False`, returns `(cF, cG, F, G)` (content factors + reduced polys); when `include=True`, returns only `(F, G)`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
+  - `new(rep, dom, lev, ring)` — classmethod that **skips `dmp_cancel`** (no GCD reduction); use when fraction is already known to be in reduced form. Contrast with `__init__` which always cancels.
   - `_parse(rep, dom, lev)` — input normalization; when rep is a (num, den) tuple, **negates both numerator and denominator if the denominator has a negative leading coefficient**, enforcing a canonical positive-denominator sign convention. Sets denominator to one if numerator is zero.
   - `per(num, den, cancel, kill, ring)` — construct new DMF; **if `kill=True` and `lev==0`, returns scalar `num/den`**.
   - `frac_unify(g)` — unify two DMFs across different domains; creates a local `per` closure that captures the unified domain and has the same kill/level-zero scalar-return behavior.
@@ -67,6 +68,9 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
   - `drop_to_ground(*gens)` — remove generators and inject them into the domain; **if no generators remain after removal, returns `self` unchanged** (does not reduce to the domain).
 - `PolyElement` — element of a `PolyRing` (dict: monomial tuple → coefficient).
+  - `_rebuild_expr(expr, mapping)` — recursively convert symbolic expression to ring element.
+    - **Pow with non-negative integer exponents**: decomposed (base rebuilt and raised to the power).
+    - **Pow with negative or non-integer exponents**: fall through to `domain.convert`, treated as ground domain elements.
   - `evaluate(x, a)` — substitute scalar for one variable; **univariate case returns a plain domain scalar** (drops the ring).
   - `subs(x, a)` — substitute scalar; **univariate case wraps result via `ring.ground_new`, returning a constant polynomial still in the ring**.
   - `compose(x, a)` — substitute a polynomial expression for a variable.
@@ -83,6 +87,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
   - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
+  - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
   - `__mul__` cross-ring dispatch: when `p2` is a `PolyElement` from a different ring, checks if `p2.ring.domain` is a `PolynomialRing` whose `.ring` matches `p1.ring`; if so, **delegates to `p2.__rmul__(p1)`**.
@@ -129,6 +134,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Content/primitive: `content`, `primitive`, `monic`.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
   - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
+  - `_eval_subs(old, new)` — internal substitution: if `old` is a generator, evaluates at `new` when numeric.
+    - **For non-numeric `new`, tries `replace(old, new)`; silently falls back to `as_expr().subs(old, new)` on `PolynomialError`**.
+    - Also falls back to expression-level subs when `old` is not a generator.
   - `homogenize(s)` — make polynomial homogeneous using symbol `s`; **if `s` is already a generator, reuses its index; if new, appends it to generators**. Raises `TypeError` if `s` is not a `Symbol`.
   - `is_univariate`, `is_multivariate` — determined purely by **number of declared generators** (`len(gens)`), not by which symbols actually appear in the expression; e.g. `Poly(x**2, x, y).is_multivariate` returns `True`.
   - `homogeneous_order()` — return the total degree if all terms share the same degree; `is_homogeneous` for a boolean check.
@@ -153,7 +161,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression; **returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1)**.
 - `reduced(f, G)` — divide polynomial `f` modulo a set of polynomials `G`, returning quotients and remainder.
   - **Auto-promotes ring domain to its fraction field** for division, then attempts to retract results back to the ring (keeps field results if retraction fails).
-- `cancel(f, g)`, `groebner`, `factor`, `sqf`, `decompose`, `sturm` — public free functions.
+- `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
+- `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
@@ -202,7 +211,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_abs` — absolute values of coefficients.
 - `dup_max_norm`, `dmp_max_norm` — maximum coefficient norm; **returns `K.zero` for zero polynomial (empty list)**.
 - `dup_l1_norm`, `dmp_l1_norm` — L1 norm (sum of absolute coefficient values); **returns `K.zero` for zero polynomial (empty list)**.
-- `dup_expand`, `dmp_expand` — multiply together several polynomials.
+- `dup_expand`, `dmp_expand` — multiply together several polynomials; **returns multiplicative identity (`[K.one]` / `dmp_one`) for empty input list**.
 
 ### [`densebasic.py`](densebasic.py)
 Low-level dense polynomial basics: construction, conversion, queries.
@@ -468,7 +477,12 @@ Caveat: These are reference/theoretical implementations operating on symbolic ex
 Automatic domain inference from coefficient lists.
 
 - `construct_domain(coeffs, opt)` — determine minimal domain (ZZ, QQ, RR, algebraic, composite) for a set of coefficients.
-- `_construct_simple`, `_construct_algebraic`, `_construct_composite`, `_construct_expression` — helpers for each domain type.
+- `_construct_simple` — handle simple numeric domains (ZZ, QQ, RR).
+- `_construct_algebraic` — handle algebraic coefficients: decomposes each into (irrational_part, multiplicative_factor, additive_constant).
+  - Collects distinct irrational parts, **computes a single primitive element to unify all extensions into one algebraic field**.
+  - Reconstructs each coefficient in the unified field using the primitive element representation.
+- `_construct_composite` — handle composite domains (ZZ[X], QQ[X], ZZ(X), QQ(X)).
+- `_construct_expression` — fallback to the expression domain EX.
 
 ### [`compatibility.py`](compatibility.py)
 Bridge between sparse polynomial ring interface and dense function API.
@@ -694,9 +708,13 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `__eq__` — attempts coercion; **returns `False` (not `NotImplemented`) on `CoercionFailed`**, unlike arithmetic operators which return `NotImplemented`.
 - `FreeModuleElement` (in `modules.py`) — element of a free module; data stored as a **tuple of ring entries**; arithmetic (`add`, `mul`, `div`) is component-wise over the tuple.
 - `FreeModulePolyRing` (in `modules.py`) — free module over a generalized polynomial ring; **constructor requires the ring's ground domain to be a Field** (raises `NotImplementedError` for e.g. ZZ[x]).
+- `FreeModuleQuotientRing` (in `modules.py`) — free module over a quotient ring `R/I`; internally holds a `.quot` attribute representing the same set as an R-module (modulo `I·R^n`).
+  - `lift(elem)` — promote element from `R/I`-module to the `.quot` R-module by **extracting underlying `.data` from each component**; enables computation in the larger ring setting.
+  - `unlift(elem)` — reverse of `lift`; push element of `.quot` back down to the quotient module.
 - `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
   - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
+- `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
 - `SubModule.syzygy_module()` (in `modules.py`) — compute kernel of the map from a free module to `self`; **filters out zero relations** from the result for convenience.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.is_submodule(other)` (in `modules.py`) — for two QuotientModules, **requires killed submodules to be equal AND base modules to have containment**; for SubQuotientModule, checks container identity.

@@ -80,6 +80,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
 - `PygletPlot` — top-level plot object; manages plot objects, axes, camera, window, and rendering thread.
+- `__init__(*fargs, **win_args)` — pops `axes` option string from kwargs, parses it via `parse_option_string()`, and configures the `PlotAxes` object separately before passing remaining kwargs to the window.
 - `__setitem__(i, args)` — indexed assignment (`p[1] = expr`); parses args into a `PlotMode` and stores it.
   - Wraps `GeometryEntity` in a list even though it satisfies `is_sequence()`, preventing geometry objects from being unpacked as multiple arguments.
   - Passes `PlotObject` instances through directly without parsing.
@@ -138,7 +139,7 @@ Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
   - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points.
 
 ### `plot_axes.py`
-Coordinate axes rendering.
+Coordinate axes OpenGL rendering (not parsing; axes option string parsing occurs in `plot.py`'s `PygletPlot.__init__`).
 
 - `PlotAxes` — draws axes with configurable styles (ordinate, frame, box, none); manages labels and ticks.
 

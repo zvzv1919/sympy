@@ -97,6 +97,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `julia_code()` — top-level API; returns Julia-syntax string with dot-operator rules, assignment support, and custom function dispatch.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested ternary `(cond) ? (expr) :` chains; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
+- `indent_code` — auto-indents generated code using regex-matched block keywords; lines that both close and open blocks (e.g., `elseif`, `else`) decrease indent before the line and increase after.
 
 ### [`octave.py`](octave.py)
 `OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
@@ -125,6 +126,9 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`latex.py`](latex.py)
 `LatexPrinter` — converts expressions to LaTeX markup strings (e.g., `\frac{x}{y}`). Produces **1D markup text**, not spatial/visual rendering.
+- `__init__` — mode-dependent defaults: `mode='inline'` auto-enables `fold_short_frac` (compact `a/b` instead of `\frac{a}{b}` for simple fractions).
+- Configures `mul_symbol_latex` and `mul_symbol_latex_numbers` (numeric factors default to centered dot even when general symbol is a space).
+- `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`.
 - `_print_Mul` — renders products; uses two distinct separator settings: `mul_symbol_latex` between general factors and `mul_symbol_latex_numbers` between adjacent numeric factors (detected via regex on rendered terms). Renders fractions via `\frac{}{}` when a denominator is present.
 - `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.
 - Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.

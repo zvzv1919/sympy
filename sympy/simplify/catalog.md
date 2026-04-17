@@ -55,6 +55,7 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 High-level trigonometric simplification entry points and Gröbner-basis trig solver.
 
 - `trigsimp(expr, **opts)` — main entry point; dispatches to Gröbner, Fu-based, or old pattern-matching strategies.
+  - `recursive` option: uses CSE to extract common subexpressions, simplifies the reduced expression, then back-substitutes in reverse order, re-simplifying after each substitution.
 - `trigsimp_groebner(expr, hints)` — simplifies trig expressions via polynomial Gröbner basis over trig generators; minimizes total degree of the result.
   - Numeric hints (e.g. `2`) expand search space to find double-angle/multiple-angle forms like sin(x)·cos(x) → sin(2x)/2.
   - `analyse_gens(gens, hints)` — groups generators by argument, computes GCD base frequency, ensures complementary functions (sin/cos/tan) are included.

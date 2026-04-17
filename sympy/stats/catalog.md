@@ -81,6 +81,7 @@ Statistical convenience functions; re-exports core query functions (`P`, `E`, `d
 ### [`symbolic_probability.py`](symbolic_probability.py)
 Symbolic (unevaluated) representations of probabilistic expressions — for algebraic manipulation and rewriting, not direct numeric evaluation.
 - `Probability`, `Expectation`, `Variance`, `Covariance`: subclasses of `Expr`; remain unevaluated until `.doit()` or `.rewrite()` is called.
+- `Expectation._eval_rewrite_as_Probability`: converts expectation to Integral/Sum weighted by `Probability(Eq(rv, x))`; generates a fresh dummy symbol (lowercased or `_1`-suffixed) and dispatches by pspace type (continuous → Integral, finite, discrete → Sum).
 - `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients.
 - `Covariance.doit()`: expands covariance of sums/products using linearity; detects identical args and delegates to `Variance`.
 

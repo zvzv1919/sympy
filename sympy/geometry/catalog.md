@@ -68,7 +68,8 @@ Parametric curves in 2D space.
 
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
-- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `is_tangent()`, `equation()`.
+- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`.
+  - `is_tangent(o)` — type-dispatched tangency test: for `Ellipse` checks single intersection point (coincident ellipses → False); for `LinearEntity` checks single intersection in segment; for `Polygon` iterates over all sides counting edge–ellipse intersection points and returns `True` iff total count is 1.
   - `reflect(line)` — overrides `GeometryEntity.reflect`; handles axis-aligned lines only; raises `NotImplementedError` (with reflected equation) for diagonal lines.
   - `rotate(angle, pt)` — overrides `GeometryEntity.rotate`; only supports multiples of π/2; raises `NotImplementedError` otherwise.
   - `__contains__(o)` — Python `in` operator: for `Point` checks if point satisfies ellipse equation; for another `Ellipse` checks equality only (not geometric containment).

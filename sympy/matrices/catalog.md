@@ -30,8 +30,11 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `key2ij`, `_setitem`.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
-- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_symmetric`, `is_hermitian`, `is_zero` (three-valued), `is_nilpotent` (tests characteristic polynomial = x^n via `charpoly`).
-- **Display**: `print_nonzero`, `table`, `_format_str`.
+- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_hermitian`, `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
+- `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives. `is_anti_symmetric`: similar simplify flag.
+- **Construction**: `_handle_creation_inputs` — normalizes all constructor forms (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
+  - Validates uniform row lengths; skips 0×0 sub-matrices when tracking column widths.
+- **Display**: `print_nonzero` (marks non-zero entries), `table` (tabular string with alignment), `_format_str` (str representation; embeds explicit dimensions for zero-row/zero-col matrices).
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
@@ -49,7 +52,8 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
 - Factory methods: `zeros`, `eye`, `ones`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
-- `hessian(f, varlist, constraints=[])`: computes the (bordered) Hessian matrix of `f` wrt `varlist`; optionally bordered by constraint gradients. Validates differentiability of `f` and each constraint (raises `ValueError`).
+- `hessian(f, varlist, constraints=[])`: (bordered) Hessian of `f` wrt `varlist`; optionally bordered by constraint gradients.
+  - `varlist` accepts a sequence or row/column matrix (columns transposed; non-vector matrices raise `ShapeError`). Validates differentiability.
 - `diag(*values)`: builds a concrete block-diagonal matrix from a mix of scalars, plain lists, and existing Matrix objects; auto-converts lists to Matrix, accumulates total rows/cols from each block, places blocks along the diagonal of a sparse intermediate, then converts to the target class.
 - `wronskian(functions, var, method)`: computes the Wronskian determinant (derivatives matrix det) for testing linear independence of differential functions; returns 1 for an empty input list.
 - `casoratian(seqs, n)`: computes the Casoratian determinant for testing linear independence of sequences (used in recurrence solving).
@@ -151,7 +155,7 @@ Block-structured symbolic matrices.
 - `HadamardProduct`: unevaluated symbolic element-wise matrix product (concrete version is `matrix_multiply_elementwise` in `dense.py`).
 
 ### [`expressions/funcmatrix.py`](expressions/funcmatrix.py)
-- `FunctionMatrix`: matrix defined by a lambda `f(i,j)` for each entry.
+- `FunctionMatrix`: matrix defined by a lambda `f(i,j)` for each entry; has custom `_eval_trace` that delegates to `Trace._eval_rewrite_as_Sum` (symbolic summation over diagonal) rather than iterating entries directly.
 
 ### [`expressions/fourier.py`](expressions/fourier.py)
 - `DFT`: discrete Fourier transform matrix.
@@ -175,13 +179,13 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
 - `LU`, `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists.
 - `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
-- `forward_substitution`: lower-triangular solve on raw nested lists. `backward_substitution`: upper-triangular solve on raw nested lists.
-- These are internal backends; the public API lives in `MatrixBase` (`matrices.py`).
+- `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it.
+- These are internal backends (standalone functions, not methods); the public API lives in `MatrixBase` (`matrices.py`).
 
 ### [`densearith.py`](densearith.py)
 Low-level arithmetic on raw nested lists (list-of-lists representation, not matrix objects).
 
-- `add`, `sub`, `negate`: element-wise addition, subtraction, and negation on nested lists.
+- `add`, `addrow`: element-wise addition on nested lists. `sub`: subtraction implemented as `negate` + `add` (not direct element-wise difference). `negate`, `negaterow`: sign inversion.
 - `mulmatmat`: matrix-matrix product — transposes the second operand (rows→columns via `zip`) then computes row-column dot products via `mulrowcol`.
 - `mulrowcol(row, col, K)`: inner product of a row and column represented as flat lists; columns are flat (not nested single-element lists) for performance.
 - `mulmatscaler`: scalar-matrix product on nested lists.

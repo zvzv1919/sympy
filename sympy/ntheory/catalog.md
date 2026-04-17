@@ -38,7 +38,7 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 - `core(n, t)` — t-free core of n
 - `digits(n, b=10)` — decompose integer n into list of digits in base b; encodes sign via negated base prefix
 - `totient` — Euler's totient function (symbolic Function class)
-- `reduced_totient` — Carmichael's lambda function
+- `reduced_totient` — Carmichael's λ(n): smallest m > 0 such that a^m ≡ 1 mod n for **all** a coprime to n; special-cases prime factor 2 with multiplicity > 2
 - `divisor_sigma`, `udivisor_sigma` — (unitary) divisor sigma functions
 - `primenu`, `primeomega` — count of distinct / total prime factors
 
@@ -46,7 +46,7 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 
 ### [`residue_ntheory.py`](residue_ntheory.py)
 Modular roots, residues, and multiplicative-order computations.
-- `n_order(a, n)` — multiplicative order of a modulo n
+- `n_order(a, n)` — multiplicative order of a modulo n; raises ValueError if a and n are not coprime
 - `primitive_root(p)`, `is_primitive_root(a, p)` — primitive root lookup/test
 - `sqrt_mod(a, p)`, `sqrt_mod_iter(a, p)` — modular square root (single / iterator)
 - `nthroot_mod(a, n, p)` — modular nth root

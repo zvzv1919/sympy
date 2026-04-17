@@ -46,7 +46,7 @@ Classic DPLL satisfiability solver with simple recursive backtracking; both symb
 
 ### [`algorithms/dpll2.py`](algorithms/dpll2.py)
 Modern iterative CDCL SAT solver (not recursive backtracking); uses clause learning, watched-literal scheme, and VSIDS heuristic.
-- `dpll_satisfiable(expr, all_models)` — entry point; supports generating all satisfying models.
+- `dpll_satisfiable(expr, all_models)` — entry point; converts to CNF, early-exits for trivially false formulas (before solver runs), supports generating all satisfying models via generator.
 - `SATSolver` — stateful SAT solver class operating on integer-encoded clauses.
   - Uses watched-literal data structures for efficient unit propagation.
   - VSIDS (Variable State Independent Decaying Sum) branching heuristic.

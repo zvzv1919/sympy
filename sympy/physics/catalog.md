@@ -9,8 +9,10 @@ The `physics` package provides symbolic physics across classical mechanics, opti
 ## Top-Level Files
 
 ### [`hydrogen.py`](hydrogen.py)
-Radial wavefunctions for hydrogen-like atoms.
+Hydrogen-like atom wavefunctions and energy levels.
 - `R_nl(n, l, r, Z=1)` — radial wavefunction with quantum numbers n, l and atomic number Z.
+- `E_nl(n, Z=1)` — non-relativistic energy in Hartree units; depends only on n (not l). Raises ValueError for n < 1.
+- `E_nl_dirac(n, l, spin_up=True, Z=1, c=137.036...)` — relativistic Dirac energy (rest mass excluded). Raises ValueError when l=0 and spin_up=False (no spin-down state for s-orbitals).
 
 ### [`matrices.py`](matrices.py)
 Standard physics matrices as SymPy Matrix objects.
@@ -150,7 +152,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
-  - `pauli.py` — Pauli spin operators as quantum Operator subclasses (SigmaX/Y/Z, SigmaPlus/SigmaMinus) with optional string labels; operators with different labels commute (commutator returns zero).
+  - `pauli.py` — Pauli spin-½ operators as quantum Operator subclasses: SigmaX/Y/Z (components), SigmaPlus (raising), SigmaMinus (lowering); optional string labels for subsystem identification. Operators with different labels commute (commutator returns zero).
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
@@ -165,7 +167,8 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
 - `dyadic.py` — `Dyadic` class.
 - `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation.
-- `point.py` — `Point`: position, velocity (`vel()`), acceleration in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
+- `point.py` — `Point`: position, velocity (`vel()`), acceleration (`acc()`) in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
+  - `acc(frame)` fallback: if acceleration not explicitly set, differentiates velocity; if velocity is also zero, returns zero vector.
 - `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
   - `get_motion_params(frame, **kwargs)` — computes acceleration/velocity/position from any one given; integrates using `_process_vector_differential`, which short-circuits when the input vector is zero (returns boundary condition directly without integrating).
 - `fieldfunctions.py` — scalar/vector field operations: gradient, divergence, curl.
@@ -180,7 +183,7 @@ Geometric and wave optics.
   - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
   - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
 - `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index). Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
-- `medium.py` — `Medium` class (refractive index, permittivity, permeability).
+- `medium.py` — `Medium` class: electromagnetic propagation material with refractive index, permittivity, permeability, intrinsic impedance (wave impedance = √(μ/ε)), and wave speed.
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection), `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_equation()`, `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
 
 ### [`mechanics/`](mechanics/catalog.md)

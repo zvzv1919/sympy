@@ -18,7 +18,7 @@ Defines basic indexed objects for representing array elements like `M[i, j]`.
 
 ## index_methods.py
 
-Functions that **analyze indices** on `Indexed`/`IndexedBase` expressions: shape conformance, outer-index determination, and contraction-structure discovery.
+Functions that **analyze indices** on `Indexed`/`IndexedBase` expressions only (not abstract `TensMul`/`TIDS` tensors): shape conformance, outer-index determination, and contraction-structure discovery.
 
 - `get_indices(expr)` — returns the outer (non-summation) indices of an expression together with symmetry information.
 - `get_contraction_structure(expr)` — maps summation (dummy) indices to the terms they apply to; returns nested dicts describing hierarchical contractions in products, powers, and sub-expressions.
@@ -42,9 +42,10 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `__call__` — returns a `Tensor` with indices; supports auto-matrix index behavior via `True` placeholders or omitted trailing indices.
 - `TensorSymmetry` — symmetry specification for tensor indices.
 - `TensorType` — pairs a list of `TensorIndexType`s with a `TensorSymmetry`.
-- `TIDS` — internal tensor-index data structure holding components, free indices, and dummy indices.
+- `TIDS` — internal tensor-index data structure holding components, free indices, and dummy indices for a product of abstract tensors.
   - `TIDS.mul(f, g)` — multiplies two TIDS; contracts matching free indices of opposite variance; raises `ValueError` if both indices share the same covariant/contravariant orientation.
   - `TIDS.from_components_and_indices` — constructs TIDS from component list and index list.
+  - `TIDS.get_tensors` — decomposes the stored product back into individual `Tensor` objects by slicing the full index list per component rank; preserves both contracted and uncontracted indices.
   - `TIDS.get_components_with_free_indices` — returns list of (component, free-indices) pairs; maps each factor to its uncontracted indices; returns all-empty lists when every index is contracted.
   - `TIDS._check_matrix_indices` — handles matrix-style auto-indices during multiplication.
 - `Tensor` — single tensor (head + indices).
@@ -67,6 +68,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components. Raises `NotImplementedError` when contraction pattern requires transposition.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
+  - `data_product_tensors` — iteratively multiplies a list of ndarray factors via `reduce`; at each step pairs arrays with `TensMul` metadata, contracts matching indices, and accumulates the result.
   - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
   - Handles metric tensors specially via covariant/contravariant signature lookup.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.

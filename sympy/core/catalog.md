@@ -50,6 +50,7 @@ All concrete numeric types and their arithmetic operations.
   - `_eval_power` — negative Float base with rational exponent p/q where p=1 and q is odd: factors out `(-1)**(1/q)` and recurses on positive base, avoiding spurious complex result
   - `__eq__` — equality comparison; short-circuits to False when other is an irrational `NumberSymbol` (e.g., pi, E) without numerical comparison
   - `__gt__`/`__ge__` — ordering comparisons; checks `other.is_comparable` to decide whether to numerically evaluate the other operand before mpf comparison
+  - `__mod__` — modulo operator; when divisor is a non-integer Rational (q≠1), converts self to exact Rational first, computes mod in exact arithmetic, then rounds result back to Float precision (avoids precision loss from float mod)
   - `__lt__`/`__le__` — ordering comparisons; checks `other.is_real and other.is_number` (different predicate from `__gt__`/`__ge__`) to decide whether to evalf the other operand
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
   - `as_content_primitive()` — returns `(|self|, sign)` for nonzero; returns `(1, self)` when self is zero
@@ -115,7 +116,7 @@ All concrete numeric types and their arithmetic operations.
 **Caveat**: `Pow` delegates to `base._eval_power(exp)` for type-specific evaluation; numeric power logic (Integer/Rational/Float raised to numeric exponents) lives in `numbers.py`, not here.
 
 ### [`mod.py`](mod.py)
-`Mod` class for symbolic modulo; `eval()` simplifies for known operands.
+`Mod` class — symbolic modulo AST node (unevaluated `x % y`); `eval()` simplifies structurally. Concrete numeric `%` operators (Float.__mod__, Integer.__mod__) live in `numbers.py`.
 
 ---
 
@@ -217,7 +218,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
 - `Lambda` — anonymous function expression `Lambda(x, expr)`; `__eq__` performs alpha-equivalence (renames bound variables before comparing bodies, so `Lambda(x, x**2) == Lambda(y, y**2)`)
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
-- `AppliedUndef` — result of calling an UndefinedFunction on arguments
+- `AppliedUndef` — result of calling an UndefinedFunction on arguments; `_eval_as_leading_term` returns self unchanged (no series computation possible for unknown functions)
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
 - `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
