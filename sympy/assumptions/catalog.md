@@ -23,9 +23,11 @@ Main inference engine for the assumptions system.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive` and `Q.negative` each document the asymmetry between negation (`~Q.positive`) and "non" counterparts (`Q.nonpositive`): `~Q.positive(I)` is `True` but `Q.nonpositive(I)` is `False`, because "non" predicates require realness.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
-    - Docstrings document cross-predicate structural inference rules (e.g., when combining two matrix properties implies a third).
+    - Docstrings document structural requirements (e.g., squareness — non-square matrices immediately return False for orthogonal/unitary/positive_definite) and cross-predicate inference rules.
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
-- `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then to SAT fallback.
+- `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then falls back in two tiers.
+- `ask_full_inference(proposition, assumptions, known_facts_cnf)`: first-tier SAT fallback inside `ask.py`; checks satisfiability of proposition (and its negation) against known predicate relationships to return True/False/None.
+  - If indeterminate, `ask()` escalates to `satask()` (in `satask.py`) which gathers expression-specific facts.
 - `register_handler(key, handler)`: registers a handler class for a predicate; if the property name doesn't exist on `Q`, dynamically creates a new `Predicate` and attaches it.
 - `remove_handler(key, handler)`: removes a handler from a predicate.
 - `compute_known_facts()`, `get_known_facts()`: build logical relationship tables between predicates.
@@ -104,8 +106,8 @@ Handlers for **matrix property predicates**.
 ## SAT-Based Inference
 
 ### [`satask.py`](satask.py)
-Fallback SAT-based query system used when direct handlers are inconclusive.
-- `satask()`: answers queries via satisfiability checking.
+Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (in `ask.py`) are inconclusive.
+- `satask()`: gathers expression-specific relevant facts (via `sathandlers.py` registry) and checks satisfiability.
 - `get_relevant_facts()`, `get_all_relevant_facts()`: extract and expand relevant facts for a proposition.
 
 ### [`sathandlers.py`](sathandlers.py)

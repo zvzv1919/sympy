@@ -141,7 +141,9 @@ Simplifies combinatorial expressions (factorials, binomials, gamma, Pochhammer).
 
 - `combsimp(expr)` — minimize number of combinatorial functions (factorials, binomials, gamma, Pochhammer).
   - For multiplicative expressions: splits non-commutative factors out, simplifies only the commutative part; returns expr unchanged if no commutative args.
-  - Gamma simplification applies reflection formula, multiplication theorem, and recursive absorption of rational offsets.
+  - Gamma simplification: applies reflection formula, recursive absorption of rational offsets, duplication theorem, and Gauss multiplication theorem.
+  - Duplication theorem: cancels gamma(2s)/gamma(s) pairs, replacing with half-integer-shifted gamma plus power-of-two and √π factors.
+  - Multiplication theorem: detects n gamma args forming an arithmetic progression with common difference 1/n, collapses the product into a single gamma with scaled argument (n·x).
 
 ### [`ratsimp.py`](ratsimp.py)
 Simplifies rational expressions by computing common denominators.

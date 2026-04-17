@@ -35,7 +35,8 @@ Point representations in n-dimensional Euclidean space.
   - `are_concurrent(*lines)` — static; tests concurrency.
   - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)` — compare via `coefficients`; return `False` (no error) if either entity lacks `coefficients`.
   - `angle_between(l1, l2)`.
-  - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`, `projection(o)`.
+  - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
+  - `projection(o)` — projects a `Point` or `LinearEntity` onto this line; raises `GeometryError` for any other geometry type (e.g., `Circle`).
   - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
   - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.
   - `random_point()`, `contains()`.
@@ -72,7 +73,8 @@ Elliptical entities in 2D.
 
 ### [`parabola.py`](parabola.py)
 Parabolic entities defined by focus and directrix.
-- `Parabola` — supports vertical/horizontal parabolas. Properties: `focus`, `directrix`, `vertex`, `p_parameter`, `eccentricity`. Methods: `equation()`, `intersection()`.
+- `Parabola` — supports vertical/horizontal parabolas only; `__new__` raises `NotImplementedError` if directrix is diagonal (neither horizontal nor vertical).
+  - Properties: `focus`, `directrix`, `vertex`, `p_parameter`, `eccentricity`. Methods: `equation()`, `intersection()`.
 
 ## Planes & Surfaces
 

@@ -51,7 +51,7 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
 - `erf2` — two-argument error function erf(x,y); carries its own conversion methods to `uppergamma`, `expint`, Fresnel, Meijer G, and hypergeometric forms.
 - `Ei` — exponential integral Ei(x).
-- `expint` — generalized exponential integral E_n(x).
+- `expint` — generalized exponential integral E_ν(z); `eval` extracts branch factors from z and applies order-dependent branching formulas (integer vs non-integer ν).
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
 - `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).

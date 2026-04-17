@@ -162,5 +162,8 @@ Integration of expressions involving Dirac delta and Heaviside step functions.
   - If no simple DiracDelta is found, falls back to expanding all DiracDelta terms with `diracdelta=True`
 
 ### [`singularityfunctions.py`](singularityfunctions.py)
-Integration of SingularityFunction expressions (beam/structural mechanics notation).
-- `singularityintegrate(f, x)` — integrates SingularityFunction by rewriting to Heaviside/DiracDelta
+Integration of SingularityFunction (Macaulay bracket) expressions used in beam/structural mechanics.
+- `singularityintegrate(f, x)` — integrates SingularityFunction expressions with three branches:
+  - Bare SingularityFunction(x,a,n): increments exponent (power rule); for n≥0 divides by n+1, for n∈{-1,-2} just increments
+  - Product or power containing SingularityFunction: rewrites to DiracDelta/Heaviside, integrates, then converts result back to SingularityFunction
+  - Otherwise returns None (not handled)

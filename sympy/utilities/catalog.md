@@ -7,6 +7,9 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments.
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions.
+- `CodeWrapper` — base class; subclasses handle compilation and module import; `_get_wrapped_function(mod, name)` resolves the callable from the compiled module.
+- `CythonCodeWrapper` — Cython backend; `_get_wrapped_function` appends `'_c'` suffix to the routine name when retrieving the callable from the built extension module.
+- `F2PyCodeWrapper`, `DummyWrapper` — Fortran/dummy backends; resolve callable by original routine name (no suffix).
 - `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
   - `wrap_code(routines)` — compiles multiple expression routines into a single binary; generates a unique exported function name (not derived from routine names) via `id()`.
   - `dump_c(routines, f)` — writes C source for ufunc; n_out = len(routines), assumes all routines share the same input arguments (partitioned from routines[0]).
@@ -14,7 +17,7 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `_infer_language(backend)` — returns the default language for a given backend; raises `ValueError` for unrecognized backends.
 
 ### [`codegen.py`](codegen.py)
-Generates source code (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions.
+Generates source code files (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions; does not compile or import modules (see `autowrap.py` for compilation and callable resolution).
 - `Routine` — represents a callable routine with inputs/outputs.
 - `CodeGen`, `CCodeGen`, `FCodeGen` — language-specific code generators.
 - `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
@@ -42,6 +45,8 @@ Memoization decorators optimized for recurrence relations.
 Large collection of iterable/container utility functions.
 - `flatten`, `unflatten` — recursive/structured flattening of nested iterables.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
+- `partitions(n, m, k)` — generator of unordered integer partitions of n; yields mutable dicts {part: count}; terminates when decomposition capacity is exhausted.
+- `_set_partitions(n)` — generator enumerating all ways to assign n elements into non-overlapping groups via a constrained n-digit counter; each digit ≤ 1 + max of all digits to its left; yields (num_groups, mutable assignment vector).
 - `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
 - `kbins(l, k, ordered)` — partition a list into k bins; `ordered` is a 2-digit flag (00/01/10/11) controlling whether bin order and item order matter; raises `ValueError` for unsupported values.
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).

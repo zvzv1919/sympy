@@ -73,7 +73,7 @@ Generic, SymPy-independent branching strategy combinators. All rules are generat
 ### [`branch/traverse.py`](branch/traverse.py)
 Branching tree-traversal strategies.
 - `top_down(brule)` — apply branching rule top-down through the tree.
-- `sall(brule)` — apply branching rule to all args; yields Cartesian product of per-arg results.
+- `sall(brule)` — apply branching rule to all args; for leaf/atomic expressions yields the expression unchanged; otherwise yields Cartesian product of per-arg results.
 
 ### [`branch/tools.py`](branch/tools.py)
 Composite branching strategies.

@@ -85,7 +85,7 @@ Base class for all symbolic (unevaluated) matrix expressions.
 - **Operator dispatch**: `__pow__` handles special exponents (0→Identity, 1→self, -1→Inverse, non-square→ShapeError) before delegating to `MatPow`.
 - **Conversion to concrete form**: `as_explicit` iterates all (i,j) entries and returns an `ImmutableMatrix`; `as_mutable` converts further to mutable dense.
 - Properties: `shape`, `rows`, `cols`, `is_square`, `T` (transpose).
-- `MatrixElement`: represents a single symbolic entry M[i,j] as an `Expr` node.
+- `MatrixElement`: represents a single symbolic entry M[i,j] as an `Expr` node; `doit(deep=True)` recursively evaluates parent matrix and indices before indexing, `doit(deep=False)` indexes with raw args.
 - `Identity(n)`: symbolic n×n identity matrix (square, `is_Identity`); `_eval_inverse` returns self.
 - `ZeroMatrix(m, n)`: symbolic m×n zero matrix — additive identity (`is_ZeroMatrix`).
 - `ZeroMatrix.__pow__`: own exponent dispatch — 0→Identity, ≥1→self, <1→`ValueError` (det==0; not invertible), non-square with exp≠1→`ShapeError`.

@@ -21,7 +21,7 @@ Core boolean types, operators, and normal-form conversions.
 ### [`inference.py`](inference.py)
 Propositional-logic inference: truth evaluation, satisfiability dispatch, entailment, and knowledge bases.
 - `pl_true(expr, model, deep)` — evaluate a propositional expression under a (possibly partial) truth assignment; returns True/False/None (three-valued).
-  - With `deep=True`, tests all remaining unassigned atoms to determine if the expression is a tautology or contradiction.
+  - With `deep=True`, uses a heuristic probe: sets all unassigned atoms to True, evaluates, then branches — checks tautology (`valid`) if probe is true, checks unsatisfiability (`satisfiable`) if probe is false.
 - `satisfiable(expr, algorithm, all_models)` — check satisfiability; dispatches to `dpll` or `dpll2` algorithm backends.
 - `valid(expr)` — check if expression is a tautology (true under every assignment).
 - `entails(expr, formula_set)` — check logical entailment of expr from a set of formulas.

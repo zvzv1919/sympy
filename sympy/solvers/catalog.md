@@ -55,6 +55,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
 - `_solve_as_poly`, `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
 - `_solveset(f, symbol, domain, _check=False)` — internal helper that dispatches to type-specific solvers and optionally validates results.
+  - Product decomposition: decomposes `f*g == 0` into `Union(f==0, g==0)` only when all factors are verified finite for finite inputs (`_is_finite_with_finite_vars`); prevents spurious solutions where one factor diverges at zeros of another.
   - Post-solve validation (`_check=True`): for FiniteSet results, filters out invalid candidates via `domain_check`, but exempts `RootOf` (implicit algebraic root) objects from validation. ConditionSet results bypass checking entirely.
 - `_solve_radical(f, symbol, solveset_solver)` — solves equations with radicals via `unrad`; when a cover (substitution) variable is returned, tests whether it can equal I — if not, replaces it with a real-constrained dummy before solving.
 - `_solve_abs(f, symbol, domain)` — solves equations involving Abs; real domain only (raises ValueError for complex domain). Decomposes `p*|q| + r` into two cases: solves with `q` non-negative and with `q` negative, intersecting each solution with the corresponding sign condition on the argument.
@@ -81,7 +82,8 @@ Solves Diophantine equations (polynomial equations over integers).
 - `diophantine(eq, param, syms)` — main entry; factors equation into terms, dispatches each to `diop_solve()`, and merges results.
   - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
-- Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
+- Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic` / `_diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
+  - `_diop_ternary_quadratic`: cross-product-only case (no squared terms): if xz coefficient is nonzero, reduces to binary quadratic and picks solution minimizing |x|+|z|; if xz coefficient is zero, swaps variables and recurses.
   - `diop_linear` / `_diop_linear` — solves linear Diophantine equations (a₁x₁+…+aₙxₙ=c) by recursively reducing n-variable problems to two-variable GCD sub-problems; returns parametric solutions with integer parameters.
   - `diop_quadratic` / `_diop_quadratic` — solves binary quadratic Diophantine equations (Ax²+Bxy+Cy²+Dx+Ey+F=0) by discriminant-based case dispatch: simple-hyperbolic (A=C=0), parabolic (B²−4AC=0, including variable-swap when A=0), square discriminant, and general case.
 - Sum-of-powers solvers: `diop_general_sum_of_squares`, `diop_general_sum_of_even_powers` — solve x₁^e+…+xₙ^e=k over integers; respects variable assumptions (e.g. nonpositive) by flipping signs on results.
@@ -131,7 +133,10 @@ Solves partial differential equations via method dispatch.
   - When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.
 - `_handle_Integral(expr, func, order, hint)` — post-processes PDE solutions containing unevaluated integrals.
   - Hint suffix `_Integral` preserves raw integral form; `1st_linear_constant_coeff` triggers `doit()` + `simplify`; all others return unchanged.
-- `pde_separate`, `pde_separate_add`, `pde_separate_mul` — variable separation methods.
+- `pde_separate(eq, fun, sep, strategy)` — separates a PDE by substituting a product (or sum) of single-variable functions for the dependent variable.
+  - Multiplicative mode: after substitution, divides each term by the full product to normalize into a form where variables can be isolated to different sides.
+  - Delegates to `_separate`, which uses a two-pass algorithm: first extracts derivative terms depending only on the target variable and finds divisors, then splits remaining terms into left/right sides.
+- `pde_separate_add` / `pde_separate_mul` — convenience wrappers calling `pde_separate` with additive or multiplicative strategy.
 
 ### [`recurr.py`](recurr.py)
 Solves recurrence (difference) equations with polynomial/rational coefficients.

@@ -78,7 +78,8 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
-- **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (Operator/Hermitian/Unitary), `hilbert.py` (Hilbert spaces).
+- **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (Operator/Hermitian/Unitary/OuterProduct), `hilbert.py` (Hilbert spaces).
+  - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
@@ -94,6 +95,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Rotation` — Euler-angle rotation operator; `_apply_operator_uncoupled` applies to kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j.
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
+    - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
   - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients.
@@ -141,6 +143,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Circuit utilities**: `circuitutils.py` — primitive circuit manipulation: `find_subcircuit`/`replace_subcircuit` (KMP-based subsequence search/replace in gate tuples), `random_reduce(circuit, gate_ids)` (randomly removes a known gate identity from a circuit; returns original circuit unchanged if no identity is found), `random_insert` (inserts a random identity into a circuit), `flatten_ids` (expands GateIdentity objects into sorted list of equivalent sequences), `convert_to_symbolic_indices`/`convert_to_real_indices`.
 - **Other**: `tensorproduct.py`, `matrixcache.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
   - `innerproduct.py` — `InnerProduct` expression node (unevaluated ⟨bra|ket⟩); constructor validates types and stores bra/ket.
+    - `_eval_conjugate` — conjugate of ⟨a|b⟩ returns InnerProduct(Dagger(ket), Dagger(bra)), i.e. swaps and daggers both components.
     - Does NOT contain evaluation formulas — actual results (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
@@ -155,7 +158,10 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
-- `vector.py` — `Vector` class. `dyadic.py` — `Dyadic` class.
+- `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic.
+  - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
+  - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
+- `dyadic.py` — `Dyadic` class.
 - `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation.
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
 - `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).

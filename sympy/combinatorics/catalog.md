@@ -35,6 +35,7 @@ Individual permutation representation, construction, and properties.
 Permutation group (set of permutations) with group-theoretic algorithms.
 - `PermutationGroup` — the main group class, constructed from generating permutations.
   - **BSGS framework**: `schreier_sims`, `schreier_sims_incremental`, `schreier_vector`.
+  - `schreier_sims_incremental` — deterministic BSGS construction: computes Schreier generators, sifts each through the chain via `_strip`/`_strip_af`, and handles failures — extends the base when a non-identity residual survives all levels, or adds a new strong generator at the level where sifting failed.
   - `schreier_sims_random` — randomized BSGS computation: orchestrates a sifting loop that samples random elements, decides when to extend the base sequence (new anchor points), and amends stabilizer chains/orbits when sifting fails. Uses `_strip` from `util.py` as a subroutine.
   - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`, `basic_stabilizers`.
   - **Coset-based ranking/unranking** (group-level, via Schreier-Sims): `coset_rank`, `coset_unrank`, `coset_factor`.

@@ -131,7 +131,7 @@ Curve rendering for 1D pyglet plots.
 Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
 
 - `PlotSurface` — OpenGL vertex grid for pyglet surface rendering; supports wireframe and solid draw styles (not used by matplotlib-based plotting).
-  - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points; tracks bounding box.
+  - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points; tracks spatial bounding box (not color bounds).
   - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points.
 
 ### `plot_axes.py`
@@ -176,14 +176,16 @@ Color mapping for curves and surfaces.
 - `ColorScheme` — applies color functions (including lambdified expressions) to vertices.
   - `__call__(x, y, z, u, v)` — evaluates the color function; catches any exception and returns `None` (used as sentinel for failed evaluations).
   - `apply_to_curve(verts, u_set)` — assigns RGB to 1D vertex list; two-pass: compute raw channels + track bounds, then normalize to [0,1] and apply gradient. Skips None vertices (from exceptions or missing verts). Sets `v=None` for single-parameter curves.
-  - `apply_to_surface(verts, u_set, v_set)` — same two-pass normalization for 2D vertex grid (u×v mesh); skips None entries.
+  - `apply_to_surface(verts, u_set, v_set)` — two-pass RGB normalization over a u×v vertex mesh: pass 1 computes per-vertex RGB via color function and tracks per-channel min/max bounds; pass 2 rescales each channel to [0,1] via `rinterpolate` then applies gradient. Skips None entries.
 
 ### `managed_window.py`
 Pyglet window lifecycle and threaded event loop with thread-safe GL lock management.
 
 - `ManagedWindow` — wraps pyglet Window; spawns a separate thread running `__event_loop__` for FPS-limited rendering.
-- `__event_loop__()` — the thread function: acquires/releases module-level `gl_lock` via try/finally for both initialization and each per-frame cycle (dispatch, update, draw, flip), ensuring the lock is always released even on uncaught exceptions.
-- `gl_lock` — module-level `threading.Lock` guarding all OpenGL calls; distinct from the plot-level `_render_lock` used in `PlotWindow.draw()`.
+- `__event_loop__()` — the thread function: acquires/releases module-level `gl_lock` via try/finally for both initialization and each per-frame cycle (dispatch, update, draw, flip).
+  - On uncaught exception during per-frame rendering: catches exception, sets `has_exit = True` to terminate the loop, and the `finally` block ensures `gl_lock` is released.
+  - Initialization errors similarly set `has_exit = True` before the loop starts.
+- `gl_lock` — module-level `threading.Lock` guarding all OpenGL calls; distinct from the plot-level `_render_lock` in `PlotWindow.draw()` (which serializes plot-function iteration, not GL context access).
 
 ### `util.py`
 OpenGL and 3D math utilities.

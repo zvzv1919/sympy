@@ -29,7 +29,7 @@ Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 - `Atom` — parent for indivisible expressions (Symbol, Number); has no `.args`
 - `_aresame(a, b)` — structural identity check (not mathematical equality); traverses both trees in preorder comparing type and value at each node; special-cases `UndefinedFunction`/`AppliedUndef` using `class_key()`
 - `_atomic(e)` — returns atom-like quantities (Derivatives, Functions, Symbols) for substitution purposes
-- `preorder_traversal` — generator yielding nodes in preorder
+- `preorder_traversal(node, keys)` — generator yielding nodes in preorder; when `keys` is None and a node stores children as a set (e.g., lattice-style ops), uses the internal set directly to avoid unnecessary sorting; when `keys` is provided, delegates to `ordered()` for deterministic traversal
 
 ### [`core.py`](core.py)
 Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicMeta` metaclass, `all_classes` registry.
@@ -162,7 +162,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - `as_Add` hint forces Add or Mul mode; when forced mode mismatches actual type (e.g., Add forced as Mul), returns `(identity, self)` (1 for Mul, 0 for Add)
   - For Mul, non-commutative factors after the first dependent one are all grouped as dependent
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation preserves sign properties, else None; Add requires all terms individually divisible
-- `coeff(x)` — extracts coefficient of `x` from a sum; for noncommutative expressions, tries common prefix/suffix matching first
+- `coeff(x, n)` — extracts coefficient of `x**n` from a sum; when x is the multiplicative identity (1), returns only additive terms whose leading numeric factor is 1; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
 - `_random(n, re_min, im_min, re_max, im_max)` — evaluates self with random complex substitutions for free symbols; escalates precision from 2 up to `DEFAULT_MAXPREC` via `giant_steps` when initial evaluation yields no significant digits; returns None if no significance achieved
@@ -246,6 +246,8 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 
 ### [`sympify.py`](sympify.py)
 `sympify()` — converts Python objects to SymPy types. `converter` dict maps types to handlers. `SympifyError` for failures.
+
+- `CantSympify` — mixin trait; classes inheriting this are blocked from sympification even if their base type (e.g., `dict`) would normally be convertible
 
 ---
 

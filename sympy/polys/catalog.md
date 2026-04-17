@@ -94,6 +94,7 @@ Sparse rational function fields and their elements.
 - `sfield(exprs, *symbols)` — construct field from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
   - `__new__` — caches field objects; assigns generator symbols as attributes on the field; **skips `setattr` if an attribute with that name already exists (`hasattr` guard)**, preventing generator names like `'domain'` or `'ring'` from overwriting internal attributes.
+  - `ground_new(element)` — create element from ground coefficient; **if ring coercion fails and domain has an associated field (e.g. ZZ→QQ), splits element into numer/denom via the field and constructs a proper fraction**.
   - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
   - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
@@ -121,6 +122,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `reorder`, `inject`, `eject` — generator manipulation.
     - `inject`: **returns `self` unchanged if the coefficient domain is purely numerical** (no ground generators to promote).
     - `eject`: **only supports front or back generators**; raises `NotImplementedError` for middle generators.
+  - `half_gcdex(g, auto)`, `gcdex(g, auto)`, `invert(g, auto)` — extended Euclidean algorithm and modular inverse; **if `auto=True` and domain is a ring, auto-promotes to fraction field** (e.g. ZZ→QQ) before computing.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
@@ -164,12 +166,14 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
   - `is_zero_dimensional` — check if ideal is zero-dimensional.
-  - `reduce(expr)` — reduce polynomial modulo the basis.
+  - `reduce(expr)` — reduce polynomial modulo the basis; **auto-promotes ring domain to its fraction field**, then attempts to retract results back.
+  - `contains(poly)` — check ideal membership; **returns `True` iff `reduce(poly)` yields zero remainder**.
 
 ### [`polyfuncs.py`](polyfuncs.py)
 High-level polynomial utility functions (symbolic level).
 
 - `symmetrize(poly)` — rewrite in terms of elementary symmetric polynomials; returns `(symmetric_part, non_symmetric_remainder)` pair.
+  - **If input cannot be converted to polynomial and is a plain number, returns `(number, 0)` without error**; in `formal` mode, appends an empty symbol-mapping list.
   - **Non-homogeneous inputs have their constant term extracted first**; iterative decomposition then operates on the homogeneous remainder.
 - `horner(poly)` — convert polynomial to Horner form (symbolic rewriting, not evaluation).
 - `interpolate(data, x)` — construct interpolating polynomial.
@@ -469,7 +473,7 @@ Bridge between sparse polynomial ring interface and dense function API.
 - `IPolys` — mixin class providing dense polynomial operations as methods on ring objects.
   - `wrap(element)` — coerce a `PolyElement` into this ring; **raises `NotImplementedError("domain conversions")` if the element belongs to a different ring**.
   - `ground_new`, `domain_new`, `from_dict`, `clone`, `drop` — ring interface methods.
-  - Multivariate result methods (`dmp_LC`, `dmp_TC`, `dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
+  - Multivariate result methods (`dmp_LC`, `dmp_TC`, `dmp_eval_tail`, `dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
     - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
   - `dup_sqf_norm`, `dmp_sqf_norm` — bridge methods; the resultant (third return value) is converted via `self.to_ground().from_dense()` (ground domain ring), not `self.from_dense()`.
   - `to_gf_dense(element)` — convert sparse element to dense coefficient list for GF(p) arithmetic; **converts each coefficient through `domain.dom`** (the base integer domain of the finite field).
@@ -485,6 +489,7 @@ Option processing and validation for `Poly` constructors and functions.
   - `__init__` — preprocesses explicit args first, then **prunes defaults that conflict with already-set options via `cls.excludes` lists** before applying defaults; enforces mutual-exclusion and dependency constraints after all options are set.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
+- `Extension.preprocess(extension)` — validates extension parameter; `1` → `True`, `0` → raises `OptionError`; **empty iterable (e.g. `[]`) → `None` (silently disables extension)** rather than raising an error; non-empty iterable → set of extensions.
 - `build_options(gens, args)` — if `args` has exactly one key `'opt'` and no generators, **returns the existing `Options` object directly** (reuse); otherwise constructs a new `Options`.
 
 ### [`polyconfig.py`](polyconfig.py)
@@ -559,6 +564,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
   - **When one input minimal polynomial is linear (degree 1), skips expensive factorization** and returns the resultant directly (already irreducible).
 - `_minimal_polynomial_sq(p, n, x)` — minimal polynomial for `p^(1/n)` where `p` is a sum of surds; eliminates square roots via repeated `_separate_sq`.
   - **When `n==1`, skips factorization and directly normalizes** (sign correction + primitive part), since elimination already yields a constant multiple of the minimal polynomial.
+- `_minpoly_exp(ex, x)` — minimal polynomial of `exp(ex)`; for `e^(i·p·π/q)`, **uses hardcoded results for small primes q; general case generates cyclotomic polynomials for divisors of 2q and picks the correct factor**.
 - `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.

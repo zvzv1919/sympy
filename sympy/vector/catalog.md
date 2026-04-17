@@ -70,9 +70,11 @@ Vector calculus operations and coordinate re-expression.
 - `_path(from_object, to_object)` — traverses the parent-hierarchy tree to find the route between two coordinate systems/points; raises `ValueError` if they don't share a common root.
 
 ### [`deloperator.py`](deloperator.py)
-Vector differential operator (∇).
-- `Del` — symbolic nabla; `gradient`, `dot` (divergence), `cross` (curl).
-- `_diff_conditional` — re-expresses an expr into a coordinate system, returns `S(0)` if the base scalar is absent, else returns `Derivative`. Used only by `Del.dot` (divergence).
+Vector differential operator (∇), bound to a specific `CoordSysCartesian`.
+- `Del` — symbolic nabla operator tied to a coordinate system; `__call__` is aliased to `gradient`.
+  - `gradient` — re-expresses the scalar field into the operator's own coordinate system (via `express`) before taking partial derivatives along each axis.
+  - `dot` (divergence), `cross` (curl) — analogous vector calculus operations on vector fields.
+- `_diff_conditional` — re-expresses an expr into a coordinate system, returns `S(0)` if the base scalar is absent, else returns `Derivative`. Used only by `Del.dot`.
 
 ## Package Init
 
