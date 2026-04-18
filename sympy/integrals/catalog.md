@@ -123,6 +123,11 @@ Risch Differential Equation solver: solves Dy + f·y = g for y in a differential
   - For exp: checks `parametric_log_deriv` to tighten bound n when possible cancellation detected (nb==0)
   - For tan (hypertangent): gates on `recognize_log_derivative(2*beta)` of the real part before attempting `parametric_log_deriv` to tighten bound n
   - Returns transformed (A, B, C, h) tuple with p^N scaling
+- `bound_degree(a, b, cQ, DE, case)` — computes upper bound on degree of polynomial solution to the RDE; dispatches on extension type:
+  - base/primitive/exp/tan each have distinct formulas comparing degrees of a, b, and c
+  - primitive case: when deg(b)==deg(a)−1, calls `limited_integrate` to check if α is an integer-shifted derivative; when deg(b)==deg(a), uses `is_log_deriv_k_t_radical_in_field`
+  - exp case: when deg(a)==deg(b), uses `parametric_log_deriv` to potentially raise the bound
+- `spde(a, b, c, n, DE)` — Rothstein's Special Polynomial Differential Equation; reduces RDE to equivalent equation with lower degree bound
 - Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
 
 ### [`prde.py`](prde.py)

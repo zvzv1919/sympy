@@ -53,7 +53,8 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 
 - `solveset(f, symbol, domain=S.Complexes)` — core solver; dispatches by domain.
   - Constant (variable-free) expressions: returns domain if equal to 0, EmptySet if nonzero; raises NotImplementedError if equality to zero is undetermined.
-  - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`; falls back to ConditionSet on NotImplementedError.
+  - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`, then subtracts denominator-zero points (via `_invalid_solutions`) from the result; falls back to ConditionSet on NotImplementedError.
+- `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.

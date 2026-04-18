@@ -64,9 +64,12 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - `build_ideal(x, terms)` — generates polynomial relations (Pythagorean, multiple-angle) for the ideal.
   - `parse_hints(hints)` — interprets user hints for generator selection.
 - `exptrigsimp(expr)` — simplifies mixed exponential/hyperbolic/trig expressions.
-- `_trigsimp` / `__trigsimp` — recursive helper for trig simplification of sub-expressions.
+- `_trigsimp` / `__trigsimp` — cached recursive helper for trig/hyperbolic simplification of sub-expressions.
   - For `Mul`: splits non-commutative products into commutative and non-commutative parts; simplifies only the commutative portion.
-  - For commutative products: dispatches through division-pattern matchers to rewrite trig-power products (e.g. sin^a·cos^b → tan^c).
+  - For commutative products: tries fast rewrite via `_match_div_rewrite` first; if it returns None (e.g. skipped indices 6,7), falls back to SymPy `.match()` pattern matching with positivity guards.
+  - For `Add`: applies identity matchers per term, then addition matchers with `TR10i` contraction; skips if matched residual contains trig/hyper of matched args.
+  - Artifact reduction phase: reverses Pythagorean substitutions (e.g. 1−cos²→sin²) that made the expression more complex; uses restricted wildcards (excluding certain functions) to influence better matches.
+  - Loop guard: iterates artifact reversal with `was != expr` check to prevent infinite re-matching; breaks early when matched coefficient is zero or cancels with other terms.
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
 - `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) for rewriting ratios/products of trig and hyperbolic functions.
   - `artifacts` table: reverses Pythagorean identity substitutions that made an expression more complex (e.g. 1−cos²→sin², 1−1/cos²→−tan²), restoring the simpler original form.

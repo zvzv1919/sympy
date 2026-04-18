@@ -194,6 +194,7 @@ Color mapping for curves and surfaces.
 Pyglet window lifecycle and threaded event loop with thread-safe GL lock management.
 
 - `ManagedWindow` — wraps pyglet Window; spawns a separate thread running `__event_loop__` for FPS-limited rendering.
+- `__init__(**win_args)` — early-returns immediately (no thread, no window) when `runfromdoctester` kwarg is truthy; otherwise merges default window args and spawns the event-loop thread.
 - `__event_loop__()` — the thread function: acquires/releases module-level `gl_lock` via try/finally for both initialization and each per-frame cycle (dispatch, update, draw, flip).
   - On uncaught exception during per-frame rendering: catches exception, sets `has_exit = True` to terminate the loop, and the `finally` block ensures `gl_lock` is released.
   - Initialization errors similarly set `has_exit = True` before the loop starts.

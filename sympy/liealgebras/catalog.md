@@ -48,18 +48,19 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 - `positive_roots()` — enumerates all positive roots via nested loop over pairs i < j, each root a +1/−1 difference vector.
 
 ### [`type_b.py`](type_b.py)
-`TypeB` — B_n series. Lie algebra so(2n) (as returned by `lie_algebra()`). Dimension n. Roots: 2n².
-- `simple_root(i)` — first n−1 roots are difference vectors (same as A_(n−1)); last root is a single unit vector [0,…,0,1].
+`TypeB` — B_n series (odd-dimensional orthogonal). Dimension n. Roots: 2n². Rank ≥ 2.
+- `simple_root(i)` — first n−1 roots are difference vectors (same as A_(n−1)); nth root is a single unit vector [0,…,0,1] (no −1 component).
 - `positive_roots()` — generates three kinds of positive roots: difference vectors (e_i−e_j), sum vectors (e_i+e_j), and unit vectors (e_i).
 - Cartan matrix has asymmetric boundary entry (−2 in [n−2,n−1] vs −1 in [n−1,n−2]).
+- Caveat: `lie_algebra()` returns "so(2n)" (same string as D_n); mathematically B_n corresponds to so(2n+1).
 
 ### [`type_c.py`](type_c.py)
 `TypeC` — C_n series. Lie algebra sp(2n). Dimension n. Roots: 2n².
 
 ### [`type_d.py`](type_d.py)
-`TypeD` — D_n series. Lie algebra so(2n). Dimension n. Roots: 2n(n−1). Branching Dynkin diagram. Root/Cartan definitions only — no reflection matrices.
-- `simple_root(i)` — defines simple roots; last root has two +1 entries (branching node).
-- `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots.
+`TypeD` — D_n series (even-dimensional orthogonal, so(2n)). Dimension n. Roots: 2n(n−1). Branching Dynkin diagram. Rank ≥ 3.
+- `simple_root(i)` — first n−1 roots are difference vectors; nth root has two +1 entries [0,…,0,1,1] (branching node).
+- `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots (unlike B_n).
 
 ### [`type_e.py`](type_e.py)
 `TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all. Complex positive-root enumeration with Rationals.

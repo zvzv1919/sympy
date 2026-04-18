@@ -63,6 +63,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
 Sparse polynomial rings and their elements (dict-based representation).
 
 - `ring()`, `xring()`, `vring()` — ring constructor functions with explicit domain.
+  - **`ring` returns `(ring,) + gens` (flat tuple); `xring` returns `(ring, gens)` (nested tuple for tuple-unpacking); `vring` injects gens into global namespace**.
 - `sring(exprs, *symbols)` — construct ring from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `_gens_set` — cached set of canonical generator elements.
@@ -196,7 +197,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
   - `is_zero_dimensional` — check if ideal is zero-dimensional.
-  - `reduce(expr)` — reduce polynomial modulo the basis; **auto-promotes ring domain to its fraction field**, then attempts to retract results back.
+  - `reduce(expr)` — reduce polynomial modulo the basis; **auto-promotes ring domain to its fraction field**, then attempts to retract results back; **silently keeps field-domain results if retraction fails** (`CoercionFailed` is caught).
   - `contains(poly)` — check ideal membership; **returns `True` iff `reduce(poly)` yields zero remainder**.
 
 ### [`polyfuncs.py`](polyfuncs.py)
@@ -461,7 +462,7 @@ Symbolic root representations and root-sum evaluation.
 ### [`polyroots.py`](polyroots.py)
 Symbolic root-finding algorithms (closed-form solutions).
 
-- `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
+- `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases; **also accepts a plain list of numerical coefficients** (builds a dummy variable internally).
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
   - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.

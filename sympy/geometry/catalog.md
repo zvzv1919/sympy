@@ -89,6 +89,8 @@ Elliptical entities in 2D.
 Parabolic entities defined by focus and directrix.
 - `Parabola` — supports vertical/horizontal parabolas only; `__new__` raises `NotImplementedError` if directrix is diagonal (neither horizontal nor vertical).
   - Properties: `focus`, `directrix`, `vertex`, `eccentricity`. Methods: `equation()`, `intersection()`.
+  - `vertex` — extremal (turning) point of the parabola; computed by subtracting `p_parameter` from the appropriate focal coordinate based on axis orientation.
+  - `eccentricity` — always returns 1 (unit eccentricity by definition for all parabolas).
   - `p_parameter` — signed semi-latus rectum; sign convention depends on orientation (horizontal vs vertical) with inverted comparison logic between the two cases.
   - `focal_length` — unsigned distance from vertex to focus (half the vertex-to-directrix distance).
 
@@ -97,6 +99,7 @@ Parabolic entities defined by focus and directrix.
 ### [`plane.py`](plane.py)
 3D planar surfaces.
 - `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`.
+  - `are_concurrent(*planes)` — static; tests whether multiple planes all share a single common line of intersection; deduplicates inputs, returns False for <2 planes.
   - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) is coplanar with this plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test.
   - `arbitrary_point(t)` — returns a parametric `Point3D` that traces a unit circle on the plane around `p1` as `t` varies from 0 to 2π; handles axis-aligned normals directly, general normals via projection and symbolic solve.
   - `random_point(seed)` — evaluates `arbitrary_point` at a random parameter value.
@@ -129,6 +132,6 @@ Standalone geometric utility functions.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
 - `are_coplanar(*entities)` — standalone coplanarity test for 3D points/lines; returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
 - `are_similar(e1, e2)` — tests geometric similarity via double dispatch: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check.
-- `centroid(*args)` — weighted centroid of geometric entities.
+- `centroid(*args)` — weighted center of mass for a homogeneous collection of Points (equal weight), Segments (weighted by length), or Polygons (weighted by area). Returns None for mixed types.
 - `idiff(eq, y, x, n=1)` — implicit differentiation: computes dy/dx (up to order `n`) assuming `eq == 0`.
   - `y` must be a `Symbol` or list of `Symbol`s (first element is primary dependent variable); raises `ValueError` if `y` is neither.
