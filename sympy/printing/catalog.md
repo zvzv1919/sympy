@@ -73,6 +73,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ### [`str.py`](str.py)
 `StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
 - `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
+- `_print_Mul` — splits factors into numerator/denominator lists; uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator (prevents re-simplification), but allows evaluation when exponent is exactly `-1` (since negation yields 1, collapsing to the base).
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and abstract formatting hooks.
@@ -134,6 +135,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.
 - Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.
 - `_print_MatMul` / `_print_HadamardProduct` — parenthesize operands that are sums or mixed-type products.
+- `translate(s)` — module-level helper converting symbol names to LaTeX: looks up Greek letters, then recursively strips accent/modifier suffixes (hat, dot, prime, etc.) longest-first; guards against empty base by requiring remaining string length > modifier length.
 
 ### [`mathml.py`](mathml.py)
 `MathMLPrinter` — generates MathML XML markup using DOM, prioritizing content markup.

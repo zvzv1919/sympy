@@ -432,6 +432,7 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
+  - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
@@ -634,7 +635,9 @@ Precomputed coefficient arrays and resolvent parameters for solving solvable qui
 Special polynomial constructors for testing and benchmarking.
 
 - `swinnerton_dyer_poly(n, x)` — Swinnerton-Dyer polynomial; **n ≤ 3 returns hardcoded expressions; n > 3 computes via `minimal_polynomial` of sum of square roots of primes**.
-- `cyclotomic_poly`, `symmetric_poly`, `random_poly`, `interpolating_poly`.
+- `cyclotomic_poly`, `symmetric_poly`, `random_poly`.
+- `interpolating_poly(n, x, X, Y)` — construct Lagrange interpolating polynomial; builds basis functions as ratios of products of differences `∏(x−Xⱼ)/∏(Xᵢ−Xⱼ)`.
+  - Returns a symbolic `Add` of weighted basis terms. Distinct from `polyfuncs.interpolate` which is a higher-level wrapper.
 - `fateman_poly_F_1/F_2/F_3`, `dmp_fateman_poly_F_1/F_2/F_3` — Fateman GCD benchmarks (symbolic and dense multivariate).
   - F_1 = trivial GCD (shared factor is 1), F_2 = linearly dense quartic inputs (shared factor is squared sum of variables), F_3 = sparse (degree ~ vars).
   - **In `dmp_fateman_poly_F_3`, the GCD's constant term is added at nesting level `n-1`** (not `n` as in F_1), reflecting the sparse structure.
@@ -714,6 +717,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
+  - `subset(other)` — check if `other` is a subset of this ideal; **if `other` is an Ideal, delegates to `_contains_ideal`; if `other` is a plain iterable (e.g. list of ring elements), checks each element individually** via `_contains_elem`.
 - `Module.__eq__(other)` (in `modules.py`) — equality via **mutual submodule inclusion**: returns True iff `self.is_submodule(other)` and `other.is_submodule(self)`.
 - `Module.__mul__(e)` (in `modules.py`) — if `e` is not an `Ideal`, **coerces it to an ideal via `self.ring.ideal(e)` before delegating to `multiply_ideal`**; returns `NotImplemented` if coercion fails.
 - `ModuleElement` (in `modules.py`) — base class for module element wrappers; stores reference to containing module.

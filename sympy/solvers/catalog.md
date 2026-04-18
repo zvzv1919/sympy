@@ -20,7 +20,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `_solve_system(exprs, symbols)` — internal system solver (used by `solve` for multi-equation inputs); handles:
   - Linear systems: converts each expression to Poly, extracts monomial coefficients to build an augmented matrix in-place, then dispatches to `solve_linear_system`.
   - Nonlinear polynomial systems via `solve_poly_system`.
-  - Underdetermined nonlinear systems: enumerates variable subsets sized to match equation count, solves each subset; does **not** produce parametric infinite-family solutions (see `linsolve` for that).
+  - Underdetermined nonlinear systems: enumerates variable subsets sized to match equation count, solves each subset via `solve_poly_system`, discards solutions whose free symbols overlap previously solved variables (dependent-solution filter); does **not** produce parametric infinite-family solutions (see `linsolve` for that).
   - Residual non-polynomial equations: iteratively solves remaining symbols one at a time after polynomial pass.
 - `_solve(f, symbol, **flags)` — internal single-equation solver; handles:
   - Multi-symbol sequential resolution: solves for each symbol in turn; discards solutions whose free symbols depend on a previously solved symbol.
@@ -109,11 +109,11 @@ Solves inequality constraints and returns interval-based solutions.
 - `reduce_abs_inequality` / `reduce_abs_inequalities` — absolute value inequalities.
 
 ### [`polysys.py`](polysys.py)
-Solves systems of polynomial equations via Groebner bases.
+Solves zero-dimensional (fully determined) systems of polynomial equations via Groebner bases. Does not handle underdetermined subset enumeration — that logic lives in `_solve_system` in `solvers.py`.
 
-- `solve_poly_system(seq, *gens)` — general polynomial system solver.
+- `solve_poly_system(seq, *gens)` — general polynomial system solver; requires #equations ≥ #variables for a finite solution set.
 - `solve_biquadratic(f, g, opt)` — two bivariate quadratic equations.
-- `solve_generic(polys, opt)` — arbitrary systems via elimination.
+- `solve_generic(polys, opt)` — zero-dimensional systems via Groebner basis elimination.
 - `solve_triangulated(polys, *gens)` — Gianni-Kalkbrenner triangulation algorithm.
 
 ---

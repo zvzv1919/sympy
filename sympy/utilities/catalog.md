@@ -121,5 +121,5 @@ Interactive convenience for polluting the user's session namespace (not related 
 - `pollute` — inject SymPy names into the caller's global namespace.
 
 ### [`pkgdata.py`](pkgdata.py)
-Resource acquisition for package data files.
-- `get_resource(identifier)` — retrieve a file from package data.
+Acquires bundled data files from within a package using module-level loader introspection.
+- `get_resource(identifier)` — locates a data file relative to the calling package's `__file__` path; if the module has a `__loader__`, delegates to its `get_data` and returns an in-memory StringIO; otherwise falls back to direct filesystem open. Raises `IOError` if the module has no `__file__`.

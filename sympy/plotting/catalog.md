@@ -194,9 +194,13 @@ Pyglet window lifecycle and threaded event loop with thread-safe GL lock managem
 - `gl_lock` — module-level `threading.Lock` guarding all OpenGL calls; distinct from the plot-level `_render_lock` in `PlotWindow.draw()` (which serializes plot-function iteration, not GL context access).
 
 ### `util.py`
-OpenGL and 3D math utilities.
+OpenGL state queries, 3D math utilities, numeric range/interpolation helpers, and option parsing.
 
 - `get_model_matrix()`, `get_projection_matrix()`, `get_viewport()` — GL state queries.
 - `screen_to_model()`, `model_to_screen()` — coordinate transformations.
 - `billboard_matrix()` — resets the upper-left 3×3 rotation submatrix of the current modelview matrix to identity while preserving translation (row 4) and projection (column 4), so drawn primitives always face the viewer.
+- `strided_range(r_min, r_max, stride, max_steps=50)` — generates evenly-spaced tick values between endpoints aligned to stride boundaries; recursively doubles stride when step count exceeds `max_steps` to prevent excessive output.
+- `interpolate()`, `rinterpolate()`, `interpolate_color()` — linear interpolation helpers; `rinterpolate` computes inverse ratio.
+- `scale_value()`, `scale_value_list()` — normalize values to [0,1] range.
+- `create_bounds()`, `update_bounds()` — track per-axis min/max bounding boxes.
 - `parse_option_string()` — parses keyword arguments from string format.

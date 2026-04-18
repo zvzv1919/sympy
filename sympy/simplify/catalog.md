@@ -94,7 +94,7 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
 - `logcombine(expr, force)` — combine/split logarithms using log rules.
 - `nsimplify(expr, constants, tolerance)` — find simple closed-form for numerical expressions.
-- `hypersimp(f, k)` — simplify consecutive-term ratio f(k+1)/f(k); rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
+- `hypersimp(f, k)` — compute consecutive-term ratio f(k+1)/f(k) for combinatorial/hypergeometric sequences; rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
 - `besselsimp(expr)` — simplify Bessel function expressions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds.
   - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial. For power-of-2 `n`, repeatedly sqrtdenests and halves `n`, returning early without polynomial solving.
@@ -144,7 +144,7 @@ Denests nested square root expressions.
 ## Combinatorial & Rational Simplification
 
 ### [`combsimp.py`](combsimp.py)
-Simplifies combinatorial expressions (factorials, binomials, gamma, Pochhammer).
+Simplifies combinatorial function expressions (factorials, binomials, gamma, Pochhammer) — rewrites and reduces function counts, not term-ratio analysis.
 
 - `combsimp(expr)` — minimize number of combinatorial functions (factorials, binomials, gamma, Pochhammer).
   - For multiplicative expressions: splits non-commutative factors out, simplifies only the commutative part; returns expr unchanged if no commutative args.

@@ -79,7 +79,10 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 ### [`risch.py`](risch.py)
 Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
-- `DifferentialExtension` — represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
+- `DifferentialExtension` — builds and represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
+  - `_exp_part` — attempts to add an exponential monomial to the tower; uses `is_log_deriv_k_t_radical` to detect algebraic dependencies
+    - Normalizes n==-1 radical degree to n==1 (inverts u, negates const/powers); restarts extension when algebraic radical avoidable
+  - `_log_part` — attempts to add a logarithmic monomial to the tower; uses `is_deriv_k` to detect existing derivatives
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear
 - `derivation(p, DE)` — computes Dp for polynomial p in the differential extension tower; `coefficientD=True` computes the coefficient derivation (treats top-level variable as constant)
@@ -95,16 +98,19 @@ Risch algorithm for integration of transcendental elementary functions.
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
 - `rischDE(fa, fd, ga, gd, DE)` — main RDE solver
-- `special_denom` — non-parametric special denominator computation; dispatches on the already-classified case (exp/tan/primitive) to adjust denominator (cf. `prde_special_denom` in prde.py for parametric variant)
+- `special_denom` — non-parametric special denominator computation; dispatches on exp/tan/primitive case to adjust denominator and polynomial order bound
+  - For exp: checks `parametric_log_deriv` to tighten bound n when possible cancellation detected (nb==0)
+  - For tan (hypertangent): gates on `recognize_log_derivative(2*beta)` of the real part before attempting `parametric_log_deriv` to tighten bound n
+  - Returns transformed (A, B, C, h) tuple with p^N scaling
 - Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
 
 ### [`prde.py`](prde.py)
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
 - `param_rischDE` — main parametric RDE solver
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
-- `prde_special_denom` — parametric special denominator; handles exp/tan/primitive/base cases
-  - For primitive/base: short-circuits with `(a, ba.quo(bd), G, 1)` — no order computation or cancellation checks needed since k<t>==k[t]
-  - For exp/tan: computes order at special polynomial; in hypertangent case with possible cancellation, checks `recognize_log_derivative` and `parametric_log_deriv` before adjusting degree bound
+- `prde_special_denom` — parametric variant of special denominator (operates on vector of RHS polynomials G=[g1,...,gm] instead of scalar c)
+  - For primitive/base: short-circuits with `(a, ba.quo(bd), G, 1)` — no order computation needed since k<t>==k[t]
+  - For exp/tan: computes order at special polynomial; mirrors cancellation checks from `special_denom` but applied to parametric system
 - `real_imag` — separates a rational function into real and imaginary parts evaluated at a complex root of t²+1
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
