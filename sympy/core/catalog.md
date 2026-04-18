@@ -141,6 +141,7 @@ All concrete numeric types and their arithmetic operations.
 - `Pow._eval_evalf(prec)` — numerical evaluation of `base**exp`; when exponent is negative and base is non-real, rewrites as `conjugate(base)/|base|²` with negated exponent to avoid complex-power precision issues
 - `Pow._eval_nseries` — n-series expansion around bounded nonzero base limit; rewrites `b` as `b0*(1+z)` and computes binomial Taylor expansion; falls back to first-order `1+z` when big-O of `z` or scaled order is zero (non-polynomial order like `O(exp(-1/x))`)
 - `Pow._eval_expand_power_base` — distributes exponent over a product `(a*b)**n → a**n * b**n`; for NC factors: positive integer exponent repeats the NC sequence e times, negative integer inverts; non-integer exponents keep NC factors grouped (undistributed)
+  - Sifts commutative bases into nonneg/neg/other/imag categories; consolidates `I` factors via mod-4 cycle (e.g., two I's become -1, canceling an existing negative factor or adding one)
 - `Pow._eval_expand_power_exp` — splits `a**(n+m) → a**n * a**m` when exponent is a commutative Add
 - `Pow.as_content_primitive(radical, clear)` — extracts positive Rational from `base**exp`; when base is rational, decomposes exponent into integer + fractional parts via `divmod` and splits the power accordingly; when base is Mul, recursively extracts content from base
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag

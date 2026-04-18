@@ -89,6 +89,7 @@ Handlers that **evaluate** ordering / sign predicates for specific expression ty
 ### [`handlers/sets.py`](handlers/sets.py)
 Handlers that **evaluate** set-membership predicates for specific expression types. Predicate definitions and implication rules are in `ask.py`.
 - `AskIntegerHandler`, `AskRationalHandler`, `AskIrrationalHandler`: dispatch on `Basic`, `Add`, `Mul`, `Pow`, `Rational`, `Float`, `GoldenRatio`, `Abs`, `exp`, `ImaginaryUnit`.
+  - `AskIntegerHandler.Mul`: special-cases rational (non-integer) factors — denominator 2 delegates to `Q.even(2*expr)`; even denominator → indeterminate; two irrational factors → indeterminate.
   - `AskRationalHandler.Pow`: rational base + integer exp → rational; prime base + rational (non-integer) exp → irrational.
 - `AskRealHandler`: dispatch includes `Add`, `Mul`, `Pow`, `cos`, `sin`, `exp`, `log`, `atan`, `asin`, `acos`.
 - `AskExtendedRealHandler`, `AskComplexHandler`.

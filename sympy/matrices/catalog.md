@@ -34,7 +34,9 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
-- **Solvers**: `solve`, `LUsolve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Solvers**: `solve`, `LUsolve`, `gauss_jordan_solve`, `solve_least_squares`.
+  - `pinv`: Moore-Penrose pseudoinverse (generalized inverse); full-rank→uses (AᴴA)⁻¹Aᴴ or Aᴴ(AAᴴ)⁻¹; rank-deficient→raises `NotImplementedError('Rank-deficient matrices are not yet supported.')`.
+  - `pinv_solve`: solves Ax=B via pseudoinverse; for underdetermined systems auto-generates a dummy-symbol placeholder matrix with dimensions (cols, rows) then transposes to (rows, cols).
   - `QRsolve`: solves Ax=b via QR decomposition then performs its own back-substitution on R (builds solution vector backwards and reverses); does not delegate to `_upper_triangular_solve`.
   - `LDLsolve`: symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A; underdetermined→raises `NotImplementedError` suggesting `gauss_jordan_solve`.
   - `cholesky_solve`: symmetric→direct Cholesky; overdetermined rows≥cols→normal equations; underdetermined→raises `NotImplementedError` suggesting `gauss_jordan_solve`.

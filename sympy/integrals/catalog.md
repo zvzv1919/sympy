@@ -65,6 +65,7 @@ Gaussian quadrature rules: computes nodes and weights (not sums) for numerical i
 Symbolic integral transforms — class-based API and dispatch layer (delegates heavy computation to `meijerint.py`).
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
+  - `_inverse_mellin_transform` — computes inverse Mellin without direct contour integration: rewrites integrand as gamma products via `_rewrite_gamma`, constructs a Meijer G-function, then `hyperexpand`s it; validates convergence along the integration line using the G-function's `delta` and `argument` (symmetric vs absolute convergence)
   - `InverseMellinTransform._compute_transform` validates input by traversing the expression and checking each function against a whitelist of allowed types (exp, gamma, sin, cos, tan, etc.); raises `IntegralTransformError` for unrecognized functions
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters (an, ap, bm, bq) for inverse Mellin transform
   - `left(c, is_numer)` — determines whether a pole at c lies left of the fundamental strip (integration contour); handles None/infinite strip boundaries with heuristic inequality checks

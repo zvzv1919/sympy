@@ -26,6 +26,7 @@ Base classes and core query functions for all random variable types.
 - `given(expr, condition)`: conditions a random expression on an event; for single-variable equality conditions, solves the equation and substitutes solutions; otherwise builds a full conditional probability space.
 - `expectation(expr, condition)`: computes expected value of a random expression; exploits linearity (decomposes `Add` into per-term expectations) for efficiency; delegates final integration to `pspace().integrate()`.
 - `probability(condition, given_condition)`: computes probability that a condition holds; supports Monte Carlo sampling via `numsamples`.
+  - Short-circuits without integration: returns `S.Zero` when `given_condition` is `False`, returns `S.One`/`S.Zero` when `condition` is trivially true/false.
 - `sampling_E`, `sampling_P`, `sampling_density`: Monte Carlo approximations of expectation, probability, and density.
 - `_value_check(condition, message)`: parameter validation utility used across all distribution types; uses `condition == False` (not `not condition`), so symbolic/unevaluable conditions silently pass.
 - `NamedArgsMixin`: mixin providing attribute-style access to positional `args` via `_argnames` tuple.

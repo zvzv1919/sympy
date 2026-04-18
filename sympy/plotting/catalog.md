@@ -170,9 +170,12 @@ Coordinate axes OpenGL rendering (not parsing; axes option string parsing occurs
   - `reset_bounding_box()` — resets all three axes to `[None, None]` bounds and clears tick arrays.
 
 ### `plot_camera.py`
-3D camera control.
+3D camera control for pyglet interactive viewer.
 
-- `PlotCamera` — handles perspective/orthographic projection, position, rotation, zoom, and preset angles.
+- `PlotCamera` — handles perspective/orthographic projection, position, rotation, zoom, and named viewing-angle presets.
+  - `set_rot_preset(preset_name)` — applies a named rotation preset from `rot_presets` dict; catches `AttributeError` to raise `ValueError` with descriptive message for invalid preset names.
+  - `euler_rotate()`, `spherical_rotate()` — rotation primitives; `zoom_relative()` — zoom with ortho/perspective branching.
+  - `reset()` — restores default distance, position, and rotation matrix.
 
 ### `plot_controller.py`
 User input handling with 2D/3D mode awareness.

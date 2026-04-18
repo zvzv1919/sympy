@@ -54,8 +54,12 @@ Unevaluated and evaluated finite/infinite summations.
 - `eval_sum(f, limits)` — main evaluation dispatcher; handles Piecewise summands (folds when conditions are index-independent, bails out for index-dependent conditions with symbolic/large ranges), KroneckerDelta, finite direct, symbolic, and hypergeometric paths.
 - `telescopic(L, R, limits)` — detect telescoping (collapsing/canceling) sums via pattern matching; matches `L(i+k)` against `-R` to find shift `k`, validates shift is integer and cancellation holds, falls back to `solve` if match fails.
 - `telescopic_direct(L, R, n, limits)` — directly sum boundary terms of a confirmed telescoping sum.
-- `_eval_sum_hyper(f, i, a)` / `eval_sum_hyper` — evaluate **infinite** hypergeometric sums (a to ∞) via `hypersimp` + `hyperexpand`.
-  - Shifts index to start at 0; handles summands that vanish at the starting index (distinguishes identically-zero vs zero-only-at-start).
+- `_eval_sum_hyper(f, i, a)` — convert a summand into a generalized hypergeometric series (`hyper`) from `a` to ∞.
+  - Computes consecutive-term ratio via `hypersimp`, extracts linear-factor parameters as rising-factorial numerator/denominator lists.
+  - Calls `hyperexpand` to evaluate. Shifts index to start at 0; handles vanishing initial terms.
+- `eval_sum_hyper(f, (i, a, b))` — hypergeometric evaluation over **any** bound configuration (finite, semi-infinite, doubly-infinite).
+  - For finite ranges where `b - a` is non-integer: decomposes into `_eval_sum_hyper(f,i,a) − _eval_sum_hyper(f,i,b+1)`.
+  - Combines convergence conditions from both sub-sums; returns `Piecewise` or None.
 
 ### [`products.py`](products.py)
 Unevaluated and evaluated finite/infinite products.
@@ -80,8 +84,8 @@ Gosper's algorithm for hypergeometric indefinite summation (finding closed-form 
 - `gosper_term(f, n)` — find a hypergeometric term g_n such that g_{n+1}−g_n = f_n.
   - Calls `hypersimp` to get the consecutive ratio f_{n+1}/f_n, then `gosper_normal` to factorize it into (A, B, C).
   - Computes candidate polynomial degrees from degree/leading-coefficient relationships among A, B, C (three cases: N≠M or mismatched LC, both zero-degree, or sub-leading coefficient ratio).
-- `gosper_sum(f, k)` — closed-form **definite** hypergeometric summation over finite ranges (returns result or None). Called as subroutine by `eval_sum_symbolic`; does **not** handle infinite series.
-  - Falls back to symbolic `limit()` when substituting summation bounds into the antidifference produces an undefined (NaN) result.
+- `gosper_sum(f, k)` — closed-form **definite** summation via anti-difference: finds g s.t. g(n+1)−g(n)=f(n), then evaluates g(b+1)−g(a).
+  - Does **not** convert to hypergeometric series or handle infinite series. Falls back to `limit()` when bound substitution yields NaN.
 
 ### [`delta.py`](delta.py)
 Simplification of sums and products containing Kronecker delta functions.

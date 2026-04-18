@@ -69,7 +69,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `render()` — converts picture to display string; splits output exceeding terminal width into column-width segments. Multi-line pictures get blank-line spacers between segments; single-line pictures do not.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
-- `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
+- `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; parenthesizes nested divisions. For negative numerators (NEG binding), pads the numerator with a trailing space to preserve visual alignment under the fraction bar.
 - `prettyForm.__add__` — binding-aware addition; reuses existing minus signs to simplify `+ -x` forms.
 - `prettyForm.__mul__` — assembles the inline visual representation of a product sequence: inserts multiplication symbols between factors, applies precedence-based parenthesization.
   - Detects `-1` factors and substitutes `-1 * x` → `-x`; inserts a space when consecutive leading minus signs would create visual ambiguity (dash collision).

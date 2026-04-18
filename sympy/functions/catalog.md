@@ -72,7 +72,8 @@ Bessel functions and Airy functions.
 - `jn`, `yn` — spherical Bessel functions.
 - `SphericalHankelBase` — shared base for spherical Hankel functions (spherical wave propagation); uses `_hankel_kind_sign` (+1/−1) to unify rewrite/expand logic for both kinds into standard cylindrical Bessel forms.
 - `hn1`, `hn2` — spherical Hankel functions of first/second kind (outgoing/incoming waves); subclasses of `SphericalHankelBase` differing only in sign.
-- `AiryBase` — abstract base for Airy functions (solutions of w''(z) − z·w(z) = 0); `as_real_imag` decomposes complex-argument evaluation into real/imaginary parts.
+- `AiryBase` — abstract base for Airy functions (solutions of w''(z) − z·w(z) = 0); shared conjugate, is_real, and real/imaginary decomposition logic.
+  - `_as_real_imag(deep)` — if argument is real, returns `(self, 0)` when `deep=False` or `(expanded_self, 0)` when `deep=True`; otherwise splits argument into re/im parts.
 - `airyai`, `airybi`, `airyaiprime`, `airybiprime` — Airy functions and derivatives (subclasses of `AiryBase`).
 
 #### [`special/hyper.py`](special/hyper.py)

@@ -47,6 +47,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
   - Structural: `exclude` (remove unused generators, returns removed indices + reduced DMP), `inject`, `eject`, `deflate`, `permute`.
   - `refine_root(s, t, eps, steps)` — refine an isolating interval; **if neither `eps` nor `steps` is given, defaults to `steps=1`** (single bisection step).
+  - `is_cyclotomic` — **univariate only (`lev == 0`): delegates to `dup_cyclotomic_p`; multivariate: silently returns `False`** (no error raised). Contrast `PolyElement.is_cyclotomic` in `rings.py` which raises `MultivariatePolynomialError`.
   - Root isolation: `intervals(all, eps, sqf)` — isolate roots; **raises `PolynomialError` if multivariate (`lev > 0`)**; dispatches to 4 variants based on `all`/`sqf` flags. `refine_root`, `count_real_roots`, `count_complex_roots` — also univariate-only.
   - `cancel(g, include)` — cancel common factors in f/g; when `include=False`, returns `(cF, cG, F, G)` (content factors + reduced polys); when `include=True`, returns only `(F, G)`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
@@ -558,6 +559,7 @@ Symbolic root representations and root-sum evaluation.
     Avoids computing roots explicitly by introducing formal root symbols, symmetrizing, then substituting Viète relations.
   - `_is_func_rational` — checks if the lambda is a rational function.
   - `doit` — attempts to evaluate the root sum; **if `roots()` finds fewer roots than the polynomial degree, returns `self` unevaluated** instead of summing partial results.
+  - `_eval_evalf(prec)` — numerical evaluation; computes `nroots` and sums `fun(r)` for each; **on `DomainError` or `PolynomialError`, returns `self` unevaluated** (silent fallback, no error raised).
 - `rootof(poly, index)` — factory function creating `CRootOf` instances.
 
 ### [`polyroots.py`](polyroots.py)

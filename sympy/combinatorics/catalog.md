@@ -23,7 +23,7 @@ Individual permutation representation, construction, and properties.
   - `__mul__` (`*` operator) — composes two permutations; pads the shorter array with identity-mapped indices to match the longer one before computing the product.
   - Ranking/unranking of individual permutations in lexicographic order: `rank`, `unrank_lex`, `next_lex`.
   - Non-lex ranking: `rank_nonlex`, `unrank_nonlex`, `rank_trotterjohnson`, `unrank_trotterjohnson`.
-  - Properties: `is_even`, `is_odd`, `parity`, `inversions`, `support`.
+  - Properties: `is_even`, `is_odd`, `parity`, `inversions`, `support`, `ascents`, `descents` (positions where consecutive array-form values increase/decrease).
   - `order()` — smallest positive exponent k such that p^k = identity; computed as LCM of disjoint cycle lengths.
   - `cycle_structure` — dict mapping each cycle length to its multiplicity; fixed points (self-mapping elements) counted as length-1 cycles.
   - `__xor__` (`^` operator) — conjugation: `p^q` computes `~q*p*q`; raises `ValueError` if the two permutations have different sizes. When left operand is an int `i`, returns `q(i)` instead.

@@ -124,7 +124,8 @@ Sparse storage N-dim arrays backed by a dict (`_sparse_array`).
 - `SparseNDimArray` — constructor alias, returns `ImmutableSparseNDimArray`.
 - `ImmutableSparseNDimArray` / `MutableSparseNDimArray` — immutable and mutable sparse variants.
 - `__getitem__` — same tuple-of-slices logic as dense; missing keys default to zero.
-- `tomatrix()`, `zeros`, `reshape`.
+- `tomatrix()` — converts a concrete rank-2 sparse `NDimArray` to `SparseMatrix`; raises `ValueError` for other ranks.
+- `zeros`, `reshape`.
 
 ### array/arrayop.py
 
