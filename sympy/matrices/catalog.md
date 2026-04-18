@@ -58,7 +58,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry. `_eval_simplify` is aliased to `simplify`, so the core simplification framework's internal hook dispatches here.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
-- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
+- **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower` (both triangularity checks support non-square/rectangular matrices), `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
 - `is_hermitian`: three-valued (True/False/None) via `fuzzy_and`; checks diagonal entries are real and off-diagonal pairs satisfy conjugate symmetry. Returns None when assumptions are insufficient (e.g. symbolic diagonal with no real assumption).
 - `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives.
 - `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
@@ -94,7 +94,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `diag(*values)`: builds a concrete block-diagonal matrix from a mix of scalars, plain lists, and existing Matrix objects; auto-converts lists to Matrix, accumulates total rows/cols from each block, places blocks along the diagonal of a sparse intermediate, then converts to the target class.
 - `wronskian(functions, var, method)`: computes the Wronskian determinant (derivatives matrix det) for testing linear independence of differential functions; returns 1 for an empty input list.
 - `casoratian(seqs, n)`: computes the Casoratian determinant for testing linear independence of sequences (used in recurrence solving).
-- `randMatrix(r, c, ...)`: generates a random matrix with optional symmetry and sparsity control.
+- `randMatrix(r, c, min, max, seed, symmetric, percent, prng)`: generates a random dense matrix; `percent` controls non-zero density by zeroing entries in the flat `_mat` list and shuffling (not related to sparse matrix storage).
 
 ### [`sparse.py`](sparse.py)
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
@@ -248,7 +248,7 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 ### [`densearith.py`](densearith.py)
 Low-level arithmetic on raw nested lists (list-of-lists representation, not matrix objects).
 
-- `add`, `addrow`: element-wise addition on nested lists. `sub`: subtraction implemented as `negate` + `add` (not direct element-wise difference). `negate`, `negaterow`: sign inversion.
+- `add`, `addrow`: element-wise addition on nested lists. `sub`: subtraction implemented as `negate` + `add` (not direct element-wise difference). `negate(matlist, K)`, `negaterow(row, K)`: sign inversion; both accept a domain/ring parameter `K` but apply Python's unary minus without using it.
 - `mulmatmat`: matrix-matrix product — transposes the second operand (rows→columns via `zip`) then computes row-column dot products via `mulrowcol`.
 - `mulrowcol(row, col, K)`: inner product of a row and column represented as flat lists; columns are flat (not nested single-element lists) for performance.
 - `mulmatscaler`: scalar-matrix product on nested lists.

@@ -89,7 +89,7 @@ All concrete numeric types and their arithmetic operations.
   - `NegativeInfinity._eval_power` — integer exponents: odd → -oo, even → oo; non-integer numeric exponents: decomposes as `(-1)**expt * oo**expt` instead of returning a direct result
   - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
-- `NaN` — indeterminate placeholder; structurally equal to itself (`__eq__`) but mathematically unequal to everything (`_eval_Eq` returns false)
+- `NaN` — indeterminate placeholder; own `__add__`, `__sub__`, `__mul__`, `__div__` all return self (propagates NaN through arithmetic); structurally equal to itself (`__eq__`) but mathematically unequal to everything (`_eval_Eq` returns false)
 - `ComplexInfinity` — unsigned (undirected) infinite quantity; `_eval_power`: zero exp → NaN, positive exp → zoo, negative exp → 0, zoo exp → NaN
 - `_sympify` coercion and `SympifyError` handling throughout arithmetic methods
 

@@ -24,6 +24,8 @@ Defines basic indexed objects for representing array elements like `M[i, j]`.
 Functions that **analyze indices** on `Indexed`/`IndexedBase` expressions only (not abstract `TensMul`/`TIDS` tensors): shape conformance, outer-index determination, and contraction-structure discovery.
 
 - `get_indices(expr)` — returns the outer (non-summation) indices of an expression together with symmetry information.
+  - Recurses into `Mul`, `Add`, `Pow`, and generic `Function` subexpressions.
+  - For generic `Function` instances: collects indices from args via set union but does NOT treat repeated indices across arguments as summation contractions (ufunc-like behavior).
 - `get_contraction_structure(expr)` — maps summation (dummy) indices to the terms they apply to; returns nested dicts describing hierarchical contractions in products, powers, and sub-expressions.
 - `_get_indices_Mul(expr)` — determines outer indices of a `Mul`; repeated indices across factors become dummies.
 - `_get_indices_Pow(expr)` — determines outer indices of a `Pow`; treats power as element-wise (universal) function, so `x[i]**2` is NOT self-contraction; exponent indices are kept separate from base indices.

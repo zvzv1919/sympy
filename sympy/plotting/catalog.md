@@ -91,6 +91,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 ### `plot.py`
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
+- Module-level pyglet dependency check: imports `pyglet.gl` in a try/except at the top of the file; raises `ImportError` immediately with a descriptive message if pyglet is not installed (eager failure, unlike `__init__.py`'s lazy-error pattern).
 - `PygletPlot` — top-level plot object and authoritative source for auto-detection rules: 1 expr → Cartesian, 2–3 → parametric; 1 var → curve, 2 vars → surface. Manages plot objects, axes, camera, window, and rendering thread. Supported modes by variable count: 1-var: parametric/cartesian/polar; 2-var: parametric/cartesian/cylindrical/spherical.
 - `__init__(*fargs, **win_args)` — pops `axes` option string from kwargs, parses it via `parse_option_string()`, and configures the `PlotAxes` object separately before passing remaining kwargs to the window.
 - `__setitem__(i, args)` — indexed assignment (`p[1] = expr`); parses args into a `PlotMode` and stores it.

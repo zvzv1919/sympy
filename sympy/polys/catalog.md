@@ -278,7 +278,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
 - `dup_add_ground`, `dmp_add_ground`, `dup_sub_ground`, `dmp_sub_ground` — add/subtract a ground domain scalar from a polynomial; **multivariate variants promote the scalar to nested representation via `dmp_ground`** before delegating to `*_add_term`/`*_sub_term` at degree 0.
-- `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
+- `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant; **`dup_mul_ground` short-circuits to `[]` (zero polynomial) if either `c` is zero or `f` is empty**, without iterating over coefficients.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
   - `dup_ff_div`, `dup_rr_div`, `dmp_ff_div`, `dmp_rr_div` — **raise `PolynomialDivisionFailed` if remainder degree fails to strictly decrease** between loop iterations (stall detection to prevent infinite loops).
@@ -488,6 +488,8 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_strip`, `gf_trunc` — canonical form: strip leading zeros / reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
   - `gf_add`/`gf_sub` — **only strips leading zeros (via `gf_strip`) when both operands share the same degree** (possible cancellation); skips stripping when degrees differ.
+  - `gf_sub` degree mismatch: **when the subtrahend has higher degree, negates its excess leading coefficients via `gf_neg`** before combining with element-wise subtraction on the aligned tail (asymmetric with `gf_add` which simply copies excess coefficients).
+  - `gf_div` — **when dividend degree < divisor degree, returns `([], f)` immediately** (empty quotient, dividend as remainder) without entering the division loop.
   - `gf_exquo` — exact quotient; **raises `ExactQuotientFailed` if the divisor does not evenly divide the dividend** (nonzero remainder).
 - Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is zero poly and `a % p == 0`, returns `[]`**. Also `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg`.
 - `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval`, `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — standard operations and GCD/LCM.
@@ -805,7 +807,8 @@ Gröbner basis computation algorithms.
 - `lbp`, `lbp_cmp`, `lbp_key` — labeled polynomial constructors and comparators for the F5B signature-based algorithm.
 - `lbp_sub(f, g)` — subtract labeled polynomials; **propagates signature and number from whichever operand has the larger signature** (via `sig_cmp`), not necessarily from the minuend.
 - `lbp_mul_term(f, cx)` — multiply labeled polynomial by a term; scales both signature and polynomial.
-- `critical_pair`, `cp_cmp`, `cp_key` — critical pair construction and ordering; `cp_cmp` uses **two-level comparison: first the dominant (signature) component, then the subordinate component as tiebreaker** when dominants are equal.
+- `critical_pair(f, g, ring)` — construct critical pair tuple for S-polynomial; **builds lightweight proxy labeled polynomials containing only leading terms** (not full polynomials) for comparison, then uses `lbp_cmp` on these proxies to determine which element appears first in the returned 6-tuple (larger signature first ensures correct S-polynomial subtraction order).
+- `cp_cmp`, `cp_key` — critical pair ordering; `cp_cmp` uses **two-level comparison: first the dominant (signature) component, then the subordinate component as tiebreaker** when dominants are equal.
 
 ### [`fglmtools.py`](fglmtools.py)
 FGLM algorithm for Gröbner basis conversion between monomial orderings.
@@ -978,5 +981,5 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
   - `from_FractionField(a, K0)` — convert between fraction fields: same gens → direct copy or domain conversion; source gens ⊂ target gens → reorders monomials; **incompatible gens → implicitly returns `None`** (silent conversion failure).
   - `from_GlobalPolynomialRing` — cross-ring conversion: **same gens + same domain → direct rep copy; same gens + different domain → converts element to target domain first**; different gens → reorders monomials via `_dict_reorder` and converts coefficients.
-- `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.
+- `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` **returns `False` immediately if the other operand is not the same class or belongs to a different ring** (no conversion attempt), unlike `__mul__`/`__add__` which try `ring.convert`; for same-ring elements, tests whether their difference belongs to the ideal.
   - `revert(a)` — compute multiplicative inverse of `a` in `R/I`; **forms the sum of the principal ideal `(a)` and the base ideal, then tests if 1 is expressible in their generators**; raises `NotReversible` if not a unit.

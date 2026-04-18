@@ -21,6 +21,7 @@ Main inference engine for the assumptions system.
   - Deprecated alias properties: `Q.infinitesimal` → `Predicate('zero')`, `Q.bounded` → `Predicate('finite')`, `Q.infinity` → `Predicate('infinite')`. Decorated with `@deprecated`.
   - `deprecated_predicates` list: names excluded from the set of active assumption keys used for fact derivation (e.g., `compute_known_facts`).
   - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.composite`, `Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.irrational`, `Q.finite`, …
+  - `Q.complex`: true iff `x` belongs to the set of complex numbers; every complex number is **finite**, so `Q.complex(oo)` is `False`.
   - `Q.irrational`: true iff `x` is a **real** number not expressible as an integer ratio; purely imaginary inputs (e.g., `I`) return `False`. Contrast with `Q.transcendental` which includes complex numbers.
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.

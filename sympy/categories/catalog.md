@@ -33,5 +33,6 @@ Lays out diagram objects on a 2-D grid and renders to Xy-pic LaTeX strings. Hand
   - Supports `groups` (object groupings) and layout `hints` (e.g. transpose, sequential layout for linear diagrams).
 - `ArrowStringDescription` — data class describing a single arrow's visual attributes (label, curve, style, direction offsets).
 - `XypicDiagramDrawer` — converts a `DiagramGrid` into Xy-pic markup; handles arrow styling, label placement, looped morphisms.
+  - `_process_morphism` — builds the label string for each arrow: identity (`id_{…}`), composite (`\circ`-joined component names), or named morphism name.
 - `xypic_draw_diagram(diagram)` — convenience function returning Xy-pic string.
 - `preview_diagram(diagram)` — renders diagram to image via LaTeX/Xy-pic.

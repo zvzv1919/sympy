@@ -28,7 +28,7 @@ Pauli matrix algebra via pure symbolic manipulation (Symbol subclass, not quantu
   - `_eval_power` reduces exponent mod 2 for positive integers (σ²=1); returns None (Symbol fallback) for non-positive/non-integer exponents.
 - `delta(i, j)` — Kronecker delta helper; returns 1 if i == j, else 0.
 - `epsilon(i, j, k)` — Levi-Civita symbol helper; returns +1 for even permutations of (1,2,3), −1 for odd, 0 otherwise (including repeated indices).
-- `evaluate_pauli_product(arg)` — simplifies a product of Pauli matrices using algebraic rules.
+- `evaluate_pauli_product(arg)` — simplifies a product of commutative Pauli Symbol objects (σ₁σ₂→iσ₃) using index-based algebraic rules; no labels, no non-commutative operator framework.
 
 ### [`pring.py`](pring.py)
 Quantum particle on a ring (circular-path constraint).
