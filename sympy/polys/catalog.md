@@ -34,6 +34,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
     - `__add__(g)` / `__sub__(g)` — when `g` is not a DMP, first tries `dom.convert(g)` to create a ground polynomial; **if that fails (`CoercionFailed`/`NotImplementedError`) and `f.ring` is set, retries via `f.ring.convert(g)`**; returns `NotImplemented` if both paths fail.
+    - `__div__(g)` — if `g` is a DMP, delegates to `exquo`; otherwise tries `mul_ground(g)`; **on `CoercionFailed`/`NotImplementedError`, falls back to `f.ring.convert(g)` then `exquo`** if ring is set; returns `NotImplemented` if all paths fail.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
     - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
@@ -202,6 +203,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
   - `__eq__` — checks `len(f.gens) == len(g.gens)` (not name equality); **attempts domain unification and returns `False` on `UnificationFailed`** (same pattern as `Poly.__eq__`).
 - `GroebnerBasis` — Gröbner basis representation class.
+  - `__new__(F, *gens, **args)` — converts input expressions to `Poly` objects via `parallel_poly_from_expr`, constructs a `PolyRing` from generators/domain/ordering, **converts each `Poly` to a ring element via `ring.from_dict(poly.rep.to_dict())`**, then calls the core Gröbner algorithm.
   - `__iter__`, `__getitem__` — **if `options.polys` is set, yields/returns `Poly` objects; otherwise yields/returns symbolic expressions** (via `.exprs`).
   - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
@@ -572,6 +574,8 @@ Option processing and validation for `Poly` constructors and functions.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
 - `Symbols.default()` — returns a **lazy generator of numbered placeholder names** `s1, s2, s3, …` (via `numbered_symbols('s', start=1)`); used as default symbol names for algebraic decomposition when no explicit names are provided.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
+- `Auto` — boolean flag; defaults to `True`; **`postprocess` automatically sets `auto=False` when `domain` or `field` is explicitly provided** (disables automatic domain inference).
+- `Frac` — boolean flag for fraction field mode; defaults to `False`.
 - `Extension.preprocess(extension)` — validates extension parameter; `1` → `True`, `0` → raises `OptionError`; **empty iterable (e.g. `[]`) → `None` (silently disables extension)** rather than raising an error; non-empty iterable → set of extensions.
 - `build_options(gens, args)` — if `args` has exactly one key `'opt'` and no generators, **returns the existing `Options` object directly** (reuse); otherwise constructs a new `Options`.
 
@@ -664,7 +668,7 @@ Partial fraction decomposition.
   - `full=False` (default): uses undetermined coefficients method; `full=True`: uses Bronstein's algorithm.
 - `apart_undetermined_coeffs(P, Q)` — partial fractions via undetermined coefficients; factors denominator, assigns symbolic unknowns per factor power, builds a linear system by matching polynomial powers, and solves for unknowns.
 - `apart_full_decomposition(P, Q)` — Bronstein's full partial fraction decomposition.
-- `apart_list(f, x)` — structured partial fraction as `(common, poly_part, fraction_list)` tuple; **if input is atomic (plain number or symbol), returns the expression directly** (not a tuple), making the return type inconsistent for non-rational-function inputs.
+- `apart_list(f, x)` — structured partial fraction as `(common, poly_part, fraction_list)` tuple; **if no custom dummy generator is supplied, creates a default generator that yields the same `Dummy` symbol indefinitely** (used as placeholder variables in the decomposition); **if input is atomic (plain number or symbol), returns the expression directly** (not a tuple).
 - `assemble_partfrac_list` — reassemble from structured representation; **if roots are given as a `Poly`, constructs a `RootSum`; if roots are an explicit list of algebraic numbers, directly evaluates numerator/denominator at each root**.
 
 ### [`orthopolys.py`](orthopolys.py)
@@ -790,6 +794,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
 - `SubModule.syzygy_module()` (in `modules.py`) — compute kernel of the map from a free module to `self`; **filters out zero relations** from the result for convenience.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
+- `SubQuotientModule` (in `modules.py`) — submodule of a quotient module; `__init__` builds a `base` submodule by placing original generators first, then killed-module generators (ordering is critical).
+  - `_syzygies()` — computes kernel of the surjection onto the subquotient; **truncates full syzygy vectors to only the first `len(self.gens)` components**, projecting away the killed-module entries; relies on the generator ordering established in `__init__`.
 - `QuotientModule.is_submodule(other)` (in `modules.py`) — for two QuotientModules, **requires killed submodules to be equal AND base modules to have containment**; for SubQuotientModule, checks container identity.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `ModuleHomomorphism.__mul__` (in `homomorphisms.py`) — **if other is a `ModuleHomomorphism` with compatible domain/codomain, composes the two maps; otherwise attempts `ring.convert(other)` for scalar multiplication**; returns `NotImplemented` on `CoercionFailed`. `__rmul__` is aliased to `__mul__`.
@@ -816,6 +822,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
     - When both are `FiniteField` (GF(p)), **selects the one with the larger modulus** (via `default_sort_key`); if no known pairing matches, falls back to the expression domain `EX`.
+- `SimpleDomain` (in `simpledomain.py`) — base class for simple domains (ZZ, QQ); `inject(*gens)` **directly creates a polynomial ring over itself** (`self.poly_ring(*gens)`) without checking for generator overlaps (no existing generators to conflict with).
 - `CharacteristicZero` (in `characteristiczero.py`) — mixin for domains with infinitely many elements; `characteristic()` returns 0. Inherited by ZZ, QQ, RR, CC, algebraic fields.
 - `Ring` (in `ring.py`) — abstract base for ring domains.
   - `is_unit(a)` — test invertibility by attempting `revert`; `revert(a)` **only succeeds for the multiplicative identity** (raises `NotReversible` otherwise).

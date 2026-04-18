@@ -13,7 +13,7 @@ Defines basic indexed objects for representing array elements like `M[i, j]`.
 - `IndexedBase` — the stem/base of a concrete array-element expression (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`. Not related to abstract tensor algebra.
 - `Idx` — integer index with optional range; properties: `label`, `lower`, `upper`.
 - `IndexException` — raised for indexing errors.
-- No index analysis or contraction logic; purely data-model classes.
+- No index analysis, contraction logic, canonicalization, or structural equality (`equals`) methods; purely data-model classes.
 
 ---
 
@@ -52,7 +52,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `TIDS._check_matrix_indices` — handles matrix-style auto-indices during multiplication.
 - `Tensor` — single tensor (head + indices).
   - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (same label, opposite variance), rebuilds so those pairs become dummy/summation indices.
-  - `equals(other)` — structural equality via canonicalization: compares `(coeff, components, sorted free, sorted dum)` tuples after `canon_bp`.
+  - `equals(other)` — structural equality: handles zero (checks coeff), plain scalars (asserts no components), and general expressions via canonicalization tuple `(coeff, components, sorted free, sorted dum)` after `canon_bp`.
 - `TensMul` — product of tensors with a scalar coefficient.
   - `__mul__` — Einstein summation: contracts matching upper/lower index pairs across factors.
   - `__div__` / `__truediv__` — division by scalars only; raises `ValueError('cannot divide by a tensor')` if divisor is a `TensExpr`.

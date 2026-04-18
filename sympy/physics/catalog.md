@@ -147,6 +147,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Fourier` (QFT/IQFT) — `_represent_ZGate` builds Fourier matrix and embeds into full Hilbert space via tensor products with identity matrices on both sides when gate doesn't start at qubit 0 or total qubits exceed gate range.
   - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
+  - `Qubit._represent_ZGate` — Z-basis column vector: iterates bit values in reverse to compute binary→integer index, sets a 1 at that position in a 2^n-length vector. Supports sympy, numpy, scipy.sparse formats.
   - `IntQubit` — integer-to-binary qubit encoding: single int arg → uses minimum bits needed; two-int args → second specifies bit width, raises ValueError if width is insufficient to represent the integer. `as_int()` reconstructs integer from stored binary tuple.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape. Raises QuantumError if vector length is not a power of 2.
@@ -193,6 +194,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 - `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic; owns its own `_latex` and `_pretty` rendering (not delegated to `printing.py`).
   - `_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
+  - `Vector.doit(**hints)` — propagates keyword hints (e.g. `deep=False`) element-wise to each scalar coefficient via `applyfunc`; `simplify()` and `subs()` follow the same per-component pattern.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
 - `dyadic.py` — `Dyadic` class: tensor product of two vectors; owns its own `_pretty` and `_latex` rendering (not delegated to `printing.py`).

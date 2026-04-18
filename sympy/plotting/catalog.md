@@ -84,7 +84,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 ### `plot.py`
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
-- `PygletPlot` — top-level plot object; manages plot objects, axes, camera, window, and rendering thread.
+- `PygletPlot` — top-level plot object; manages plot objects, axes, camera, window, and rendering thread. Class docstring documents mode auto-detection rules (1 expr → Cartesian, 2–3 → parametric; 1 var → curve, 2 vars → surface) and variable interval syntax.
 - `__init__(*fargs, **win_args)` — pops `axes` option string from kwargs, parses it via `parse_option_string()`, and configures the `PlotAxes` object separately before passing remaining kwargs to the window.
 - `__setitem__(i, args)` — indexed assignment (`p[1] = expr`); parses args into a `PlotMode` and stores it.
   - Wraps `GeometryEntity` in a list even though it satisfies `is_sequence()`, preventing geometry objects from being unpacked as multiple arguments.
@@ -93,7 +93,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 ### `plot_mode.py`
 Plot mode registry and argument interpretation.
 
-- `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes.
+- `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes; implements mode resolution after `PygletPlot` parses inputs.
 - `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
 - `_find_i_vars()`, `_find_d_vars()` — infer independent/dependent variables from expressions.
 - `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.

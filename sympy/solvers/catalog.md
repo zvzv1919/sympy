@@ -38,7 +38,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - Post-solve assumption filtering: checks each candidate against the symbol's declared properties (e.g. positive, real) via `check_assumptions`.
   - Drops solutions that definitively violate assumptions (test=False); keeps solutions where verification is inconclusive (test=None) with optional warning.
   - Relational/inequality solutions (Relational, And, Or): assumptions on the variable are **not** verified — only a warning is emitted. Raises ValueError if more than one symbol is involved.
-- `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
+- `checksol(f, symbol, sol)` — validates a candidate algebraic-equation solution by substitution; does not handle ODE verification (see `checkodesol`) or domain/singularity checks (see `domain_check`).
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
@@ -134,7 +134,8 @@ Solves ordinary differential equations via classification and hint-based dispatc
 
 - `dsolve(eq, func, hint, ics)` — main ODE solver; classifies then applies best method.
 - `classify_ode(eq, func)` — classifies ODE into applicable solving hints without solving.
-- `checkodesol(ode, sol)` — validates ODE solution via multi-pass verification:
+- `checkodesol(ode, sol, func)` — validates ODE solution via multi-pass verification:
+  - If `func` is omitted, auto-detects via `_preprocess`; on failure, falls back to extracting applied undefined functions from the solution(s) (raises ValueError if not exactly one found).
   - Pass 1: direct substitution of solved f(x) into the ODE.
   - Pass 2: compares nth derivatives of both sides (for exact ODEs).
   - Pass 3: computes successive derivatives of candidate, solves for each d^n f/dx^n, then back-substitutes into ODE in decreasing order (n, n-1, …, 0).

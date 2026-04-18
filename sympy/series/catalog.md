@@ -22,7 +22,7 @@ General limit computation interface. Tries heuristics first, falls back to Grunt
 
 ### [`gruntz.py`](gruntz.py)
 Gruntz algorithm for computing limits via most-rapidly-varying (MRV) subexpression analysis.
-- `gruntz(e, z, z0, dir)` — main entry; converts finite-point limits to limits at infinity.
+- `gruntz(e, z, z0, dir)` — main entry; converts all limits to z→∞: finite z0 via z→z0+1/z (right) or z→z0−1/z (left), −∞ via z→−z.
 - `limitinf(e, x)` — compute limit as x → ∞ using MRV sets.
 - `mrv(e, x)` — find most rapidly varying subexpressions in continuous-variable limits.
 - `compare(a, b, x)` — compare growth rates of two subexpressions (continuous limits, not discrete additive-term dominance).
