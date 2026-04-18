@@ -138,6 +138,8 @@ Polynomial algebra, domains, Gröbner bases, factorization, root isolation, and 
   - `Wrt.preprocess`: parse 'with-respect-to' variable specification; comma/whitespace-separated string splitting via regex; trailing comma raises OptionError; Basic→stringified, iterable→mapped to str list.
 - `polyfuncs.py` — `interpolate` (construct interpolating polynomial; plain list of y-values defaults to x=1..n), `horner` (Horner form rewriting; multivariate: recursively applies to coefficients w.r.t. remaining generators), `rational_interpolate`.
 - `orthopolys.py` — `jacobi_poly`, `gegenbauer_poly`, `hermite_poly` (physicist's convention H_n with 2^n leading coefficient), `laguerre_poly`, `legendre_poly`, `chebyshevt_poly`, `chebyshevu_poly`: computational polynomial generators; low-level `dup_hermite`/`dup_legendre`/etc. implement recurrence in dense representation; when x=None, wraps result in PurePoly with Dummy('x') instead of Poly.
+- `sqfreetools.py` — square-free decomposition: `dup_sqf_p`/`dmp_sqf_p` (test if square-free via GCD with derivative), `dup_sqf_norm` (square-free norm over algebraic domains), `dup_sqf_list`/`dmp_sqf_list`; `dmp_gff_list` (greatest factorial factorization; raises MultivariatePolynomialError for u>0).
+- `groebnertools.py` — `groebner` (low-level Gröbner basis computation; `_buchberger` improved Buchberger algorithm, `_f5b` F5B algorithm); auto-converts to field domain.
 - `factortools.py` — low-level factorization: Hensel lifting, Zassenhaus algorithm; `dmp_zz_diophantine` (multivariate Diophantine equation solver for Wang/EEZ factorization; reduces to univariate via evaluation points, lifts solutions via Taylor-like expansion with differentiation and factorial division).
 - `numberfields.py` — `minimal_polynomial` (two algorithms: composition-based default, Gröbner-based fallback via `_minpoly_groebner`), algebraic field extensions; `_minpoly_groebner` (computes minimal polynomial via Gröbner bases; `bottom_up_scan` handles negative rational exponents on sums by computing algebraic inverse via primitive element, then re-scanning the inverted base raised to positive exponent).
 - `distributedmodules.py` — sparse distributed module elements (free modules over multivariate rings).
@@ -295,6 +297,7 @@ String/code representation of SymPy expressions. Outputs text, NOT callable code
 - `precedence.py` — bracket-necessity system; `precedence_PolyElement` (4-way dispatch: generator→Atom, ground→delegate, term→Mul, multi-term→Add), `precedence_FracElement`.
 - `pretty/pretty.py` — `PrettyPrinter`: 2D human-readable output; `_print_meijerg` (4-parameter 2×2 grid with annotated G symbol), `_print_hyper`, `_print_Integral`, `_print_Matrix`.
   - `_print_BasisDependent`: vector/dyadic Unicode rendering; coeff==1 → omitted, coeff==−1 → explicit "(-1) " prefix, general → parenthesized; ASCII raises NotImplementedError.
+- `pretty/pretty_symbology.py` — Unicode/ASCII glyph abstraction layer; `pretty_use_unicode`/`pretty_try_use_unicode` (detect/set Unicode support); `U` (lookup Unicode chars by name); Greek alphabet tables, atom tables, sub/superscript digit maps.
 - `dot.py` — `dotprint`: generate Graphviz DOT digraph of expression tree; `repeat=True` disambiguates same subexpressions at different positions by appending position tuples to node IDs; `dotedges`, `dotnode`, `purestr`.
 - `tree.py` — `print_node` (class name + string repr + non-None assumptions for each node), `tree` (recursive text tree via `print_node` + `pprint_nodes`), `print_tree`, `pprint_nodes` (last sibling uses spaces instead of pipe characters for continuation lines).
 - `defaults.py` — `DefaultPrinting` mixin: aliases `__repr__` to `__str__` so elements in Python lists/dicts display in human-readable form; forces default (lex) ordering regardless of global setting.
@@ -397,6 +400,9 @@ Physics subpackages: quantum mechanics, classical mechanics, optics, units, seco
 - `mechanics/particle.py` — `Particle`: zero-dimensional massive body; `linear_momentum` (mass × point velocity in frame), `angular_momentum`, `kinetic_energy`.
 - `mechanics/functions.py` — `inertia` (construct inertia dyadic from frame + 6 components; TypeError if frame arg invalid), `msubs`, `angular_momentum`, `kinetic_energy`.
   - `_smart_subs`: intelligent substitution; selectively simplifies only subexpressions whose denominators become zero.
+- `mechanics/kane.py` — `KanesMethod`: Kane's method dynamics; generates `[M] udot = forcing` from bodies, forces, generalized coordinates/speeds; `_initialize_vectors` (None→empty Matrix conversion), auxiliary equations for non-contributing forces.
+- `mechanics/lagrange.py` — `LagrangesMethod`: Lagrange's method for equations of motion; requires Lagrangian and generalized coordinates; auto-generates Lagrange multipliers for constraint equations; `mass_matrix_full`, `forcing_full`.
+- `mechanics/models.py` — `multi_mass_spring_damper`: sample multi-DOF spring-damper-mass symbolic model; returns KanesMethod object; optional gravity and time-varying external forces.
 - `vector/frame.py` — `CoordinateSym` (coordinate base scalar symbol associated with a ReferenceFrame; `__new__` validates index in range 0–2, raises ValueError for out-of-range dimension number), `ReferenceFrame`: `__getitem__` (dual dispatch: numeric→coord var, string→basis vector), `orient` (computes direction cosine matrix: Body multiplies elementary rotations in given order a1·a2·a3, Space reverses to a3·a2·a1; also Quaternion and arbitrary-Axis via Rodrigues' formula; manages DCM cache invalidation).
   - `ang_acc_in`: returns angular acceleration; fallback when not explicitly set: differentiates angular velocity via `ang_vel_in(otherframe).dt(otherframe)`.
   - `set_ang_vel`/`set_ang_acc`: store bidirectionally with negated reverse; wraps scalar 0 to Vector(0).
@@ -405,6 +411,10 @@ Physics subpackages: quantum mechanics, classical mechanics, optics, units, seco
 - `vector/dyadic.py` — `Dyadic`: second-rank tensor (outer product of vectors); `__and__`/`dot` (dispatches: Dyadic×Dyadic → Dyadic via pairwise inner products, Dyadic×Vector → Vector via right-contraction); `to_matrix` (3×3 matrix form w.r.t. reference frame(s); single frame → same frame for rows and columns), `express` (re-express in alternate frame(s)); `applyfunc` (apply function to each scalar coefficient; raises TypeError if argument is not callable), `__eq__`, `__str__`, `_latex`.
 - `vector/printing.py` — `VectorStrPrinter` (_print_Derivative: dot-notation only for UndefinedFunction; defined functions like sin/cos fall back to standard StrPrinter), `VectorLatexPrinter`, `VectorPrettyPrinter` (`_print_Derivative`: renders time derivatives via Unicode combining diacritical marks — COMBINING DOT ABOVE/DIAERESIS/THREE DOTS/FOUR DOTS inserted at midpoint of symbol string): Newton dot notation for time-derivatives.
   - `init_vprinting`: globally enables compact temporal derivative display (e.g. f') across all output formats.
+- `quantum/fermion.py` — `FermionOp` (fermionic creation/annihilation operator; anticommutation {c, c†}=1), `FermionFockKet`, `FermionFockBra`: fermionic Fock space states.
+- `quantum/pauli.py` — `SigmaX`, `SigmaY`, `SigmaZ`, `SigmaMinus`, `SigmaPlus`: Pauli spin operators with commutation/anticommutation relations; `_eval_power` for integer exponents; operators with different names commute.
+- `quantum/qubit.py` — `Qubit`, `QubitBra`, `IntQubit`, `IntQubitBra`: quantum computing qubit states (validates 0/1 values); `qubit_to_matrix`, `matrix_to_qubit`, `measure_all`, `measure_partial`, `measure_partial_oneshot`.
+- `quantum/sho1d.py` — 1D simple harmonic oscillator: `RaisingOp` (a†), `LoweringOp` (a), `NumberOp` (N), `Hamiltonian`; ladder operators on `SHOKet`/`SHOBra` Fock states; `_represent_XOp` raises NotImplementedError (commented-out position basis logic).
 - `quantum/dagger.py` — `Dagger` (general Hermitian conjugate; subclass of `adjoint` from `functions/elementary/complexes.py`; `__new__` tries `.adjoint()`, then `.conjugate().transpose()` — bug: if neither method exists, `obj` is never assigned, causing UnboundLocalError). NOT `matrices/expressions/adjoint.py`.
 - `quantum/gate.py` — qubit gate operators: `HadamardGate`, `XGate`, `YGate`, `ZGate`, `PhaseGate`, `TGate`, `SwapGate`, `CNotGate`, `CGate`, `UGate`.
   - `normalized`: global toggle for Hadamard 1/√2 scaling factor in matrix representation. Also `gate_sort`, `gate_simp`, `random_circuit`.
@@ -455,6 +465,7 @@ Physics subpackages: quantum mechanics, classical mechanics, optics, units, seco
 - `unitsystems/units.py` — `UnitSystem`: `print_unit_base` (express derived unit in basis; sorts by decreasing power, normalizes scale factors), `get_unit`, `extend`.
 - `unitsystems/dimensions.py` — `Dimension` (physical quantity characteristic; filters zero-valued exponent entries during construction for equality invariance), `DimensionSystem`: `get_dim` (lookup by string name/symbol or Dimension object; returns None if not found), `extend`, `sort_dims`.
 - `unitsystems/quantities.py` — `Quantity`: physical quantity as (factor, unit) pair; `add` (converts other to same unit before combining; raises TypeError for non-Quantity operands), `mul`, `div`, `convert_to`.
+- `unitsystems/prefixes.py` — `Prefix`: unit prefix with name, abbreviation, and factor (base^exponent, default base=10); `__mul__` returns 1×factor when combined prefix not in global registry; `prefix_unit` creates all prefixed unit variants.
 - `unitsystems/systems/mksa.py` — MKSA (meter-kilogram-second-ampere) dimension/unit definitions; extends MKS with current as fourth base dimension. Defines voltage, impedance, capacitance, inductance, charge, magnetic_density, magnetic_flux dimensions and their SI units.
 - `unitsystems/simplifiers.py` — `dim_simplify`: dimensional analysis simplification.
 
@@ -497,6 +508,7 @@ New-style 3D vector algebra module (sympy.vector). NOT physics.vector.
 ### [`stats/`](stats/catalog.md)
 Probability and statistics: random variables, distributions, expected values.
 - `crv_types.py` — continuous distribution classes: `BetaDistribution`, `GammaDistribution`, `GammaInverseDistribution` (inverse gamma: x^(-α-1)·exp(-β/x) density), `KumaraswamyDistribution`, `WeibullDistribution` (power-law × stretched exponential; `sample` delegates to `random.weibullvariate`), `VonMisesDistribution`, etc.
+- `frv_types.py` — finite discrete RV types: `FiniteDistributionHandmade` (user-provided dict→Dict), `DiscreteUniform`, `Die`, `Bernoulli`, `Coin`, `Binomial`, `Hypergeometric`; `FiniteRV` (public entry point wrapping dict of outcomes→probabilities).
 - `crv.py` — `ContinuousPSpace` (`probability`: univariate via `where`; multivariate fallback computes density of lhs-rhs and reduces to univariate), `SingleContinuousDistribution`, `_inverse_cdf_expression`.
 - `frv.py` — `FiniteDomain` (`as_boolean`: convert finite sample space to Or-of-And-of-Eq propositional logic), `SingleFiniteDomain`, `FinitePSpace`.
   - `ConditionalFiniteDomain`: restricted discrete event space; `_test` evaluates condition on outcome, falls back to equality LHS==RHS when substitution doesn't yield bool.
@@ -530,6 +542,7 @@ Symbolic integration: indefinite, definite, transforms, Risch algorithm, Meijer-
 Series expansions, limits, sequences, formal power series, Fourier series, and asymptotic analysis.
 - `residues.py` — `residue`: compute residue of expression at a pole via series expansion; iterative retry loop with increasing term counts; workaround for nseries bug: when series has Order term but non-Order part is zero, skips iteration and retries with more terms.
 - `order.py` — `Order` (big-O notation): `__new__` (handles nested Order expressions; raises NotImplementedError if same variable has different limit point), `_eval_power` (nonneg exponent → raise inner expr; O(1) exponent → identity).
+- `gruntz.py` — `limitinf` (compute limit at ∞ via Gruntz algorithm), `compare` (compare growth rates via log ratio), `mrv` (most rapidly varying subexpressions), `rewrite` (series expansion of mrv set; most complex part), `leadterm`, `sign`: asymptotic limit computation.
 - `limits.py` — `Limit.doit`: compute limits using the Gruntz algorithm; rewrites factorial→gamma only when approach point is positive (factorial is zero for negative inputs unlike gamma); Mul at ∞ uses leading-term substitution trick; falls back to heuristics, then `limit_seq` for sequences.
 - `fourier.py` — `FourierSeries`, `fourier_series` (even symmetry → cosine-only, odd → sine-only, skipping unnecessary integrals): precomputed trigonometric series with `scale`, `shift`, `shiftx`, `scalex` (fast coefficient transforms without recomputing integrals).
 - `formal.py` — `fps`, `rational_algorithm` (compute FPS coefficients via partial fraction decomposition of rational function; no-constant-term denominator factors treated as independent/separated terms; returns None if result still contains variable or infinity), `solve_de`, `hyper_re`, `exp_re`: formal power series via DE-to-recurrence and partial-fraction approaches.
@@ -557,6 +570,7 @@ Combinatorics: permutation groups, polyhedra, partitions, free groups, tensor ca
 - `tensor_can.py` — `double_coset_can_rep`, `dummy_sgs` (symmetry generators for contracted index pairs): Butler-Portugal canonicalization; `canonical_free` (lexicographic minimization of free indices via slot symmetries; empty base → immediate copy return); `tensor_gens` (BSGS for multiple tensors of same type; early-returns identity when base is empty and fewer than 2 tensors lack fixed indices); `gens_products` (combined BSGS for multiple distinct tensor types via iterative direct product of per-type symmetry groups); `get_minimal_bsgs`, `_is_minimal_bsgs`.
 - `util.py` — `_check_cycles_alt_sym` (detect prime-length cycles with n/2 < p < n-2 for alt/sym group recognition), `_base_ordering`, `_distribute_gens_by_base`.
 - `testutil.py` — `graph_certificate` (isomorphism-invariant identifier for undirected graphs; encodes vertices as symmetric tensors with edge-paired indices and computes canonical form via `canonicalize`), `_cmp_perm_lists`, `_verify_bsgs`.
+- `generators.py` — `symmetric`, `cyclic`, `alternating`, `dihedral`: group generator functions yielding Permutation sequences; dihedral n=1/n=2 use special-case embeddings in S₂/S₄.
 - `partitions.py` — `Partition`, `IntegerPartition`: set and integer partition classes; `random_integer_partition` (random partition summing to n; raises ValueError for n < 1).
 - `polyhedron.py` — `Polyhedron`: labeled-vertex solid; `__new__` normalizes face tuples by rotation and reversal to lowest lexical ordering (cw and ccw windings map to same face); `rotate` (apply permutation in-place; integer → pgroup lookup with validation, Permutation object → size check only, no physical-validity check), `edges`, `reset`.
 
@@ -600,6 +614,7 @@ Plotting backends for 2D/3D mathematical visualization.
   - `__setitem__`: index-based function assignment; wraps GeometryEntity in list to prevent sequence unpacking during parse; validates non-negative integer index.
 - `pygletplot/plot_axes.py` — `PlotAxes`: 3D axis display; `__init__` processes alias kwargs (`none`, `frame`, `box`, `ordinate`) sequentially — last truthy alias wins style; `flexible_boolean` parses mixed string/bool inputs.
 - `pygletplot/plot_mode.py` — `PlotMode._interpret_args` (argument parser: when first arg is a GeometryEntity, extracts coordinate functions via `arbitrary_point()` and range via `plot_interval()`), `_extract_options`.
+- `pygletplot/plot_curve.py` — `PlotCurve`: 1-parameter 3D curve renderer; undefined evaluation points stored as None, causing line-segment breaks during OpenGL draw; bounding box computation, color vertex callbacks.
 - `pygletplot/color_scheme.py` — `ColorScheme` (surface appearance mapping); `_interpret_args` (3 per-channel range tuples (r1,r2),(g1,g2),(b1,b2) transposed to endpoint RGB triples); `ColorGradient` (multi-stop color interpolation).
 
 ### [`geometry/`](geometry/catalog.md)
@@ -608,6 +623,7 @@ Euclidean geometry: points, lines, polygons, circles, ellipses, planes.
   - Module-level `scale(x, y, pt)`: 3×3 affine scaling matrix; when reference point given, composes translate-to-origin · scale · translate-back. Also `translate`, `rotate`.
   - `GeometrySet` (hybrid GeometryEntity+Set): `_union` (FiniteSet merge: filters contained points, returns None if no points overlap — signals no simplification possible), `_intersect`, `_contains`.
 - `ellipse.py` — `Ellipse` (`minor`/`major`: shorter/longer axis; falls back to vradius/hradius when symbolic radii ordering is indeterminate; `circumference`: uses elliptic integral E(e²); degenerate eccentricity=1 → 2π·hradius shortcut), `Circle`: tangent lines, intersection, `encloses_point`; `normal_lines` (perpendicular lines from point; fast Poly.real_roots with solve fallback on DomainError/PolynomialError).
+- `line.py` — `LinearEntity` (abstract base for line-like objects; validates two unique points of equal dimension), `Line`, `Ray`, `Segment`: 2D linear entities; `slope`, `coefficients`, `intersection`, `distance`, `contains`, `is_parallel`, `is_perpendicular`.
 - `line3d.py` — `Line3D`, `Ray3D`, `Segment3D`: 3D linear entities; `Segment3D.distance` (point-to-segment via projection parameter t).
 - `plane.py` — `Plane`: `projection_line` (project line onto plane; returns Point3D if line is along normal), `angle_between`, `distance`, `intersection`, `are_concurrent`.
 - `point.py` — `Point` (2D/3D Euclidean): `Point3D.__new__` (auto-pads 2-coord input with zero for third component), `intersection` (delegates to other entity if not a Point), `Point2D.rotate` (counterclockwise rotation by angle around optional pivot; translates to origin, applies 2D rotation matrix, translates back), `Point2D.scale`, `Point2D.translate`. NOT `vector/point.py` (coordinate system points).
@@ -624,6 +640,7 @@ Holonomic function representation via differential equations.
   - `_indicial`, `_extend_y0`, `evalf` (numerical evaluation via RK4/Euler).
   - `_convert_meijerint`: convert expression to holonomic form via Meijer G-function decomposition; absorbs x-power prefactors into G-function parameters before converting each term.
   - `from_meijerg`/`from_hyper`: convert Meijer G / hypergeometric functions to holonomic form; constructs ODE from parameters, finds initial conditions by incrementing evaluation point when function/derivatives diverge.
+- `linearsolver.py` — `NewMatrix`: custom MutableDenseMatrix subclass that bypasses sympification; `gauss_jordan_solve` with parametric free-variable support for underdetermined systems.
 - `recurrence.py` — `RecurrenceOperator` (shift operator algebra with `__eq__`), `HolonomicSequence`: recurrence-based holonomic function algebra.
 - NOT recurrence solvers (those are `solvers/recurr.py`). NOT general ODE solving (that's `solvers/ode.py`).
 
@@ -633,11 +650,11 @@ Abstract index notation for tensors: `TensorHead`, `TensorIndex`, `TIDS`, Einste
   - `tensor_indices`: create named indices from comma-separated string; returns bare object for single name, list for multiple.
 - `index_methods.py` — `get_contraction_structure` (recursive analysis of repeated/dummy indices in expressions; returns nested dict mapping index tuples to term sets; Pow/exp recurse base and exponent independently), `get_indices`.
 - `indexed.py` — `Idx` (integer subscript for array access; single dimension arg→lower=0, upper=dim-1; numeric label short-circuits to number), `Indexed`, `IndexedBase`.
-- `array/` — N-dimensional arrays (dense/sparse, mutable/immutable): `Array`, `tensorproduct`, `tensorcontraction` (index summation); `NDimArray._scan_iterable_shape` (recursive nested-collection validator: infers shape from iterable structure, raises ValueError "could not determine shape unambiguously" on ragged/inconsistent nesting depths); `NDimArray._parse_index` (convert multi-axis coordinate tuple to flat storage index via row-major linearization; validates rank and per-axis bounds).
+- `array/` — N-dimensional arrays (dense/sparse, mutable/immutable): `Array`, `tensorproduct`, `tensorcontraction` (index summation), `derive_by_array` (element-wise symbolic derivatives); `NDimArray._scan_iterable_shape` (recursive nested-collection validator: infers shape from iterable structure, raises ValueError "could not determine shape unambiguously" on ragged/inconsistent nesting depths); `NDimArray._parse_index` (convert multi-axis coordinate tuple to flat storage index via row-major linearization; validates rank and per-axis bounds).
   - `DenseNDimArray.__getitem__`: tuple-of-slices → new typed array with computed shape; plain (non-tuple) slice → raw `self._array[index]` elements directly (NOT a new array object).
   - `NDimArray.__mul__`: scalar-only; raises ValueError("scalar expected, use tensorproduct(...)") for iterables, other arrays, or Matrix inputs.
   - `SparseNDimArray.tomatrix`: convert to SparseMatrix; raises ValueError if rank ≠ 2.
-  - `derive_by_array`: element-wise symbolic derivatives w.r.t. basis variables; combine with contraction for divergence-like operations.
+  - `array/arrayop.py` — `tensorproduct`, `tensorcontraction`, `derive_by_array`: array operation implementations; `_arrayfy` converts MatrixBase/list/tuple to ImmutableDenseNDimArray.
 - NOT quantum tensor products (those are `physics/quantum/tensorproduct.py`).
 - NOT second quantization index ordering (that's `physics/secondquant.py`).
 

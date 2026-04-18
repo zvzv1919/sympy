@@ -848,6 +848,10 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
     **Clears all denominators first** by computing the product of all entry denominators, making entries integral before delegation.
   - For product/mixed orders given as tuples, builds the product order first, then checks `order.is_global`.
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
+- `FractionField` (in `fractionfield.py`) — multivariate rational function field domain `K(x₁,…,xₙ)` using `FracField` dtype.
+  - `from_AlgebraicField(a, K0)` — converts algebraic number to fraction field element **only if `K1.domain == K0`** (target's ground domain equals source field).
+  - **Silently returns `None` otherwise** (no error, no attempt), unlike other `from_*` methods which always delegate to `K1.domain.convert`.
+  - `from_PolynomialRing(a, K0)` — converts polynomial ring element; requires same or subset generators; **returns `None` if generators are incompatible**.
 - `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
   - `from_FractionField(a, K0)` — convert between fraction fields: same gens → direct copy or domain conversion; source gens ⊂ target gens → reorders monomials; **incompatible gens → implicitly returns `None`** (silent conversion failure).
