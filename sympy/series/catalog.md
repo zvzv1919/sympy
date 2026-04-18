@@ -5,7 +5,7 @@ The `series` module handles series expansions, limits, sequences, and asymptotic
 - **Limit computation**: `limits.py` (entry point + heuristic evaluation of composite expressions) → `gruntz.py` (full Gruntz algorithm when heuristics bail out); `limitseq.py` (discrete sequence limits).
 - **Series expansions**: `series.py` (thin wrapper), `formal.py` (formal power series), `fourier.py` (Fourier series).
 - **Sequence algebra**: `sequences.py` — discrete sequence objects and term-wise arithmetic operations.
-- **Utilities**: `order.py` (big-O), `residues.py`, `approximants.py`, `acceleration.py`, `kauers.py` (finite differences).
+- **Utilities**: `order.py` (big-O), `residues.py`, `approximants.py`, `acceleration.py` (convergence acceleration & sequence extrapolation), `kauers.py` (finite differences).
 - **Base classes**: `series_class.py` provides `SeriesBase`; `sequences.py` provides `SeqBase`.
 
 ---
@@ -96,9 +96,9 @@ Generator for consecutive Padé approximants from a raw coefficient list (not fr
 - Terminates early when the internal coefficient list becomes all zeros (no further approximants producible).
 
 ### [`acceleration.py`](acceleration.py)
-Convergence acceleration methods for slowly converging series.
-- `richardson(A, k, n, N)` — Richardson extrapolation.
-- `shanks(A, k, n, m)` — Shanks transformation.
+Convergence acceleration and extrapolation methods for slowly converging series and sequences.
+- `richardson(A, k, n, N)` — Richardson extrapolation; approximates series limit using weighted finite differences of N+1 consecutive partial sums.
+- `shanks(A, k, n, m)` — Shanks transformation (sequence extrapolation); supports m-fold recursive application (m > 1) where each pass builds on a table of intermediate values propagated from the previous pass.
 
 ### [`kauers.py`](kauers.py)
 Finite difference operators for symbolic sums.

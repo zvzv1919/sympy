@@ -12,6 +12,7 @@ Defines basic indexed objects for representing array elements like `M[i, j]`.
   - `shape` — returns base shape if defined; otherwise infers dimensions from each `Idx`'s `upper - lower + 1`. Raises `IndexException` if indices lack bounds attributes or if bounds are None.
   - `_eval_derivative(wrt)` — derivative w.r.t. another `Indexed`: returns product of KroneckerDeltas if same base and equal index count; raises `IndexException` if index counts differ; returns zero for different bases.
 - `IndexedBase` — the stem/base of a concrete array-element expression (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`. Not related to abstract tensor algebra.
+  - `__getitem__` — if shape is defined, validates index count matches dimensionality; raises `IndexException("Rank mismatch.")` when a single scalar index is given to a multi-dimensional base or when tuple length ≠ shape length.
 - `Idx` — integer index with optional range; properties: `label`, `lower`, `upper`.
 - `IndexException` — raised for indexing errors.
 - No index analysis, contraction logic, canonicalization, or structural equality (`equals`) methods; purely data-model classes.
@@ -97,7 +98,7 @@ Concrete N-dimensional array types (dense/sparse, mutable/immutable) and array o
 
 Base class for all N-dim arrays.
 
-- `NDimArray` — abstract base providing shape, rank, `_parse_index`, `applyfunc`, `tolist`.
+- `NDimArray` — abstract base providing shape, rank, `_parse_index` (converts multi-dim index tuple to flat offset; raises `ValueError` for wrong axis count), `applyfunc`, `tolist`.
   - `diff(*args)` — differentiates each element w.r.t. given symbol(s); returns a new array of the **same shape**.
 - `ImmutableNDimArray` — immutable base (SymPy `Basic` subclass).
 

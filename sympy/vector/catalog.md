@@ -4,7 +4,8 @@
 
 ### [`basisdependent.py`](basisdependent.py)
 Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
-- `BasisDependent(Expr)` — superclass providing arithmetic (+, -, *, /), `evalf`/`n` (numerical evaluation), `simplify`, `trigsimp`, `factor`, `diff` (rejects `BasisDependent` args with `TypeError`), `doit`.
+- `BasisDependent(Expr)` — superclass providing Python dunder arithmetic (`__add__`, `__mul__`, `__div__`, `__rdiv__`/`__rtruediv__` for reverse division, etc.), `evalf`/`n`, `simplify`, `trigsimp`, `factor`, `diff`, `doit`.
+- `__rdiv__`/`__rtruediv__` — handles `scalar / vector_or_dyadic`; returns a `TypeError` object (known bug: returns instead of raising).
 - `evalf` decomposes into scalar coefficients and basis units, evaluates each scalar via `components` mapping, then reassembles.
 - `BasisDependentAdd` — represents sums of basis-dependent terms.
 - `BasisDependentMul.__new__` — scalar × basis-dependent product; counts non-scalar operands and raises `ValueError` if more than one (prevents e.g. vector×vector); distributes scalar over `BasisDependentAdd` sums.
@@ -18,14 +19,14 @@ Concrete vector classes built on `BasisDependent`.
   - `cross` dispatches on operand type: Vector → Vector (via custom inline 3×3 determinant), Dyadic → Dyadic (distributes cross over each dyadic component's first basis vector, then re-forms outer products).
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system; `__new__` validates index ∈ {0,1,2} (`ValueError`) and system type (`TypeError`).
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
-- `_vect_div` — division dispatch helper; raises `TypeError` if both operands are vectors, `ValueError` on divide-by-zero, otherwise returns `VectorMul` with inverse scalar.
+- `_vect_div` — forward-division computation helper (called by `BasisDependent.__div__`); raises `TypeError` if both operands are vectors, `ValueError` on divide-by-zero, otherwise returns `VectorMul` with inverse scalar.
 
 ### [`dyadic.py`](dyadic.py)
 Dyadic tensor classes built on `BasisDependent`.
 - `Dyadic` — superclass for dyadic tensors (tensor/outer products of vectors); `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross` (Dyadic × Vector → Dyadic; crosses each component's second basis vector with the operand), `to_matrix`.
 - `BaseDyadic(AtomicExpr)` — atomic outer product of two base vectors; `__new__` validates both args are `BaseVector`/`VectorZero` (`TypeError` otherwise), returns `Dyadic.zero` if either is the zero vector.
 - `DyadicAdd`, `DyadicMul`, `DyadicZero` — sum, scalar product, and zero specializations.
-- `_dyad_div` — division dispatch helper; raises `TypeError` if both operands are dyadics or if dividing by a dyadic, otherwise returns `DyadicMul` with inverse scalar.
+- `_dyad_div` — forward-division computation helper (called by `BasisDependent.__div__`); raises `TypeError` if both operands are dyadics or if dividing by a dyadic, otherwise returns `DyadicMul` with inverse scalar.
 
 ### [`scalar.py`](scalar.py)
 Coordinate variable symbols.

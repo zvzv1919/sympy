@@ -41,6 +41,8 @@ Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 ### [`core.py`](core.py)
 Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicMeta` metaclass, `all_classes` registry.
 
+- `BasicMeta.__cmp__` — metaclass comparison for canonical ordering of symbolic types; looks up both class names in `ordering_of_classes`; when both are unlisted, falls back to lexicographic comparison of class names
+
 ### [`singleton.py`](singleton.py)
 `S` registry and `Singleton` metaclass ensuring unique instances (S.Zero, S.One, S.NaN, S.Infinity, etc.).
 
@@ -201,6 +203,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `equals(other, failing_expression)` — determines symbolic equality when `simplify(self - other)` fails to produce zero; multi-stage: numerical probing, surd self-consistency, then minimal polynomial of the difference (if `mp.is_Symbol`, difference is zero → True; otherwise False)
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation moves value toward zero, else None
   - When `c` is an Add, extracts its rational primitive before attempting factoring; when `c` is a Mul, recursively splits into two-term factors
+  - Numeric special cases: NegativeInfinity ÷ negative c → Infinity, ÷ positive c → NegativeInfinity; ComplexInfinity ÷ any nonzero → ComplexInfinity; Infinity ÷ positive → Infinity
   - Numeric `extract_additively`: requires diff has same sign as self AND smaller magnitude (overshooting zero returns None)
   - Add `extract_multiplicatively`: requires all terms individually divisible
 - `as_coefficient(expr)` — returns scalar multiplier `r` such that `self == r*expr`, or None if self is not a pure scalar multiple of expr

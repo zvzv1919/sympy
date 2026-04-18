@@ -90,7 +90,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
     - `TensorProductHilbertSpace.eval` — merges adjacent like Hilbert spaces into `TensorPowerHilbertSpace`: two powers with same base → combined exponent; plain space adjacent to its power → exponent+1; two identical plain spaces → power of 2.
     - `TensorPowerHilbertSpace.eval` — validates exponent when raising a Hilbert space to a power: single-atom exponent must be a non-negative Integer or Symbol (raises ValueError otherwise); multi-term exponent (e.g. n+42) only checks each atom is Integer or Symbol but does NOT enforce non-negativity of integer components.
-  - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
+  - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components.
+  - `DifferentialOperator` (d/dx applied to wavefunctions): applies to Wavefunction by substituting the placeholder function with the wavefunction's expression, then preserving the original coordinate bounds (args[1:]) in the resulting Wavefunction.
   - `qexpr.py` — `QExpr._eval_adjoint`: if parent Expr adjoint returns None, wraps in Dagger; then propagates `hilbert_space` onto the result if it is a QExpr instance. `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
     - `enumerate_states(state, ...)` — generates indexed copies of an abstract vector (Ket/Bra) given a list of indices or a start index + count; delegates to `state._enumerate_state()`; returns empty list if the state raises NotImplementedError.
@@ -98,6 +99,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
     - `Wavefunction` — continuous-basis representation (Function subclass). Constructor converts Python tuples to Tuple objects before parent call to avoid type-check errors.
     - `Wavefunction.norm` — L2 norm: integrates |expr|² over each coordinate variable within its bounds, returns sqrt of result. `is_normalized` compares norm to 1.0.
+    - `Wavefunction.normalize()` — returns a rescaled Wavefunction with unit norm; raises NotImplementedError if norm is infinite (non-normalizable function).
     - `BraBase._represent` — default bra representation: delegates to the dual ket's `_represent` and applies Dagger (conjugate transpose) to the result.
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
@@ -205,7 +207,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 - `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic; owns its own `__str__`, `_latex`, and `_pretty` rendering (not delegated to `printing.py`).
   - `__str__`/`_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
-  - `Vector.doit(**hints)` — propagates keyword hints (e.g. `deep=False`) element-wise to each scalar coefficient via `applyfunc`; `simplify()` and `subs()` follow the same per-component pattern.
+  - `Vector.doit(**hints)` — propagates keyword hints (e.g. `deep=False`) element-wise to each scalar coefficient; `simplify()` and `subs()` follow the same per-component pattern.
+  - `Vector.applyfunc(f)` — applies a user-supplied function to each scalar component; raises TypeError if `f` is not callable.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
 - `dyadic.py` — `Dyadic` class: tensor product of two vectors; owns its own `_pretty` and `_latex` rendering (not delegated to `printing.py`).
@@ -263,6 +266,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `angular_momentum(point, frame, *body)` — sums angular momenta of Particles/RigidBodies; validates Point and ReferenceFrame types.
   - `linear_momentum`, `kinetic_energy`, `potential_energy` — system-level aggregators that sum per-body contributions (delegate to each body's own method).
   - `Lagrangian(frame, *body)` — computes T−V (kinetic minus potential energy) for a collection of Particles/RigidBodies in a given frame; returns a scalar expression.
+  - `find_dynamicsymbols(expression, exclude=None)` — finds all time-dependent (`dynamicsymbols`) in an expression; optional `exclude` kwarg must be iterable (raises TypeError if a bare symbol is passed instead of a list).
 - `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
 - `models.py` — pre-built example multi-body systems for testing/demos; **not exported by `__init__.py`** — must be imported explicitly (`from sympy.physics.mechanics.models import ...`). `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
 

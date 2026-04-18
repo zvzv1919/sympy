@@ -140,6 +140,7 @@ Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (i
 - `AllArgs`, `AnyArgs`, `ExactlyOneArg`: vectorize a predicate over expression arguments.
 - `ClassFactRegistry` / `fact_registry`: the expression-type-keyed **registry** of logical inference rules for SAT solving; `__getitem__` returns the union of rules for the queried class and all its registered superclasses (via `issubclass`), so child types inherit parent-type rules. `register_fact()` populates this registry.
 - Module-level loop registers ~40 inference rules (e.g., `Mul` → `Implies(AllArgs(Q.positive), Q.positive)`) covering `Add`, `Mul`, `Pow`, `Abs`, `Number`, `Integer`, `MatMul`.
+  - `NumberSymbol` (pi, E) and `ImaginaryUnit` have **separate** `CheckOldAssump` registrations because `NumberSymbol` does not subclass `Number`; the superclass-based lookup in `ClassFactRegistry` therefore won't inherit `Number`'s rules for them.
 
 ---
 

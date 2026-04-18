@@ -135,6 +135,9 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `NumPyPrinter` subclass — vectorized NumPy output; prints sequences as tuples (for numba nopython compatibility).
   - `_print_DotProduct` — emits `dot(a, b)` with automatic transpose to ensure 1×n by n×1 orientation when vector shapes don't match.
   - `_print_MatMul` — chains `.dot()` calls for matrix multiplication.
+- `NumExprPrinter` subclass — generates string expressions for `numexpr.evaluate()` (string-based evaluation, not namespace-based).
+  - `_numexpr_functions` dict maps SymPy function names to numexpr equivalents; unmapped functions checked for `_imp_` fallback before raising `TypeError`.
+  - Blacklists all Matrix types.
 
 ### [`python.py`](python.py)
 `PythonPrinter` — generates executable Python code strings.
@@ -159,6 +162,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`mathml.py`](mathml.py)
 `MathMLPrinter` — generates MathML XML markup using DOM, prioritizing content markup.
+- `mathml_tag(e)` — resolves an expression to its MathML tag name: walks the class MRO against a translate dict; if no ancestor matches, falls back to lowercasing the class name.
 
 ---
 

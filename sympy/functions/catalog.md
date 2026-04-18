@@ -166,7 +166,12 @@ Complex number component functions.
 Rounding functions: `floor`, `ceiling`, `frac`.
 
 #### [`elementary/miscellaneous.py`](elementary/miscellaneous.py)
-Miscellaneous: `sqrt`, `Min`, `Max`, `IdentityFunction`.
+Miscellaneous elementary functions and extrema.
+- `sqrt` — principal square root (shorthand for `Pow(x, S.Half)`).
+- `root(arg, n, k=0)` — principal or k-th nth-root of arg.
+- `real_root(arg, n=None)` — returns the real nth-root of arg; when n is omitted, converts all `(-a)**(1/odd)` to `-(a**(1/odd))` via pattern-matching transform.
+- `Min`, `Max` — symbolic minimum/maximum over arguments; base class `MinMaxBase`.
+- `IdentityFunction` — identity function f(x)=x.
 
 ### [`combinatorial/`](combinatorial/)
 Combinatorial functions and number sequences.

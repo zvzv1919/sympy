@@ -18,7 +18,10 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Arithmetic**: `__add__` (concrete element-wise addition; reshapes result to preserve original dimensions when a dimension is zero), `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`.
 - `__mul__`: matrix multiplication — checks `is_Matrix` on RHS; returns `NotImplemented` (defers to Python dispatch) when RHS claims matrix-ness but lacks `.T.tolist()` (e.g. `MatrixSymbol`); scalar RHS broadcasts element-wise.
 - `exp`: matrix exponential — decomposes via `jordan_cells`, splits each Jordan block into diagonal + nilpotent parts, computes factorial power series for the nilpotent component, recombines via P·eJ·P⁻¹.
-- **Dot / element-wise products**: `dot` (relaxed-dimension concrete inner product — accepts plain Python lists/sequences (wraps to Matrix) or Matrix; auto-transposes both operands when b has cols>1; returns scalar for vectors, list for rectangular), `multiply_elementwise`, `cross`.
+- **Dot / element-wise products**: `multiply_elementwise`, `cross`.
+  - `dot`: relaxed-dimension concrete inner product; accepts lists/sequences or Matrix.
+  - Dimension fallback cascade: cols==b.rows→standard multiply, cols==b.cols→transposes b, rows==b.rows→transposes self.
+  - Returns scalar for vectors, list for rectangular matrices.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
@@ -31,7 +34,9 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve` (symmetric→direct Cholesky; overdetermined rows≥cols→normal equations A^T·A then Cholesky; underdetermined→raises), `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+  - `LDLsolve`: symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A; underdetermined→raises `NotImplementedError` suggesting `gauss_jordan_solve`.
+  - `cholesky_solve`: symmetric→direct Cholesky; overdetermined rows≥cols→normal equations; underdetermined→raises `NotImplementedError` suggesting `gauss_jordan_solve`.
 - **Triangular solvers** (public precondition-checking wrappers): `lower_triangular_solve(rhs)` validates squareness, row-count match, and `is_lower` before delegating; `upper_triangular_solve(rhs)` validates squareness, row-count match, and `is_upper` before delegating. Both delegate to `_lower/_upper_triangular_solve` in dense/sparse layers.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det` (division-free determinant via Berkowitz algorithm; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction), `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.

@@ -96,6 +96,8 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 Main general-purpose simplification and miscellaneous simplification functions.
 
 - `simplify(expr, ratio, measure, fu)` — primary heuristic simplifier; tries multiple strategies and picks the shortest.
+  - Pipeline includes cancel, together, factor_terms, hyperexpand, trigsimp, logcombine, combsimp, powsimp, and exptrigsimp stages.
+  - Post-processing: if final denominator is an Add, attempts rationalization via `radsimp(1/denom)` and rewrites numer/denom accordingly.
   - For non-arithmetic functions (not Add/Mul/Pow/Exp) with an `inverse` attribute: detects and unwraps inverse-function compositions (e.g. f(f⁻¹(x)) → x) before recursing into args.
 - `signsimp(expr, evaluate)` — canonicalize sign of Add sub-expressions (e.g., y−x → −(x−y)).
   - Uses double-negation on Mul atoms to detect non-canonical signs; `evaluate` controls whether no-op transforms are kept.

@@ -74,10 +74,12 @@ Unevaluated and evaluated finite/infinite products.
 ## Algorithms and Helpers
 
 ### [`gosper.py`](gosper.py)
-Gosper's algorithm for hypergeometric indefinite summation.
+Gosper's algorithm for hypergeometric indefinite summation (finding closed-form anti-differences of hypergeometric terms).
 
-- `gosper_normal(f, g, n)` — compute Gosper's normal form of f/g.
-- `gosper_term(f, n)` — compute Gosper's hypergeometric term.
+- `gosper_normal(f, g, n)` — factorize a rational consecutive ratio p/q into Gosper's normal form `(A, B, C)` using resultants and iterated GCD.
+- `gosper_term(f, n)` — find a hypergeometric term g_n such that g_{n+1}−g_n = f_n.
+  - Calls `hypersimp` to get the consecutive ratio f_{n+1}/f_n, then `gosper_normal` to factorize it into (A, B, C).
+  - Computes candidate polynomial degrees from degree/leading-coefficient relationships among A, B, C (three cases: N≠M or mismatched LC, both zero-degree, or sub-leading coefficient ratio).
 - `gosper_sum(f, k)` — closed-form **definite** hypergeometric summation over finite ranges (returns result or None). Called as subroutine by `eval_sum_symbolic`; does **not** handle infinite series.
   - Falls back to symbolic `limit()` when substituting summation bounds into the antidifference produces an undefined (NaN) result.
 

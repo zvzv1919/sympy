@@ -37,6 +37,9 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
     - `__div__(g)` — if `g` is a DMP, delegates to `exquo`; otherwise tries `mul_ground(g)`; **on `CoercionFailed`/`NotImplementedError`, falls back to `f.ring.convert(g)` then `exquo`** if ring is set; returns `NotImplemented` if all paths fail.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
     - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
+  - `subresultants(g)` — subresultant PRS of `f` and `g`.
+  - `resultant(g, includePRS)` — resultant via PRS; **when `includePRS=True`, returns `(resultant, [PRS_polys])` tuple; when `False`, returns scalar only**; applies `kill=True` to reduce dimension.
+  - `discriminant` — discriminant of `f`.
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `shift(a)` (Taylor shift `f(x+a)`), `decompose`, `sturm`, `gff_list`, `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
@@ -151,6 +154,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots; **raises `ValueError` if `n` is not a positive integer** (rejects zero, negative, non-integer).
   - `ground_roots()` — roots by factorization over the coefficient domain; **only returns roots from linear factors, silently omitting irreducible quadratic or higher-degree factors**.
   - `real_roots`, `all_roots`, `root` — root enumeration via `CRootOf`.
+  - `slice(x, m, n)` — extract terms with degrees in `[m, n)` for generator `x`; **when called with only two numeric args (no generator), defaults to the first generator (`j=0`) and reinterprets args as `(m, n)`**.
+  - `replace(x, y)` — replace generator `x` with symbol `y`; **if `y` is not already a generator and the domain is composite (`is_Composite`), raises `PolynomialError` when `y` appears in the coefficient domain's symbols** (prevents symbol appearing as both generator and coefficient variable); univariate shorthand: single arg replaces the sole generator.
   - `reorder`, `inject`, `eject` — generator manipulation.
     - `inject`: **returns `self` unchanged if the coefficient domain is purely numerical** (no ground generators to promote).
     - `eject`: **only supports front or back generators**; raises `NotImplementedError` for middle generators.
@@ -902,6 +907,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `RealField` (in `realfield.py`) — real numbers up to given precision (mpmath `mpf`).
   - `from_ComplexField(element, base)` — converts complex domain element to real; **silently returns `None` (no error) if element has nonzero imaginary part**, signaling conversion failure to the domain machinery.
 - `ComplexField` (in `complexfield.py`) — complex numbers up to given precision (mpmath `mpc`).
+  - `get_ring()` — **always raises `DomainError`** ("no ring associated with CC"); `has_assoc_Ring = False`.
   - `from_sympy(expr)` — convert SymPy expression to complex number; evaluates numerically, splits into real/imaginary parts, **raises `CoercionFailed` if either part fails `is_Number` check** (e.g. unevaluated symbols remain).
   - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
 - `ModularInteger` (in `modularinteger.py`) — element class for finite residue rings (GF(p) elements); created by `ModularIntegerFactory` which caches per-modulus classes.
