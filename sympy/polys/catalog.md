@@ -310,7 +310,8 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 
 - `dup_eval(f, a, K)` — evaluate univariate polynomial at point using Horner scheme; **if `a` is zero (falsy), returns the trailing coefficient directly** instead of iterating.
 - `dmp_eval(f, a, u, K)` — evaluate multivariate polynomial at `x_0 = a` using Horner scheme; **if `a` is zero (falsy), returns the trailing coefficient `dmp_TC(f, K)` directly** (same shortcut as `dup_eval`).
-- `dmp_eval_in`, `dmp_eval_tail` — evaluate at specific variable or trailing variables.
+- `dmp_eval_in(f, a, j, u, K)` — evaluate multivariate polynomial at `x_j = a` by index `j`; uses recursive descent through nesting levels to the target variable, then applies Horner evaluation; **raises `IndexError` if `j` is out of bounds**.
+- `dmp_eval_tail(f, A, u, K)` — evaluate at trailing variables `x_{n-len(A)+1}, …, x_n`.
 - `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation.
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
 - `dup_compose`, `dmp_compose` — polynomial composition.
@@ -467,7 +468,9 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_sqf_p`, `gf_sqf_part`, `gf_sqf_list` — square-free testing and decomposition in GF(p).
 - `gf_irreducible_p` — irreducibility dispatch; queries `GF_IRRED_METHOD` config and **defaults to `gf_irred_p_rabin` when no preference is set**. `gf_irred_p_ben_or`, `gf_irred_p_rabin` — the two concrete algorithms.
 - `gf_ddf_zassenhaus` — distinct degree factorization (DDF); **appends non-trivial remainder as a factor of its own degree**.
-- `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF). Also `gf_ddf_shoup`, `gf_edf_shoup` (Shoup variants).
+- `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF).
+- `gf_ddf_shoup` — improved distinct-degree factorization using **baby-step/giant-step** Frobenius powers; precomputes small steps `x^(p^i)` for `i ≤ k=ceil(sqrt(n/2))` and giant steps `x^(p^(k*j))`, then combines via products and GCDs. Faster than `gf_ddf_zassenhaus` for large degree or modulus.
+- `gf_edf_shoup` — improved equal-degree factorization (Shoup variant).
 - `gf_Qmatrix` — compute Berlekamp's Q matrix (rows are `x^(ip) mod f` for each i).
 - `gf_Qbasis` — find kernel (null space) of `Q - I` via Gaussian elimination over GF(p); returns basis vectors for Berlekamp factorization.
 - `gf_berlekamp`, `gf_zassenhaus`, `gf_shoup` — square-free factorization algorithms (small/medium/large `p`).

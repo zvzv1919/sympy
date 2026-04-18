@@ -124,12 +124,13 @@ Handlers that **evaluate** matrix predicates — both structural properties and 
 ## SAT-Based Inference
 
 ### [`satask.py`](satask.py)
-Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (in `ask.py`) are inconclusive.
-- `satask()`: gathers expression-specific relevant facts (via `sathandlers.py` registry) and checks satisfiability.
-- `get_relevant_facts()`, `get_all_relevant_facts()`: extract and expand relevant facts for a proposition.
+Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (in `ask.py`) are inconclusive. Orchestrates fact collection and satisfiability checking.
+- `satask()`: gathers all relevant facts, then checks satisfiability of proposition ∧ assumptions ∧ facts (and its negation) to return True/False/None.
+- `get_relevant_facts()`: single-pass fact collector; queries `fact_registry` (from `sathandlers.py`) for each expression and returns `(facts, new_exprs)`.
+- `get_all_relevant_facts()`: **fixed-point loop** over `get_relevant_facts()`; new sub-expressions discovered in one pass (e.g., `Q.zero(x*y)` introduces `x`, `y`) become input for the next pass, iterating until no new expressions appear or `iterations` limit is reached.
 
 ### [`sathandlers.py`](sathandlers.py)
-Registry of logical inference rules (implications, equivalences) keyed by expression type, plus old-to-new assumption bridging utilities for SAT solving.
+**Defines and registers** logical inference rules (implications, equivalences) keyed by expression type; consumed by `satask.py`'s iterative fact collector. Also provides old-to-new assumption bridging utilities.
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
   - Handles semantic mismatches: e.g., `Q.positive` requires both `is_finite` and `is_positive` (legacy "positive" doesn't exclude unbounded).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.

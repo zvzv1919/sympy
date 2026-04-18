@@ -9,6 +9,7 @@ Mathematical function classes (symbolic, unevaluated). Defines function behavior
 - **generalized factorial function**: the gamma function Γ(n)=(n−1)!; `gamma` in `special/gamma_functions.py`. Its logarithm is `loggamma` in the same file.
 - **upper incomplete gamma**: `uppergamma` in `special/gamma_functions.py`.
 - **signum function**: `sign` class in `elementary/complexes.py`; Heaviside-to-sign rewriting is in `special/delta_functions.py`.
+- **trigonometric integral** / **cosine integral** / **sine integral**: `Ci`, `Si` in `special/error_functions.py` — NOT the elementary trig functions in `elementary/trigonometric.py`.
 - **fdiff**: method on Function subclasses returning symbolic partial derivatives; lives alongside the class definition.
 - **rewrite**: `_eval_rewrite_as_*` methods live on the source class, not the target class.
 
@@ -122,7 +123,7 @@ B-spline basis functions constructed as Piecewise expressions via recursive Cox-
 Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, complex, rounding.
 
 #### [`elementary/trigonometric.py`](elementary/trigonometric.py)
-Trigonometric functions and their inverses.
+Trigonometric functions and their inverses (NOT trigonometric integrals Si, Ci — those are in `special/error_functions.py`).
 - `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions; `sin`/`cos` have `_eval_expand_trig` for multiple-angle expansion using Chebyshev T (odd n) and Chebyshev U (even n) polynomials from `special/polynomials.py`.
 - `ReciprocalTrigonometricFunction` — base class for reciprocal circular trig forms (`sec`, `csc`, `cot`); delegates rewrites to the underlying base function (e.g., cos for sec) and inverts.
   - `_rewrite_reciprocal` guards against trivial identity rewrites by returning None if the delegated result equals the original expression unchanged.

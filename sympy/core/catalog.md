@@ -71,6 +71,7 @@ All concrete numeric types and their arithmetic operations.
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
 - `int_trace` — profiling decorator for `Integer.__new__`; optimistically increments hit counter before cache lookup, then on KeyError decrements hit and increments miss; registered via `atexit` to print stats
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
+  - Overloaded arithmetic (`__add__`, `__mul__`, etc.) for efficiency; `__mul__` with Rational uses `igcd(self.p, other.q)` for GCD-based simplification; `__add__`/`__sub__` with Rational pass 1 (no GCD reduction) to Rational constructor
   - `_eval_power` — handles infinite exponents first: positive base >1 with `oo` → `oo`; negative base (not -1,0,1) with `oo` → `oo + I*oo`; `NegativeInfinity` delegates via `Rational(1,self)**oo`
   - Negative-base sign branching differs for integer vs fractional exponents
   - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
@@ -228,6 +229,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both are numbers, otherwise to polynomial `invert`
 - `_eval_is_positive` / `_eval_is_negative` — sign determination; uses low-precision evalf, falls back to minimal polynomial when no significant digits
 - `_eval_interval` — definite evaluation over an interval with limit fallback for singular values
+- `Expr._from_mpmath(x, prec)` — static method converting mpmath numbers to SymPy; real (`_mpf_`) → Float; complex (`_mpc_`) → decomposes into `re + im*I` as two Floats
 - `AtomicExpr` — parent class for objects that are both Atom and Expr (Symbol, Number, etc.)
 - `_mag(x)` — module-level helper returning base-10 order of magnitude (`i` such that `.1 <= x/10**i < 1`); uses `math.log10` with fallback to multi-precision `mpf_log` on overflow
 

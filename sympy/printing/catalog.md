@@ -41,7 +41,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 - `_print_MatrixSlice` — renders sub-range access as 2D pretty-printed layout with slice simplification (same rules as `StrPrinter`).
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
-- `_print_Integral` — builds integral signs with limits and spacing.
+- `_print_Integral` — builds integral signs with limits and spacing; limit tuple length determines rendering: 2-element tuple → empty lower bound with only upper bound shown; 3-element tuple → both bounds shown.
 - Special-case `_print_*` overrides for functions whose names collide with Greek/Unicode symbols (e.g., `_print_Chi` keeps Latin "Chi" instead of Greek χ, `_print_gamma`/`_print_lowergamma`/`_print_uppergamma` use explicit Γ/γ glyphs).
 - `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
 - `_print_Subs` — renders evaluation-at-a-point notation: parenthesizes the expression, draws a vertical bar (`|`) to its right, and places variable=value assignment pairs as subscripts below the bar.
@@ -65,6 +65,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `next(*args)` — core static method for horizontal composition: computes new unified baseline and height across all blocks, pads each block with empty lines above/below to align baselines, then joins corresponding rows. All other horizontal combinators (`left`, `right`) delegate to this.
 - Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other. `stack` accepts a special `LINE` sentinel that is replaced with a horizontal dash row spanning the maximum width of all composed elements.
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
+- `render()` — converts picture to display string; splits output exceeding terminal width into column-width segments. Multi-line pictures get blank-line spacers between segments; single-line pictures do not.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
 - `prettyForm.__add__` — binding-aware addition; reuses existing minus signs to simplify `+ -x` forms.
@@ -98,6 +99,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`fcode.py`](fcode.py)
 `FCodePrinter` — generates Fortran code with language-specific operators and formatting (source format, precision, contraction).
+- `fcode()` — top-level API; accepts `assign_to`, `precision`, `source_format` ('fixed'/'free'), `standard` (66/77/90/95/2003/2008), `human`, `contract`, and `user_functions`.
 - Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds).
 - `_wrap_fortran` — enforces Fortran fixed-format line length (72 chars) by wrapping long lines with continuation markers.
 - Loop syntax: `do VAR = start, stop` / `end do`.
