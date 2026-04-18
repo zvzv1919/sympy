@@ -42,7 +42,7 @@ Propositional-logic inference: truth evaluation, satisfiability dispatch, entail
 
 ### [`algorithms/dpll.py`](algorithms/dpll.py)
 Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple recursive backtracking on symbolic and integer-encoded representations.
-- `dpll_satisfiable(expr)` — backend entry point; converts to CNF then calls `dpll_int_repr`. Does not support `all_models`.
+- `dpll_satisfiable(expr)` — backend entry point; converts to CNF, early-exits with `False` if any conjunct is literal `False`, then delegates to `dpll_int_repr`. Does not support `all_models`.
 - `dpll(clauses, symbols, model)` — recursive DPLL on symbolic clause lists.
   - Runs unit-clause and pure-literal elimination loops, evaluates remaining clauses, then branches on an unassigned variable (True first, False on backtrack via short-circuit OR).
 - `dpll_int_repr(clauses, symbols, model)` — recursive DPLL on integer-encoded clause sets; same branch-and-backtrack logic as `dpll`.

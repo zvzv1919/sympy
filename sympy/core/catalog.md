@@ -208,7 +208,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ## Expressions and Manipulation
 
 ### [`expr.py`](expr.py)
-`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`), ordering comparisons, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
+`Expr` — base for algebraic expressions (inherits Basic + EvalfMixin). Arithmetic operators (`+`, `-`, `*`, `/`, `//`, `%`), ordering comparisons, `as_coeff_Mul()`, `as_coeff_Add()`, `sort_key()`, `is_constant()`.
+- `__floordiv__` / `__rfloordiv__` — floor division operators (`//`); `__floordiv__(self, other)` returns `floor(self / other)`; `__rfloordiv__(self, other)` is the reflected (right-hand) floor division invoked when left operand defers
 
 - `as_independent(*deps, as_Add=None)` — general-purpose split into (independent, dependent) parts w.r.t. given symbols; works on any Expr
   - Distinct from `Add.as_coeff_add(*deps)` which partitions an Add's own args by symbol dependency or extracts leading numeric coefficient
@@ -260,7 +261,9 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 - `_monotonic_sign(expr)` — returns closest-to-zero bound if expression has uniform sign; for non-Add with numeric denominator: prime+odd→3, prime+even→2, positive+even→2, positive+integer→1, positive→_eps, negative mirrors; for multivariate signed linear expressions, substitutes each free symbol's monotonic sign using epsilon placeholder
 
-- `factor_nc(expr)` — factors expressions with non-commutative symbols; extracts common NC prefixes/suffixes, then tries permutations of NC factors to find correct ordering
+- `factor_nc(expr)` — factors a whole expression into a product of non-commutative symbols (returns a factored Mul)
+  - Finds shared NC left/right divisors across all terms and pulls them out as multiplicative factors
+  - Distinct from `Expr.coeff` which extracts the coefficient of a specific NC term from a sum
 
 - `_mask_nc(eq)` — replaces non-commutative objects with Dummy symbols for commutative processing; single NC object → commutative Dummy; multiple NC symbols → kept as-is (returns None dict); NC objects whose free symbols are all commutative (e.g., raw `Basic()` without `_eval_is_commutative`) are replaced with commutative Dummies
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents

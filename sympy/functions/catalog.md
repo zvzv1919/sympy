@@ -10,6 +10,7 @@ Mathematical function classes (symbolic, unevaluated). Defines function behavior
 - **upper incomplete gamma**: `uppergamma` in `special/gamma_functions.py`.
 - **signum function**: `sign` class in `elementary/complexes.py`; Heaviside-to-sign rewriting is in `special/delta_functions.py`.
 - **trigonometric integral** / **cosine integral** / **sine integral**: `Ci`, `Si` in `special/error_functions.py` — NOT the elementary trig functions in `elementary/trigonometric.py`.
+- **hyperbolic sine integral** / **hyperbolic cosine integral**: `Shi`, `Chi` in `special/error_functions.py` — NOT the elementary hyperbolic functions in `elementary/hyperbolic.py`.
 - **fdiff**: method on Function subclasses returning symbolic partial derivatives; lives alongside the class definition.
 - **discrete delta** / **Kronecker delta**: `KroneckerDelta` in `special/tensor_functions.py` (δ_{i,j} = 1 when i=j, 0 otherwise). NOT `DiracDelta` in `special/delta_functions.py`.
 - **rewrite**: `_eval_rewrite_as_*` methods live on the source class, not the target class.
@@ -60,9 +61,9 @@ Error functions and related integrals (special cases of incomplete gamma).
   - `_eval_nseries` — series expansion branches on order: ν=1 rewrites via trig integrals (Si/Ci), integer ν>1 rewrites via Ei, otherwise falls back to default.
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
-- `Si` (sine integral ∫₀ᶻ sin(t)/t dt), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
+- `Si` (sine integral ∫₀ᶻ sin(t)/t dt), `Ci` (cosine integral), `Shi` (hyperbolic sine integral ∫₀ᶻ sinh(t)/t dt), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
   - `Si` rewrites to `sinc` (cardinal sine) via `_eval_rewrite_as_sinc`, producing `Integral(sinc(t), (t, 0, z))`.
-  - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
+  - Each defines argument-transformation rules for negation (`_minusfactor`) and imaginary-unit rotation (`_Ifactor`): e.g., Shi(i·z)→i·Si(z), Chi(i·z)→Ci(z)+iπ/2.
 - `FresnelIntegral` — base class for Fresnel integrals; `eval` extracts factors of −1 and I from the argument using a subclass `_sign` attribute (+1 for cosine, −1 for sine) to differentiate simplification of f(i·z).
 - `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x); subclasses of `FresnelIntegral`.
 

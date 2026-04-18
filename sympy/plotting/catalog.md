@@ -9,7 +9,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `Plot` — central figure container for data series; dispatches rendering to backends (matplotlib, text, default). Manages an internal `_series` list of `BaseSeries` objects.
   - `__init__(*args, **kwargs)` — sets default display configuration (title, xlabel/ylabel, xlim/ylim, axis_center, aspect_ratio, autoscale, margin, axis visibility, xscale/yscale, legend). Applies user keyword overrides via `hasattr`/`setattr` — silently ignores unknown kwargs.
   - `__getitem__`, `__delitem__` — indexed read/delete on `_series`.
-  - `__setitem__(index, *args)` — indexed replacement of a series in `_series`; accepts a single `BaseSeries` via varargs.
+  - `__setitem__(index, *args)` — indexed replacement of a series in `_series`; uses `*args` varargs signature, so the value arrives as a tuple even for single assignment (`p[0] = series`).
   - `append()`/`extend()` — add series from another `Plot` or individual `BaseSeries` objects.
 - `check_arguments(args, expr_len, nb_of_free_symbols)` — argument grouping helper for matplotlib-based `plot*()` functions only.
   - Groups flat or tuple-wrapped expressions into plot series; three branches: multiple exprs with same range, series with same range, multiple with different ranges.

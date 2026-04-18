@@ -61,14 +61,14 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `xsym(sym)` — resolves operator characters (comparison `<=`/`>=`/`!=`, arithmetic `*`/`.`, arrows `-->`/`==>`, assignment `:=`/`+=`) to Unicode or ASCII display form via `_xsym` lookup table.
 - `xstr(*args)` — string-type dispatcher: calls `unicode()` when unicode mode is on, `str()` when off. Governed by module-level `_use_unicode` flag.
 - `pretty_use_unicode(flag)` — gets/sets the module-level `_use_unicode` flag controlling Unicode vs ASCII output mode.
-- `vobj(symb, height)` / `hobj(symb, width)` — vertical/horizontal object constructors.
+- `vobj(symb, height)` / `hobj(symb, width)` — sole builders of multi-line delimiter glyphs; delegate to `xobj` for glyph assembly.
 - Key data: `atoms_table` (atom→Unicode mapping), `_xobj_unicode`/`_xobj_ascii` (bracket/delimiter glyph tables).
 
 ### [`pretty/stringpict.py`](pretty/stringpict.py)
 `stringPict` — 2D string canvas with baseline tracking. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
 - `next(*args)` — core static method for horizontal composition: computes new unified baseline and height across all blocks, pads each block with empty lines above/below to align baselines, then joins corresponding rows. All other horizontal combinators (`left`, `right`) delegate to this.
 - Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other. `stack` accepts a special `LINE` sentinel that is replaced with a horizontal dash row spanning the maximum width of all composed elements.
-- `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
+- `parens(left, right, ifascii_nougly)` — wraps picture in pre-built delimiter glyphs (does not construct glyph shapes); in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `render()` — converts picture to display string; splits output exceeding terminal width into column-width segments. Multi-line pictures get blank-line spacers between segments; single-line pictures do not.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; parenthesizes nested divisions. For negative numerators (NEG binding), pads the numerator with a trailing space to preserve visual alignment under the fraction bar.

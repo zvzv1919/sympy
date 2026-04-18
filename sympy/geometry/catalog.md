@@ -105,6 +105,7 @@ Elliptical entities in 2D.
 Parabolic entities defined by focus and directrix.
 - `Parabola` — supports vertical/horizontal parabolas only; `__new__` raises `NotImplementedError` if directrix is diagonal (neither horizontal nor vertical).
   - Properties: `focus`, `directrix`, `vertex`, `eccentricity`. Methods: `equation()`, `intersection()`.
+  - `equation(x, y)` — branches on `axis_of_symmetry.slope`: horizontal axis (slope==0) squares `y`, vertical axis squares `x`.
   - `vertex` — extremal (turning) point of the parabola; computed by subtracting `p_parameter` from the appropriate focal coordinate based on axis orientation.
   - `eccentricity` — always returns 1 (unit eccentricity by definition for all parabolas).
   - `p_parameter` — signed semi-latus rectum; sign convention depends on orientation (horizontal vs vertical) with inverted comparison logic between the two cases.

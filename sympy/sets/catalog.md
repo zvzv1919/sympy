@@ -43,7 +43,7 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
   - `_intersect` — intersection with an `Interval`: builds a `Range` from `ceiling(left)` to `floor(right)+1`, then re-intersects with the original interval to exclude open-boundary endpoints
 - `Reals` — all reals; subclass of `Interval(−∞, ∞)` singleton; inherits `_contains` and all interval behavior from `Interval` in `sets.py`
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases
-  - `__new__` — returns `base_set` for identity Lambda; returns `FiniteSet(expr)` when the Lambda is constant (expr has no free symbols or no args); otherwise constructs normally
+  - `__new__` — only handles two degenerate cases: returns `base_set` for identity Lambda, returns `FiniteSet(expr)` for constant Lambda; does NOT compose or simplify nested transformations (that logic lives in `imageset()` in `sets.py`)
   - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation
   - `_intersect` with `Interval`: inverts the lambda at interval endpoints to find new domain boundaries; falls back to `solveset` over reals when inverted boundaries are non-real; converts finite `Range` to `FiniteSet` before remapping through the lambda
 - `Range` — discrete integer range (start, stop, step); supports slicing, iteration, and Diophantine-based intersection

@@ -996,6 +996,9 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `get_ring()` — **always raises `DomainError`** ("no ring associated with CC"); `has_assoc_Ring = False`.
   - `from_sympy(expr)` — convert SymPy expression to complex number; evaluates numerically, splits into real/imaginary parts, **raises `CoercionFailed` if either part fails `is_Number` check** (e.g. unevaluated symbols remain).
   - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
+- `ExpressionDomain` (in `expressiondomain.py`) — symbolic catch-all domain (EX); wraps arbitrary SymPy expressions as field elements.
+  - Inner `Expression` class — element wrapper; **every arithmetic operation (`__add__`, `__sub__`, `__mul__`, `__pow__`) calls `simplify(result)` which invokes `.cancel()` on the raw expression**, automatically reducing fractions after each operation.
+  - `numer(f)` / `denom(f)` — extract numerator/denominator via `as_numer_denom()`.
 - `ModularInteger` (in `modularinteger.py`) — element class for finite residue rings (GF(p) elements); created by `ModularIntegerFactory` which caches per-modulus classes.
   - `to_int()` — convert back to plain integer; **when symmetric mode (`sym=True`), values exceeding `mod // 2` are mapped to negative by subtracting the modulus**.
   - `__pow__(exp)` — exponentiation; **for negative `exp`, computes multiplicative inverse first** (via `invert`), then raises to `|exp|`.
