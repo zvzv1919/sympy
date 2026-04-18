@@ -50,7 +50,7 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 Modular roots, residues, and multiplicative-order computations.
 - `n_order(a, n)` — multiplicative order of a modulo n; raises ValueError if a and n are not coprime
 - `primitive_root(p)`, `is_primitive_root(a, p)` — primitive root lookup/test
-- `sqrt_mod(a, p)`, `sqrt_mod_iter(a, p)` — modular square root (single / iterator)
+- `sqrt_mod(a, p)`, `sqrt_mod_iter(a, p)` — modular square root (single / iterator); for composite p, factorizes p and combines per-prime-power roots via CRT internally
 - `nthroot_mod(a, n, p)` — modular nth root; raises `NotImplementedError` when p has no primitive root (e.g. most composite moduli)
 - `is_quad_residue(a, p)`, `quadratic_residues(p)` — quadratic residue test / enumeration
 - `is_nthpow_residue(a, n, m)` — nth-power residue test

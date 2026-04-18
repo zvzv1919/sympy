@@ -162,8 +162,9 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `parametric_log_deriv_heu` — heuristic for n·f = Dv/v + m·Dθ/θ (n,m∈ℤ, v∈k(t)*); branches on whether deg(q) exceeds a derivation-degree bound B, solving coefficient equations in each branch
 
 ### [`heurisch.py`](heurisch.py)
-Semi-decision (heuristic) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.
+Semi-decision (heuristic) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert, erf/erfi, Ei). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
+  - Adds special-function candidate terms: `erf`/`erfi` for `exp(a*x²)` (uses `erf` when sign of `a` is negative or unknown), `Ei` for `li`-containing integrands
   - Substitutes subexpressions with placeholder symbols; tries all permutations of the substitution ordering until the result is rational in placeholders
   - Two-phase coefficient domain strategy: first solves the undetermined-coefficients system over the rationals ('Q'); if that fails, retries without a field restriction (general domain)
   - If both domain attempts fail, recursively retries with decremented retry count and different variable permutations

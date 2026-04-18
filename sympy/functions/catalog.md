@@ -75,8 +75,10 @@ Hypergeometric and Meijer G-functions.
 - `TupleParametersBase` — base class for functions with tuple-valued arguments (e.g., numerator/denominator parameter lists); handles `_eval_derivative` by iterating over grouped parameters with tuple-indexed `fdiff`.
 - `hyper` — generalized hypergeometric function pFq.
 - `meijerg` — Meijer G-function.
-- `HyperRep` subclasses — closed-form representatives for specific hypergeometric cases; each defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-region evaluation.
-  - Named by the elementary function they represent: `HyperRep_atanh` (atanh(√z)/√z), `HyperRep_asin1`/`_asin2` (asin), `HyperRep_log1`/`_log2`, `HyperRep_power1`/`_power2`, `HyperRep_sqrts`, `HyperRep_cosasin`, `HyperRep_sinasin`.
+- `HyperRep` subclasses — closed-form representatives for specific hypergeometric cases; each defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-region evaluation (small/big × positive/negative argument).
+  - Named by the elementary function they represent: `HyperRep_atanh`, `HyperRep_asin1`/`_asin2`, `HyperRep_log1`/`_log2`, `HyperRep_power1`/`_power2`, `HyperRep_cosasin`, `HyperRep_sinasin`.
+  - `HyperRep_sqrts1` — represents ((1−√z)^{2a}+(1+√z)^{2a})/2; `_expr_big_minus` uses trig form with atan(√z).
+  - `HyperRep_sqrts2` — represents √z·((1−√z)^{2a}−(1+√z)^{2a})/2; `_expr_big_minus` handles large negative-branch case with sin(2a·atan(√z)).
 
 #### [`special/elliptic_integrals.py`](special/elliptic_integrals.py)
 Elliptic integral functions: `elliptic_k`, `elliptic_f`, `elliptic_e`, `elliptic_pi`.
@@ -89,7 +91,10 @@ Riemann zeta and related functions: `zeta`, `lerchphi`, `polylog` (Li_s(z)), `di
 Euler beta function `beta(x, y)`. NOT probability beta distribution (that's `stats/`).
 
 #### [`special/tensor_functions.py`](special/tensor_functions.py)
-Discrete tensor index functions: `LeviCivita` (epsilon tensor), `KroneckerDelta`.
+Discrete tensor index functions for symbolic indices (NOT continuous distributions — those are in `delta_functions.py`).
+- `LeviCivita` — Levi-Civita epsilon tensor ε_{i,j,...}.
+- `KroneckerDelta` — discrete Kronecker delta δ_{i,j}; `eval` simplifies integer indices and enforces canonical ordering; supports fermi-level assumptions (above/below fermi).
+  - `_eval_power` — idempotent for positive exponents (δ^n=δ); negative exponents ≠ −1 return 1/δ; exponent −1 falls through (returns None).
 
 #### [`special/mathieu_functions.py`](special/mathieu_functions.py)
 Mathieu functions — solutions to the Mathieu differential equation y'' + (a − 2q·cos(2x))·y = 0.

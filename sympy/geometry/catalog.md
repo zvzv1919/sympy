@@ -76,7 +76,8 @@ Explicit parametric curves in the 2D plane (not 3D surfaces).
 
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
-- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`, `intersection()`.
+- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`, `intersection()`, `arbitrary_point()`, `plot_interval()`, `random_point()`.
+  - `arbitrary_point(parameter='t')` — returns trigonometric parameterization `(center.x + hradius*cos(t), center.y + vradius*sin(t))`; raises `ValueError` if parameter name collides with a free symbol in the ellipse's definition.
   - `intersection(o)` — type-dispatched: handles `Point`, `LinearEntity`, `Circle`, `Ellipse`; for unrecognized types, falls back to `o.intersection(self)` (reverse dispatch).
   - `is_tangent(o)` — type-dispatched tangency test: for `Ellipse` checks single intersection point (coincident ellipses → False); for `LinearEntity` checks single intersection in segment; for `Polygon` iterates over all sides counting edge–ellipse intersection points and returns `True` iff total count is 1.
   - `reflect(line)` — overrides `GeometryEntity.reflect`; handles axis-aligned lines only; raises `NotImplementedError` (with reflected equation) for diagonal lines.
@@ -103,6 +104,7 @@ Parabolic entities defined by focus and directrix.
 ### [`plane.py`](plane.py)
 3D planar surfaces.
 - `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `projection_line()`, `intersection()`.
+  - `intersection(o)` — type-dispatched: handles `Point`/`Point3D`, `LinearEntity`/`LinearEntity3D` (Line, Ray, Segment — both 2D and 3D), and `Plane`. For linear entities, solves parametrically then validates the solution point lies on the bounded entity; returns `[]` if a segment or ray doesn't extend far enough to reach the plane.
   - `projection_line(line)` — projects a 2D or 3D linear entity onto the plane; returns a `Point3D` (not a line) when the line is parallel to the plane's normal (both endpoints map to the same location).
   - `are_concurrent(*planes)` — static; tests whether multiple planes all share a single common line of intersection; deduplicates inputs, returns False for <2 planes.
   - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) is coplanar with this plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test.

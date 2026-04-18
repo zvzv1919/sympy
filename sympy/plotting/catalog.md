@@ -130,7 +130,7 @@ Concrete plot mode implementations for various coordinate systems.
 ### `plot_interval.py`
 Bounded interval representation for pyglet variable ranges (discretized sample points for rendering, not interval arithmetic).
 
-- `PlotInterval` — stores [variable, min, max, steps] with property accessors and validation.
+- `PlotInterval` — stores [variable, min, max, steps] with property accessors and validation. Does NOT auto-reorder bounds; assumes caller provides min ≤ max.
   - `__init__(*args)` — flexible constructor: accepts a string (parsed via `eval`), a tuple/list of bounds, copy from another `PlotInterval`, or positional args `(symbol, min, max, steps)` with optional leading symbol.
   - Property setters validate types: `v_min`/`v_max` must be sympifiable to a numeric value (tested via `float(evalf())`), `v_steps` must be a positive integer.
 - `fill_from(b)` — merges defaults from another interval for partial specifications.
@@ -180,6 +180,7 @@ OpenGL window management, rendering loop, and title-bar progress display.
 - `PlotWindow` — extends `ManagedWindow`; sets up GL context, coordinates camera and controller.
 - `draw()` — called each frame; acquires `_render_lock` to iterate plot functions and collect vertex/color progress in a single pass.
   - Sets initial viewing orientation from the first rendered object's `default_rot_preset` via a `drawing_first_object` flag; only the first surface influences the default camera angle.
+  - Progress tracking catches `ValueError` silently: if accessing a renderable's vertex/color computation progress raises `ValueError` (e.g., from concurrent modification), the exception is swallowed to avoid crashing the render loop.
 - `update_caption()` — formats vertex and color calculation percentages into the window title bar.
 
 ### `plot_object.py`

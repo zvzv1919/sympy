@@ -75,10 +75,11 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components. Raises `NotImplementedError` when contraction pattern requires transposition.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - `__getitem__` — retrieves component data; unwraps zero-dimensional arrays to scalar (`dat[()]`) and single-element 1-d arrays to their sole element (`dat[0]`).
-  - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
+  - `_get(key)` — central dispatch that retrieves numerical data for any tensor expression type: `TensorHead`, `Tensor`, `TensMul`, or `TensAdd`.
+    - For `TensMul`: retrieves data per-factor and contracts; raises `ValueError` if some factors have data and others do not.
+    - For `TensAdd`: transposes each summand's ndarray so free-index axes align to a common ordering before element-wise addition.
   - `_correct_signature_from_indices` — adjusts ndarray values for covariant/contravariant index positions: lowers covariant indices via metric matrix, then contracts dummy (paired) index axes via numpy `trace`.
   - `data_product_tensors` — iteratively multiplies a list of ndarray factors via `reduce`; at each step pairs arrays with `TensMul` metadata, contracts matching indices, and accumulates the result.
-  - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
   - Handles metric tensors specially via covariant/contravariant signature lookup.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.
   - `comm_symbols2i(i)` — maps a label (symbol/string/number) to its internal commutation group number; **auto-registers** unseen labels by appending a new group that commutes with group 0.
@@ -126,7 +127,7 @@ Standalone functions for tensor-style operations on N-dim arrays.
 - `tensorproduct(*args)` — outer (tensor) product of arrays/scalars; result rank = sum of input ranks.
 - `tensorcontraction(array, *contraction_axes)` — contracts (sums) over specified axis pairs; validates axes are distinct and dimensions match (raises `ValueError` on mismatch).
 - `derive_by_array(expr, dx)` — partial derivative of array w.r.t. array/scalar; result rank = rank(dx) + rank(expr) (shape is **extended**, not preserved).
-- `permutedims(expr, perm)` — reorders axes of an N-dim array by a permutation.
+- `permutedims(expr, perm)` — reorders axes of a concrete N-dim array object by a permutation; not used for abstract tensor expression data retrieval.
 
 ### array/mutable_ndim_array.py
 

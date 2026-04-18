@@ -117,7 +117,9 @@ Sparse rational function fields and their elements.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
   - `__new__` — caches field objects; assigns generator symbols as attributes on the field; **skips `setattr` if an attribute with that name already exists (`hasattr` guard)**, preventing generator names like `'domain'` or `'ring'` from overwriting internal attributes.
   - `ground_new(element)` — create element from ground coefficient; **if ring coercion fails and domain has an associated field (e.g. ZZ→QQ), splits element into numer/denom via the field and constructs a proper fraction**.
-  - `from_expr(expr)` / `_rebuild_expr` — reconstruct a symbolic expression into a field element; **if ground domain fails to convert a leaf (CoercionFailed) and the domain is a ring with an associated field, retries conversion via `domain.get_field()`** (e.g. ZZ falls back to QQ).
+  - `from_expr(expr)` / `_rebuild_expr` — recursively decompose a symbolic expression tree into a **rational function** field element; maps Add→sum, Mul→product, integer Pow→power, and leaf nodes to domain coefficients.
+    - **If ground domain fails to convert a leaf (`CoercionFailed`) and domain has an associated field, retries via `domain.get_field()`** (e.g. ZZ→QQ).
+    - Distinct from `PolyElement._rebuild_expr` in `rings.py` which produces polynomial ring elements (not fractions).
 - `FracElement` — element of a `FracField` (numerator/denominator pair).
   - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
     - **If that fails and domain has an associated field (e.g. ZZ→QQ), retries via the field and returns `(numer, denom)` split**; returns `(0, None, None)` on total failure.
@@ -183,7 +185,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
 - `to_rational_coeffs(f)` — transform polynomial with irrational (square-root) coefficients to rational coefficients.
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
-- `terms_gcd(f)` (free function) — extract monomial GCD from expression; **returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1)**.
+- `terms_gcd(f)` (free function) — extract monomial GCD from expression.
+  - **If coefficient domain lacks a Ring (`not domain.has_Ring`), skips coefficient extraction and defaults coefficient to `S.One`**.
+  - Returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1).
 - `reduced(f, G)` — divide polynomial `f` modulo a set of polynomials `G`, returning quotients and remainder.
   - **Auto-promotes ring domain to its fraction field** for division, then attempts to retract results back to the ring (keeps field results if retraction fails).
 - `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
@@ -199,7 +203,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
-  - `gcd_list(seq)` — GCD of a list of polynomials; **two-phase fallback**: first attempts purely numerical GCD (via `construct_domain`) before polynomial conversion; if polynomial conversion fails, **retries numerical GCD on the failed expressions**; returns `S.Zero` for empty input.
+  - `gcd_list(seq)` — GCD of a list of polynomials; returns `S.Zero` for empty input.
+    - **Two-phase fallback**: first tries numerical GCD (via `construct_domain`); if polynomial conversion fails, **retries numerical GCD on the failed expressions**.
+    - **Early-exits the iterative reduction when the running GCD becomes one** (cannot reduce further).
   - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
@@ -577,8 +583,11 @@ Automatic domain inference from coefficient lists.
 Bridge between sparse polynomial ring interface and dense function API.
 
 - `IPolys` — mixin class providing dense polynomial operations as methods on ring objects.
-  - `wrap(element)` — coerce a `PolyElement` into this ring; **raises `NotImplementedError("domain conversions")` if the element belongs to a different ring**.
+  - `wrap(element)` — coerce a `PolyElement` into this ring; **raises `NotImplementedError("domain conversions")` if the element belongs to a different ring**; for non-`PolyElement` inputs, delegates to `ground_new`.
   - `ground_new`, `domain_new`, `from_dict`, `clone`, `drop` — ring interface methods.
+  - Multivariate term operations (`dmp_add_term`, `dmp_sub_term`, `dmp_mul_term`): **coefficient is preprocessed via `wrap(c).drop(0).to_dense()`**.
+    - Wraps into the ring, drops the leading generator, converts to dense (treats coefficient as polynomial in remaining variables).
+    - Univariate variants (`dup_add_term`, etc.) pass the coefficient directly without preprocessing.
   - Multivariate result methods (`dmp_LC`, `dmp_TC`, `dmp_eval_tail`, `dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
     - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
   - Wang factorization bridge methods (`dmp_zz_wang_hensel_lifting`, `dmp_zz_wang_lead_coeffs`, etc.): **slice the ring into univariate `self[:1]` and multivariate `self[1:]` sub-rings** to convert lifted factors (univariate) and leading coefficient expressions (multivariate) separately before delegating to the dense implementation.
@@ -845,6 +854,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings.
   - `map(seq)` — recursively convert all elements of a nested list to this domain; **recurses on sublists, calls `self(elt)` on leaf elements**; only handles `list` (not tuples or other iterables).
   - `convert(element, base=None)` — coerce element to this domain; **when `base` is None, dispatches by Python type** (int → ZZ, float → RR, complex → CC, GMPY types, `DomainElement` → parent, `Basic` → `from_sympy`).
+    - **For numerical domains (`is_Numerical`), if element has `is_ground` (e.g. a constant-valued ring element), extracts its leading coefficient via `element.LC()` and recursively converts that scalar**.
     - **For unknown non-Basic, non-sequence types, attempts `sympify(element)` then retries via `from_sympy`**; raises `CoercionFailed` if all strategies fail.
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
   - Base arithmetic: `half_gcdex(a, b)` **delegates to `gcdex` and discards second Bézout coefficient**; `gcdex`, `gcd`, `lcm` raise `NotImplementedError` at base level — subclasses must override. `cofactors(a, b)` computes GCD then derives cofactors via `quo`.
@@ -853,10 +863,15 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
     - **Inexact domains (RR, CC)**: uses `max(precision)` and `max(tolerance)` from both operands; CC absorbs RR (complex wins over real).
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
     - When both are `FiniteField` (GF(p)), **selects the one with the larger modulus** (via `default_sort_key`); if no known pairing matches, falls back to the expression domain `EX`.
+- `CompositeDomain` (in `compositedomain.py`) — base class for composite domains (e.g. `ZZ[x]`, `ZZ(x)`).
+  - `inject(*symbols)` — **raises `GeneratorsError` if new generators overlap with existing ones** (set intersection check); otherwise constructs a new ring/field with merged generators.
 - `SimpleDomain` (in `simpledomain.py`) — base class for simple domains (ZZ, QQ); `inject(*gens)` **directly creates a polynomial ring over itself** (`self.poly_ring(*gens)`) without checking for generator overlaps (no existing generators to conflict with).
 - `CharacteristicZero` (in `characteristiczero.py`) — mixin for domains with infinitely many elements; `characteristic()` returns 0. Inherited by ZZ, QQ, RR, CC, algebraic fields.
 - `Ring` (in `ring.py`) — abstract base for ring domains.
   - `is_unit(a)` — test invertibility by attempting `revert`; `revert(a)` **only succeeds for the multiplicative identity** (raises `NotReversible` otherwise).
+- `RationalField` (in `rationalfield.py`) — the field of rationals QQ.
+  - `from_AlgebraicField(a, K0)` — convert algebraic number field element back to QQ; **succeeds only if element is ground (constant)**, extracting its leading coefficient.
+    - Implicitly returns `None` (conversion failure) for non-ground algebraic elements.
 - `AlgebraicField` (in `algebraicfield.py`) — algebraic number field `Q(α)`; ground domain must be QQ.
   - `from_sympy(a)` — two-stage conversion: first tries ground rational field (`dom.from_sympy`); **on `CoercionFailed`, falls back to `to_number_field` to interpret `a` as an algebraic element** of the extension; raises `CoercionFailed` if both fail.
 - `Field` (in `field.py`) — abstract base for field domains; inherits from `Ring`.

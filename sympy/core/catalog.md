@@ -151,7 +151,7 @@ Named algebraic variables and temporary dummy symbols.
 - `Symbol._sanitize()` — validates and coerces assumption values
 - `Symbol.as_real_imag(deep, **hints)` — decomposes into `(re(self), im(self))`; returns `None` (not a tuple) when `hints.get('ignore')` equals the symbol itself
 - `Dummy` — unique uncached symbol (internal counter `_count`); identity by index, not name
-- `Wild` — pattern-matching variable with optional `exclude`/`properties` constraints
+- `Wild` — pattern-matching variable with optional `exclude`/`properties` constraints; `__call__` raises `TypeError` (guards against accidentally invoking a wildcard as a function)
 
 ### [`alphabets.py`](alphabets.py)
 Precomputed Greek letter name collections for `symbols()` shorthand.
@@ -274,6 +274,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Lambda` — anonymous function expression `Lambda(x, expr)`; `__eq__` performs alpha-equivalence (renames bound variables before comparing bodies, so `Lambda(x, x**2) == Lambda(y, y**2)`)
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments; `_eval_as_leading_term` returns self unchanged (no series computation possible for unknown functions)
+- `Derivative.__new__` — when no differentiation variables supplied, auto-detects from `expr.free_symbols`; raises `ValueError` if expression has zero or more than one free variable; returns `S.Zero` for numeric expressions
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
 - `Derivative._eval_subs` — substitution on derivatives; if old is a Derivative of the same expr with a subset of differentiation variables (lower-order), returns `Derivative(new, *remaining_vars)`; if variable being replaced is not diff-compatible, wraps in `Subs`
 - `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`

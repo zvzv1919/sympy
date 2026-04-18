@@ -32,8 +32,9 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve` (symmetric→direct Cholesky; overdetermined rows≥cols→normal equations A^T·A then Cholesky; underdetermined→raises), `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Triangular solvers** (public precondition-checking wrappers): `lower_triangular_solve(rhs)` validates squareness, row-count match, and `is_lower` before delegating; `upper_triangular_solve(rhs)` validates squareness, row-count match, and `is_upper` before delegating. Both delegate to `_lower/_upper_triangular_solve` in dense/sparse layers.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
-- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det` (division-free determinant via Berkowitz algorithm; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction), `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**:
   - `inverse_ADJ`: cofactor/adjugate — computes `berkowitz_det`, checks `d.equals(0)`; if indeterminate (None), falls back to `rref` diagonal-pivot check for singularity.
   - `inverse_LU`: LU decomposition via `LUsolve`; checks rref diagonal for singularity.
@@ -64,6 +65,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 
 - `DenseMatrix`: concrete dense storage; element access, `tolist`, `row`, `col`, `applyfunc`, `reshape`.
+- `_eval_trace`: computes trace by summing diagonal entries via flat `_mat` list indexing (`_mat[i*cols + i]`), not two-dimensional access.
 - `as_immutable`: converts to `ImmutableMatrix`; special-cases zero-row or zero-col matrices (passes shape+empty list instead of `tolist`). `as_mutable`: converts to mutable `Matrix`.
 - `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.

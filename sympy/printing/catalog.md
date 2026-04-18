@@ -33,7 +33,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 ## Pretty Printing (2D ASCII/Unicode)
 
 ### [`pretty/pretty.py`](pretty/pretty.py)
-`PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
+`PrettyPrinter` — renders expressions as 2D visual text art (ASCII/Unicode box drawing). Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
 - `_print_Mul` — decomposes a product into numerator/denominator factor lists and renders as a 2D stacked fraction with a horizontal bar; inserts `1` when numerator is empty.
   - Scope limited to fraction decomposition and layout — does **not** handle inline multiplication signs, negative-one substitution, or sign-collision avoidance.
   - Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
@@ -79,7 +79,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ## String / Code Printers
 
 ### [`str.py`](str.py)
-`StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
+`StrPrinter` — the default human-readable text formatter (`str(expr)`, `print()`). Generates **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
 - `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
 - `_print_Mul` — splits factors into numerator/denominator lists; formats as `a*b/c` (single denominator, no parens) or `a*b/(c*d)` (multiple denominators wrapped in parentheses).
   - Uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator; allows evaluation when exponent is exactly `-1` (negation yields 1, collapsing to base).
