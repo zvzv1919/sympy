@@ -70,6 +70,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - For `Add`: applies identity matchers per term, then addition matchers with `TR10i` contraction; skips if matched residual contains trig/hyper of matched args.
   - Artifact reduction phase: reverses Pythagorean substitutions (e.g. 1−cos²→sin²) that made the expression more complex; uses restricted wildcards (excluding certain functions) to influence better matches.
   - Loop guard: iterates artifact reversal with `was != expr` check to prevent infinite re-matching; breaks early when matched coefficient is zero or cancels with other terms.
+- `_dotrig(a, b)` — guard that checks whether expression `a` and pattern `b` share the same function category (both TrigonometricFunction or both HyperbolicFunction) and outer type (`func`); skips pattern matching when categories don't match.
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
 - `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) for rewriting ratios/products of trig and hyperbolic functions.
   - `artifacts` table: reverses Pythagorean identity substitutions that made an expression more complex (e.g. 1−cos²→sin², 1−1/cos²→−tan²), restoring the simpler original form.
@@ -105,7 +106,9 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `besselsimp(expr)` — simplify Bessel function expressions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds.
   - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial. For power-of-2 `n`, repeatedly sqrtdenests and halves `n`, returning early without polynomial solving.
-- `bottom_up(rv, F)` — apply function bottom-up through expression tree.
+- `bottom_up(rv, F, atoms, nonbasic)` — apply function bottom-up through expression tree; recurses into `rv.args`.
+  - If `rv` lacks `args` (non-Basic object): catches `AttributeError`; applies `F` only when `nonbasic=True` (catching `TypeError` if `F` rejects it).
+  - `atoms=True`: applies `F` even to leaf nodes (args is empty).
 - `clear_coefficients(expr)` — strip rational leading coefficients.
 - `sum_simplify(s)` — simplify sums of Sum objects; absorbs constants into Sum bodies and pairwise merges terms.
 - `sum_add(s1, s2, method)` — helper merging two Sums: method 0 combines matching limits; method 1 merges adjacent index ranges when bodies match and index variable is the same.

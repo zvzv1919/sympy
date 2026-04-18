@@ -78,7 +78,7 @@ Yields individual `Permutation` elements (not `PermutationGroup` objects) for st
 - `symmetric(n)`, `cyclic(n)`, `alternating(n)` — yield all permutations of Sn, Cn, An respectively. `alternating` filters by `is_even`.
 - `dihedral(n)` — yields all 2n elements of Dn. Special-case embeddings for n=1 (in S2) and n=2 (Klein 4-group in S4) where Dn is not a subgroup of Sn.
 - `rubik_cube_generators()` — standard 3×3 Rubik's cube face-turn permutations.
-- `rubik(n)` — NxN Rubik's cube permutation generator; builds all plane-rotation permutations for each face direction.
+- `rubik(n)` — NxN Rubik's cube permutation generator; represents each face as an n×n numbered matrix, simulates single-face rotations, slice-plane moves, and whole-cube rotations (cycling face matrices and rotating adjacent faces), then records each resulting state as a `Permutation`.
 
 ---
 
@@ -173,7 +173,9 @@ Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
 - `transversal2coset(size, base, transversal)` — converts BSGS transversals to coset representation; fills identity for positions not in base, then trims trailing identity entries so the returned list may be shorter than `size`.
 - `get_symmetric_group_sgs(n, antisym)` — returns minimal BSGS for a rank-n (anti)symmetric tensor; encodes sign via trailing positions: symmetric appends `[n, n+1]`, antisymmetric appends `[n+1, n]`.
-- `tensor_gens`, `perm_af_direct_product`, `bsgs_direct_product`, `dummy_sgs`.
+- `perm_af_direct_product` — direct product of two generator lists in array form; embeds each set into the combined index space.
+- `bsgs_direct_product` — direct product of two BSGS structures; merges bases and generators, filters out identity permutations, and falls back to a single identity generator if all combined generators are trivial.
+- `tensor_gens`, `dummy_sgs`.
 - `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal.
 - `_is_minimal_bsgs` — verifies a BSGS has the lexicographically smallest base by reconstructing the base from generators and comparing to the given one.
 - `get_transversals` — returns transversals for a group given its BSGS.

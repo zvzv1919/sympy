@@ -46,12 +46,16 @@ Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple re
 - `pl_true_int_repr(clause, model)` — lightweight three-valued truth evaluator for a single integer-encoded disjunctive clause.
   - Negative integers represent negated propositions (looks up absolute value and flips boolean).
   - Returns True/False/None depending on whether the clause is satisfied, falsified, or indeterminate under partial assignment.
-- `unit_propagate` / `unit_propagate_int_repr` — simplify clauses by propagating unit clauses.
+- `unit_propagate(clauses, symbol)` — simplify a symbolic clause list by a unit literal: removes clauses containing the symbol; deletes ¬symbol from others.
+  - Non-`Or` clauses (single literals) are kept unconditionally without symbol-matching.
+- `unit_propagate_int_repr` — integer-encoded equivalent; filters out clauses containing the symbol and strips its negation from the rest.
 - `find_pure_symbol` / `find_pure_symbol_int_repr` — find symbols appearing with only one polarity.
-- `find_unit_clause` / `find_unit_clause_int_repr` — find a clause with exactly one unbound literal and return that variable with its required truth value (sign determines polarity).
+- `find_unit_clause(clauses, model)` — iterate disjunctive clauses counting literals not yet bound in `model`; when exactly one literal is unbound, return that variable and its forced truth value (positive literal → True, negated → False).
+- `find_unit_clause_int_repr` — integer-encoded equivalent of `find_unit_clause`.
 
 ### [`algorithms/dpll2.py`](algorithms/dpll2.py)
 Internal CDCL SAT backend (called by `inference.satisfiable`); iterative solver with clause learning, watched literals, and VSIDS heuristic.
+- Standalone clause helpers (`unit_propagate`, `find_unit_clause`, `find_pure_symbol`) live in `dpll.py`, not here.
 - `dpll_satisfiable(expr, all_models)` — backend entry point; converts to CNF, early-exits for trivially false formulas, yields models to caller.
 - `SATSolver` — stateful SAT solver class operating on integer-encoded clauses.
   - Uses watched-literal data structures for efficient unit propagation.

@@ -56,6 +56,8 @@ All concrete numeric types and their arithmetic operations.
   - `__mod__` — modulo operator; when divisor is a non-integer Rational (q≠1), converts self to exact Rational first, computes mod in exact arithmetic, then rounds result back to Float precision (avoids precision loss from float mod)
   - `__lt__`/`__le__` — ordering comparisons; checks `other.is_real and other.is_number` (different predicate from `__gt__`/`__ge__`) to decide whether to evalf the other operand
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
+  - `gcd(other)` — greatest common divisor of two Rationals: `igcd(numerators) / ilcm(denominators)`
+  - `lcm(other)` — least common multiple of two Rationals: `lcm(numerators) / gcd(denominators)`
   - `as_content_primitive()` — returns `(|self|, sign)` for nonzero; returns `(1, self)` when self is zero
 - `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
@@ -213,7 +215,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 ### [`exprtools.py`](exprtools.py)
 Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_const()`, `_monotonic_sign()`, `factor_nc()`.
 
-- `_monotonic_sign(expr)` — determines uniform sign of an expression; for multivariate signed linear expressions, substitutes each free symbol's monotonic sign, using a tiny epsilon placeholder (`_eps`/`-_eps`) when a symbol's closest-to-zero value is exactly zero; final result subs epsilon back to 0
+- `_monotonic_sign(expr)` — returns closest-to-zero bound if expression has uniform sign; for non-Add with numeric denominator: prime+odd→3, prime+even→2, positive+even→2, positive+integer→1, positive→_eps, negative mirrors; for multivariate signed linear expressions, substitutes each free symbol's monotonic sign using epsilon placeholder
 
 - `factor_nc(expr)` — factors expressions with non-commutative symbols; extracts common NC prefixes/suffixes, then tries permutations of NC factors to find correct ordering
 

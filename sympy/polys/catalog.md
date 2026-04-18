@@ -81,7 +81,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `_iadd_poly_monom(p2, mc)` — in-place add product; same generator-copy safeguard.
   - `coeff(element)` — return scalar multiplier for a given monomial; accepts integer `1` for constant term or a monomial element; **raises `ValueError` for non-monomial arguments**.
   - `_term_div()` — returns a closure for term divisibility; **over non-field domains (e.g. ZZ), also checks that the coefficient divides evenly** before returning a quotient.
-  - `div(fv)`, `rem(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking.
+  - `div(fv)`, `rem(G)`, `quo(G)`, `exquo(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking; **`exquo` raises `ExactQuotientFailed` if remainder is nonzero**.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
   - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
   - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`.
@@ -230,6 +230,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
   - `dup_ff_div`, `dup_rr_div`, `dmp_ff_div`, `dmp_rr_div` — **raise `PolynomialDivisionFailed` if remainder degree fails to strictly decrease** between loop iterations (stall detection to prevent infinite loops).
+  - `dup_rr_div`/`dmp_rr_div` (ring division): **breaks the division loop early when the remainder's leading coefficient is not evenly divisible by the divisor's leading coefficient**, returning partial quotient and current remainder.
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo` — remainder, quotient.
 - `dup_exquo`, `dmp_exquo` — exact quotient; **raises `ExactQuotientFailed` if remainder is nonzero**.
 - `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **same `PolynomialDivisionFailed` stall detection as regular division**.
@@ -502,6 +503,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
   - `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence.
   - `method=0` scales remainders by `LC(p)^(deg_diff)` for modified subresultant coefficients; `method=1` produces plain (unscaled) coefficients.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
+  - `euclid_q` — Euclidean sequence in Q[x]; **normalizes LC(p) to positive before computing remainders (negating both inputs); after completion, negates entire output sequence if original LC was negative**; removes trailing zero/NaN entry.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
 - `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`).

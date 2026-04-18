@@ -68,8 +68,9 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
     - When pole position is indeterminate: returns None for numerator factors; for denominator factors, returns None if strip bounds or pole contain free symbols, otherwise raises `MellinTransformStripError`
   - Poles are classified as left/right of contour to assign them to bm vs bq (or an vs ap) G-function parameter lists
   - Polynomial factors: degree-1 extracts linear root directly; degree>1 factors via `roots()`, falls back to `CRootOf.all_roots()` when roots() doesn't find all roots
-  - Trig factors (sin, cos, tan, cot): rewrites as pairs of gamma functions; sin uses `_rewrite_sin` for denominator strip checking
-  - Applies gamma multiplication theorem to normalize coefficient magnitudes ≠ 1
+  - Trig factors (sin, cos, tan, cot): rewrites as pairs of gamma functions via `_rewrite_sin` / analogous helpers
+- `_rewrite_sin` — converts sin(m·s+n) into a gamma(…)·gamma(1−…) pair using the reflection formula; computes an integer shift via `ceiling` to keep both gamma arguments safely on the correct side of the integration strip (avoids poles inside the contour); uses `as_real_imag()[0]` instead of `re()` because `re()` does not expand symbolic expressions
+  - Applies gamma multiplication theorem to normalize coefficient magnitudes ≠ 1 (in `_rewrite_gamma`)
   - Raises `MellinTransformStripError` if a pole falls inside the critical strip; raises NotImplementedError if numerator gamma poles partially overlap the strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails

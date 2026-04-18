@@ -115,6 +115,8 @@ Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, com
 #### [`elementary/trigonometric.py`](elementary/trigonometric.py)
 Trigonometric functions and their inverses.
 - `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions; `sin`/`cos` have `_eval_expand_trig` for multiple-angle expansion using Chebyshev T (odd n) and Chebyshev U (even n) polynomials from `special/polynomials.py`.
+- `ReciprocalTrigonometricFunction` — base class for reciprocal trig forms (`sec`, `csc`, `cot`); delegates rewrites/eval to the underlying base function (e.g., cos for sec) and inverts.
+  - `_rewrite_reciprocal` guards against trivial identity rewrites by returning None if the delegated result equals the original expression unchanged.
 - `asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2` — inverse trig.
 - `_pi_coeff` — helper to normalize arguments by π.
 
@@ -125,7 +127,7 @@ Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
 Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those are `Chi`, `Shi` in `special/error_functions.py`).
 - `sinh`, `cosh`, `tanh`, `coth` — primary hyperbolic functions; `eval` converts purely imaginary arguments to circular trig equivalents (e.g., sinh(ix)→i·sin(x), cosh(ix)→cos(x)).
   - `sinh`/`cosh` have `_eval_expand_trig` for addition-identity expansion; integer-multiple arguments n*t are split into t + (n−1)*t and recursively expanded.
-- `ReciprocalHyperbolicFunction` — base class for reciprocal forms (`csch`, `sech`); delegates rewrites to the underlying function via `_rewrite_reciprocal`, which guards against trivial identity rewrites by returning None if the result is unchanged.
+- `ReciprocalHyperbolicFunction` — hyperbolic counterpart of `ReciprocalTrigonometricFunction` (in `trigonometric.py`); base class for `csch`, `sech`; same delegation/rewrite-guard pattern.
 - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
   - `acosh.eval` — has a constant lookup table mapping known algebraic values (1/2, √3/2, etc.) to exact π-multiples; multiplies result by i when the argument is real (branch-cut convention).
 

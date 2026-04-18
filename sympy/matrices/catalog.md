@@ -29,7 +29,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
-- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
@@ -76,10 +76,12 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
 
 - `SparseMatrix`: DOK-based sparse storage; `row_list`, `col_list`, `nnz`.
+- `__eq__`: equality comparison — checks shape, then compares `_smat` dicts directly for sparse-vs-sparse; converts dense `MatrixBase` to sparse (via `MutableSparseMatrix`) before dict comparison; returns False on `AttributeError` for non-matrix operands.
 - `row_join`: horizontal concatenation (`[A B]`); handles both sparse (dict iteration) and dense (flat-list `_mat` iteration) operands.
 - `col_join`: vertical concatenation (`[A; B]`); similarly handles mixed sparse/dense operands.
 - `MutableSparseMatrix`: mutable variant with in-place `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`.
-- `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees; used by sparse decompositions to skip zero entries.
+- `liupc`: Liu's algorithm for elimination tree pre-determination; collects below-diagonal non-zero indices per row, iterates each row's off-diagonal entries (excludes diagonal via `[:-1]`) to build parent/virtual arrays. Returns (row index lists, parent list).
+- `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees (calls `liupc`); used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
 - `_eval_inverse`: sparse inversion dispatch (internal to sparse storage layer); symmetrizes via M^T·M when needed.
@@ -132,6 +134,8 @@ Block-structured symbolic matrices.
 
 ### [`expressions/transpose.py`](expressions/transpose.py)
 - `Transpose`: unevaluated symbolic transpose Mᵀ.
+- `doit`: evaluates the transpose — recursively evaluates inner arg (if `deep=True`), then calls `arg._eval_transpose()`; if that returns `None`, wraps arg back in `Transpose` (never propagates None); catches `AttributeError` for objects lacking the hook.
+- `refine_Transpose`: returns the original arg when symmetric assumptions hold.
 
 ### [`expressions/adjoint.py`](expressions/adjoint.py)
 - `Adjoint`: unevaluated symbolic expression node for conjugate transpose M*; represents the operation lazily, does not verify self-adjoint properties.

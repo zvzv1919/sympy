@@ -33,9 +33,8 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 - `group_order()` — order of the full Weyl group; dispatches per series: factorial formulas for A/B/C/D, hardcoded constants for E (ranks 6/7/8 only), F, G.
 - `group_name()` — descriptive name and geometric interpretation.
 - `element_order(weylelt)` — order of a specific element given as a product of generators.
-- `matrix_form(weylelt)` — converts a product-of-reflections string into its matrix representation; builds standard matrices for each generating reflection per series (A, D, E, F, G).
-  - D-series: generators with index < rank are coordinate transpositions; the last generator (index == rank) uses negative off-diagonal entries instead.
-  - Each series has distinct per-generator matrix construction logic with series-specific special cases.
+- `matrix_form(weylelt)` — converts a product-of-reflections string into its reflection matrix representation per series (A, D, E, F, G).
+  - Each series has distinct per-reflection matrix construction logic with series-specific special cases.
 - `coxeter_diagram()` — undirected Coxeter diagram.
 
 ## Type Series — Root System Definitions
@@ -59,7 +58,7 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 
 ### [`type_d.py`](type_d.py)
 `TypeD` — D_n series (even-dimensional orthogonal, so(2n)). Dimension n. Roots: 2n(n−1). Branching Dynkin diagram. Rank ≥ 3.
-- `simple_root(i)` — first n−1 roots are difference vectors; nth root has two +1 entries [0,…,0,1,1] (branching node).
+- `simple_root(i)` — constructs fundamental roots: first n−1 are difference vectors like A_(n−1); the nth (last) root breaks the pattern with two +1 entries [0,…,0,1,1] instead of a +1/−1 pair (branching node).
 - `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots (unlike B_n).
 
 ### [`type_e.py`](type_e.py)

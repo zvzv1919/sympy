@@ -41,7 +41,7 @@ Deterministic tree-traversal strategies that apply a rule across an expression t
 ### [`tools.py`](tools.py)
 Composite deterministic strategies that depend on SymPy.
 - `subs(d)` — full simultaneous exact substitution via top-down traversal.
-- `canon(*rules)` — canonicalization: bottom-up exhaust of do_one, repeated until fixed point.
+- `canon(*rules)` — canonicalization via nested fixed-point: at each node (top-down), exhaust all rules via `do_one`; repeat the whole tree pass until globally stable.
 - `typed(ruletypes)` — dispatch rules by expression type via `switch`.
 
 ### [`tree.py`](tree.py)

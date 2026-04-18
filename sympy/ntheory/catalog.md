@@ -4,7 +4,7 @@
 
 ### [`generate.py`](generate.py)
 Generating, counting, and enumerating primes and composites.
-- `Sieve` — infinite dynamically-growing sieve of Eratosthenes; `search(n)` returns bounding prime indices (uses ceiling vs truncation to distinguish exact prime match from non-integer input)
+- `Sieve` — infinite dynamically-growing sieve of Eratosthenes (prime cache); `search(n)` returns bounding prime indices; `__contains__` membership test short-circuits even numbers without cache lookup
 - `prime(nth)`, `primepi(n)` — nth prime / count of primes ≤ n
 - `nextprime`, `prevprime` — adjacent prime lookup
 - `primerange(a, b)` — generate primes in half-open range

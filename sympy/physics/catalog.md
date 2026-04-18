@@ -50,7 +50,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
   - `Commutator.eval` — automatic simplification on construction: distributes over sums ([A+B,C]→[A,C]+[B,C]), extracts scalar prefactors ([xA,yB]→xy[A,B]), directly evaluates bosonic/fermionic single-operator pairs.
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors. `FermionState` subclass adds fermi-level logic: `_only_above_fermi(i)` returns True for symbolic indices without assumptions when no fermi level is set.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
-- `Dagger` — Hermitian conjugate of creation/annihilation operators; `eval()` dispatches: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
+- `Dagger` — Hermitian conjugate for second-quantization operators (distinct from `quantum/dagger.py` which wraps `adjoint` for abstract quantum operators). `eval()` fallback for objects without `_dagger_()`: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
 - `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products.
 - `contraction(a, b)` — evaluates the contraction of two operators.
 - `matrix_rep(op, basis)` — matrix representation in a Fock basis.
@@ -99,6 +99,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
+  - `SpinOpBase._apply_operator_TensorProduct` — distributes operator action across each factor of a tensor-product (multi-particle) state; restricted to coordinate-basis operators (Jx, Jy, Jz) only — raises NotImplementedError for J+, J−, J².
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
@@ -194,6 +195,7 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration (`acc()`) in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
   - `acc(frame)` fallback: if acceleration not explicitly set, differentiates velocity; if velocity is also zero, returns zero vector.
 - `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
+  - `dynamicsymbols(names, level=0)` — creates time-dependent symbolic functions (UndefinedFunction of `t`); `level` applies pre-differentiation. Single name → bare expression; multiple names → list. Stores time variable as `dynamicsymbols._t`.
   - `get_motion_params(frame, **kwargs)` — computes acceleration/velocity/position from any one given; integrates using `_process_vector_differential`, which short-circuits when the input vector is zero (returns boundary condition directly without integrating).
 - `fieldfunctions.py` — scalar/vector field operations: gradient, divergence, curl.
 
@@ -219,6 +221,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
   - `to_linearizer()` — converts Kane's EOM into `Linearizer` form; decomposes equations into kinematic (f_0, f_1) and dynamic (f_2, f_3) components by zeroing different variable groups.
     - Partitions coordinates/speeds into independent vs dependent sets. Validates coefficient matrices contain no unexpected dynamic symbols.
+    - Raises ValueError if an external dynamic symbol and its time derivative both appear in the auto-discovered forcing terms.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
   - Legacy `_old_linearize` (deprecated) — in-place linearization via manual chain-rule Jacobian decomposition. Validates that system matrices (K_kqdot, K_ku, etc.) contain no unexpected dynamic symbols outside the forcing vector; raises ValueError if found. Also rejects derivatives of unrecognized dynamic symbols in forcing terms. Branches into four cases based on holonomic/non-holonomic constraints, computing dqd/dqi and dud/dui via LU-solving constraint Jacobians.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation). Constructor validates frame argument: raises TypeError if a non-null value is not a ReferenceFrame instance.

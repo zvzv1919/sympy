@@ -27,7 +27,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `_matplotlib_list(interval_list)` — converts bounding rectangular intervals to x/y coordinate lists for matplotlib `fill()`; returns lists of four `None`s when input is empty (workaround because matplotlib rejects empty lists for `fill`).
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
   - `__init__` — enforces dimensional consistency: raises `ValueError` if series mix 2D and 3D data (all series must be uniformly 2D or 3D).
-  - Implicit plot rendering: interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
+  - Implicit plot rendering: disables axis smart bounds before rendering; interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
 - `TextBackend` — ASCII fallback backend; `show()` raises `ValueError` if more than one series or if series is not `LineOver1DRangeSeries`. Delegates single-expression rendering to `textplot()`.
 - `DefaultBackend` — auto-selects `MatplotlibBackend` if matplotlib is available, otherwise `TextBackend`.
 
@@ -161,6 +161,7 @@ User input handling with 2D/3D mode awareness.
   - Class-level sensitivity constants: `normal_mouse_sensitivity` / `modified_mouse_sensitivity` and `normal_key_sensitivity` / `modified_key_sensitivity`; shift key toggles from normal to modified (slower) sensitivity for both pointer and keyboard input.
   - `__init__(window, **kwargs)` — initializes boolean `action` state dictionary tracking all user interactions (rotate, zoom, spin, reset, presets, axis toggles, `modify_sensitivity`); accepts `invert_mouse_zoom` option.
   - `update(dt)` — applies accumulated input each frame; branches on `is_2D()`: in 2D mode, arrow keys become translations instead of rotations, and model-Z-axis rotation keys are suppressed entirely.
+  - `is_2D()` — returns True when all plotted functions have at most 1 independent variable and at most 2 dependent variables; determines whether dragging translates (2D) or rotates (3D).
 
 ### `plot_window.py`
 OpenGL window management, rendering loop, and title-bar progress display.

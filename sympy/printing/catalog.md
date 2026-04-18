@@ -36,7 +36,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 `PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
 - `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty. Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
 - `_print_MatrixElement` — renders matrix element access; when parent is a `MatrixSymbol` with numeric indices, produces a subscripted symbol (e.g., `A₁₂`); otherwise uses function-like bracket notation `A[i, j]`.
-- `_print_MatrixSlice` — renders sub-range access with start:stop:step notation; simplifies by omitting unit step, collapsing single-element ranges, and dropping zero start index.
+- `_print_MatrixSlice` — renders sub-range access as 2D pretty-printed layout with slice simplification (same rules as `StrPrinter`).
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
 - `_print_Sum` — builds the summation (∑) sign with upper/lower limits.
 - `_print_Integral` — builds integral signs with limits and spacing.
@@ -78,6 +78,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
 - `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
 - `_print_Mul` — splits factors into numerator/denominator lists; uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator (prevents re-simplification), but allows evaluation when exponent is exactly `-1` (since negation yields 1, collapsing to the base).
+- `_print_MatrixSlice` — renders matrix sub-range access as flat 1D `A[start:stop:step, ...]` text; simplifies by omitting unit step, collapsing single-element ranges, and dropping zero start index.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and abstract formatting hooks.
