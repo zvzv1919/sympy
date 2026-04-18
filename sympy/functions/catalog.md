@@ -63,7 +63,8 @@ Bessel functions and Airy functions.
 - `besselj`, `bessely`, `besseli`, `besselk` — Bessel functions of first/second kind, modified.
 - `hankel1`, `hankel2` — Hankel functions.
 - `jn`, `yn` — spherical Bessel functions; `hn1`, `hn2` — spherical Hankel.
-- `airyai`, `airybi`, `airyaiprime`, `airybiprime` — Airy functions and derivatives.
+- `AiryBase` — abstract base for Airy functions (solutions of w''(z) − z·w(z) = 0); `as_real_imag` decomposes complex-argument evaluation into real/imaginary parts.
+- `airyai`, `airybi`, `airyaiprime`, `airybiprime` — Airy functions and derivatives (subclasses of `AiryBase`).
 
 #### [`special/hyper.py`](special/hyper.py)
 Hypergeometric and Meijer G-functions.

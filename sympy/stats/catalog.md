@@ -53,6 +53,7 @@ All built-in continuous probability distributions (~28) plus a factory for user-
 - Named distributions: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
 - Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).
+- Some distributions override `sample()` to bypass the generic inverse-CDF sampling in the base class (e.g., `LogNormalDistribution` delegates to `random.lognormvariate`).
 
 ### [`drv_types.py`](drv_types.py)
 Built-in discrete distributions with infinite support.
@@ -96,4 +97,6 @@ Derivative-based arithmetic error (uncertainty) propagation for general expressi
 - `variance_prop(expr, consts, include_covar)`: computes total variance via partial-derivative formula; all non-const symbols are treated as variant.
 
 ### [`__init__.py`](__init__.py)
-Package init; re-exports public API (distributions, query functions) from submodules.
+Package entry point; assembles `__all__` by importing and re-exporting the public API from each submodule.
+- Authoritative manifest of every exported name, grouped by category: finite (`frv_types`), continuous (`crv_types`), discrete-infinite (`drv_types`), query functions (`rv_interface`), symbolic probability.
+- To determine which distributions or functions are available at the package level, consult this file.

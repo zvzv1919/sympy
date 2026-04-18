@@ -22,7 +22,7 @@ Concrete vector classes built on `BasisDependent`.
 
 ### [`dyadic.py`](dyadic.py)
 Dyadic tensor classes built on `BasisDependent`.
-- `Dyadic` — superclass for dyadic tensors; `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross`, `to_matrix`.
+- `Dyadic` — superclass for dyadic tensors (tensor/outer products of vectors); `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross`, `to_matrix`.
 - `BaseDyadic` — outer product of two base vectors.
 - `DyadicAdd`, `DyadicMul`, `DyadicZero` — sum, scalar product, and zero specializations.
 - `_dyad_div` — division dispatch helper; raises `TypeError` if both operands are dyadics or if dividing by a dyadic, otherwise returns `DyadicMul` with inverse scalar.
@@ -66,7 +66,7 @@ Vector calculus operations and coordinate re-expression.
 - `express(expr, system, variables=False)` — re-express vectors, dyadics, or scalars in a different coordinate system.
   - When `variables=True`, substitutes foreign-frame coordinate variables (base scalars) via each foreign system's `scalar_map`.
 - `curl`, `divergence`, `gradient` — convenience wrappers; computation logic lives in the `Del` operator class.
-- `is_conservative`, `is_solenoidal` — field property tests.
+- `is_conservative`, `is_solenoidal` — field property tests; both short-circuit to `True` for the zero vector without computing curl/divergence.
 - `scalar_potential`, `scalar_potential_difference` — potential computations.
 - `matrix_to_vector` — inverse of `Vector.to_matrix`: takes a 3×1 column matrix and returns a Vector by combining its elements with the system's basis vectors (i, j, k).
 - `orthogonalize` — Gram-Schmidt orthogonalization of vectors.

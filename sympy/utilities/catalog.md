@@ -6,7 +6,7 @@
 Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cython, or Ufuncify backends.
 - `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments.
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
-- `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions.
+- `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions; numpy backend enforces maxargs=32 limit on total (inputs+outputs), raises `ValueError` if exceeded.
 - `CodeWrapper` — base class; subclasses handle compilation and module import; `_get_wrapped_function(mod, name)` resolves the callable from the compiled module.
 - `CythonCodeWrapper` — Cython backend; `_get_wrapped_function` appends `'_c'` suffix to the routine name when retrieving the callable from the built extension module.
 - `F2PyCodeWrapper`, `DummyWrapper` — Fortran/dummy backends; resolve callable by original routine name (no suffix).
@@ -24,7 +24,7 @@ Generates source code files (C, C++, Fortran, Julia, Octave/Matlab) from SymPy e
 - `codegen(name_expr, language)` — top-level convenience function.
 
 ### [`lambdify.py`](lambdify.py)
-Transforms SymPy expressions into fast numerical lambda functions using math/numpy/mpmath backends.
+Transforms SymPy expressions into interpreted Python lambda functions using math/numpy/mpmath backends (no compilation, no argument-count limits).
 - `lambdify(args, expr, modules)` — main entry point for expression-to-function conversion.
 
 ## Decorators & Memoization

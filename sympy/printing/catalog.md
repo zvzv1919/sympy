@@ -56,7 +56,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 
 ### [`pretty/stringpict.py`](pretty/stringpict.py)
 `stringPict` — 2D string canvas with baseline tracking. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
-- Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other.
+- Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other. `stack` accepts a special `LINE` sentinel that is replaced with a horizontal dash row spanning the maximum width of all composed elements.
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
@@ -154,6 +154,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `TableForm` — renders 2D data as aligned tables (ASCII, LaTeX, HTML).
 - `TableForm.__init__` — normalizes ragged 2D data; `pad` kwarg controls fill for short rows and None entries. When `pad=None` (default), short rows are space-filled but explicit None entries are preserved as-is; when `pad` is given, both None and short-row gaps use that character.
 - Supports column alignments (left/center/right via string aliases `'l'`/`'r'`/`'c'`/`'<'`/`'>'`/`'^'`), row/column headings ("automatic" or custom labels), per-column format strings or callables, and `wipe_zeros`.
+- Has its own `_latex` method that renders the table as a LaTeX `tabular` environment; when a per-column callable returns `None`, falls back to `printer._print(x)` for that cell.
 - If row headings are present and alignment count == data columns + 1, the first alignment is peeled off as the row heading alignment; otherwise row heading defaults to right-justified.
 
 ### [`tree.py`](tree.py)

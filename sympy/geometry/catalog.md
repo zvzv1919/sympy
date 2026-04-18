@@ -63,7 +63,7 @@ Point representations in n-dimensional Euclidean space.
 ## Curves & Conics
 
 ### [`curve.py`](curve.py)
-Parametric curves in 2D space.
+Explicit parametric curves in the 2D plane (not 3D surfaces).
 - `Curve` — defined by `(f(t), g(t))` over a parameter interval; supports `arbitrary_point()`, `plot_interval()`, `rotate()`, `scale()`, `translate()`.
 
 ### [`ellipse.py`](ellipse.py)
@@ -87,7 +87,9 @@ Parabolic entities defined by focus and directrix.
 
 ### [`plane.py`](plane.py)
 3D planar surfaces.
-- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `is_coplanar()`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`, `arbitrary_point()`.
+- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `is_coplanar()`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`.
+  - `arbitrary_point(t)` — returns a parametric `Point3D` that traces a unit circle on the plane around `p1` as `t` varies from 0 to 2π; handles axis-aligned normals directly, general normals via projection and symbolic solve.
+  - `random_point(seed)` — evaluates `arbitrary_point` at a random parameter value.
 
 ## Polygons
 

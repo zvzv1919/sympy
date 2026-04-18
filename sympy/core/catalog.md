@@ -178,6 +178,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `_random(n, re_min, im_min, re_max, im_max)` — evaluates self with random complex substitutions for free symbols; escalates precision from 2 up to `DEFAULT_MAXPREC` via `giant_steps` when initial evaluation yields no significant digits; returns None if no significance achieved
 - `is_constant(*wrt)` — checks if expression is constant w.r.t. given symbols; uses numerical probing (substitutes 0, 1, random values)
 - `is_polynomial(*syms)` — returns True only if expression is an exact finite-degree polynomial; rejects symbolic exponents (e.g., `x**n` where n is a symbol, even if integer/nonneg); delegates to `_eval_is_polynomial`
+- `is_rational_function(*syms)` — tests if expression is a ratio of polynomials in given symbols; no simplification attempted (unsimplified forms may return False even if simplifiable to rational); delegates to `_eval_is_rational_function`
+- `is_algebraic_expr(*syms)` — tests if expression is constructible from field operations and rational exponentiation (extends `is_rational_function` to include fractional powers); no simplification attempted; base `_eval_is_algebraic_expr` returns False when free symbols overlap, relying on subclass overrides
 - `as_terms()` — decomposes a sum into structured term list: each term becomes `(coeff, monom, ncpart)` where coeff is `(real, imag)`, monom is a tuple of commutative base exponents indexed by sorted generators, ncpart is non-commutative factors
 - `leadterm(x)` — returns leading term as `(coeff, exponent)` tuple; temporarily replaces `log(x)` with a Dummy before decomposition to avoid variable leaking into the coefficient
 - `extract_branch_factor(allow_half)` — decomposes products of `exp_polar` into `(residual, n)` where n is the integer winding number; collects `pi*I` multiples and rounds down to nearest even integer via `ceiling`
@@ -207,6 +209,10 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 ### [`operations.py`](operations.py)
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.
+
+- `AssocOp.__new__` — constructor: sympifies args, filters identity elements; when `evaluate=False` (or `global_evaluate[0]` is off), returns unevaluated via `_from_args`; when evaluating, calls `flatten()` then determines `is_commutative` based on whether the non-commutative partition is empty
+- `_from_args(args, is_commutative)` — creates instance from pre-processed args; when `is_commutative` is None, infers via `fuzzy_and` over args
+- `_new_rawargs(*args)` — fast instance creation with minimal overhead; inherits commutativity from `self` (not recomputed from new args)
 
 - `_eval_evalf(prec)` — numerical evaluation for Add/Mul; splits into numeric-independent and dependent parts; guards against infinite recursion when the independent part is itself an AssocOp Function
 - `_matches_commutative` — pattern matching for Add/Mul; after removing exact (non-wild) parts, rejects match if inverse-combined expression has more ops than original (count_ops guard)
@@ -267,6 +273,8 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic relational expression nodes (unevaluated comparison objects). `Relational` base dispatches by operator string.
 
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
+- `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
+- `Unequality.__new__` — negation of Equality; delegates to `Equality` then negates
 
 ---
 

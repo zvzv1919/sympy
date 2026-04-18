@@ -6,7 +6,9 @@
 Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 
 - `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default). Supports indexed access (`__getitem__`, `__setitem__`, `__delitem__`) and `append()`/`extend()` for series manipulation.
-- `check_arguments(args, expr_len, nb_of_free_symbols)` — argument parser that groups flat or tuple-wrapped expressions into plot series with three branches: multiple expressions with same range, series of plots with same range, and multiple plots with different ranges.
+- `check_arguments(args, expr_len, nb_of_free_symbols)` — argument grouping helper for matplotlib-based `plot*()` functions only.
+  - Groups flat or tuple-wrapped expressions into plot series; three branches: multiple exprs with same range, series with same range, multiple with different ranges.
+  - Does NOT determine curve-vs-surface or coordinate mode — each `plot*()` entry point already knows its series type.
   - Explicitly excludes the "series of plots with same range" branch when expr_len == 3, because 3-element tuples are ambiguous between expression groups and range tuples.
 - Public API entry points (matplotlib-based):
   - `plot()` — single-expression 2D plots over one variable.
@@ -72,7 +74,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 
 - `PygletPlot(*args, **kwargs)` — factory function whose docstring documents the full user-facing API:
   - Flexible variable interval syntax: `[var, min, max, steps]` with partial specification — `[]` uses all defaults, `[100]` sets only step count, `[-13, 13]` sets only bounds; omitted args filled from coordinate mode defaults.
-  - Coordinate mode selection (Cartesian, parametric, polar, cylindrical, spherical); auto-detected from expression/variable count.
+  - Automatic coordinate mode detection: 1 expression → Cartesian, 2–3 expressions → parametric; 1 variable → curve, 2 variables → surface. Supports Cartesian, parametric, polar, cylindrical, spherical modes.
   - Calculator-like indexed interface (`p[1] = expr`), per-slot style/color, keyboard controls.
 - Caveat: defined inside a try/except block; if pyglet (or any dependency) is not importable, a fallback `PygletPlot` is defined that re-raises the captured exception on every call (lazy-error-raising pattern for optional dependencies).
 

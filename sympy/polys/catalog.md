@@ -231,6 +231,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_deflate`, `dmp_deflate` — map `x^m → y` by computing the GCD of all nonzero-coefficient exponents and slicing; **returns stride 1 unchanged for degree ≤ 0**.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`.
+- `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
 - `dmp_nest(f, l, K)` — wrap a multivariate value in `l` additional nesting levels; **if `f` is not a list (plain scalar), delegates to `dmp_ground`** instead of wrapping in nested lists.
@@ -514,6 +515,8 @@ Option processing and validation for `Poly` constructors and functions.
 
 - `Options` — option container (dict subclass); manages `domain`, `field`, `gaussian`, `extension`, `modulus`, `order`, etc.
   - `__init__` — preprocesses explicit args first, then **prunes defaults that conflict with already-set options via `cls.excludes` lists** before applying defaults; enforces mutual-exclusion and dependency constraints after all options are set.
+- `Domain.preprocess(domain)` — parses domain specification from string, `Domain` instance, or object with `to_domain()`.
+  - **Regex-based string parsing**: `'Z'`/`'ZZ'` → ZZ, `'Q'`/`'QQ'` → QQ, `'EX'` → EX, `'RR_<prec>'`/`'CC_<prec>'` → `RealField(prec)`/`ComplexField(prec)` with extracted precision, `'GF(<p>)'` → FF(p), `'ZZ[x,y]'`/`'QQ(x,y)'` → polynomial ring/fraction field, `'QQ<a,b>'` → algebraic extension.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
 - `Extension.preprocess(extension)` — validates extension parameter; `1` → `True`, `0` → raises `OptionError`; **empty iterable (e.g. `[]`) → `None` (silently disables extension)** rather than raising an error; non-empty iterable → set of extensions.
@@ -663,6 +666,7 @@ Sparse distributed module representations for submodule/syzygy computation.
 
 - Basic element operations: `sdm_add` (add two module elements with cancellation), `sdm_LC`, `sdm_from_dict`, `sdm_sort`, `sdm_strip` — element arithmetic and construction.
 - Module monomial operations: `sdm_monomial_mul`, `sdm_monomial_deg`, `sdm_monomial_lcm`, `sdm_monomial_divides`.
+  - `sdm_monomial_lcm(A, B)` — computes LCM by **preserving the generator index (first tuple element) and delegating `monomial_lcm` on the remaining exponent entries**; result is undefined if A and B belong to different generators.
   - `sdm_monomial_divides(A, B)` — checks if polynomial monomial X exists such that XA = B; **returns False if A and B belong to different free module generators** (different first tuple element), even if polynomial exponents satisfy divisibility.
 - `sdm_nf_buchberger(f, G, O, K, phantom)` — weak normal form using standard Buchberger algorithm (global orderings); optional `phantom` pair tracks companion coefficient vectors in parallel; **when phantom is None, uses `itertools.repeat([])` as dummy** to avoid branching in the divisor-search loop.
 - `sdm_nf_buchberger_reduced` — reduced normal form (unique but more expensive); does NOT support phantom tracking.
@@ -755,8 +759,14 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `is_unit(a)` — test invertibility by attempting `revert`; `revert(a)` **only succeeds for the multiplicative identity** (raises `NotReversible` otherwise).
 - `AlgebraicField` (in `algebraicfield.py`) — algebraic number field `Q(α)`; ground domain must be QQ.
   - `from_sympy(a)` — two-stage conversion: first tries ground rational field (`dom.from_sympy`); **on `CoercionFailed`, falls back to `to_number_field` to interpret `a` as an algebraic element** of the extension; raises `CoercionFailed` if both fail.
+- `Field` (in `field.py`) — abstract base for field domains; inherits from `Ring`.
+  - `gcd(a, b)` — tries to delegate to associated ring's GCD on numerators/denominators; **if no associated ring exists (raises `DomainError`), falls back to returning `self.one`** (trivial GCD).
+  - `lcm(a, b)` — same fallback pattern; **returns `a*b` if no associated ring exists**.
+  - `exquo`, `quo`, `div` — all equivalent to exact division (`a / b`); `rem` always returns `self.zero`.
 - `RealField` (in `realfield.py`) — real numbers up to given precision (mpmath `mpf`).
   - `from_ComplexField(element, base)` — converts complex domain element to real; **silently returns `None` (no error) if element has nonzero imaginary part**, signaling conversion failure to the domain machinery.
+- `ComplexField` (in `complexfield.py`) — complex numbers up to given precision (mpmath `mpc`).
+  - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.

@@ -75,7 +75,8 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - Hollow-factoring removal: if simplifying an expanded factor yields no improvement (result == expanded form), reverts to the original unexpanded form to prevent expression degradation.
   - If unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
   - `recursive` option: extracts common subexpressions via CSE, simplifies the reduced expression, then re-substitutes in reverse order, re-simplifying after each substitution.
-- `futrig(expr)` — applies Fu-like transformation tree for trig simplification.
+- `futrig(expr)` — applies Fu-like transformation tree for trig simplification; uses `_futrig` helper internally.
+  - `_futrig` builds a nested rule tree of TR transforms and applies them via greedy search with a multi-criteria objective (`Lops`) ranking candidates by (trig count, op count, node count, arg count, is_Add).
 
 ---
 

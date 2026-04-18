@@ -134,7 +134,13 @@ Subset generation and manipulation via binary, lexicographic, and Gray code enum
 
 ### [`prufer.py`](prufer.py)
 Prufer sequence correspondence for labeled trees.
-- `Prufer` — bijection between labeled trees and Prufer codes.
+- `Prufer` — bijection between labeled trees (edge lists) and Prufer codes (length n−2 integer sequences).
+  - `to_prufer(tree, n)` — static; converts edge list to Prufer sequence by iteratively finding the smallest leaf node, recording its neighbor, and removing the edge.
+  - `to_tree(prufer)` — static; reconstructs edge list from a Prufer sequence.
+  - `prufer_repr` / `tree_repr` — lazy properties returning the Prufer sequence or edge list.
+  - `prufer_rank` / `unrank(rank, n)` — ranking and unranking of Prufer sequences.
+  - `edges(*runs)` — static; builds edges from sequences of node-index runs.
+  - `next(delta)`, `prev(delta)` — navigate to adjacent Prufer sequences by rank.
 
 ### [`polyhedron.py`](polyhedron.py)
 Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedron).

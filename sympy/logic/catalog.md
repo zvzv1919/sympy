@@ -35,8 +35,8 @@ Propositional-logic inference: truth evaluation, satisfiability dispatch, entail
 Classic DPLL satisfiability solver with simple recursive backtracking; both symbolic and integer-encoded representations.
 - `dpll_satisfiable(expr)` — top-level SAT solver entry point; converts to CNF then calls `dpll_int_repr`.
 - `dpll(clauses, symbols, model)` — recursive DPLL on symbolic clause lists.
-- `dpll_int_repr(clauses, symbols, model)` — recursive DPLL on integer-encoded clause sets.
-  - After exhausting unit-propagation and pure-literal rules, picks an unassigned variable and recursively tries both True/False assignments (backtracking via short-circuit OR).
+  - Runs unit-clause and pure-literal elimination loops, evaluates remaining clauses, then branches on an unassigned variable (True first, False on backtrack via short-circuit OR).
+- `dpll_int_repr(clauses, symbols, model)` — recursive DPLL on integer-encoded clause sets; same branch-and-backtrack logic as `dpll`.
 - `pl_true_int_repr(clause, model)` — lightweight three-valued truth evaluator for a single integer-encoded disjunctive clause.
   - Negative integers represent negated propositions (looks up absolute value and flips boolean).
   - Returns True/False/None depending on whether the clause is satisfied, falsified, or indeterminate under partial assignment.
