@@ -8,7 +8,7 @@ Core print-system initialization for interactive sessions (both plain Python and
   - Configures pretty-printer settings: order, unicode, wrap, column width.
 - `_init_ipython_printing` — registers IPython display formatters (PNG/LaTeX/SVG/pretty-text) for SymPy types.
 - `_init_python_printing` — installs a `sys.displayhook` for plain Python REPL sessions.
-- `_is_ipython` — detects whether a shell instance is an IPython `InteractiveShell`; uses cascading imports across IPython versions (≥0.11 vs `iplib`) to handle backward-incompatible API changes.
+- `_is_ipython` — detects whether a shell instance is an IPython `InteractiveShell`; cascading imports across IPython versions (≥0.11 vs `iplib`); silently returns `False` if all import paths fail.
 
 ## [ipythonprinting.py](ipythonprinting.py)
 **Deprecated** IPython extension shim (deprecated since 0.7.3). Delegates to `init_printing` in `printing.py`.

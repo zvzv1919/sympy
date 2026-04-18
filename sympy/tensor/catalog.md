@@ -132,6 +132,7 @@ Sparse storage N-dim arrays backed by a dict (`_sparse_array`).
 Standalone functions for tensor-style operations on N-dim arrays.
 
 - `tensorproduct(*args)` — outer (tensor) product of arrays/scalars; result rank = sum of input ranks.
+  - Caveat: plain symbolic scalars (e.g. `Symbol`) are **not** auto-wrapped into arrays; if any operand remains non-`NDimArray` after conversion, falls back to scalar `a*b` instead of building a higher-rank tensor.
 - `tensorcontraction(array, *contraction_axes)` — contracts (sums) over specified axis pairs; validates axes are distinct and dimensions match (raises `ValueError` on mismatch).
 - `derive_by_array(expr, dx)` — partial derivative of array w.r.t. array/scalar; result rank = rank(dx) + rank(expr) (shape is **extended**, not preserved).
 - `permutedims(expr, perm)` — reorders axes of a concrete N-dim array object by a permutation; not used for abstract tensor expression data retrieval.

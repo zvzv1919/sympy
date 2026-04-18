@@ -80,6 +80,8 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
   - When fallback returns a Piecewise that still contains an unevaluated `Integral`, raises `IntegralTransformError` ('inversion integral of unrecognised form')
   - If result is still Piecewise after processing, returns early without Heaviside/exp simplification (booleans in args break those transforms)
+  - `simp_heaviside` — simplifies Heaviside(arg) when arg depends on t only via exp(-t): substitutes exp(-t)→dummy, solves the resulting inequality, converts back using log to yield Heaviside(±(t+k))
+  - `simp_exp` — expands complex exponentials via `expand_complex`
 - `_fourier_transform(f, x, k, a, b)` — backend computing generalized F(k) = a·∫exp(b·i·x·k)f(x)dx over (−∞,∞); extracts first branch if result is Piecewise
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
 - `_sine_cosine_transform` — backend for sine/cosine transforms; integrates over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral

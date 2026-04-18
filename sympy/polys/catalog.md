@@ -372,7 +372,9 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
   - `dmp_primitive_prs` — **raises `MultivariatePolynomialError` for `u > 0`** (same pattern as `dmp_euclidean_prs`; delegates to `dup_primitive_prs` when univariate).
   - `dup_inner_subresultants` — computes subresultant PRS and scalar subresultants; **abnormal case (degree drop `d > 1`)**: updates scalar subdeterminant via `c = (-lc)^d / c^(d-1)` (quotient formula); **normal case (`d == 1`)**: simply `c = -lc`.
-  - `dmp_inner_subresultants` — swaps inputs if `deg(f) < deg(g)`; **returns `([], [])` if both are zero; returns `([f], [K.one ground])` if only `g` is zero** (single-element PRS with unit cofactor).
+  - `dmp_inner_subresultants` — multivariate subresultant PRS; swaps inputs if `deg(f) < deg(g)`.
+    - **Returns `([], [])` if both are zero; returns `([f], [K.one ground])` if only `g` is zero** (single-element PRS with unit cofactor).
+    - Same abnormal-case formula as univariate: **degree drop `d > 1` → `c = (-lc)^d / c^(d-1)`; `d == 1` → `c = -lc`**.
 - `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
@@ -567,6 +569,7 @@ Symbolic root-finding algorithms (closed-form solutions).
 
 - `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases; **also accepts a plain list of numerical coefficients** (builds a dummy variable internally).
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
+  - **Two-term (binomial) optimization**: for polynomials with exactly 2 terms and degree > 1, extracts nth-power factors from the constant term, substitutes a dummy base, solves the simpler form, then back-substitutes.
   - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
@@ -889,6 +892,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `__mul__(e)` — when `e` is not an `Ideal`, coerces via `self.ring.ideal(e)`; **returns `NotImplemented` (not an error) if coercion raises `CoercionFailed`**.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
   - `subset(other)` — check if `other` is a subset of this ideal; **if `other` is an Ideal, delegates to `_contains_ideal`; if `other` is a plain iterable (e.g. list of ring elements), checks each element individually** via `_contains_elem`.
+- `ModuleImplementedIdeal` (in `ideals.py`) — ideal implementation that delegates all operations to an underlying `SubModule`.
+  - `_product(J)` — ideal product; assembles **all pairwise products of generators** from both ideals and creates a new submodule from them. Only method that depends on the underlying structure being a `SubModule` (not just a generic module).
 - `Module.__div__(e)` (in `modules.py`) — quotient module; **if `e` is not a `Module` instance, unpacks it as generators to `self.submodule(*e)` before calling `quotient_module`**.
 - `Module.__eq__(other)` (in `modules.py`) — equality via **mutual submodule inclusion**: returns True iff `self.is_submodule(other)` and `other.is_submodule(self)`.
 - `Module.__mul__(e)` (in `modules.py`) — if `e` is not an `Ideal`, **coerces it to an ideal via `self.ring.ideal(e)` before delegating to `multiply_ideal`**; returns `NotImplemented` if coercion fails.
@@ -904,6 +909,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModule.in_terms_of_generators(e)` (in `modules.py`) — express element as linear combination of generators; **catches `CoercionFailed` and raises `ValueError`** if `e` is not a member of the submodule.
 - `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
   - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
+- `SubModule.union(other)` (in `modules.py`) — combine generators of `self` and `other` into a single submodule; **raises `ValueError` if `other` belongs to a different free module container** (same check in `intersect` and `module_quotient`).
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
 - `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient (colon ideal) `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
   - **Single generator**: embeds into a higher-rank free module with an elimination ordering (`ilex`) and extracts quotient from Gröbner basis elements whose non-last components are all zero.
@@ -977,7 +983,10 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
-- `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None. `from_AlgebraicField(a, K0)` — **succeeds only if `K1.domain == K0`** (target ring's coefficient domain matches the source algebraic field); **implicitly returns `None` otherwise** (silent failure, no conversion attempted).
+- `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain wrapper.
+  - `__init__(domain_or_ring, symbols, order)` — **dual-path initialization**: if first arg is already a `PolyRing` and no other args given, reuses it directly; otherwise constructs a new `PolyRing` from the provided symbols, domain, and ordering.
+  - `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
+  - `from_AlgebraicField(a, K0)` — **succeeds only if `K1.domain == K0`**; **implicitly returns `None` otherwise** (silent failure, no conversion attempted).
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
   - `GeneralizedPolynomialRing.new(a)` — construct element; **validates that the denominator's leading term under the ring's ordering has all-zero exponents** (i.e., denominator is a unit in the localization); raises `CoercionFailed` otherwise.

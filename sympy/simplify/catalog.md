@@ -65,7 +65,8 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - `analyse_gens(gens, hints)` — groups generators by argument, computes GCD base frequency, ensures complementary functions (sin/cos/tan) are included.
   - `build_ideal(x, terms)` — generates polynomial relations (Pythagorean, multiple-angle) for the ideal.
   - `parse_hints(hints)` — interprets user hints for generator selection.
-- `exptrigsimp(expr)` — simplifies mixed exponential/hyperbolic/trig expressions.
+- `exptrigsimp(expr)` — simplifies mixed exponential/hyperbolic/trig expressions; converts exp↔sinh/cosh/tanh and exp↔tan via ratio substitution.
+  - Safety guard: rejects the result if it introduces imaginary unit `I` where the original expression had none.
 - `_trigsimp` / `__trigsimp` — cached recursive helper for trig/hyperbolic simplification of sub-expressions.
   - For `Mul`: splits non-commutative products into commutative and non-commutative parts; simplifies only the commutative portion.
   - For commutative products: tries fast rewrite via `_match_div_rewrite` first; if it returns None (e.g. skipped indices 6,7), falls back to SymPy `.match()` pattern matching with positivity guards.

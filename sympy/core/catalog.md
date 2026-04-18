@@ -77,6 +77,7 @@ All concrete numeric types and their arithmetic operations.
 - `int_trace` — profiling decorator for `Integer.__new__`; activated by environment variable `SYMPY_TRACE_INT=yes`; when inactive, returns the original function unwrapped; when active, wraps constructor to track `_intcache` hits/misses and registers `atexit` handler to print cache statistics
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
   - Overloaded arithmetic (`__add__`, `__mul__`, etc.) for efficiency; `__mul__` with Rational uses `igcd(self.p, other.q)` for GCD-based simplification; `__add__`/`__sub__` with Rational pass 1 (no GCD reduction) to Rational constructor
+  - Ordering comparisons (`__gt__`, `__lt__`, `__ge__`, `__le__`) — attempt `_sympify(other)`; raise `TypeError` on `SympifyError` (non-sympifiable operand); Integer-vs-Integer compares raw `.p` values directly
   - `_eval_power` — handles infinite exponents first: positive base >1 with `oo` → `oo`; negative base (not -1,0,1) with `oo` → `oo + I*oo`; `NegativeInfinity` delegates via `Rational(1,self)**oo`
   - Negative-base sign branching differs for integer vs fractional exponents
   - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
@@ -251,6 +252,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 - `factor_nc(expr)` — factors expressions with non-commutative symbols; extracts common NC prefixes/suffixes, then tries permutations of NC factors to find correct ordering
 
+- `_mask_nc(eq)` — replaces non-commutative objects with Dummy symbols for commutative processing; single NC object → commutative Dummy; multiple NC symbols → kept as-is (returns None dict); NC objects whose free symbols are all commutative (e.g., raw `Basic()` without `_eval_is_commutative`) are replaced with commutative Dummies
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
 - `Term` — efficient representation of `coeff*(numer/denom)` for commutative expressions; init decomposes factors via `decompose_power`, extracts `primitive()` content from Add bases into coeff, partitions into numer/denom by exponent sign
@@ -305,6 +307,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
   - Metahints (e.g., `force`, `modulus`) are passed through to `_eval_expand_hint` methods; `deep` is handled by `expand()` itself and not forwarded
 - `expand_power_base(expr, deep, force)` — wrapper around `expand(power_base=True)`; splits `(a*b)**e` into `a**e * b**e`; `deep=False` applies only at top level (does not descend into subexpressions like `sin(...)`)
 - `expand_power_exp`, `expand_complex`, `expand_trig`, `expand_log`, `expand_func`, `expand_mul` — similar single-hint expand wrappers
+- `_mexpand(expr, recursive)` — internal helper combining `expand_multinomial` then `expand_mul`; returns None immediately if expr is None (defensive guard); when `recursive=True`, iterates until expression stabilizes (fixed point)
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
 - `count_ops(expr, visual)` — tallies arithmetic operations in an expression; skips S.One entirely (0 ops); classifies other rationals by sign (NEG) and denominator (DIV); handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement

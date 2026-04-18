@@ -59,6 +59,7 @@ Point representations in n-dimensional Euclidean space.
   - `random_point()` — generates a random point on the entity; switches from x-based to y-based randomization when slope is infinite (vertical line); adjusts bounds for `Ray` (half-open) and `Segment` (closed).
   - `contains()`.
 - `Line` — infinite 2D line through two points.
+  - `distance(o)` — shortest distance to a point using the line's implicit-form coefficients; falls back to `perpendicular_segment` length when a coefficient is zero (vertical/horizontal line) to avoid division-by-zero in the slope-based formula.
 - `Ray` — 2D ray (half-line) from a source point in a direction.
   - `distance(o)` — shortest distance to a point; falls back to distance from the ray's source when the perpendicular foot lies outside the ray.
   - `contains(o)` — membership test using direction-consistency; raises `Undecidable` for unresolvable symbolic coordinates.
@@ -71,6 +72,7 @@ Point representations in n-dimensional Euclidean space.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
   - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
   - `is_similar(other)` — checks if `self` and `other` are on the same line; only handles `Line3D` as `other`, raises `NotImplementedError` for `Ray3D`/`Segment3D`.
+  - `arbitrary_point(parameter='t')` — parametric point on the 3D entity; raises `ValueError` if parameter name collides with a free symbol already in the entity's definition.
   - `direction_ratio`, `direction_cosine`, `angle_between(l1, l2)`.
 - `Line3D`, `Ray3D`, `Segment3D` — 3D counterparts of the 2D entities.
 

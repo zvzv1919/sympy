@@ -201,7 +201,7 @@ Functional decomposition for solving via composition chain reduction.
 Utilities for classifying and manipulating differential equations.
 
 - `ode_order(expr, func)` — returns the order of a differential equation.
-- `_preprocess(expr, func, hint)` — controls derivative evaluation before ODE/PDE solving. Evaluates unevaluated derivatives selectively based on hint suffix; if hint is None, bypasses all derivative evaluation entirely. Auto-detects the target function from derivatives if func is omitted (raises ValueError if ambiguous).
+- `_preprocess(expr, func, hint)` — controls derivative evaluation before ODE/PDE solving. Selectively calls `.doit()` on unevaluated derivatives based on three conditions: evaluates if the derivative contains the target function, if derivative variables overlap with the function's arguments, or if the hint does not end with `_Integral`. If hint is None, bypasses all derivative evaluation entirely. Auto-detects the target function from derivatives if func is omitted (raises ValueError if ambiguous).
 - `_desolve(eq, func, hint, ics)` — shared dispatch helper used by both `dsolve` (ODE) and `pdsolve` (PDE).
   - Delegates to `classify_ode` or `classify_pde` based on `type` kwarg.
   - Handles meta-hints `all`, `all_Integral`, and `best`: iterates matching hints, collects solutions into a dict.

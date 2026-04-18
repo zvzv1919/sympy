@@ -102,6 +102,9 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 Coordinate-system mode registry and argument interpretation only — no coordinate math or coordinate-to-Cartesian conversion (those live in `plot_modes.py`).
 
 - `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes; looks up the concrete mode class after `PygletPlot` has already determined expression/variable counts. Does not define the user-facing auto-detection rules (those are defined in `plot.py`'s `PygletPlot`).
+- `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class.
+  - If `mode_arg` is a `PlotMode` subclass, validates it was registered (checks `_was_initialized`); raises `ValueError` if the class hasn't been set up.
+  - If string alias, looks up in `_mode_map`; if empty string, returns the default mode for the given variable counts.
 - `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
 - `_find_i_vars()`, `_find_d_vars()` — infer independent/dependent variables from expressions.
 - `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.
