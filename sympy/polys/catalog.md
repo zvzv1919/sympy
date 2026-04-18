@@ -41,6 +41,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `subresultants(g)` — subresultant PRS of `f` and `g`.
   - `resultant(g, includePRS)` — resultant via PRS; **when `includePRS=True`, returns `(resultant, [PRS_polys])` tuple; when `False`, returns scalar only**; applies `kill=True` to reduce dimension.
   - `discriminant` — discriminant of `f`.
+  - `eval(a, j=0)` — evaluate at point `a` in variable `x_j`; **coerces `a` to ground domain via `dom.convert(a)` before evaluation**; passes `kill=True` to `per`, reducing the variable count by one (eliminates the evaluated variable from the result).
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `shift(a)` (Taylor shift `f(x+a)`), `decompose`, `sturm`, `gff_list`, `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
@@ -196,6 +197,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - **Unlike `Expr.coeff()`, does not collect terms across other variables** — returns the exact coefficient of the given power-product.
   - `nth(*N)` — return coefficient by generator exponents (e.g. `nth(1, 2)` for `x^1·y^2`); more efficient than `coeff_monomial` when exponents are already known.
   - Ground arithmetic: `add_ground`, `sub_ground`, `mul_ground`, `quo_ground` (truncating scalar division), `exquo_ground` (exact scalar division; **raises `ExactQuotientFailed` if any coefficient is not evenly divisible**).
+  - `integrate(*specs, auto=True)` — antiderivative; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before integrating** (since integration introduces fractional coefficients); `diff` does not perform this conversion.
+  - `factor_list()` — returns list of irreducible factors; **catches `DomainError` from internal representation and falls back to `(S.One, [(f, 1)])`** (returns original polynomial as single factor) when the coefficient domain doesn't support factorization.
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `prem(g)` — pseudo-remainder; **caveat: safe only for computing subresultant PRS in Z[x]**; for Euclidean/Sturmian PRS in Z[x], use functions in `subresultants_qq_zz` module instead (`rem_z` premultiplies by absolute value of LC, unlike `prem`).
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.

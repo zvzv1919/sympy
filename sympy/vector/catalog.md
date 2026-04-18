@@ -10,6 +10,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 - `evalf` decomposes into scalar coefficients and basis units, evaluates each scalar via `components` mapping, then reassembles.
 - `BasisDependentAdd` — represents sums of basis-dependent terms.
 - `BasisDependentMul.__new__` — scalar × basis-dependent product; counts non-scalar operands and raises `ValueError` if more than one (prevents e.g. vector×vector); distributes scalar over `BasisDependentAdd` sums.
+  - Falls back to plain `Mul(*args)` when **all** arguments are scalars (count == 0), i.e. no vector/dyadic component is present.
 - `BasisDependentZero` — zero element for basis-dependent quantities.
 
 ### [`vector.py`](vector.py)

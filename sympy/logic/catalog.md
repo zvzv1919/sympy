@@ -60,6 +60,7 @@ Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple re
 Internal CDCL SAT backend (called by `inference.satisfiable`); iterative solver with clause learning, watched literals, and VSIDS heuristic.
 - Standalone clause helpers (`unit_propagate`, `find_unit_clause`, `find_pure_symbol`, `pl_true_int_repr`) live in `dpll.py`, not here; this module has no three-valued clause truth evaluator.
 - `dpll_satisfiable(expr, all_models)` — backend entry point; converts to CNF, handles `all_models` semantics. Early-exits for trivially false formulas (returns `False`, or a generator yielding `False` when `all_models=True`). Otherwise delegates to `SATSolver` and wraps results via `_all_models` generator.
+- `_all_models(models)` — wrapper generator that yields all satisfying assignments; if the underlying solver produces no models at all, yields `False` as a sentinel to signal unsatisfiability.
 - `SATSolver` — stateful SAT solver class operating on integer-encoded clauses.
   - Uses watched-literal data structures for efficient unit propagation.
   - VSIDS (Variable State Independent Decaying Sum) branching heuristic.

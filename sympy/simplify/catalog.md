@@ -17,7 +17,7 @@
 ### [`fu.py`](fu.py)
 Individual trig transformation rules and the Fu simplification algorithm. Each TR rule applies one specific trig identity.
 
-- `fu(rv, measure)` — main Fu algorithm; applies TR rules via CTR and RL sequences, selects simplest by caller-supplied `measure` (defaults to `L`, i.e. trig-function count only).
+- `fu(rv, measure)` — main orchestration entry point for the Fu algorithm; sequences multiple identity-rewriting passes (CTR1–4, RL1, RL2) over TR rules to minimize trig-function count, selecting simplest result by caller-supplied `measure`.
   - Non-Expr inputs (e.g. Eq, relational): recursively applies `fu` to each arg via `rv.func(...)` instead of running the rule pipeline.
   - Uses JIT factoring: extracts common factors to attempt trig combination, discards factoring if it doesn't simplify.
 - `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
@@ -57,7 +57,7 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 ### [`trigsimp.py`](trigsimp.py)
 High-level trigonometric simplification entry points and Gröbner-basis trig solver.
 
-- `trigsimp(expr, **opts)` — main entry point and strategy dispatcher; `method` parameter selects named strategy: 'matching' (default, Fu-based via `futrig`), 'fu', 'groebner', 'combined' (groebner then futrig), or 'old' (legacy pattern-matching).
+- `trigsimp(expr, **opts)` — user-facing dispatcher (not the orchestrator); `method` parameter selects a back-end strategy: 'matching' (default, delegates to `futrig`), 'fu' (delegates to `fu()`), 'groebner', 'combined', or 'old'.
   - `old=True` flag forces method to 'old', bypassing all other options.
   - First attempts `expr._eval_trigsimp()` delegation before falling back to strategy dispatch.
   - `recursive` option: uses CSE to extract common subexpressions, simplifies the reduced expression, then back-substitutes in reverse order, re-simplifying after each substitution.

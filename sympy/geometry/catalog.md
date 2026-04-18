@@ -112,6 +112,7 @@ Parabolic entities defined by focus and directrix.
 ### [`plane.py`](plane.py)
 3D planar surfaces.
 - `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `projection_line()`, `intersection()`.
+  - `projection(pt)` — projects a point onto the plane along the normal vector; returns the point unchanged (short-circuits) if it already lies on the plane, otherwise intersects a normal line through the point with the plane.
   - `distance(o)` — shortest distance from plane to a 3D entity (`Point3D`, `LinearEntity3D`, or `Plane`); returns zero early if the two entities intersect, before any type-specific calculation.
   - `intersection(o)` — type-dispatched: handles `Point`/`Point3D`, `LinearEntity`/`LinearEntity3D` (Line, Ray, Segment — both 2D and 3D), and `Plane`. For linear entities, solves parametrically then validates the solution point lies on the bounded entity; returns `[]` if a segment or ray doesn't extend far enough to reach the plane.
   - `projection_line(line)` — projects a 2D or 3D linear entity onto the plane; returns a `Point3D` (not a line) when the line is parallel to the plane's normal (both endpoints map to the same location).

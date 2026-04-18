@@ -78,6 +78,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
   - Applies gamma multiplication theorem to normalize coefficient magnitudes ≠ 1 (in `_rewrite_gamma`)
   - Raises `MellinTransformStripError` if a pole falls inside the critical strip; raises NotImplementedError if numerator gamma poles partially overlap the strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
+- `_laplace_transform` — backend for forward Laplace transform; integrates exp(-s·t)·f over [0,∞), extracts convergence half-plane from Piecewise results via `process_conds`: pattern-matches `periodic_argument`/phase conditions on (s+w)^p·q and converts them into Re(s) > a inequalities; merges disjunctive conditions into a single convergence strip bound
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
   - When fallback returns a Piecewise that still contains an unevaluated `Integral`, raises `IntegralTransformError` ('inversion integral of unrecognised form')
   - If result is still Piecewise after processing, returns early without Heaviside/exp simplification (booleans in args break those transforms)
@@ -121,7 +122,7 @@ Risch algorithm for integration of transcendental elementary functions.
   - Computes resultant of d and (a − z·Dd); swaps resultant argument order when deg(Dd) > deg(d) to ensure correct polynomial remainder sequence
 - `integrate_primitive_polynomial(p, DE)` — iteratively reduces polynomial degree in a logarithmic (primitive) tower extension
   - Peels off leading coefficient each iteration, calls `limited_integrate` to solve for it, subtracts partial antiderivative's derivative from remainder
-  - Raises `NonElementaryIntegralException` when the leading coefficient has no elementary antiderivative
+  - Returns `(q, p, False)` when `limited_integrate` raises `NonElementaryIntegralException` for the leading coefficient, signaling the polynomial has no elementary antiderivative
 - `integrate_primitive(a, d, DE)` — integrates primitive (logarithmic) functions; uses Hermite reduction + residue reduction + `integrate_primitive_polynomial` pipeline
 - `integrate_hyperexponential_polynomial(p, DE, z)` — integrates Laurent polynomials in k[t, 1/t] for hyperexponential extensions; iterates over degrees (skips zero), calls `rischDE` per coefficient; on `NonElementaryIntegralException` sets b=False but continues processing remaining terms (does not bail out)
 - `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
@@ -145,7 +146,7 @@ Risch Differential Equation solver: solves Dy + f·y = g for y in a differential
 - `spde(a, b, c, n, DE)` — Rothstein's Special Polynomial Differential Equation; reduces RDE to equivalent equation with lower degree bound
 - `no_cancel_b_large`, `no_cancel_b_small` — polynomial RDE helper cases when deg(b) is large or small relative to deg(D)
 - `cancel_primitive` — cancellation case for primitive (logarithmic) extensions; checks if b is a logarithmic derivative (Dz/z) via `is_log_deriv_k_t_radical_in_field`; raises NotImplementedError when b==Dz/z (needs unimplemented `is_deriv_in_field`)
-- `cancel_exp` — cancellation case for hyperexponential extensions
+- `cancel_exp` — cancellation case for hyperexponential extensions; checks `parametric_log_deriv` on b vs Dt/t; raises NotImplementedError when a==1 (needs unimplemented `is_deriv_in_field`)
 
 ### [`prde.py`](prde.py)
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).

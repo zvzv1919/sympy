@@ -58,6 +58,7 @@ All concrete numeric types and their arithmetic operations.
 
 - `comp(z1, z2, tol)` — module-level numerical comparison; with nonzero tol uses relative error (`diff/|z1|`) when z2 is nonzero and `|z1| > 1`, otherwise absolute error; with tol=None uses precision-based significance test; with tol='' uses exact string comparison
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
+  - `as_coeff_mul(*deps, rational=True)` — coefficient extraction for multiplicative decomposition; Rational numbers return `(self, ())`; negative non-rational numbers (e.g., negative Float) return `(S.NegativeOne, (-self,))` factoring out the sign; positive non-rational returns `(S.One, (self,))`; when `rational=False`, returns `(self, ())` unconditionally
   - `__mul__` returns `NotImplemented` (not parent delegation) when other is a `Tuple`, deferring to the container's own multiplication
   - `_eval_subs(old, new)` — if `old` equals the negation of self, returns `-new`; otherwise returns self unchanged (handles e.g., substituting `-3` when atom is `3`)
   - `as_coeff_Mul(rational)` — coefficient extraction; returns `(self, S.One)` for nonzero values but `(S.One, self)` when self is zero (zero goes into the "rest" term, not the coefficient)
@@ -352,6 +353,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 - `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
 - `Unequality.__new__` — delegates to `Equality`; if result is a `BooleanAtom` (True/False), returns its negation; if equality is indeterminate, falls through to create an unevaluated `Relational` node
+- `GreaterThan._eval_relation` / `LessThan._eval_relation` / `StrictGreaterThan._eval_relation` / `StrictLessThan._eval_relation` — concrete inequality evaluation; each calls the corresponding dunder method directly (e.g., `lhs.__ge__(rhs)`) wrapped in `_sympify`, rather than using the operator symbol (workaround for issue #7951)
 
 ---
 
