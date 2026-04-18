@@ -9,7 +9,10 @@ Foundation of all set types and operations.
 
 - `Set` — abstract base class for all sets; defines `union`, `intersect`, `contains`, `complement`, `is_subset`, `is_superset`, `is_disjoint`
   - `contains` — returns True/False for definite membership; falls back to an unevaluated `Contains` expression when membership is indeterminate
-- `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes forward image of a function over the interval (domain → range) via calculus extrema; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
+- `Interval` — continuous real interval with open/closed endpoint flags
+  - `__new__` — degenerate cases: equal endpoints with any open boundary → `EmptySet`; equal endpoints both closed → `FiniteSet({point})`; auto-opens boundaries at ±∞
+  - `_eval_imageset` computes forward image of a function over the interval (domain → range) via calculus extrema
+  - `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
 - `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic that classifies each element via fuzzy three-valued containment (definitely in / unknown / dropped)

@@ -16,7 +16,7 @@ Hydrogen-like atom wavefunctions and energy levels.
 
 ### [`matrices.py`](matrices.py)
 Standard physics matrices as SymPy Matrix objects.
-- `msigma(i)` — 2×2 Pauli spin matrix σ_i (i = 1, 2, 3).
+- `msigma(i)` — 2×2 Pauli spin matrix σ_i (i = 1, 2, 3); raises `IndexError` for any i outside {1, 2, 3}.
 - `mgamma(mu, lower=False)` — 4×4 Dirac gamma matrix γ^μ (standard/Dirac representation); `lower=True` returns γ_μ by negating spatial (1,2,3) and chiral (5) indices (metric signature +−−−).
 - `pat_matrix(m, dx, dy, dz)` — 3×3 Parallel Axis Theorem correction matrix for translating an inertia tensor by displacement (dx, dy, dz) for a body of mass m; returns m·[off-diagonal: −dᵢdⱼ, diagonal: sum of squared perpendicular components].
 - `mdft(n)` — n×n discrete Fourier transform matrix.
@@ -132,7 +132,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `is_reducible(circuit, nqubits, begin, end)` — checks if a circuit interval contains a scalar subcircuit; only tests right-anchored subcircuits (grows leftward from `end`), so left-anchored-only reductions within the range may be missed.
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
-  - `BosonOp` — mode-labeled bosonic ladder operator; `_eval_commutator_BosonOp` returns −1 for [a†,a] same-name, 0 with `independent` hint, None otherwise (e.g. [a,a] returns unevaluated).
+  - `BosonOp` — mode-labeled bosonic ladder operator; `_eval_commutator_BosonOp` returns −1 for [a†,a] same-name, 0 with `independent` hint, None otherwise.
+    - `__mul__`: when multiplied by a Mul expression, separates commutative and non-commutative factors, iteratively multiplies non-commutative parts, then recombines with commutative prefactor.
   - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; ladder action: a|n⟩→√n|n−1⟩, a†|n⟩→√(n+1)|n+1⟩.
   - `BosonCoherentKet/Bra` — coherent states (eigenstates of annihilation operator); ⟨α|β⟩ inner product returns 1 when α=β, else Gaussian overlap exp(−(|α|²+|β|²−2·conj(β)·α)/2).
   - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).

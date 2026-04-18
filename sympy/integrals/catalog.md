@@ -198,6 +198,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting
   - Pre-processes product-form integrands by filtering out `exp(a*x)` and `base^(a*x)` factors, accumulating their exponents into a cumulative shift applied to the final result
   - When coefficient extraction from a power exponent fails (`_CoeffExpValueError`), treats the factor as non-exponential (keeps it in the integrand unchanged)
+- `_rewrite_saxena(fac, po, g1, g2, x)` — normalizes a product of two G-functions with different rational powers of x in their arguments so both become linear in x; harmonizes exponents via LCM-based inflation, flips negative exponents, applies principal branch, and absorbs the polynomial factor into one G-function
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
 - `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)

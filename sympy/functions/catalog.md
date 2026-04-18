@@ -123,6 +123,11 @@ Trigonometric functions and their inverses.
 
 #### [`elementary/exponential.py`](elementary/exponential.py)
 Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
+- `log` — natural logarithm (and general-base logarithm). `eval` handles complex-domain decomposition:
+  - Negative real args → π·i + log(|arg|); purely imaginary args → ±π·i/2 + log of the real coefficient.
+  - Base conversion, rational factoring, and special-value shortcuts (0→ComplexInfinity, 1→0, e→1).
+- `exp` — exponential function e^x; `exp_polar` — branch-aware polar exponential.
+- `LambertW` — Lambert W function (product-log), the inverse of x·e^x.
 
 #### [`elementary/hyperbolic.py`](elementary/hyperbolic.py)
 Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those are `Chi`, `Shi` in `special/error_functions.py`).

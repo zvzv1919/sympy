@@ -176,6 +176,8 @@ Adaptive arbitrary-precision numerical evaluation engine using mpmath.
 ### [`evaluate.py`](evaluate.py)
 Global evaluation toggle — context manager `evaluate(False)` suppresses automatic simplification. Not numerical evaluation; controls whether `Add`/`Mul`/`Pow` constructors simplify.
 
+- `_global_evaluate` — custom `list` subclass storing the flag; overrides `__setitem__` to call `clear_cache()` (from `cache.py`) on every modification, ensuring memoized results are invalidated whenever the evaluation mode changes
+
 ---
 
 ## Expressions and Manipulation
@@ -194,6 +196,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - Add `extract_multiplicatively`: requires all terms individually divisible
 - `as_coefficient(expr)` — returns scalar multiplier `r` such that `self == r*expr`, or None if self is not a pure scalar multiple of expr
   - Calls `extract_multiplicatively` then rejects if result still `.has(expr)` (e.g., `2*sin(E)*E` w.r.t. `E` → None because `sin(E)` contains `E`)
+- `as_coefficients_dict()` — returns defaultdict mapping terms to their Rational coefficient; for non-Add expressions, treats self as single term via `as_coeff_Mul()`; if extracted coefficient is not Rational, falls back to coefficient=1 with self as the key
 - `args_cnc(cset, warn, split_1)` — separates factors into commutative and non-commutative lists; when `cset=True`, returns commutative part as a set and raises ValueError if duplicate commutative factors exist (e.g., from unevaluated Mul)
 - `coeff(x, n)` — extracts coefficient of `x**n` from a sum; short-circuits to `S.Zero` when self is commutative but x is non-commutative; when x is the multiplicative identity (1), returns only additive terms whose leading numeric factor is 1; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; first checks `extract_multiplicatively(-1)` asymmetry; then type-specific: Add counts negative-vs-positive terms (majority wins); Mul checks parity of negative factors across numer/denom (odd count → True); final tiebreaker uses `sort_key()` comparison

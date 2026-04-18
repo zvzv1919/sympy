@@ -208,7 +208,9 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`: forward elimination on raw nested lists.
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
-- `LU` (raw list-of-lists LU without pivoting), `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
+- `LU`: raw list-of-lists LU decomposition without pivoting. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
+- `LDL`: square-root-free L·D·Lᵀ factorization for hermitian/self-adjoint matrices on raw nested lists.
+  - Returns unit lower-triangular L, diagonal D, and conjugate transpose of L — avoids square roots by separating the diagonal (unlike `cholesky`).
 - `cholesky`: Hermitian decomposition on raw nested lists returning L and conjugate transpose; diagonal entries use `isqrt` (integer square root), restricting input to matrices where diagonal minus accumulated sum is a perfect square; off-diagonal entries use division by L[j][j].
 - `rref_solve`, `cholesky_solve`, `LU_solve`: solver routines on raw nested-list data. Each deep-copies the coefficient matrix, decomposes it, allocates a fresh symbolic `y` vector for intermediate results, then performs forward substitution (mutating `y` in-place) followed by backward substitution (mutating the caller's `variable` list in-place).
 - `cholesky_solve`: decomposes via `cholesky` into L and L*; `LU_solve`: decomposes via `LU` into L and U. Both rely on in-place mutation of passed vectors rather than returning new results.

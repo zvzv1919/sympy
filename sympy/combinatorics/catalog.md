@@ -136,7 +136,9 @@ Set and integer partitions.
 Gray code (Hamiltonian walk on an n-dimensional binary hypercube) representation and bit-level operations (rank/unrank, conversion).
 - `GrayCode` — n-bit Gray code object; generates all codes, supports `rank`, `unrank`, `next`, `current`.
   - Constructor accepts optional `start` (binary string) or `rank` (integer starting position); rank wraps via modulo (rank % 2^n) when it exceeds total selections.
-- `gray_to_bin`, `bin_to_gray`, `get_subset_from_bitstring`, `graycode_subsets`.
+- `gray_to_bin`, `bin_to_gray` — convert between Gray and binary encodings.
+- `get_subset_from_bitstring(super_set, bitstring)` — selects elements from a collection using a binary string mask; raises `ValueError` if lengths differ.
+- `graycode_subsets(gray_code_set)` — yields all subsets of a collection in Gray code order via `get_subset_from_bitstring`.
 - **Note**: For traversing *subsets* in Gray code order, see `subsets.py::Subset.iterate_graycode`.
 
 ### [`subsets.py`](subsets.py)
@@ -144,6 +146,7 @@ Subset generation and manipulation via binary, lexicographic, and Gray code enum
 - `Subset` — subset of a superset with ranking/unranking in binary, lexicographic, and Gray code orders.
   - Ranking properties: `rank_binary`, `rank_lex`, `rank_gray` — compute the position of a subset relative to its parent set in each ordering.
   - Gray code traversal: `iterate_graycode`, `next_gray`, `prev_gray` — step through subsets in reflected binary code order with modular wraparound.
+  - `subset_from_bitlist` — constructs a `Subset` object from a superset and bitlist (returns object, not raw list; contrast `graycode.py::get_subset_from_bitstring`).
 - `ksubsets` — k-element subsets of a set.
 
 ### [`prufer.py`](prufer.py)

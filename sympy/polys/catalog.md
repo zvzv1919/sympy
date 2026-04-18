@@ -91,6 +91,8 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`.
     - Single-term (monomial) fast path handles arbitrary exponents.
     - **≤5 terms → `_pow_multinomial` (multinomial coefficient expansion); >5 terms → `_pow_generic` (repeated squaring)**.
+  - `is_squarefree`, `is_irreducible` — delegates to ring's dense algorithm wrappers (`dmp_sqf_p`, `dmp_irreducible_p`).
+  - `is_cyclotomic` — **univariate only; raises `MultivariatePolynomialError` if ring has more than one generator**; delegates to `dup_cyclotomic_p`.
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
     - `_gcd_zero(g)` — **if `g` is nonnegative, returns `g` as GCD; otherwise negates `g` (and cofactor sign) to ensure GCD is always nonnegative**.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
@@ -315,6 +317,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_half_gcdex`, `dup_gcdex`, `dmp_half_gcdex`, `dmp_gcdex` — extended Euclidean algorithms.
 - `dup_invert(f, g, K)` / `dmp_invert` — modular inverse; **raises `NotInvertible("zero divisor")` if gcd(f,g) ≠ 1**.
 - `dup_euclidean_prs`, `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — polynomial remainder sequences.
+- `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dmp_zz_collins_resultant` / `dmp_qq_collins_resultant` — Collins's modular resultant in Z[X] / Q[X]; iterates over primes, **catches `HomomorphismFailed` from per-prime `dmp_zz_modular_resultant` and `continue`s to the next prime**; accumulates via CRT.
@@ -519,7 +522,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
   - `method=0` scales remainders by `LC(p)^(deg_diff)` for modified subresultant coefficients; `method=1` produces plain (unscaled) coefficients.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
   - `euclid_q` — Euclidean sequence in Q[x]; **normalizes LC(p) to positive before computing remainders (negating both inputs); after completion, negates entire output sequence if original LC was negative**; removes trailing zero/NaN entry.
-- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`).
+- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv`, `subresultants_vv_2` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`); `subresultants_vv_2` is the **implicit-matrix variant** (Sylvester matrix not stored explicitly) for large-dimension cases; **returns `[f, g]` early if `deg(f) > 0` and `deg(g) == 0`** (constant second input).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
 - `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`).
   - **Returns empty `Matrix([])` when both polys are zero, both are constants, or one is constant and the other is zero**.
