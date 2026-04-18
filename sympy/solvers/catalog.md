@@ -36,6 +36,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — solves for unknown algebraic coefficients in a polynomial identity (not ODE-related; see `ode.py` for the ODE undetermined coefficients method).
 - Post-solve assumption filtering: checks each candidate against the symbol's declared properties (e.g. positive, real) via `check_assumptions`.
   - Drops solutions that definitively violate assumptions (test=False); keeps solutions where verification is inconclusive (test=None) with optional warning.
+  - Relational/inequality solutions (Relational, And, Or): assumptions on the variable are **not** verified — only a warning is emitted. Raises ValueError if more than one symbol is involved.
 - `checksol(f, symbol, sol)` — validates a candidate solution by substitution.
 - `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.

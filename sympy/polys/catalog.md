@@ -91,7 +91,9 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
-  - `__mul__` cross-ring dispatch: when `p2` is a `PolyElement` from a different ring, checks if `p2.ring.domain` is a `PolynomialRing` whose `.ring` matches `p1.ring`; if so, **delegates to `p2.__rmul__(p1)`**.
+  - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
+    - If `p2.ring.domain` is a `PolynomialRing` whose `.ring` matches `p1.ring`, **delegates to `p2.__radd__`/`__rsub__`/`__rmul__`** (outer ring handles).
+  - `quo_ground(x)` — divide all coefficients by scalar `x`; **over fields, uses exact division; over non-field domains (e.g. ZZ), silently drops terms whose coefficients are not evenly divisible** rather than raising an error.
 
 ### [`fields.py`](fields.py)
 Sparse rational function fields and their elements.
@@ -299,7 +301,9 @@ Heuristic polynomial GCD at the **Poly-object level** (not dense lists).
 
 - `heugcd(f, g)` — heuristic GCD for `PolyElement` objects in `ZZ[x₁,…,xₙ]`; evaluates at points, computes integer GCD, and interpolates back.
   - **Triple-fallback verification**: after interpolating the candidate GCD, if trial division fails, tries interpolating the first cofactor and dividing, then the second cofactor and dividing — two alternative recovery paths before advancing to the next evaluation point.
-- `_gcd_interpolate` — helper for Lagrange interpolation step.
+- `_gcd_interpolate(h, x, ring)` — recover polynomial from integer GCD image via base-conversion-style interpolation with **symmetric modular representation**.
+  - **Univariate**: integer modular arithmetic (`h % x`, adjusted to `[-x/2, x/2]`), stores coefficients by degree index.
+  - **Multivariate**: uses `trunc_ground`/`quo_ground` on polynomial coefficients, lifting each layer with a prepended variable index.
 
 Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, which implement the same triple-fallback algorithm but operate on raw dense coefficient lists (not `PolyElement` objects).
 
@@ -781,6 +785,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
   - `GeneralizedPolynomialRing.new(a)` — construct element; **validates that the denominator's leading term under the ring's ordering has all-zero exponents** (i.e., denominator is a unit in the localization); raises `CoercionFailed` otherwise.
+  - `PolynomialRingBase.revert(a)` — multiplicative inverse; attempts `1/a` and **catches both `ExactQuotientFailed` and `ZeroDivisionError`**, raising `NotReversible` if the element is not a unit.
   - `PolynomialRingBase.from_AlgebraicField(a, K0)` — convert algebraic number field element; **returns `None` (silent failure) if `K1.dom != K0`** (ground domain mismatch), unlike other `from_*` methods which always attempt conversion.
   - `GeneralizedPolynomialRing._vector_to_sdm` — converts a vector of rational function elements to sparse distributed module form.
     **Clears all denominators first** by computing the product of all entry denominators, making entries integral before delegation.

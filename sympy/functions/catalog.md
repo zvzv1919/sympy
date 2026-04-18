@@ -72,7 +72,8 @@ Hypergeometric and Meijer G-functions.
 - `TupleParametersBase` — base class for functions with tuple-valued arguments (e.g., numerator/denominator parameter lists); handles `_eval_derivative` by iterating over grouped parameters with tuple-indexed `fdiff`.
 - `hyper` — generalized hypergeometric function pFq.
 - `meijerg` — Meijer G-function.
-- `HyperRep` subclasses — closed-form representatives for specific hypergeometric cases; each subclass defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-region evaluation of hypergeometric pFq.
+- `HyperRep` subclasses — closed-form representatives for specific hypergeometric cases; each defines `_expr_small`, `_expr_big`, `_expr_small_minus`, `_expr_big_minus` classmethods for branch-region evaluation.
+  - Named by the elementary function they represent: `HyperRep_atanh` (atanh(√z)/√z), `HyperRep_asin1`/`_asin2` (asin), `HyperRep_log1`/`_log2`, `HyperRep_power1`/`_power2`, `HyperRep_sqrts`, `HyperRep_cosasin`, `HyperRep_sinasin`.
 
 #### [`special/elliptic_integrals.py`](special/elliptic_integrals.py)
 Elliptic integral functions: `elliptic_k`, `elliptic_f`, `elliptic_e`, `elliptic_pi`.
@@ -104,7 +105,9 @@ B-spline basis functions constructed as Piecewise expressions via recursive Cox-
 - `_add_splines` — helper that combines two spline Piecewise expressions.
 
 #### [`special/singularity_functions.py`](special/singularity_functions.py)
-`SingularityFunction` — generalized singularity function <x-a>^n for beam/structural analysis.
+`SingularityFunction` — Macaulay bracket function <x−a>^n for beam/structural analysis; discontinuous, piecewise-like.
+- `eval` — simplifies to `(x-a)**n*Heaviside(x-a)` for n≥0, `Derivative(DiracDelta(...))` for n<0.
+- `fdiff` — derivative convention: n>0 applies power rule (n·<x−a>^(n−1)); n=0 or n=−1 decrements exponent without coefficient (step-like/distributional case).
 
 ### [`elementary/`](elementary/)
 Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, complex, rounding.
@@ -155,5 +158,6 @@ Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFa
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)
 Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`, `stirling`.
+- `catalan` — Catalan number C_n = binomial(2n,n)/(n+1); `eval` returns gamma-based closed form for nonneg integers and negative non-integers; for negative integers returns 0 (n≤−2) or −1/2 (n=−1).
 - `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
 - `stirling` — Stirling numbers S(n,k) of first or second kind; helpers `_stirling1`/`_stirling2` implement cached recursive computation with closed-form shortcuts for special k values (e.g., k=n−1, k=n−2, k=2).

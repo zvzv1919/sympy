@@ -23,6 +23,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `_jordan_block_structure`: computes generalized eigenvector chain leaders per eigenvalue and block size; iterates block sizes largest-first, excluding vectors from smaller kernels and already-used chains.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`.
+- `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
@@ -39,8 +40,9 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
 - **Construction**: `_handle_creation_inputs` — normalizes all constructor forms (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
   - Validates uniform row lengths; skips 0×0 sub-matrices when tracking column widths.
-- **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; embeds explicit dimensions for zero-row/zero-col matrices).
+- **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; single-row matrices use inline `Matrix([...])` format; multi-row matrices insert a leading newline `Matrix([\n...])`; zero-dimension matrices embed explicit dimensions).
 - `table`: tabular text formatter with per-column width alignment; returns `'[]'` for zero-row or zero-col matrices; maps alignment strings to Python justification methods.
+- `DeferredVector`: lazily-evaluated symbolic vector; `__getitem__` creates named `Symbol` components on-the-fly. Rejects negative indices (raises `IndexError`); normalizes negative zero to 0.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
@@ -184,7 +186,7 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`: forward elimination on raw nested lists.
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
-- `LU`, `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists.
+- `LU` (raw list-of-lists LU without pivoting), `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
 - `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
 - `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it.
 - These are internal backends (standalone functions, not methods); the public API lives in `MatrixBase` (`matrices.py`).

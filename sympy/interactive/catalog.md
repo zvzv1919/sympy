@@ -17,6 +17,8 @@ Core print-system initialization for interactive sessions (both plain Python and
 ## [session.py](session.py)
 Interactive session bootstrapping and configuration.
 - `init_session` — top-level entry to start an interactive SymPy session (IPython or plain Python).
+  - Detects IPython availability and version; falls back to plain Python console.
+  - Enables IPython pylab/matplotlib integration; silently catches errors when matplotlib is missing or no display is available.
 - `init_ipython_session` — creates and configures an IPython app instance.
 - `init_python_session` — creates a plain Python `code.InteractiveConsole`.
 - `enable_automatic_symbols` — IPython hook that auto-creates undefined names as SymPy Symbols.

@@ -63,10 +63,12 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
   - `InverseMellinTransform._compute_transform` validates input by traversing the expression and checking each function against a whitelist of allowed types (exp, gamma, sin, cos, tan, etc.); raises `IntegralTransformError` for unrecognized functions
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters (an, ap, bm, bq) for inverse Mellin transform
+  - `left(c, is_numer)` — determines whether a pole at c lies left of the fundamental strip (integration contour); handles None/infinite strip boundaries with heuristic inequality checks
+  - Poles are classified as left/right of contour to assign them to bm vs bq (or an vs ap) G-function parameter lists
   - Polynomial factors: degree-1 extracts linear root directly; degree>1 factors via `roots()`, falls back to `CRootOf.all_roots()` when roots() doesn't find all roots
   - Trig factors (sin, cos, tan, cot): rewrites as pairs of gamma functions; sin uses `_rewrite_sin` for denominator strip checking
   - Applies gamma multiplication theorem to normalize coefficient magnitudes ≠ 1
-  - Raises NotImplementedError if numerator gamma poles partially overlap the fundamental strip
+  - Raises `MellinTransformStripError` if a pole falls inside the critical strip; raises NotImplementedError if numerator gamma poles partially overlap the strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
 - `_fourier_transform(f, x, k, a, b)` — backend computing generalized F(k) = a·∫exp(b·i·x·k)f(x)dx over (−∞,∞); extracts first branch if result is Piecewise

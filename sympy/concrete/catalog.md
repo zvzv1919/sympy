@@ -41,6 +41,7 @@ Base class for expressions with **integer** limits — shared by Sum and Product
 Unevaluated and evaluated finite/infinite summations.
 
 - **`Sum(AddWithLimits, ExprWithIntLimits)`** — unevaluated summation.
+  - `__new__` — constructor validates that every limit tuple has exactly 3 elements and no `None` bounds; raises `ValueError` if missing. Unlike integrals, discrete sums always require explicit lower and upper bounds.
   - `doit()` — evaluate the sum; handles reversed ranges by swapping bounds and negating the summand.
   - `is_convergent()` / `is_absolutely_convergent()` — convergence tests for infinite series.
   - `euler_maclaurin(m, n, eps, eval_integral)` — Euler–Maclaurin approximation.

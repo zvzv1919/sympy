@@ -29,7 +29,8 @@ Individual permutation representation, construction, and properties.
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.
   - `josephus(m, n, s=1)` — classmethod; simulates circular elimination (Josephus problem) where every m-th item is removed from range(n); parameter `s` switches to sequential (step-1) selection when s items remain.
 - `_af_new(perm)` — static fast-path factory; constructs a `Permutation` directly from a raw int list, skipping all input validation (no duplicate/range checks). Internal use only.
-- Low-level array-form helpers: `_af_rmul`, `_af_rmuln`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
+- Low-level array-form helpers: `_af_rmul`, `_af_parity`, `_af_invert`, `_af_pow`, `_af_commutes_with`.
+- `_af_rmuln(*perms)` — composes N permutations in array form (right-to-left); unrolled special cases for ≤8 operands, recursive divide-and-conquer fallback for >8.
 
 ### [`perm_groups.py`](perm_groups.py)
 Permutation group (set of permutations) with group-theoretic algorithms.
@@ -128,6 +129,7 @@ Set and integer partitions.
 ### [`graycode.py`](graycode.py)
 Gray code representation and bit-level operations (rank/unrank, conversion).
 - `GrayCode` — n-bit Gray code object; generates all codes, supports `rank`, `unrank`, `next`, `current`.
+  - Constructor accepts optional `start` (binary string) or `rank` (integer starting position); rank wraps via modulo (rank % 2^n) when it exceeds total selections.
 - `gray_to_bin`, `bin_to_gray`, `get_subset_from_bitstring`, `graycode_subsets`.
 - **Note**: For traversing *subsets* in Gray code order, see `subsets.py::Subset.iterate_graycode`.
 

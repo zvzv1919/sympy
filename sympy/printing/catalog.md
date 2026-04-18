@@ -15,6 +15,7 @@ The **pretty** subpackage (2D ASCII/Unicode output) has a strict layered archite
 
 ### [`printer.py`](printer.py)
 Base `Printer` class with `_print` dispatch mechanism routing expressions to `_print_*` methods. Manages settings and print-level tracking.
+- `__init__` — merges configuration in three layers: (1) copies subclass `_default_settings`, (2) overlays `_global_settings` but only for keys already in defaults (unknown global keys silently ignored), (3) overlays caller-provided `settings` dict and raises `TypeError` for any unrecognized key. This asymmetry is intentional.
 - `_print` walks the expression's MRO looking for `_print_<ClassName>` handlers; if none found, falls back to `self.emptyPrinter(expr)` (defaults to `str(expr)`).
 
 ### [`precedence.py`](precedence.py)
@@ -56,6 +57,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 
 ### [`pretty/stringpict.py`](pretty/stringpict.py)
 `stringPict` — 2D string canvas with baseline tracking. Subclass `prettyForm` adds binding strength for precedence-aware parenthesization.
+- `next(*args)` — core static method for horizontal composition: computes new unified baseline and height across all blocks, pads each block with empty lines above/below to align baselines, then joins corresponding rows. All other horizontal combinators (`left`, `right`) delegate to this.
 - Spatial combinators: `above`, `below`, `left`, `right`, `stack` — arrange sub-pictures relative to each other. `stack` accepts a special `LINE` sentinel that is replaced with a horizontal dash row spanning the maximum width of all composed elements.
 - `parens(left, right, ifascii_nougly)` — wraps picture in parentheses; in ASCII mode with `ifascii_nougly=True`, collapses height to 1 to avoid ugly tall brackets.
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.

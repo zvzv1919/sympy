@@ -12,7 +12,8 @@ Core boolean types, operators, and normal-form conversions.
 - `to_cnf`, `to_dnf`, `to_nnf` — convert expressions to conjunctive/disjunctive/negation normal form.
 - `to_int_repr` — convert CNF clauses to integer-set representation (used by DPLL solvers).
 - `SOPform`, `POSform` — build canonical sum-of-products / product-of-sums from truth tables.
-- `simplify_logic` — simplify boolean expressions via Quine-McCluskey or normal forms.
+- `simplify_logic(expr, form, deep)` — simplify boolean expressions; accepts `form='cnf'`, `'dnf'`, or `None`.
+  - When `form=None`, auto-selects DNF (via `SOPform`) if truth table covers ≥ half of all rows, else CNF (via `POSform`).
 - `bool_map` — check equivalence of two boolean expressions by truth-table comparison.
 - `_find_predicates` — extract atomic predicates from an expression.
 

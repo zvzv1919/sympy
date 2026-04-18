@@ -9,6 +9,7 @@ Symbolic objects with indices: abstract tensor algebra and indexed array express
 Defines basic indexed objects for representing array elements like `M[i, j]`.
 
 - `Indexed` — represents a complete indexed object (base + indices); properties: `base`, `indices`, `rank`, `shape`, `ranges`.
+  - `_eval_derivative(wrt)` — derivative w.r.t. another `Indexed`: returns product of KroneckerDeltas if same base and equal index count; raises `IndexException` if index counts differ; returns zero for different bases.
 - `IndexedBase` — the stem/base of a concrete array-element expression (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`. Not related to abstract tensor algebra.
 - `Idx` — integer index with optional range; properties: `label`, `lower`, `upper`.
 - `IndexException` — raised for indexing errors.
@@ -61,7 +62,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `__new__` flattens nested sums, coerces plain-scalar addends into index-free tensor products, canonicalizes each term, sorts and collects like terms.
   - `_tensAdd_flatten` — separates scalar (non-tensor-expression) addends from indexed ones, sums the scalars, wraps result as an index-free product, and flattens any nested `TensAdd`.
 - `TensExpr` — abstract base for tensor expressions.
-  - `get_matrix()` — converts attached ndarray component data to a `Matrix`; supports rank ≤ 2, raises `NotImplementedError` for higher ranks.
+  - `get_matrix()` — converts abstract tensor expression's attached ndarray component data to a `Matrix`; handles rank-1 (flat list) and rank-2 (nested lists); raises `NotImplementedError` for rank > 2.
 - `canon_bp(p)` — canonicalize tensor via Butler-Portugal algorithm.
 - `tensor_indices(s, typ)` — create `TensorIndex` objects from comma-separated string; returns a **single object** for one name, a **list** for multiple.
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
@@ -69,6 +70,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
 - `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components. Raises `NotImplementedError` when contraction pattern requires transposition.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
+  - `__getitem__` — retrieves component data; unwraps zero-dimensional arrays to scalar (`dat[()]`) and single-element 1-d arrays to their sole element (`dat[0]`).
   - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
   - `data_product_tensors` — iteratively multiplies a list of ndarray factors via `reduce`; at each step pairs arrays with `TensMul` metadata, contracts matching indices, and accumulates the result.
   - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
@@ -96,7 +98,7 @@ Dense storage N-dim arrays backed by a flat internal list (`_array`).
 - `DenseNDimArray` — constructor alias, returns `ImmutableDenseNDimArray`.
 - `ImmutableDenseNDimArray` / `MutableDenseNDimArray` — immutable and mutable dense variants.
 - `__getitem__` — tuple-of-slices indexes shape-aware; a plain (non-tuple) slice operates directly on the flat `_array`.
-- `tomatrix()` — converts rank-2 array to `Matrix`; raises `ValueError` for other ranks.
+- `tomatrix()` — converts a concrete rank-2 `NDimArray` to `Matrix`; raises `ValueError` for other ranks. Not for abstract tensor expressions.
 - `zeros`, `reshape`.
 
 ### array/sparse_ndim_array.py

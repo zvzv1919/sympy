@@ -81,6 +81,7 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (Operator/Hermitian/Unitary/OuterProduct), `hilbert.py` (Hilbert spaces).
+  - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
@@ -99,6 +100,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
+    - `_build_coupled(jcoupling, length)` — parses a coupling scheme (list of (n1,n2,j) tuples) into paired subsystem index groups and intermediate j values; used by both the constructor and `uncouple()`.
     - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
@@ -114,6 +116,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids(gate_seq)` finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
   - `GateIdentity` — represents a gate sequence that multiplies to a scalar; stores equivalent permutations. `is_degenerate` checks if a candidate is a permutation of an existing identity.
   - `is_scalar_sparse_matrix(circuit, nqubits, identity_only)` — checks if a gate sequence's scipy.sparse matrix form is a scalar matrix (bI); handles edge case where `represent()` returns a plain int instead of a matrix (short-circuits to identity check or True).
+  - `is_scalar_nonsparse_matrix` — dense-matrix variant (fallback when scipy unavailable); same edge case handling for scalar `represent()` returns. Checks diagonal + uniform trace.
   - `is_reducible(circuit, nqubits, begin, end)` — checks if a circuit interval contains a scalar subcircuit; only tests right-anchored subcircuits (grows leftward from `end`), so left-anchored-only reductions within the range may be missed.
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
@@ -129,11 +132,13 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.
   - Delegates to operator `_eval_commutator_*`/`_eval_anticommutator_*` methods; falls back through NotImplementedError chain.
-- **Algorithms**: `grover.py` (Grover's search), `qft.py` (quantum Fourier transform).
+- **Algorithms**: `grover.py` (Grover's search), `qft.py` (quantum Fourier transform gates and matrix representations).
+  - `RkGate` — parametric phase-rotation gate R_k; constructor simplifies small k values: k=1→ZGate, k=2→PhaseGate, k=3→TGate (returns different gate type, not RkGate).
+  - `Fourier` (QFT/IQFT) — `_represent_ZGate` builds Fourier matrix and embeds into full Hilbert space via tensor products with identity matrices on both sides when gate doesn't start at qubit 0 or total qubits exceed gate range.
   - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
-  - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
+  - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape. Raises QuantumError if vector length is not a power of 2.
   - `measure_all(qubit, format='sympy')` — full ensemble measurement: returns list of (basis-state, probability) pairs for all non-zero-amplitude outcomes. Accepts format parameter ('sympy', 'numpy', 'scipy.sparse') but only 'sympy' is implemented; others raise NotImplementedError.
   - `measure_partial(qubit, bits, format='sympy')` — partial measurement on a subset of qubits: uses `_get_possible_outcomes` to bin state-vector amplitudes into outcome groups via bitmask matching on measured-qubit indices; computes per-outcome probability via inner product and returns list of (post-collapse normalized state, probability) pairs. Same format limitation as `measure_all`.
   - `measure_all_oneshot(qubit)` — single-shot measurement: normalizes state, draws a random number, accumulates squared amplitudes until cumulative probability exceeds threshold, returns the selected basis state.
@@ -157,7 +162,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - Concrete overlap formulas (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes, not here.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
-  - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
+  - `sho1d.py` — 1-D SHO operator algebra and states: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
+    - `SHOKet`/`SHOBra` — ket/bra states for 1-D SHO; each provides `_represent_NumberOp` to produce column/row vectors in the number basis.
+    - Caveat: error conditions (n ≥ ndim, non-integer n) use `return ValueError(...)` instead of `raise`, silently returning the error object as a value.
     - Each operator provides `_represent_NumberOp` for matrix representation in the number basis; supports sympy, numpy, and scipy.sparse formats. For scipy.sparse, sqrt entries are cast to float before insertion.
     - Position-basis representation (`_represent_XOp`) raises NotImplementedError for all operators (LoweringOp, RaisingOp, NumberOp, Hamiltonian) — underlying position representation logic is unimplemented.
   - `pauli.py` — Pauli spin-½ operators as quantum Operator subclasses: SigmaX/Y/Z (components), SigmaPlus (raising), SigmaMinus (lowering); optional string labels for subsystem identification. Operators with different labels commute (commutator returns zero).
@@ -174,7 +181,7 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
 - `dyadic.py` — `Dyadic` class.
-- `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation.
+- `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation, `partial_velocity(frame, *gen_speeds)` returns partial angular velocities (single speed → bare Vector; multiple → tuple).
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration (`acc()`) in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
   - `acc(frame)` fallback: if acceleration not explicitly set, differentiates velocity; if velocity is also zero, returns zero vector.
 - `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
@@ -201,10 +208,11 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Constructor takes an inertial ReferenceFrame, generalized coordinates/speeds, kinematic differential equations, and optional constraint/dependent-speed specs; validates frame type.
   - Constraint initialization: partitions velocity-constraint Jacobian into independent/dependent columns; when acceleration constraints are not explicitly provided, auto-derives them by time-differentiating the velocity constraints.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
-  - `to_linearizer()` — converts Kane's EOM into `Linearizer` form; validates that kinematic/constraint coefficient matrices contain no unexpected dynamic symbols, raises ValueError if time-dependent symbols appear outside the forcing vector.
+  - `to_linearizer()` — converts Kane's EOM into `Linearizer` form; decomposes equations into kinematic (f_0, f_1) and dynamic (f_2, f_3) components by zeroing different variable groups.
+    - Partitions coordinates/speeds into independent vs dependent sets. Validates coefficient matrices contain no unexpected dynamic symbols.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
   - Legacy `_old_linearize` (deprecated) — in-place linearization via manual chain-rule Jacobian decomposition. Validates that system matrices (K_kqdot, K_ku, etc.) contain no unexpected dynamic symbols outside the forcing vector; raises ValueError if found. Also rejects derivatives of unrecognized dynamic symbols in forcing terms. Branches into four cases based on holonomic/non-holonomic constraints, computing dqd/dqi and dud/dui via LU-solving constraint Jacobians.
-- `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
+- `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation). Constructor validates frame argument: raises TypeError if a non-null value is not a ReferenceFrame instance.
   - `mass_matrix` — dynamic mass matrix, augmented with Lagrange multiplier coefficients when constraints exist (n×(n+m)).
   - `mass_matrix_full` — full block-structured coefficient matrix: identity block (kinematic qdot relations) on top, mass_matrix row in middle, differentiated constraint rows on bottom when constraints present.
   - `forcing` / `forcing_full` — generalized forcing vector; `forcing_full` augments with qdots and differentiated constraint forcing terms.
@@ -212,6 +220,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy(frame)` (computes ½mv² via velocity dot product) methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv), `linear_momentum`, `potential_energy`.
+  - `inertia` setter — accepts (Dyadic, Point) tuple; applies parallel axis theorem in reverse to compute central inertia: subtracts point-mass contribution (`inertia_of_point_mass`) from given inertia.
   - `kinetic_energy(frame)` — individual body KE: ½I·ω² (rotational) + ½mv² (translational).
 - `body.py` — unified `Body` wrapping Particle or RigidBody; constructor dispatches: mass given but no inertia → initializes as Particle; otherwise → RigidBody with symbolic inertia tensor.
 - `functions.py` — system-level kinematic/dynamic functions for multi-body systems (computation, not EOM generation).

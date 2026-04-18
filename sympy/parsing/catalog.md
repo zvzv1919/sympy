@@ -30,7 +30,7 @@ Python tokenizer producing 5-tuples of (type, string, start, end, line). Used by
 - `group()`, `any()`, `maybe()` — regex combinator helpers used to build token patterns.
 - `generate_tokens(readline)` — generator that yields token 5-tuples from a readline callable.
 - `tokenize(readline, tokeneater)` — callback-based tokenization interface.
-- `Untokenizer` — reconstructs source code from token streams. `add_whitespace()` enforces a row-ordering constraint (raises `ValueError` if row exceeds prev_row). `untokenize()` reassembles tokens into a string.
+- `Untokenizer` — reconstructs source code from token streams. `untokenize()` reassembles tokens into a string; delegates to `compat()` for 2-element (type, value) tuples, which handles spacing between adjacent NAME/NUMBER/STRING tokens (e.g. prevents consecutive string literals from merging). `add_whitespace()` handles whitespace for full 5-tuples.
 - `TokenError` — raised on malformed token streams.
 - `untokenize(iterable)` — module-level convenience wrapper around `Untokenizer`.
 
