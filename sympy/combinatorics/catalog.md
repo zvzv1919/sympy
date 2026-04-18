@@ -84,7 +84,11 @@ Yields individual `Permutation` elements (not `PermutationGroup` objects) for st
 
 ### [`fp_groups.py`](fp_groups.py)
 Finitely presented groups, coset enumeration, and subgroup presentations.
-- `FpGroup`, `CosetTable`.
+- `FpGroup` — finitely presented group defined by generators and relators.
+- `CosetTable` — tabular structure for coset enumeration; tracks coset–generator mappings.
+  - `scan(alpha, word)` — traces a relator word through the table from coset α; calls the `coincidence` routine when a completed scan is inconsistent.
+  - `scan_check(alpha, word)` — boolean-returning variant of `scan`; returns False on inconsistent completion instead of calling `coincidence`. Used in `low_index_subgroups`.
+  - `coincidence(alpha, beta)` / `coincidence_f` — merges two cosets found to be equivalent.
 - Coset enumeration: `coset_enumeration_r`, `coset_enumeration_c`.
 - `low_index_subgroups`, `reidemeister_presentation`.
 - Subgroup presentation pipeline:

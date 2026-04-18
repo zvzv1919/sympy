@@ -34,7 +34,8 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 - `trailing(n)` — count trailing zero bits (factors of 2)
 - `divisors(n)`, `divisor_count(n)` — all divisors / count of divisors
 - `udivisors(n)`, `udivisor_count(n)` — unitary divisors and count
-- `antidivisors(n)`, `antidivisor_count(n)` — antidivisors and count
+- `antidivisors(n, generator=False)` — antidivisors of n; `generator=True` returns lazy iterator instead of sorted list
+- `antidivisor_count(n)` — number of antidivisors
 - `core(n, t)` — t-free core of n
 - `digits(n, b=10)` — decompose integer n into list of digits in base b; encodes sign via negated base prefix
 - `totient` — Euler's totient function (symbolic Function class)

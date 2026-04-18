@@ -17,6 +17,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
   - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
+  - Solution validation: automatically excludes candidates that make any denominator zero (via `denoms`); `check=False` flag bypasses both denominator filtering and assumption checks, recovering all raw candidates.
 - `_solve_system(exprs, symbols)` — internal system solver (used by `solve` for multi-equation inputs); handles:
   - Linear systems: converts each expression to Poly, extracts monomial coefficients to build an augmented matrix in-place, then dispatches to `solve_linear_system`.
   - Nonlinear polynomial systems via `solve_poly_system`.
@@ -43,7 +44,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Lambert W fallback orchestration: classifies generators into exp/log vs algebraic, factors polynomial part, attempts `_solve_lambert`.
   - On Lambert W failure with exactly 2 generators, falls back to `bivariate_type` reduction within `_tsolve` itself (not in bivariate.py).
 - `unrad(eq, *syms)` — removes radicals from equations.
-- `denoms(eq, symbols)` — extracts denominators for solution validation.
+- `denoms(eq, symbols)` — extracts denominators; used by `solve` post-validation to auto-discard solutions causing zero denominators.
 
 ### [`solveset.py`](solveset.py)
 Modern set-based solver with explicit domain handling. Returns FiniteSet, Interval, ConditionSet, or ImageSet.
@@ -56,7 +57,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
   - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
 - `linear_eq_to_matrix(equations, *symbols)` — standalone utility that converts linear equations to (A, b) matrix pair for external use. Does not solve; just extracts coefficients. Accepts both expressions (implicit =0) and Eq() relations.
-- `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
+- `domain_check(f, symbol, p)` — solveset-internal singularity check; walks expression tree for infinite subexpressions at a candidate point. Not used by legacy `solve` (which has its own denominator-zero filter). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
   - `_invert_complex` exp handling: maps each target value to an ImageSet over Integers (adding 2nπi branches); requires `g_ys` to be a FiniteSet.
@@ -92,6 +93,7 @@ Solves Diophantine equations (polynomial equations over integers).
 - `diophantine(eq, param, syms)` — main entry; factors equation into terms, dispatches each to `diop_solve()`, and merges results.
   - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
+- Integer arithmetic helpers: `_nint_or_floor` (nearest-integer rounding with floor as tie-breaker), `_rational_pq`, `_remove_gcd`.
 - Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic` / `_diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
   - `_diop_ternary_quadratic`: cross-product-only case (no squared terms): if xz coefficient is nonzero, reduces to binary quadratic and picks solution minimizing |x|+|z|; if xz coefficient is zero, swaps variables and recurses.
   - `diop_linear` / `_diop_linear` — solves linear Diophantine equations (a₁x₁+…+aₙxₙ=c) by recursively reducing n-variable problems to two-variable GCD sub-problems; returns parametric solutions with integer parameters.

@@ -112,6 +112,7 @@ Base class providing shared infrastructure for all pyglet plot modes.
 ### `plot_modes.py`
 Concrete plot mode implementations for various coordinate systems.
 
+- `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; applied to sympy substitution evaluators but not to lambdified evaluators (which already return numeric output).
 - `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
 - `ParametricCurve2D`, `ParametricCurve3D`, `ParametricSurface3D` — parametric modes.
 - `Polar`, `Cylindrical`, `Spherical` — curvilinear coordinate modes.

@@ -133,6 +133,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`.
 - `_print_Mul` — renders products; uses two distinct separator settings: `mul_symbol_latex` between general factors and `mul_symbol_latex_numbers` between adjacent numeric factors (detected via regex on rendered terms). Renders fractions via `\frac{}{}` when a denominator is present.
 - `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.
+- Polynomial domain printers (`_print_Poly`, `_print_ComplexRootOf`, `_print_RootSum`, `_print_PolynomialRing`, `_print_FractionField`) — renders algebraic objects; `_print_ComplexRootOf` shortens the class name to `CRootOf` for display.
 - Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.
 - `_print_MatMul` / `_print_HadamardProduct` — parenthesize operands that are sums or mixed-type products.
 - `translate(s)` — module-level helper converting symbol names to LaTeX: looks up Greek letters, then recursively strips accent/modifier suffixes (hat, dot, prime, etc.) longest-first; guards against empty base by requiring remaining string length > modifier length.

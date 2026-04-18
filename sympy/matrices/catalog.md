@@ -15,7 +15,7 @@ The `matrices` module has two layers:
 Central base class `MatrixBase` — defines the full matrix API inherited by both dense and sparse types.
 
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
-- **Arithmetic**: `__add__`, `__mul__`, `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`, `exp` (matrix exponential via Jordan).
+- **Arithmetic**: `__add__` (concrete element-wise addition; reshapes result to preserve original dimensions when a dimension is zero), `__mul__`, `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`, `exp` (matrix exponential via Jordan).
 - **Dot / element-wise products**: `dot` (relaxed-dimension inner product — auto-transposes when row/column counts match the length of b; returns scalar for vectors, list otherwise), `multiply_elementwise`, `cross`.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.

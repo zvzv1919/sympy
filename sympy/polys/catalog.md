@@ -157,7 +157,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - GCD/resultant: `gcd`, `lcm`, `cofactors`, `resultant`, `discriminant`, `subresultants`.
     - `resultant(g, includePRS)` — when `includePRS=True`, returns `(resultant_value, [PRS_polys])` tuple instead of a single scalar.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
-    - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; `sqf_list_include` folds the coefficient into the factor tuples.
+    - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
 - `to_rational_coeffs(f)` — transform polynomial with irrational (square-root) coefficients to rational coefficients.
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression; **returns the original expression unchanged if both the extracted coefficient and monomial factor are trivial (both equal 1)**.
@@ -166,7 +166,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
-- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
+- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **when exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction. For 3+ inputs or mixed Poly/expr inputs, collects all coefficients into one flat list to infer a single unified domain.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
@@ -175,7 +175,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **raises `MultivariatePolynomialError` for multivariate input**.
   - **Validates `eps > 0` (raises `ValueError` if not positive)**; for a single expression, wraps as `Poly` and delegates.
-- `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions.
+- `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions; **each catches `GeneratorsNeeded` and re-raises as `PolynomialError`** when input has no generators (e.g. plain integer).
+- `poly(expr)` — efficiently convert expression to `Poly` by recursively decomposing `Add`/`Mul`/`Pow` nodes; **non-sum factors in a product are collected separately: numeric factors are multiplied as scalars, while symbolic non-sum factors are converted to `Poly` via `_from_expr`** before multiplication.
 - `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
   - `__eq__` — checks `len(f.gens) == len(g.gens)` (not name equality); **attempts domain unification and returns `False` on `UnificationFailed`** (same pattern as `Poly.__eq__`).
 - `GroebnerBasis` — Gröbner basis representation class.
@@ -208,7 +209,8 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
-- `dup_mul_ground`, `dmp_mul_ground`, `dup_quo_ground`, `dmp_quo_ground` — ground element operations.
+- `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
+- `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — remainder, quotient, exact quotient.
 - `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **raise `PolynomialDivisionFailed` if remainder degree fails to decrease between iterations**.
@@ -276,7 +278,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_half_gcdex`, `dup_gcdex`, `dmp_half_gcdex`, `dmp_gcdex` — extended Euclidean algorithms.
 - `dup_invert(f, g, K)` / `dmp_invert` — modular inverse; **raises `NotInvertible("zero divisor")` if gcd(f,g) ≠ 1**.
 - `dup_euclidean_prs`, `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — polynomial remainder sequences.
-- `dup_resultant`, `dmp_resultant` — resultant via multiple methods.
+- `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dmp_zz_collins_resultant` / `dmp_qq_collins_resultant` — Collins's modular resultant in Z[X] / Q[X]; iterates over primes, **catches `HomomorphismFailed` from per-prime `dmp_zz_modular_resultant` and `continue`s to the next prime**; accumulates via CRT.
 - `dup_discriminant`, `dmp_discriminant` — discriminant computation.
@@ -385,7 +387,8 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF). Also `gf_ddf_shoup`, `gf_edf_shoup` (Shoup variants).
 - `gf_Qmatrix` — compute Berlekamp's Q matrix (rows are `x^(ip) mod f` for each i).
 - `gf_Qbasis` — find kernel (null space) of `Q - I` via Gaussian elimination over GF(p); returns basis vectors for Berlekamp factorization.
-- `gf_berlekamp`, `gf_zassenhaus`, `gf_shoup`, `gf_factor_sqf` — factorization of square-free polynomials.
+- `gf_berlekamp`, `gf_zassenhaus`, `gf_shoup` — square-free factorization algorithms (small/medium/large `p`).
+- `gf_factor_sqf(f, p, K, method)` — dispatch for square-free factorization; uses `method` arg or `query('GF_FACTOR_METHOD')` config; **if both are None, defaults to `gf_zassenhaus`**.
 - `gf_factor(f, p, K)` — **complete factorization of possibly non-square-free polynomial**; square-free decomposition first, then factors each component.
 - `gf_frobenius_monomial_base`, `gf_frobenius_map` — Frobenius automorphism.
 - `gf_compose`, `gf_compose_mod` — polynomial composition and modular composition.
@@ -470,7 +473,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
-- `sylvester(p, q, x)` — Sylvester matrix construction.
+- `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`); **returns empty `Matrix([])` when both polys are zero or both are constants; handles degenerate cases where one poly is zero while the other has positive degree**.
 - `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering; `method='bz'` uses natural ordering.
   - **Identity: `bezout(..., 'prs') = backward_eye(n) * bezout(..., 'bz') * backward_eye(n)`**, connecting to Sylvester's 1853 matrix.
 - `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
@@ -737,6 +740,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `QuotientModule.is_submodule(other)` (in `modules.py`) — for two QuotientModules, **requires killed submodules to be equal AND base modules to have containment**; for SubQuotientModule, checks container identity.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
+- `ModuleHomomorphism.__mul__` (in `homomorphisms.py`) — **if other is a `ModuleHomomorphism` with compatible domain/codomain, composes the two maps; otherwise attempts `ring.convert(other)` for scalar multiplication**; returns `NotImplemented` on `CoercionFailed`. `__rmul__` is aliased to `__mul__`.
 - `ModuleHomomorphism.__init__` (in `homomorphisms.py`) — validates source/target are Module instances and **raises `ValueError` if they are defined over different base rings**.
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
   - `_quotient_codomain(sm)` — quotient the codomain by `sm`; uses `Q.container.convert` for matrix entries **when codomain is a SubModule**, else uses `Q.convert`.

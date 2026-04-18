@@ -76,7 +76,9 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - If unfactorable sum, iterates per-symbol `as_independent` splits, stopping early when result is no longer Add.
   - `recursive` option: extracts common subexpressions via CSE, simplifies the reduced expression, then re-substitutes in reverse order, re-simplifying after each substitution.
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification; uses `_futrig` helper internally.
-  - `_futrig` builds a nested rule tree of TR transforms and applies them via greedy search with a multi-criteria objective (`Lops`) ranking candidates by (trig count, op count, node count, arg count, is_Add).
+  - Post-processing: if result differs from input and is a Mul whose first arg is Rational, redistributes the leading coefficient via `as_coeff_Mul()`.
+  - Hyperbolic handling: when `hyper=True` (default), converts hyperbolic sub-expressions to trig via `hyper_as_trig`, simplifies, then converts back.
+  - `_futrig` builds a nested rule tree of TR transforms and applies them via greedy search with a multi-criteria objective ranking candidates by (trig count, op count, node count, arg count, is_Add).
 
 ---
 

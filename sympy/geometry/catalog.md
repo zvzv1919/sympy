@@ -81,7 +81,9 @@ Elliptical entities in 2D.
 ### [`parabola.py`](parabola.py)
 Parabolic entities defined by focus and directrix.
 - `Parabola` — supports vertical/horizontal parabolas only; `__new__` raises `NotImplementedError` if directrix is diagonal (neither horizontal nor vertical).
-  - Properties: `focus`, `directrix`, `vertex`, `p_parameter`, `eccentricity`. Methods: `equation()`, `intersection()`.
+  - Properties: `focus`, `directrix`, `vertex`, `eccentricity`. Methods: `equation()`, `intersection()`.
+  - `p_parameter` — signed semi-latus rectum; sign convention depends on orientation (horizontal vs vertical) with inverted comparison logic between the two cases.
+  - `focal_length` — unsigned distance from vertex to focus (half the vertex-to-directrix distance).
 
 ## Planes & Surfaces
 

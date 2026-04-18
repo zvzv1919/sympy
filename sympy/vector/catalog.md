@@ -29,7 +29,8 @@ Dyadic tensor classes built on `BasisDependent`.
 
 ### [`scalar.py`](scalar.py)
 Coordinate variable symbols.
-- `BaseScalar` — a symbolic coordinate variable (x, y, or z) bound to a specific coordinate system.
+- `BaseScalar` — a symbolic coordinate variable (x, y, or z) bound to a specific coordinate system; marked `_diff_wrt = True` so it can appear as a differentiation variable.
+- `_eval_derivative(s)` — returns `S.One` if differentiating w.r.t. itself, `S.Zero` otherwise (identity/zero derivative rule for coordinate components).
 
 ## Coordinate Systems & Orientation
 

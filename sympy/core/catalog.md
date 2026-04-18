@@ -144,6 +144,7 @@ Precomputed Greek letter name collections for `symbols()` shorthand.
 ### [`evalf.py`](evalf.py)
 Adaptive arbitrary-precision numerical evaluation engine using mpmath.
 
+- `EvalfMixin` — mixin class adding `.evalf()` method to Expr; when n=1 and self is a Number, recurses at n=2 then rounds by magnitude (special case for Sage compatibility); otherwise dispatches to module-level `evalf()`
 - `evalf(x, prec, options)` — main dispatcher; routes to type-specific handlers
 - `evalf_mul(v, prec, options)` — evaluates products; detects NaN/infinite factors by checking real parts before main multiply; separates pure-real, pure-imaginary, and complex factors with direction tracking
 - `evalf_add(v, prec, options)` — sums terms with cumulative error tracking and iterative precision increase
@@ -173,6 +174,8 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation moves value toward zero, else None
   - Numeric `extract_additively`: requires diff has same sign as self AND smaller magnitude (overshooting zero returns None)
   - Add `extract_multiplicatively`: requires all terms individually divisible
+- `as_coefficient(expr)` — returns scalar multiplier `r` such that `self == r*expr`, or None if self is not a pure scalar multiple of expr
+  - Calls `extract_multiplicatively` then rejects if result still `.has(expr)` (e.g., `2*sin(E)*E` w.r.t. `E` → None because `sin(E)` contains `E`)
 - `coeff(x, n)` — extracts coefficient of `x**n` from a sum; when x is the multiplicative identity (1), returns only additive terms whose leading numeric factor is 1; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
@@ -185,7 +188,9 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `leadterm(x)` — returns leading term as `(coeff, exponent)` tuple; temporarily replaces `log(x)` with a Dummy before decomposition to avoid variable leaking into the coefficient
 - `extract_branch_factor(allow_half)` — decomposes products of `exp_polar` into `(residual, n)` where n is the integer winding number; collects `pi*I` multiples and rounds down to nearest even integer via `ceiling`
 - `primitive()` — extracts positive Rational from expression non-recursively (treats self as Add); returns `(S.One, S.Zero)` for zero-valued expressions (content is 1, not 0); if `as_coeff_Mul(rational=True)` yields negative coefficient, negates both parts to guarantee positive result
-- `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure; `__int__` converts to Python int with off-by-one correction
+- `__int__` — converts symbolic expression to Python int; rounds to 2 decimal places, applies off-by-one correction when rounded value equals truncated int
+  - Uses Dummy-substitution `evalf(2, subs={x: i})` (not direct `(self - i).evalf(2)`, which doesn't always work) to determine difference sign
+- `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure
 - `Expr.round(p)` — rounds numeric expression to `p` decimal places; for negative values, detects when adding the rounding half-unit flips sign of the scaled intermediate and reverses direction; uses `_mag` for digit counting
 - `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for complex non-real operands, operands containing ComplexInfinity (via `.has()`), or NaN; otherwise computes difference and checks sign or returns unevaluated relational
 - `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both are numbers, otherwise to polynomial `invert`
@@ -239,6 +244,8 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
 - `diff(f, *symbols)` — top-level convenience function for symbolic differentiation; dispatches to `f._eval_diff()` if available, falls back to constructing `Derivative(f, ...)` on `AttributeError`; sets `evaluate=True` by default
+- `expand_power_base(expr, deep, force)` — wrapper around `expand(power_base=True)`; splits `(a*b)**e` into `a**e * b**e`; `deep=False` applies only at top level (does not descend into subexpressions like `sin(...)`)
+- `expand_power_exp`, `expand_complex`, `expand_trig`, `expand_log`, `expand_func`, `expand_mul` — similar single-hint expand wrappers
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
 - `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement

@@ -102,7 +102,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
   - Numeric path enumerates configurations, filters non-physical ones via triangle inequality (|j1−j2|≤j3≤j1+j2) and |m|≤j checks before computing CG coefficients.
-  - `uncouple()`/`_uncouple()` — decomposes coupled eigenstates into sums of tensor-product states weighted by CG coefficients.
+  - `uncouple()`/`_uncouple()` — decomposes spin eigenstates into sums of tensor-product states weighted by CG coefficients. Accepts both `CoupledSpinState` (extracts coupling from state) and plain `SpinState` (requires explicit j-values; auto-generates default sequential coupling scheme if none provided: space 1+2, then result+3, etc.).
     - Numeric j,m: enumerates valid magnetic projection configurations explicitly. Symbolic j,m: returns symbolic Sum over CG products.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices and decomposition methods.
   - `OneQubitGate._eval_commutator` — short-circuits to zero when two single-qubit gates act on different targets OR are the same gate class; otherwise falls back to generic Operator commutator.

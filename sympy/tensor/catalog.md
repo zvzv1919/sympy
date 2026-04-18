@@ -35,6 +35,7 @@ Functions that **analyze indices** on `Indexed`/`IndexedBase` expressions only (
 Abstract index notation tensors (Penrose-style) with Einstein summation, canonicalization, and symmetry.
 
 - `TensorIndexType` — characterizes a family of indices (name, metric, dimension, delta, epsilon).
+  - `.data` setter — assigns numerical component data; accepts rank-1 (auto-expanded to diagonal square matrix) or rank-2 arrays; validates dimension match and square shape.
 - `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`). Negation (`-idx`) returns a new index with flipped variance (upper ↔ lower).
 - `TensorHead` — named tensor ("head" of an indexed tensor expression) with index types, rank, symmetry, and commutation properties.
   - `__new__` validates the `name` argument (must be string or Symbol; raises `ValueError` otherwise).
