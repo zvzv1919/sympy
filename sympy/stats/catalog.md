@@ -114,7 +114,9 @@ Symbolic (unevaluated) representations of probabilistic expressions — for alge
 
 ### [`error_prop.py`](error_prop.py)
 Derivative-based arithmetic error (uncertainty) propagation for general expressions (not probability-space algebra).
-- `variance_prop(expr, consts, include_covar)`: computes total variance via partial-derivative formula; all non-const symbols are treated as variant.
+- `variance_prop(expr, consts, include_covar)`: recursively propagates variance through an expression tree; all non-const symbols are treated as variant.
+  - Dispatches by expression type: `Add` (sum of variances), `Mul` (relative-variance formula), `Pow`, `exp`.
+  - Unrecognized composite types (e.g., arbitrary function calls like `f(x)`): returns `Variance(expr)` wrapping the whole expression without decomposition.
 
 ### [`__init__.py`](__init__.py)
 Package entry point; assembles `__all__` by importing and re-exporting the public API from each submodule.

@@ -166,7 +166,7 @@ Denests nested square root expressions only (reduces √(…√…) nesting dept
 
 - `sqrtdenest(expr)` — main entry; denests expressions like √(2+√3).
 - `_sqrt_match(p)` — decompose expression into `[a, b, r]` matching `a + b*sqrt(r)`, selecting the addend with maximal sqrt_depth as the radical part.
-  - For Add: if all terms² are rational, delegates to `split_surds`; otherwise picks max-depth term, factors out non-radical coefficient, collects remaining terms by depth.
+  - For Add: if all terms² are rational, delegates to `split_surds`; if max sqrt_depth among addends is 0, returns empty list (no radical part); otherwise picks max-depth term, factors out non-radical coefficient, collects remaining terms by depth.
   - For single multiplicative term: returns `[0, coeff, radicand]` if factor is a sqrt; returns empty list if not a sqrt (e.g. cube root or plain symbol).
 - `sqrt_depth(p)` — max nesting depth of square roots; only counts `is_sqrt` powers (exponent ±½), returns 0 for non-sqrt Pow nodes without recursing into their base.
 - `is_sqrt(expr)` — True if expr is a Pow with rational exponent of absolute value ½.

@@ -62,7 +62,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `cofactor(i, j)` (signed minor): returns `minorEntry(i,j)` negated when `(i+j)` is odd, unchanged when even — position-based sign rule `(-1)^(i+j)`.
   - `det_bareis`: fraction-free Gaussian elimination determinant; n≤3 uses direct closed-form formulas, n>3 uses Bareiss elimination with pivot search/row-swap/sign-tracking.
   - `det_bareis` selectively simplifies intermediates via `cancel()` only when `is_Atom` is False; skips simplification for atomic expressions. Returns zero when no pivot found.
-  - `berkowitz_det`: division-free determinant via Berkowitz algorithm; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction.
+  - `berkowitz_det`: division-free determinant via Berkowitz algorithm; returns `S.One` for empty (0×0) matrix; raises `NonSquareMatrixError` for non-square; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction.
 - **Inversion strategies**:
   - `inverse_ADJ`: cofactor/adjugate — computes `berkowitz_det`, checks `d.equals(0)`; if indeterminate (None), falls back to `rref` diagonal-pivot check for singularity.
   - `inverse_LU`: LU decomposition via `LUsolve`; checks rref diagonal for singularity.

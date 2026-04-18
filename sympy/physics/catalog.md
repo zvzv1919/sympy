@@ -196,7 +196,9 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `operators_to_state(operators)` — inverse mapping: operator(s) → eigenstate.
 - **Circuit utilities**: `circuitutils.py` — primitive circuit manipulation: `find_subcircuit`/`replace_subcircuit` (KMP-based subsequence search/replace in gate tuples), `random_reduce(circuit, gate_ids)` (randomly removes a known gate identity from a circuit; returns original circuit unchanged if no identity is found), `random_insert` (inserts a random identity into a circuit), `flatten_ids` (expands GateIdentity objects into sorted list of equivalent sequences), `convert_to_symbolic_indices`/`convert_to_real_indices`.
 - **QASM parser**: `qasm.py` — `Qasm` class: parses text-based gate descriptions into a quantum circuit. `add()` dispatches each command: user-defined custom operations (`self.defs`) take priority over built-in methods; unrecognized commands are skipped with a print warning. Built-in commands: `x`, `z`, `h`, `s`, `t`, `measure`, `cnot`, `swap`, `cphase`, `toffoli`, `cx`.
-- **Other**: `tensorproduct.py`, `matrixcache.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+- **Other**: `matrixcache.py`, `piab.py` (particle in a box), `constants.py` (ℏ).
+  - `tensorproduct.py` — `TensorProduct`: symbolic non-commutative tensor product of operators/states. Constructor separates commutative (scalar) arguments from non-commutative ones; scalars are extracted and multiplied in front as a `Mul` prefactor. For all-Matrix arguments, delegates to `matrix_tensor_product` (Kronecker product).
+  - `tensor_product_simp(e)` — simplifies products of TensorProducts into a single TensorProduct by combining factor-by-factor.
   - `innerproduct.py` — `InnerProduct` expression node (⟨bra|ket⟩); constructor validates types and stores bra/ket.
     - `doit()` — evaluation dispatch with fallback: first tries ket's inner-product method; if that raises NotImplementedError, tries conjugate of the dual's inner-product; if both fail, returns self unevaluated.
     - `_eval_conjugate` — conjugate of ⟨a|b⟩ returns InnerProduct(Dagger(ket), Dagger(bra)), i.e. swaps and daggers both components.
@@ -320,6 +322,8 @@ High-energy physics.
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.); group-theoretical construction where dimensions are vectors (exponent coefficients) and units add a scale factor to a dimension. Package `__init__.py` exports core abstractions: Dimension, DimensionSystem, Unit, Constant, UnitSystem, Quantity.
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
+  - `is_dimensionless` — property; True when all exponent powers are zero.
+  - `has_integer_powers` — property; True when all exponent powers are Integer (not Rational); used to validate final results after intermediate steps that may introduce fractional powers.
   - `add(other)` — dimensional addition; raises TypeError for non-Dimension operand, raises ValueError when dimensions differ (e.g., length + time).
   - `sub(other)` — subtraction delegates to `add`; dimensions have no notion of ordering/magnitude, so subtraction is equivalent to addition when operands match.
   - `DimensionSystem.get_dim(dim)` — looks up a dimension in the system; accepts string (matches against name or symbol) or Dimension object (matches by identity in list); returns None if not found. `__getitem__` shortcut raises KeyError on miss.

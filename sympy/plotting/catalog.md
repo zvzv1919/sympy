@@ -13,6 +13,8 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
   - `append()`/`extend()` — add series from another `Plot` or individual `BaseSeries` objects.
 - `check_arguments(args, expr_len, nb_of_free_symbols)` — argument grouping helper for matplotlib-based `plot*()` functions only.
   - Groups flat or tuple-wrapped expressions into plot series; three branches: multiple exprs with same range, series with same range, multiple with different ranges.
+  - Supplies default range `(-10, 10)` for each free symbol when the user omits explicit range tuples.
+  - Distinguishes expressions from ranges by checking if an element is a 3-tuple (symbol, min, max); symbolic expressions are identified by being non-tuple sympified objects.
   - Does NOT determine curve-vs-surface or coordinate mode — each `plot*()` entry point already knows its series type.
   - Explicitly excludes the "series of plots with same range" branch when expr_len == 3, because 3-element tuples are ambiguous between expression groups and range tuples.
 - Public API entry points (matplotlib-based):

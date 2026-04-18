@@ -183,7 +183,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
   - Computes multiplicative constant correction between exp(f) and the radical
 - `is_log_deriv_k_t_radical_in_field` — field-level variant; checks if f=fa/fd is Du/u for some k(t)-radical u; dispatches on case (exp/primitive/base/tan)
   - Base case: immediately returns None if fd is not square-free or deg(fa) >= deg(fd); otherwise computes n and u from residue terms
-  - Uses `splitfactor` for denominator simplicity check, then `residue_reduce`; returns None if not all resultant roots are rational
+  - Uses `splitfactor` for denominator simplicity check, then `residue_reduce`; returns None early if residue reduction indicates non-elementary (b=False)
+  - Returns None if not all resultant roots of the residue polynomials are rational
 - `parametric_log_deriv_heu` — heuristic for n·f = Dv/v + m·Dθ/θ (n,m∈ℤ, v∈k(t)*); branches on whether deg(q) exceeds a derivation-degree bound B, solving coefficient equations in each branch
   - When deg(q) ≤ B: computes LCM of denominators, splits via `splitfactor` into normal/special factors, constructs polynomial z from those factors
   - Raises `NotImplementedError` ("heuristic failed: z in k") when z is in the constant field (doesn't involve the extension monomial t)
@@ -244,7 +245,8 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
 - `_rewrite_saxena(fac, po, g1, g2, x)` — normalizes a product of two G-functions with different rational powers of x in their arguments so both become linear in x; harmonizes exponents via LCM-based inflation, flips negative exponents, applies principal branch, and absorbs the polynomial factor into one G-function
 - `_find_splitting_points(expr, x)` — recursively walks the expression tree, pattern-matches affine sub-expressions of the form p*x+q, and collects candidate constant shifts −q/p for linear variable substitution x→x+a
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
-- `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
+- `_condsimp` — post-hoc boolean simplifier for convergence conditions already extracted by transform backends (does NOT extract half-plane constraints from arg conditions — that is `process_conds` inside `_laplace_transform`/`_mellin_transform`)
+  - Applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites `periodic_argument` equalities with infinite period on non-polar args as positivity conditions
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)
 
 ### [`meijerint_doc.py`](meijerint_doc.py)

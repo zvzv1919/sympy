@@ -94,7 +94,7 @@ Sparse polynomial rings and their elements (dict-based representation).
     - **Pow with negative or non-integer exponents**: fall through to `domain.convert`, treated as ground domain elements.
   - `evaluate(x, a)` — substitute scalar for one variable; **univariate case returns a plain domain scalar** (drops the ring).
   - `subs(x, a)` — substitute scalar; **univariate case wraps result via `ring.ground_new`, returning a constant polynomial still in the ring**.
-  - `compose(x, a)` — substitute a polynomial expression for a variable.
+  - `compose(x, a)` — substitute a polynomial expression for a variable; **when replacements are passed as a dict, entries are sorted by generator index order** before sequential application.
   - `set_ring(new_ring)` — transfer element to a different ring; **three-way dispatch**: same ring → return self; different symbols → reorder terms via `_dict_reorder` + `from_terms`; **same symbols, different domain → `from_dict` (no reorder)**.
   - `_sorted(seq, order)` — internal sorting helper for `coeffs`, `monoms`, `terms`; **when ordering is `lex`, sorts directly by monomial tuple** (Python tuple comparison is lexicographic); for other orderings, calls the order object as a key function.
   - `_iadd_monom(mc)` — in-place monomial addition; **copies self first if self is a canonical generator** to avoid mutating ring-cached generators.
@@ -215,7 +215,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
     - `_symbolic_factor_list` — internal helper for factoring symbolic expressions; when a base is raised to a non-integer exponent and its polynomial leading coefficient is negative (not positive), **appends the coefficient as a factor with exponent 1** (avoids computing negative numbers raised to fractional powers); when coefficient is positive, appends it normally with the non-integer exponent.
     - `factor_list` (via `_generic_factor_list`): **when input is a rational expression (nontrivial denominator) and `frac=True`, returns `(coeff, numer_factors, denom_factors)` 3-tuple; when `frac=False` (default), silently drops denominator factors** and returns only `(coeff, numer_factors)`.
-    - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
+    - `sqf_list(all=False)` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **when `all=True`, includes trivial constant-multiplicity-1 entries** (e.g. `Poly(1, x)` with mult 1) that are omitted by default; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
 - `_sorted_factors(factors, method)` — sort `(poly, exp)` factor pairs; **for `method='sqf'` (square-free), primary sort key is the exponent; for other methods (regular factorization), primary key is representation length** (`len(rep)`); secondary keys are rep length, generator count, and raw rep.
 - `to_rational_coeffs(f)` — transform polynomial with irrational coefficients to rational coefficients; **only applies to polynomials whose irrational coefficients involve exclusively square roots; returns `None` immediately if any coefficient contains a root of order > 2** (e.g. cube roots).
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
@@ -642,6 +642,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
   - **Returns empty `Matrix([])` when both polys are zero, both are constants, or one is constant and the other is zero**.
   - **Returns `Matrix([0])` when one poly has degree ≥ 1 and the other is zero** (not an empty matrix).
 - `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering; `method='bz'` uses natural ordering.
+  - **Same degenerate-input cases as `sylvester`**: returns `Matrix([])` when both are zero, both constants, or one constant and other zero; **returns `Matrix([0])` when one poly has degree ≥ 1 and the other is zero**.
   - **Identity: `bezout(..., 'prs') = backward_eye(n) * bezout(..., 'bz') * backward_eye(n)`**, connecting to Sylvester's 1853 matrix.
 - `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
 - `quo_z(p, q, x)` — integer polynomial quotient, same absolute-value premultiplication as `rem_z`.
@@ -932,7 +933,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `__eq__` — attempts coercion; **returns `False` (not `NotImplemented`) on `CoercionFailed`**, unlike arithmetic operators which return `NotImplemented`.
 - `FreeModuleElement` (in `modules.py`) — element of a free module; data stored as a **tuple of ring entries**; arithmetic (`add`, `mul`, `div`) is component-wise over the tuple.
 - `FreeModulePolyRing` (in `modules.py`) — free module over a generalized polynomial ring; **constructor requires the ring's ground domain to be a Field** (raises `NotImplementedError` for e.g. ZZ[x]).
-- `FreeModuleQuotientRing` (in `modules.py`) — free module over a quotient ring `R/I`; internally holds a `.quot` attribute representing the same set as an R-module (modulo `I·R^n`).
+- `FreeModuleQuotientRing` (in `modules.py`) — free module over a quotient ring `R/I`; **constructor raises `NotImplementedError` if the ring is not a `QuotientRing`** (e.g. a plain polynomial ring); internally holds a `.quot` attribute representing the same set as an R-module (modulo `I·R^n`).
   - `lift(elem)` — promote element from `R/I`-module to the `.quot` R-module by **extracting underlying `.data` from each component**; enables computation in the larger ring setting.
   - `unlift(elem)` — reverse of `lift`; push element of `.quot` back down to the quotient module.
 - `SubModule.in_terms_of_generators(e)` (in `modules.py`) — express element as linear combination of generators; **catches `CoercionFailed` and raises `ValueError`** if `e` is not a member of the submodule.
