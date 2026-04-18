@@ -27,7 +27,7 @@ Special mathematical functions: gamma, error, Bessel, orthogonal polynomials, di
 #### [`special/gamma_functions.py`](special/gamma_functions.py)
 Gamma function family: complete, incomplete, polygamma, loggamma.
 - `gamma` — complete gamma function Γ(x); evaluates special values; `fdiff` returns Γ(x)·ψ(x) for argindex 1, raises `ArgumentIndexError` otherwise. The `factorial` class (in `combinatorial/factorials.py`) handles n! computation and negative-integer edge cases.
-- `lowergamma` — lower incomplete gamma function γ(s, x).
+- `lowergamma` — lower incomplete gamma function γ(s, x); `eval` handles branch-cut logic differently for positive-integer s (entire in x), non-positive-integer s (winding-number correction), and non-integral s (factored as x^s·γ_unbranched).
 - `uppergamma` — upper incomplete gamma function Γ(s, x); `fdiff` uses Meijer G-function for derivative w.r.t. order parameter.
 - `polygamma` — polygamma function ψ^(n)(z), includes `digamma` (n=0) and `trigamma` (n=1).
 - `loggamma` — log-gamma function log Γ(x); `eval` returns closed-form expressions for integer, half-integer (denominator=2), and general rational arguments.
@@ -58,7 +58,8 @@ Error functions and related integrals (special cases of incomplete gamma).
   - `_eval_nseries` — series expansion branches on order: ν=1 rewrites via trig integrals (Si/Ci), integer ν>1 rewrites via Ei, otherwise falls back to default.
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
-- `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
+- `Si` (sine integral ∫₀ᶻ sin(t)/t dt), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
+  - `Si` rewrites to `sinc` (cardinal sine) via `_eval_rewrite_as_sinc`, producing `Integral(sinc(t), (t, 0, z))`.
   - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
 - `FresnelIntegral` — base class for Fresnel integrals; `eval` extracts factors of −1 and I from the argument using a subclass `_sign` attribute (+1 for cosine, −1 for sine) to differentiate simplification of f(i·z).
 - `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x); subclasses of `FresnelIntegral`.

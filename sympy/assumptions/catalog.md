@@ -35,7 +35,7 @@ Main inference engine for the assumptions system.
     - Docstrings define cross-predicate inference rules (e.g., `Q.diagonal` iff both `Q.upper_triangular` and `Q.lower_triangular`; `Q.invertible` iff `Q.fullrank` ∧ `Q.square`).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `_extract_facts(expr, symbol)`: extracts assumption predicates relevant to a given symbol from a compound Boolean expression; applies De Morgan's law to push negations inward (converting negated And/Or).
-- `ask(proposition, assumptions)`: top-level query function; validates assumption consistency (raises `ValueError("inconsistent assumptions")` if local facts contradict known mathematical facts via SAT check), then dispatches to registered handlers, then falls back in two tiers.
+- `ask(proposition, assumptions)`: top-level query function; pre-validates assumption consistency (raises `ValueError("inconsistent assumptions")` if local facts alone contradict known facts), then dispatches to registered handlers, then falls back in two tiers.
 - `ask_full_inference(proposition, assumptions, known_facts_cnf)`: first-tier SAT fallback inside `ask.py`; checks satisfiability of proposition (and its negation) against known predicate relationships to return True/False/None.
   - If indeterminate, `ask()` escalates to `satask()` (in `satask.py`) which gathers expression-specific facts.
 - `register_handler(key, handler)`: registers a handler class for a predicate; if the property name doesn't exist on `Q`, dynamically creates a new `Predicate` and attaches it.
@@ -130,6 +130,7 @@ Handlers that **evaluate** matrix predicates — both structural properties and 
 ### [`satask.py`](satask.py)
 Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (in `ask.py`) are inconclusive. Orchestrates fact collection and satisfiability checking.
 - `satask()`: gathers all relevant facts, then checks satisfiability of proposition ∧ assumptions ∧ facts (and its negation) to return True/False/None.
+  - Raises `ValueError("Inconsistent assumptions")` when **neither** the proposition nor its negation is satisfiable under the combined constraints — indicates contradictory inputs.
 - `get_relevant_facts()`: single-pass fact collector; queries `fact_registry` (from `sathandlers.py`) for each expression and returns `(facts, new_exprs)`.
 - `get_all_relevant_facts()`: **fixed-point loop** over `get_relevant_facts()`; new sub-expressions discovered in one pass (e.g., `Q.zero(x*y)` introduces `x`, `y`) become input for the next pass, iterating until no new expressions appear or `iterations` limit is reached.
 

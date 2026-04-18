@@ -97,6 +97,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `__truediv__(p2)` — division operator; **if `p2` is a monomial (single-term), uses `p2**(-1) * p1` (inverse multiplication) instead of general `quo`** as a fast path; otherwise delegates to `quo(p2)`.
   - `div(fv)`, `rem(G)`, `quo(G)`, `exquo(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking; **`exquo` raises `ExactQuotientFailed` if remainder is nonzero**.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
+  - `leading_expv()` — leading monomial exponent tuple per the ring's ordering; **returns `None` for the zero polynomial**, unlike `degree`/`degrees`/`tail_degree` which return `-oo`.
   - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
   - `__pow__(n)` — exponentiation; **raises `ValueError("0**0")` if self is zero and n is 0**; nonzero to zeroth power returns `ring.one`.
     - Single-term (monomial) fast path handles arbitrary exponents.
@@ -484,6 +485,7 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
 - `gf_strip`, `gf_trunc` — canonical form: strip leading zeros / reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
+  - `gf_add`/`gf_sub` — **only strips leading zeros (via `gf_strip`) when both operands share the same degree** (possible cancellation); skips stripping when degrees differ.
   - `gf_exquo` — exact quotient; **raises `ExactQuotientFailed` if the divisor does not evenly divide the dividend** (nonzero remainder).
 - Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is zero poly and `a % p == 0`, returns `[]`**. Also `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg`.
 - `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval`, `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — standard operations and GCD/LCM.

@@ -50,7 +50,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
-  - Lambert W fallback orchestration: classifies generators into exp/log vs algebraic, factors polynomial part, attempts `_solve_lambert`.
+  - Lambert W preprocessing: partitions generators into exp/log vs algebraic groups, zeros out exp/log terms, factors the remaining algebraic part, recombines to normalize the equation into a form recognizable as Lambert W, then delegates to `_solve_lambert`.
   - On Lambert W failure with exactly 2 generators, falls back to `bivariate_type` reduction within `_tsolve` itself (not in bivariate.py).
   - Last-resort `force` fallback: calls `posify` to re-express the equation with all symbols assumed positive, then re-solves. If the target variable is absent from the positified expression, returns None (no solution).
 - `unrad(eq, *syms)` — removes radicals from equations.
@@ -98,7 +98,7 @@ Solves bivariate equations by structural reduction to single-variable problems.
 - `_linab(arg, symbol)` — decomposes expression into `a*X + b` where `X` is symbol-dependent and `a`, `b` are independent; normalizes negative leading sign on `X` by negating both `a` and `X`.
 - `_mostfunc(lhs, func, X=None)` — selects the most deeply nested occurrence of a given function type (exp, log, Pow, etc.) in an expression; ties broken by highest nesting count; optional variable filter restricts candidates.
 - `_lambert(eq, x)` — low-level Lambert W solver for equations in the form `a*log(b*X+c) + d*X + f = 0`. Evaluates both real branches of LambertW (k=0 and k=-1), discarding k=-1 when the result is not real. Handles nested-log edge case: if the non-log remainder is itself a negated log, unwraps one layer and rewrites the equation before solving.
-- `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
+- `_solve_lambert(f, symbol, gens)` — solves already-preprocessed equations (from `_tsolve`) by structural case dispatch into Lambert W form; does not do initial generator classification or expression normalization. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
   - Log-dominant + additive lhs: computes log-difference differently when rhs==0 (`log(other) - log(other - lhs)`) vs nonzero (`log(lhs - other) - log(rhs - other)`).
   - Exp-dominant + additive lhs: isolates exp-containing term; if both sides are negatable (`could_extract_minus_sign`), negates both before taking log. This negation check is absent in the analogous power-with-symbolic-exponent additive case.
   - Calls `_lambert` for final resolution.

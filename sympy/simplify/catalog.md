@@ -18,13 +18,13 @@
 Individual trig transformation rules and the Fu simplification algorithm. Each TR rule applies one specific trig identity.
 
 - `fu(rv, measure)` — main Fu algorithm; applies TR rules via CTR and RL sequences, selects simplest by caller-supplied `measure` (defaults to `L`, i.e. trig-function count only).
+  - Non-Expr inputs (e.g. Eq, relational): recursively applies `fu` to each arg via `rv.func(...)` instead of running the rule pipeline.
   - Uses JIT factoring: extracts common factors to attempt trig combination, discards factoring if it doesn't simplify.
 - `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
 - `TR2(rv)` — replace tan/cot with sin/cos and cos/sin ratios.
 - `TR2i(rv, half)` — single-pass rule: converts sin/cos ratio terms within Add sums back to tan; with `half=True` also rewrites sin/(cos+1) → tan(x/2).
   - Does not handle Mul-level powered-product rewriting (that is `_match_div_rewrite` in trigsimp.py).
-  - Exponent/base guard: only rewrites when exponent is integer or base is positive; otherwise leaves expression unchanged.
 - `TR3(rv)` — canonicalize angles via induced formulas.
 - `TR4(rv)` — evaluate trig at special angles (0, π/6, π/4, π/3, π/2).
 - `_TR56(rv, f, g, h, max, pow)` — helper for TR5/TR6; replaces even powers of sin/cos via Pythagorean identity.
@@ -73,7 +73,8 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - Artifact reduction phase: reverses Pythagorean substitutions (e.g. 1−cos²→sin²) that made the expression more complex; uses restricted wildcards (excluding certain functions) to influence better matches.
   - Loop guard: iterates artifact reversal with `was != expr` check to prevent infinite re-matching; breaks early when matched coefficient is zero or cancels with other terms.
 - `_dotrig(a, b)` — guard that checks whether expression `a` and pattern `b` share the same function category (both TrigonometricFunction or both HyperbolicFunction) and outer type (`func`); skips pattern matching when categories don't match.
-- `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
+- `_replace_mul_fpowxgpow` — rewrites products of powers of two different trig/hyper functions f(x)^a·g(x)^b into a single function power h(x)^c.
+  - Safety guard: only applies when base is positive or exponent is integer, preventing incorrect rewrites for non-real exponents or bases.
 - `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) for rewriting ratios/products of trig and hyperbolic functions.
   - `artifacts` table: reverses Pythagorean identity substitutions that made an expression more complex (e.g. 1−cos²→sin², 1−1/cos²→−tan²), restoring the simpler original form.
   - First 14 division patterns must stay in fixed order — `_match_div_rewrite` indexes them by position.
