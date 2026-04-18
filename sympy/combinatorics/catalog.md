@@ -94,8 +94,10 @@ Free groups with symbolic generators.
 - Constructor entry points: `free_group(symbols)`, `xfree_group`, `vfree_group` — create a `FreeGroup` from a string, Symbol/Expr, or sequence thereof.
   - `_parse_symbols` — normalizes the `symbols` argument; accepts str, Expr, sequence of str, or sequence of Expr. Mixed-type sequences (e.g. str and Symbol together) raise `ValueError`.
 - `FreeGroup` — finitely generated free group; generators are ordered by creation order.
+  - `is_abelian` — True only when the group has rank 0 or 1 (at most one generator); rank ≥ 2 free groups are always non-abelian.
   - `center` — returns the center of the free group (always `{identity}`, since free groups of rank ≥ 2 are non-abelian).
-  - `contains`, `is_subgroup`, `identity`.
+  - `contains(g)` — tests word membership; rejects elements not of `FreeGroupElement` type, and also rejects words built from a different `FreeGroup` instance (compares group identity, not generator names).
+  - `is_subgroup`, `identity`.
 - `FreeGroupElement` — word (element) in a free group, stored as tuple of (generator, exponent) pairs.
   - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
   - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.

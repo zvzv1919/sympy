@@ -17,8 +17,8 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
   - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
-- `_solve_system(exprs, symbols)` — internal system solver; handles:
-  - Linear systems via augmented matrix construction → `solve_linear_system`.
+- `_solve_system(exprs, symbols)` — internal system solver (used by `solve` for multi-equation inputs); handles:
+  - Linear systems: converts each expression to Poly, extracts monomial coefficients to build an augmented matrix in-place, then dispatches to `solve_linear_system`.
   - Nonlinear polynomial systems via `solve_poly_system`.
   - Underdetermined nonlinear systems: enumerates variable subsets sized to match equation count, solves each subset; does **not** produce parametric infinite-family solutions (see `linsolve` for that).
   - Residual non-polynomial equations: iteratively solves remaining symbols one at a time after polynomial pass.
@@ -28,6 +28,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Linear equations via `solve_linear`.
   - Polynomial dispatch via `Poly` and generator inspection.
   - Multi-generator same-base handling: when generators share one base but differ in power (e.g. exp(x), exp(-x)), expands powers before substituting the base with a dummy variable.
+  - Multi-generator different-base handling: for nested transcendental functions (e.g. log(x) and log(log(x)-1)), substitutes the shallowest function with a dummy variable, solves the simplified equation, then inverts to recover solutions.
   - Transcendental fallback via `_tsolve`.
 - `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables.
 - `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
@@ -54,7 +55,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
   - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
-- `linear_eq_to_matrix(equations, *symbols)` — converts linear equations to augmented matrix form (A, b). Accepts both expressions (implicit =0) and Eq() relations.
+- `linear_eq_to_matrix(equations, *symbols)` — standalone utility that converts linear equations to (A, b) matrix pair for external use. Does not solve; just extracts coefficients. Accepts both expressions (implicit =0) and Eq() relations.
 - `domain_check(f, symbol, p)` — validates candidate solution point by walking the expression tree for singularities (infinite subexpressions). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
@@ -160,13 +161,13 @@ Solves recurrence (difference) equations with polynomial/rational coefficients.
 ### [`decompogen.py`](decompogen.py)
 Functional decomposition for solving via composition chain reduction.
 
-- `decompogen(f, symbol)` — decomposes f into composition chain f = f₁∘f₂∘…∘fₙ.
+- `decompogen(f, symbol)` — decomposes f into a composition chain f = f₁∘f₂∘…∘fₙ. Pure decomposition utility; does not solve equations or perform change-of-variables substitution.
 
 ### [`deutils.py`](deutils.py)
 Utilities for classifying and manipulating differential equations.
 
 - `ode_order(expr, func)` — returns the order of a differential equation.
-- `_preprocess(expr, func, hint)` — prepares expressions for ODE solving.
+- `_preprocess(expr, func, hint)` — controls derivative evaluation before ODE/PDE solving. Evaluates unevaluated derivatives selectively based on hint suffix; if hint is None, bypasses all derivative evaluation entirely. Auto-detects the target function from derivatives if func is omitted (raises ValueError if ambiguous).
 - `_desolve(eq, func, hint, ics)` — shared dispatch helper used by both `dsolve` (ODE) and `pdsolve` (PDE).
   - Delegates to `classify_ode` or `classify_pde` based on `type` kwarg.
   - Handles meta-hints `all`, `all_Integral`, and `best`: iterates matching hints, collects solutions into a dict.

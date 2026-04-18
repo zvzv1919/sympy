@@ -94,7 +94,8 @@ All concrete numeric types and their arithmetic operations.
 - `_eval_is_zero` — separates terms into real/imaginary/unknown; returns True if all args are zero; returns False if real nonzero terms don't cancel or if imaginary terms coexist
 
 ### [`mul.py`](mul.py)
-`Mul` class — commutative n-ary product. `flatten()` handles coefficient extraction and commutativity separation.
+`Mul` class — commutative n-ary product. `flatten()` collects powers, coefficients, and separates commutative/non-commutative factors.
+- `flatten()` canonicalizes negative numeric bases with non-integer rational exponents by extracting the sign into a running `(-1)**e` accumulator and storing the positive base separately for later combination
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
@@ -167,7 +168,9 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - Distinct from `Add.as_coeff_add(*deps)` which partitions an Add's own args by symbol dependency or extracts leading numeric coefficient
   - `as_Add` hint forces Add or Mul mode; when forced mode mismatches actual type (e.g., Add forced as Mul), returns `(identity, self)` (1 for Mul, 0 for Add)
   - For Mul, non-commutative factors after the first dependent one are all grouped as dependent
-- `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation preserves sign properties, else None; Add requires all terms individually divisible
+- `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation moves value toward zero, else None
+  - Numeric `extract_additively`: requires diff has same sign as self AND smaller magnitude (overshooting zero returns None)
+  - Add `extract_multiplicatively`: requires all terms individually divisible
 - `coeff(x, n)` — extracts coefficient of `x**n` from a sum; when x is the multiplicative identity (1), returns only additive terms whose leading numeric factor is 1; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation
@@ -281,7 +284,9 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 - `CACHE` — global registry (`_cache` list) with `print_cache()` and `clear_cache()` helpers
 
 ### [`decorators.py`](decorators.py)
-`_sympifyit` — auto-converts arguments to SymPy types; `deprecated` — deprecation warnings.
+`_sympifyit` / `__sympifyit` — auto-converts second argument to SymPy type before calling wrapped function; when a fallback return value is specified and the operand has `_op_priority`, skips conversion (assumes external class handles SymPy interop)
+- `call_highest_priority(method_name)` — decorator for binary special methods; delegates to the other operand's reflected method if it has higher `_op_priority`; silently falls back if reflected method missing
+- `deprecated` — deprecation warning decorator
 
 ### [`compatibility.py`](compatibility.py)
 Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`, `as_int()`.

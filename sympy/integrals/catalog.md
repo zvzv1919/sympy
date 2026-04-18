@@ -86,6 +86,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
+- `recognize_log_derivative(a, d, DE)` — tests whether f=a/d is a logarithmic derivative (dv/v for some v in the function field) by computing the resultant, splitting it via `splitfactor_sqf`, and checking that all real roots of the special factors are integers; known limitation: ignores complex roots (TODO)
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
 - `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
   - In piecewise mode, emits a Piecewise to handle the case where the exponential monomial equals 1 (zero exponent), avoiding division by zero by substituting t=1 and integrating separately

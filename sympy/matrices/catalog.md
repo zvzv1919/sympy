@@ -25,7 +25,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
-- **Norms**: `norm` (Frobenius, spectral, p-norms).
+- **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
 - **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `_setitem`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
@@ -55,6 +55,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `__setitem__`: thin wrapper; actual assignment logic (including list→Matrix conversion) is `MatrixBase._setitem` in `matrices.py`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
+- **NumPy conversion utilities**: `matrix2numpy(m, dtype)` — converts a SymPy matrix to a NumPy array element-by-element; `list2numpy(l, dtype)` — converts a Python list of expressions to a NumPy array; `symarray(prefix, shape)` — creates a NumPy object array of named symbols.
 - Factory methods: `zeros`, `eye`, `ones`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
 - `hessian(f, varlist, constraints=[])`: (bordered) Hessian of `f` wrt `varlist`; optionally bordered by constraint gradients.
   - `varlist` accepts a sequence or row/column matrix (columns transposed; non-vector matrices raise `ShapeError`). Validates differentiability.

@@ -123,7 +123,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `terms_gcd()` — extract GCD of monomial exponents from all terms; returns `(exponent_tuple, reduced_poly)`.
   - `cancel(g, include)` — cancel common factors of f/g; when `include=False`, converts domain to its associated Ring before returning the content ratio as a SymPy expression.
   - `count_roots(inf, sup)` — count roots in interval; **if one bound is real and the other complex, converts the real bound to `(value, QQ.zero)` tuple** before delegating to complex root counter.
-  - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots.
+  - `nth_power_roots_poly(n)` — polynomial whose roots are n-th powers of f's roots; **raises `ValueError` if `n` is not a positive integer** (rejects zero, negative, non-integer).
   - `ground_roots()` — roots by factorization over the coefficient domain; **only returns roots from linear factors, silently omitting irreducible quadratic or higher-degree factors**.
   - `real_roots`, `all_roots`, `root` — root enumeration via `CRootOf`.
   - `reorder`, `inject`, `eject` — generator manipulation.
@@ -167,15 +167,19 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **collects all coefficients into one flat list to infer a single unified domain**, ensuring all resulting Polys share the same coefficient ring.
-- `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `primitive`, `monic` — query functions.
+- `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
+- `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
   - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
-- `count_roots`, `real_roots`, `nroots`, `intervals`, `refine_root` — root functions.
+- `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **raises `MultivariatePolynomialError` for multivariate input**.
+  - **Validates `eps > 0` (raises `ValueError` if not positive)**; for a single expression, wraps as `Poly` and delegates.
+- `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions.
 - `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
   - `__eq__` — checks `len(f.gens) == len(g.gens)` (not name equality); **attempts domain unification and returns `False` on `UnificationFailed`** (same pattern as `Poly.__eq__`).
 - `GroebnerBasis` — Gröbner basis representation class.
+  - `__iter__`, `__getitem__` — **if `options.polys` is set, yields/returns `Poly` objects; otherwise yields/returns symbolic expressions** (via `.exprs`).
   - `__eq__(other)` — if `other` is a `GroebnerBasis`, compares internal basis and options; **if `other` is any iterable (e.g. plain list), compares against both `.polys` and `.exprs` representations** (equality succeeds if either matches).
   - `fglm(order)` — convert basis to a different monomial ordering via the FGLM algorithm; **promotes domain to its fraction field for computation, then clears denominators and resets domain** if the original was not a field (e.g. ZZ).
   - `is_zero_dimensional` — check if ideal is zero-dimensional.
@@ -191,7 +195,7 @@ High-level polynomial utility functions (symbolic level).
 - `horner(poly)` — convert polynomial to Horner form (symbolic rewriting, not evaluation).
 - `interpolate(data, x)` — construct interpolating polynomial.
 - `rational_interpolate(data, degnum, X)` — rational function interpolation.
-- `viete(poly, roots)` — Viète's formulas relating roots to coefficients.
+- `viete(poly, roots)` — Viète's formulas relating roots to coefficients; **if `roots` is a `Basic` expression (not a list), reinterprets it as a generator symbol** and auto-generates numbered root symbols.
 
 ---
 
@@ -245,7 +249,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
 - `dup_compose`, `dmp_compose` — polynomial composition.
 - `dup_clear_denoms(f, K0, K1)` — clear fractional coefficients from univariate polynomial; computes LCM of denominators. **If `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**.
-- `dmp_clear_denoms(f, u, K0, K1)` — clear fractional coefficients from multivariate polynomial; uses `_rec_clear_denoms` to **recursively traverse nested coefficient lists** computing LCM of all denominators across all nesting levels.
+- `dmp_clear_denoms(f, u, K0, K1)` — clear fractional coefficients from multivariate polynomial; **if `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**; uses `_rec_clear_denoms` to recursively traverse nested coefficient lists computing LCM of all denominators.
 - `dup_trunc(f, p, K)` — reduce coefficients modulo constant `p`; **over ZZ, uses symmetric representation** (if remainder > p//2, subtracts p to center around zero); over other domains, uses plain modular remainder.
 - `dmp_trunc` — reduce multivariate polynomial modulo a polynomial in the inner variable.
 - `dmp_ground_trunc` — reduce multivariate polynomial coefficients modulo a constant (delegates to `dup_trunc` at level 0).
@@ -285,6 +289,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**; internally dispatches to `_rr_lcm` (ring: primitive-part based) vs `_ff_lcm` (field: normalizes to monic).
 - `dmp_content`, `dmp_primitive` — multivariate content/primitive; content **negates if leading ground coeff is negative**.
 - `dup_cancel`, `dmp_cancel` — cancel common factors; **when `K.has_Field` and `K.has_assoc_Ring`, converts to ring (clears denoms) before GCD, then converts back**.
+  - Sign normalization: if both numerator and denominator have negative leading coefficients, negates both; **if only the denominator is negative, negates the content multiplier and the denominator** to enforce positive denominator convention.
 
 ### [`heuristicgcd.py`](heuristicgcd.py)
 Heuristic polynomial GCD at the **Poly-object level** (not dense lists).
@@ -407,6 +412,7 @@ Symbolic root representations and root-sum evaluation.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_reals_index`, `_complexes_index` — map global root index to per-factor local index; `_complexes_index` **offsets the local index by the number of real roots** of the same factor (via `_reals_cache`).
   - `_get_interval`, `_refine_interval`, `_eval_evalf` — numerical evaluation; `_eval_evalf` **creates a Dummy variable and substitutes when the polynomial generator is a compound expression** (not a plain Symbol).
+  - `_eval_Eq(other)` — symbolic equality check; **returns `S.false` if `other` has no imaginary part but the root is non-real (complex), or vice versa**; refines bounding interval and checks containment for compatible real/imaginary types.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
     - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
     - **Refines bounding rectangles until non-imaginary roots have boxes fully to one side of the y-axis**.
@@ -416,7 +422,7 @@ Symbolic root representations and root-sum evaluation.
   - `_rational_case(poly, func)` — **evaluates sum of a rational function over all roots using Viète's formulas and symmetric function decomposition**.
     Avoids computing roots explicitly by introducing formal root symbols, symmetrizing, then substituting Viète relations.
   - `_is_func_rational` — checks if the lambda is a rational function.
-  - `doit` — attempts to evaluate the root sum.
+  - `doit` — attempts to evaluate the root sum; **if `roots()` finds fewer roots than the polynomial degree, returns `self` unevaluated** instead of summing partial results.
 - `rootof(poly, index)` — factory function creating `CRootOf` instances.
 
 ### [`polyroots.py`](polyroots.py)

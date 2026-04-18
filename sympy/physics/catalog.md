@@ -134,6 +134,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape.
   - `measure_all(qubit)` — full ensemble measurement: returns list of (basis-state, probability) pairs for all non-zero-amplitude outcomes.
   - `measure_partial(qubit, bits)` — partial measurement on a subset of qubits: computes per-outcome probability via inner product and returns list of (post-collapse normalized state, probability) pairs.
+  - `measure_all_oneshot(qubit)` — single-shot measurement: normalizes state, draws a random number, accumulates squared amplitudes until cumulative probability exceeds threshold, returns the selected basis state.
+  - `measure_partial_oneshot(qubit, bits)` — single-shot partial measurement on selected qubits: computes outcome probabilities, randomly selects one outcome weighted by probability, returns the normalized post-collapse state.
 - **Operator application**: `qapply.py` — `qapply(e)` symbolically applies operators to states in an expression; dispatches by expression type (Add, Mul, TensorProduct, Density, Pow).
   - `qapply_Mul` handles products: decomposes OuterProduct (ket-bra) by pushing ket onto args and using bra as new lhs; tries lhs._apply_operator(rhs), then rhs._apply_operator(lhs), then forms InnerProduct for Bra·Ket pairs.
   - Dagger fallback: if `qapply_Mul` fails to simplify a Mul and `dagger=True`, takes Hermitian conjugate of the expression, re-applies, then conjugates back.
