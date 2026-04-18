@@ -5,7 +5,7 @@
 ### [`basisdependent.py`](basisdependent.py)
 Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 - `BasisDependent(Expr)` — superclass providing Python dunder arithmetic (`__add__`, `__mul__`, `__div__`, `__rdiv__`/`__rtruediv__` for reverse division, etc.), `evalf`/`n`, `simplify`, `trigsimp`, `factor`, `diff`, `doit`.
-- `diff` — component-wise differentiation; raises `TypeError` if any differentiation variable is itself a `BasisDependent` (vector/dyadic) rather than a scalar.
+- `diff` — the sole differentiation entry point for all vectors and dyadics (inherited, not overridden); raises `TypeError("Invalid arg for differentiation")` if any variable is a `BasisDependent` (vector/dyadic) rather than a scalar.
 - `__rdiv__`/`__rtruediv__` — handles `scalar / vector_or_dyadic`; returns a `TypeError` object (known bug: returns instead of raising).
 - `evalf` decomposes into scalar coefficients and basis units, evaluates each scalar via `components` mapping, then reassembles.
 - `BasisDependentAdd` — represents sums of basis-dependent terms.

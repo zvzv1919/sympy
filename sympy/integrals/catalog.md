@@ -103,6 +103,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `DifferentialExtension` — builds and represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
   - `_exp_part` — attempts to add an exponential monomial to the tower; uses `is_log_deriv_k_t_radical` to detect algebraic dependencies
     - Normalizes n==-1 radical degree to n==1 (inverts u, negates const/powers); restarts extension when algebraic radical avoidable
+    - Raises `NotImplementedError` for unavoidable algebraic radicals (e.g., exp(log(x)/2) = sqrt(x)) when const==0 and only one term remains
   - `_log_part` — attempts to add a logarithmic monomial to the tower; uses `is_deriv_k` to detect existing derivatives
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear

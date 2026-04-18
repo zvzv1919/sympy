@@ -41,7 +41,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - **BSGS framework**: `schreier_sims`, `schreier_sims_incremental`, `schreier_vector`.
   - `schreier_sims_incremental` — deterministic BSGS construction: computes Schreier generators, sifts each through the chain via `_strip`/`_strip_af`, and handles failures — extends the base when a non-identity residual survives all levels, or adds a new strong generator at the level where sifting failed.
   - `schreier_sims_random` — randomized BSGS computation: orchestrates a sifting loop that samples random elements, decides when to extend the base sequence (new anchor points), and amends stabilizer chains/orbits when sifting fails. Uses `_strip` from `util.py` as a subroutine.
-  - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`, `basic_stabilizers`.
+  - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`.
+  - `basic_stabilizers` — returns the descending chain of point-fixing subgroups from BSGS; partitions strong generators across base levels via `_distribute_gens_by_base` and wraps each level as a `PermutationGroup`.
   - **Coset-based ranking/unranking** (group-level, via Schreier-Sims): `coset_rank`, `coset_unrank`, `coset_factor` — these decompose/rank a single permutation element against the stabilizer chain; they do not compute bulk orbit or transversal data (see `util.py`).
     - `coset_unrank` returns `None` when rank is negative or ≥ group order.
   - **Subgroup search**: `subgroup_search` — depth-first search for all elements satisfying a boolean predicate, with tree-pruning tests and base-change strategy.
@@ -174,6 +175,9 @@ Prufer sequence correspondence for labeled trees.
 ### [`polyhedron.py`](polyhedron.py)
 Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedron).
 - `Polyhedron` — 3D solid defined by named corners, faces, and a permutation group (`pgroup`).
+  - `__new__` docstring contains tutorial on constructing permutation groups from geometric intuition.
+    - Camera-based method: uses fixed-position cameras at each vertex to derive index-based permutations from spatial rotations.
+    - Shows that two generators (diagonal flip + central rotation) suffice for all orientations of a polygon.
   - `rotate(perm)` — apply a permutation to vertices in place. Accepts `Permutation` or int index into `pgroup`. Validates permutation size matches vertex count; raises `ValueError` on mismatch.
   - Properties: `corners`, `faces`, `edges`, `pgroup`, `size`, `array_form`, `cyclic_form`.
 - `_pgroup_calcs()` — constructs all five Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron) with face definitions and rotation groups.

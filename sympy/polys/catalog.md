@@ -642,6 +642,9 @@ Automatic domain inference from coefficient lists.
   - Collects distinct irrational parts, **computes a single primitive element to unify all extensions into one algebraic field**.
   - Reconstructs each coefficient in the unified field using the primitive element representation.
 - `_construct_composite` — handle composite domains (ZZ[X], QQ[X], ZZ(X), QQ(X)); **returns `None` (fallback to EX) if any generator is number-like or if two generators share free symbols** (potential algebraic relations).
+  - **Ring-vs-field decision**: if `opt.field` is set, always uses a fraction field; otherwise inspects all denominators.
+  - If every denominator is a single-term constant, uses `ground.poly_ring(*gens)` (ring); if any is non-trivial (multi-term or non-constant), uses `ground.frac_field(*gens)`.
+  - **Ground domain selection**: scans all coefficients — any `Float` → RR; any non-integer `Rational` → QQ; otherwise ZZ.
 - `_construct_expression` — fallback to the expression domain EX.
 
 ### [`compatibility.py`](compatibility.py)
