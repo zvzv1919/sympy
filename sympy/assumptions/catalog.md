@@ -102,7 +102,7 @@ Handlers for **calculus predicates**: finiteness / boundedness.
 - `AskFiniteHandler`: evaluates `Q.finite` with methods for `Symbol`, `Add`, `Mul`, `Pow`, `log`, `exp`, `cos`, `sin`, number constants, `Infinity`, `NegativeInfinity`.
 
 ### [`handlers/matrices.py`](handlers/matrices.py)
-Handlers that **evaluate** matrix property predicates for specific matrix expression types (e.g., `MatAdd`, `MatMul`, `Transpose`). Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
+Handlers that **evaluate** matrix *structural* predicates for matrix expression types (e.g., `MatAdd`, `MatMul`, `Transpose`). Does NOT handle `Q.hermitian` or `Q.antihermitian` — those are in `handlers/sets.py`. Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
 - `AskSquareHandler`, `AskSymmetricHandler`, `AskInvertibleHandler`.
 - `AskOrthogonalHandler`, `AskUnitaryHandler`, `AskFullRankHandler`.
 - `AskPositiveDefiniteHandler`, `AskUpperTriangularHandler`, `AskLowerTriangularHandler`, `AskDiagonalHandler`.

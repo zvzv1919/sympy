@@ -43,7 +43,9 @@ One-dimensional quantum harmonic oscillator: closed-form analytical wavefunction
 ### [`secondquant.py`](secondquant.py)
 Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
 - `BosonicOperator`, `CreateBoson` (B†), `AnnihilateBoson` (B) — bosonic ladder operators with commutation relations.
-- `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules (not mode-labeled like `quantum/fermion.py`).
+- `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules and Fermi-level orbital properties (not mode-labeled like `quantum/fermion.py`).
+  - `is_restricted` — returns +1 (above_fermi), −1 (below_fermi), or 0 (general/unrestricted) based on orbital index symbol assumptions.
+  - `is_above_fermi`/`is_below_fermi` — whether the index *allows* values above/below Fermi level (general indices allow both).
 - `NO` — normal-ordering bracket for `secondquant` operators (CreateBoson/AnnihilateBoson, CreateFermion/AnnihilateFermion); reorders into creation-before-annihilation form.
   - Returns S.Zero if identical fermion operators violate Pauli exclusion. For mode-labeled `BosonOp`/`FermionOp`, see `quantum/operatorordering.py`.
 - `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).

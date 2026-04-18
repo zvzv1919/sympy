@@ -93,7 +93,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
   - Passes `PlotObject` instances through directly without parsing.
 
 ### `plot_mode.py`
-Plot mode registry and argument interpretation.
+Coordinate-system mode registry (Cartesian, Polar, etc.) and argument interpretation; does NOT handle rendering display style.
 
 - `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes; implements mode resolution after `PygletPlot` parses inputs.
 - `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
@@ -101,7 +101,7 @@ Plot mode registry and argument interpretation.
 - `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.
 
 ### `plot_mode_base.py`
-Base class providing shared infrastructure for all pyglet plot modes.
+Base class providing shared infrastructure for all pyglet plot modes, including rendering display style selection (wireframe/solid/both).
 
 - `PlotModeBase` — common parent for all mode implementations.
 - `draw()` — main rendering entry point; checks `style_override` first (class-level, wins if non-empty), else uses instance `_style`.

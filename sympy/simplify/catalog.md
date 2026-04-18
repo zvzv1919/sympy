@@ -129,7 +129,7 @@ Radical simplification, term collection, and rationalization.
 
 - `radsimp(expr)` — rationalize denominators containing radicals.
   - Recursively reduces `1/d` forms: splits Mul denominators, denests sqrt powers via `sqrtdenest`, decomposes `1/d**i → (1/d)**i` for integer/positive-base powers before recursing on the base.
-  - For Add denominators with up to 4 radical terms, multiplies by algebraic conjugate to eliminate radicals.
+  - For Add denominators with up to 4 radical terms, multiplies by algebraic conjugate to eliminate radicals; for >4 terms whose squares are rational, delegates to `rad_rationalize`.
 - `collect(expr, syms)` — collect terms by powers of specified symbols; also collects by derivative orders, traversing nested derivative towers.
   - Mixed partial derivatives (differentiation w.r.t. multiple different variables) raise `NotImplementedError`; only single-variable derivative chains are supported.
 - `rcollect(expr, *vars)` — recursive collect.
@@ -144,7 +144,7 @@ Radical simplification, term collection, and rationalization.
 - `_split_gcd(*a)` — partition integers into a GCD-sharing group and a coprime remainder group.
 
 ### [`sqrtdenest.py`](sqrtdenest.py)
-Denests nested square root expressions.
+Denests nested square root expressions (simplifies radical form, not denominator rationalization).
 
 - `sqrtdenest(expr)` — main entry; denests expressions like √(2+√3).
 - `sqrt_depth(p)` — max nesting depth of square roots; only counts `is_sqrt` powers (exponent ±½), returns 0 for non-sqrt Pow nodes without recursing into their base.

@@ -33,7 +33,7 @@ Point representations in n-dimensional Euclidean space.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`, `scale(x, y, z, pt)`, `translate(x, y, z)`, `transform(matrix)`.
   - `scale(x, y, z, pt)` — multiplies each coordinate by the respective factor; when a reference point `pt` is given, translates to origin first, scales, then translates back.
   - `direction_cosine(point)` — divides displacement components by magnitude; no guard against zero magnitude (identical points → division by zero).
-  - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types); raises `ValueError` if all points are collinear. For general coplanarity checks including lines and 2D entities, use `util.are_coplanar`.
+  - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types); deduplicates inputs, raises `ValueError` if <3 distinct points or all are collinear. For mixed-entity coplanarity, use `util.are_coplanar`.
   - `are_collinear(*points)` — static; delegates to `Point.is_collinear`.
 
 ## Lines & Segments
@@ -62,6 +62,7 @@ Point representations in n-dimensional Euclidean space.
   - `are_concurrent(*lines)`, `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
   - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
+  - `is_similar(other)` — checks if `self` and `other` are on the same line; only handles `Line3D` as `other`, raises `NotImplementedError` for `Ray3D`/`Segment3D`.
   - `direction_ratio`, `direction_cosine`, `angle_between(l1, l2)`.
 - `Line3D`, `Ray3D`, `Segment3D` — 3D counterparts of the 2D entities.
 

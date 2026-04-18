@@ -138,7 +138,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `limited_integrate` — solves f = Dv + Σ(ci·wi) via constraint-matrix nullspace analysis; raises NonElementaryIntegralException on empty or degenerate nullspace
 - `prde_special_denom` — parametric variant of special denominator (operates on vector of RHS polynomials G=[g1,...,gm] instead of scalar c)
   - For primitive/base: short-circuits with `(a, ba.quo(bd), G, 1)` — no order computation needed since k<t>==k[t]
-  - For exp/tan: computes order at special polynomial; mirrors cancellation checks from `special_denom` but applied to parametric system
+  - For exp: when order nb==0 (possible cancellation), checks `parametric_log_deriv` to tighten bound n
+  - For tan: when nb==0, separates real/imaginary parts via `real_imag`, gates on `recognize_log_derivative(2*beta_imag)` before attempting `parametric_log_deriv` on both parts; adjusts n to s/2 only when both succeed
 - `real_imag` — separates a rational function into real and imaginary parts evaluated at a complex root of t²+1
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)

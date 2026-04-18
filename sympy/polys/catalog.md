@@ -486,7 +486,9 @@ Symbolic root-finding algorithms (closed-form solutions).
   - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
-- `roots_quintic` — solvable quintic solver using Lagrange resolvents; **returns empty list if leading coefficient ≠ 1 and dividing through produces any irrational coefficient** (requires all normalized coefficients to be rational); swaps resolvent parameters when numerical check against discriminant fails.
+- `roots_quintic` — solvable quintic solver using Lagrange resolvents; determines solvability before attempting radical computation.
+  - **Returns empty list early if**: (1) x⁴ term is present, (2) leading coefficient ≠ 1 and dividing through produces any irrational coefficient, (3) polynomial is reducible, or (4) the associated degree-20 resolvent `f20` (from `PolyQuintic`) is irreducible over Z (no linear factor).
+  - Swaps resolvent parameters when numerical check against discriminant fails.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
   - **When one exponent in a base/generator pair is zero but the other is not, breaks** (no consistent ratio), preventing elimination of that generator.
@@ -839,6 +841,10 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_ComplexField(element, base)` — converts complex domain element to real; **silently returns `None` (no error) if element has nonzero imaginary part**, signaling conversion failure to the domain machinery.
 - `ComplexField` (in `complexfield.py`) — complex numbers up to given precision (mpmath `mpc`).
   - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
+- `ModularInteger` (in `modularinteger.py`) — element class for finite residue rings (GF(p) elements); created by `ModularIntegerFactory` which caches per-modulus classes.
+  - `__pow__(exp)` — exponentiation; **for negative `exp`, computes multiplicative inverse first** (via `invert`), then raises to `|exp|`.
+  - `invert()` — compute modular inverse via `dom.invert(val, mod)`.
+  - `ModularIntegerFactory(_mod, _dom, _sym, parent)` — creates and caches a `ModularInteger` subclass for a given modulus; **raises `ValueError` if modulus < 1**; names class `SymmetricModularIntegerMod<n>` or `ModularIntegerMod<n>` depending on `_sym` flag.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.

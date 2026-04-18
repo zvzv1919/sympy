@@ -16,6 +16,7 @@ Foundation of all set types and operations.
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
 - `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic that classifies each element via fuzzy three-valued containment (definitely in / unknown / dropped)
+  - `__iter__` — iterates an iterable constituent, testing each candidate against the other sets; yields element if true, skips if false, yields the containment expression itself if indeterminate
 - `Complement` — relative complement (set difference A − B)
 - `SymmetricDifference` — elements in either set but not both
 - `EmptySet` — singleton empty set

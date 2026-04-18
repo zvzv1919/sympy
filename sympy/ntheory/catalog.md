@@ -18,7 +18,7 @@ Primality testing algorithms.
 - `isprime(n)` — main primality test; layered strategy: trial division, Fermat test with pseudoprime exclusion for small n, sieve bisection, deterministic Miller-Rabin for n < 2^64, strong BPSW for larger
 - `mr(n, bases)` — Miller-Rabin strong pseudoprime test
 - `is_lucas_prp`, `is_strong_lucas_prp`, `is_extra_strong_lucas_prp` — Lucas probable-prime tests
-- `is_square(n)` — perfect-square check
+- `is_square(n)` — fast perfect-square test; uses two-stage bitwise modular filtering (mod 128 and mod 63 with magic constants) to quickly reject non-squares before expensive exact verification via `perfect_power`
 
 ## Factorization and Divisor Analysis
 
@@ -28,7 +28,7 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 - `factorrat(rat)` — prime factorization of a rational number
 - `primefactors(n)` — sorted list of distinct prime factors
 - `pollard_rho`, `pollard_pm1` — probabilistic factorization algorithms
-- `perfect_power(n)` — detect if n is a perfect power
+- `perfect_power(n)` — detect if n = b^e for some integers b, e with e ≥ 2 (general perfect powers, not limited to squares)
 - `multiplicity(p, n)` — exponent of prime p in n
 - `smoothness(n)`, `smoothness_p(n)` — B-smooth and B-power-smooth analysis
 - `trailing(n)` — count trailing zero bits (factors of 2)

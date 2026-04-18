@@ -32,4 +32,6 @@ Domain/range analysis and interval-arithmetic accumulation bounds.
 - `not_empty_in(finset_intersection, *syms)` — finds domains where a finite-set intersection is non-empty.
 - `AccumulationBounds` (alias `AccumBounds`) — represents a closed interval [a, b] for bounding accumulation points.
   - Supports arithmetic (+, -, *, /, **) and elementary functions (sin, exp, log).
+  - Supports comparison operators (`<`, `>`, `<=`, `>=`) and containment (`__contains__`/`in`).
+  - Caveat: `__contains__` treats ±oo as paired — if *either* bound is infinite, both oo and -oo are considered contained.
   - Used for limit computations with indeterminate forms, not for derivative-order validation.

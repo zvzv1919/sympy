@@ -62,7 +62,10 @@ Low-level algorithms for enumerative combinatorics (multiset partition traversal
 - `multiset_partitions_taocp` — Knuth's algorithm for multiset partitions.
 - `MultisetPartitionTraverser` — stateful traverser for multiset partition enumeration with size/count constraints.
   - `count_partitions(multiplicities)` — fast partition counting via dynamic programming with a persistent cross-call cache.
-  - `enum_all`, `enum_small`, `enum_range` — generate partitions with optional size bounds.
+  - `enum_all` — enumerate all partitions (no size constraint).
+  - `enum_small(multiplicities, ub)` — enumerate partitions with at most `ub` parts.
+  - `enum_large(multiplicities, lb)` — enumerate partitions with more than `lb` parts.
+  - `enum_range(multiplicities, lb, ub)` — enumerate partitions where `lb < num_parts <= ub`; combines upper- and lower-bound pruning during traversal.
 
 ## Inspection & Source
 

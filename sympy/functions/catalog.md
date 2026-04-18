@@ -126,7 +126,8 @@ Exponential and logarithmic functions: `exp`, `exp_polar`, `log`, `LambertW`.
 - `log` — natural logarithm (and general-base logarithm). `eval` handles complex-domain decomposition:
   - Negative real args → π·i + log(|arg|); purely imaginary args → ±π·i/2 + log of the real coefficient.
   - Base conversion, rational factoring, and special-value shortcuts (0→ComplexInfinity, 1→0, e→1).
-- `exp` — exponential function e^x; `exp_polar` — branch-aware polar exponential.
+- `exp` — exponential function e^x; `_eval_refine` simplifies `exp(k·π·i)` under assumptions to 1, −1, i, or −i based on integer/half-integer parity of the coefficient.
+- `exp_polar` — branch-aware polar exponential (does not wrap at 2π).
 - `LambertW` — Lambert W function (product-log), the inverse of x·e^x.
 
 #### [`elementary/hyperbolic.py`](elementary/hyperbolic.py)
