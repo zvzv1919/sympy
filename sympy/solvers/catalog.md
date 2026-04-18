@@ -132,7 +132,10 @@ Solves ordinary differential equations via classification and hint-based dispatc
 
 - `dsolve(eq, func, hint, ics)` — main ODE solver; classifies then applies best method.
 - `classify_ode(eq, func)` — classifies ODE into applicable solving hints without solving.
-- `checkodesol(ode, sol)` — validates ODE solution by substitution.
+- `checkodesol(ode, sol)` — validates ODE solution via multi-pass verification:
+  - Pass 1: direct substitution of solved f(x) into the ODE.
+  - Pass 2: compares nth derivatives of both sides (for exact ODEs).
+  - Pass 3: computes successive derivatives of candidate, solves for each d^n f/dx^n, then back-substitutes into ODE in decreasing order (n, n-1, …, 0).
 - `homogeneous_order(expr, *symbols)` — computes homogeneity order.
 - Methods: separable, exact, linear (1st/nth), Bernoulli, Lie group, variation of parameters, undetermined coefficients, power series.
 - `_solve_variation_of_parameters(eq, func, order, match)` — builds particular solution for nonhomogeneous linear ODEs via parameter variation. Computes Wronskian of homogeneous solutions (with trig simplification); raises NotImplementedError if Wronskian is zero (linearly dependent solutions) or solution count is insufficient.

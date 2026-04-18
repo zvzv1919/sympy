@@ -22,7 +22,7 @@ Base `Printer` class with `_print` dispatch mechanism routing expressions to `_p
 Operator precedence values (`PRECEDENCE` dict) and lookup functions that return a numeric precedence level for an expression. Does **not** make rendering-specific bracket decisions — those live in each printer (e.g., `LatexPrinter._needs_mul_brackets`).
 
 ### [`conventions.py`](conventions.py)
-- `split_super_sub()` — parses symbol names into base + superscripts + subscripts.
+- `split_super_sub()` — parses symbol names into base + superscripts (`^`/`__`) + subscripts (`_`); trailing digits on the base name are auto-split into a leading subscript (e.g., `alpha11` → name `alpha`, sub `11`).
 - `requires_partial()` — checks if partial derivative notation is needed.
 
 ### [`defaults.py`](defaults.py)

@@ -153,6 +153,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - **If `g` is not a Poly (e.g. a plain scalar), attempts to interpret it as a constant in `f`'s coefficient domain**; raises `UnificationFailed` if conversion fails.
   - `__eq__(other)` — equality comparison; **if generators match but coefficient domains differ, attempts domain unification; returns `False` (not an error) if `UnificationFailed`**.
   - `__pow__(n)` — if `n` is a non-negative integer, delegates to `pow(n)`; **otherwise falls back to `as_expr()**n`** (converts to symbolic expression), enabling negative/fractional exponents at the expression level.
+  - `coeff_monomial(monom)` — return coefficient of a specific monomial; delegates to `nth`.
+    - **Unlike `Expr.coeff()`, does not collect terms across other variables** — returns the exact coefficient of the given power-product.
+  - `nth(*N)` — return coefficient by generator exponents (e.g. `nth(1, 2)` for `x^1·y^2`); more efficient than `coeff_monomial` when exponents are already known.
   - Ground arithmetic: `add_ground`, `sub_ground`, `mul_ground`, `quo_ground` (truncating scalar division), `exquo_ground` (exact scalar division; **raises `ExactQuotientFailed` if any coefficient is not evenly divisible**).
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.
@@ -433,7 +436,7 @@ Symbolic root representations and root-sum evaluation.
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
   - `free_symbols` — **always returns empty set**, even when internal `poly` attribute is a `Poly` (not `PurePoly`), since `CRootOf` only represents univariate roots.
   - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
-    - **If coefficient domain is not exact (e.g. RR), converts to exact domain before proceeding**.
+    - **If coefficient domain is not exact (e.g. RR), converts to exact domain before proceeding**; after preprocessing, **raises `NotImplementedError` if domain is not ZZ** (sorted roots only supported over integers).
     - When second positional arg is an integer and no explicit `index` kwarg, **reinterprets it as root index** (not generator).
   - `_real_roots`, `_all_roots`, `_roots_radical` — root enumeration.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).

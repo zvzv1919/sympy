@@ -109,6 +109,10 @@ Risch algorithm for integration of transcendental elementary functions.
 - `integrate_hyperexponential_polynomial(p, DE, z)` — integrates Laurent polynomials in k[t, 1/t] for hyperexponential extensions; iterates over degrees (skips zero), calls `rischDE` per coefficient; on `NonElementaryIntegralException` sets b=False but continues processing remaining terms (does not bail out)
 - `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
   - In piecewise mode, emits a Piecewise to handle the case where the exponential monomial equals 1 (zero exponent), avoiding division by zero by substituting t=1 and integrating separately
+- `integrate_nonlinear_no_specials(a, d, DE)` — integrates rational functions in a nonlinear tower extension when no special irreducible factors exist
+  - Applies Hermite + residue + polynomial reduction pipeline
+  - Determines elementarity by checking whether the remainder polynomial still contains the tower variable (if so, non-elementary)
+- `NonElementaryIntegral` — subclass of `Integral` that guarantees the integral is provably nonelementary; returned by `risch_integrate` with `risch=True`
 
 ### [`rde.py`](rde.py)
 Risch Differential Equation solver: solves Dy + f·y = g for y in a differential field (no undetermined constants, no structure theorems).
@@ -131,7 +135,9 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
 - `prde_linear_constraints` — generates linear constraints on undetermined constants; computes LCM denominator, divides scaled terms, returns empty Matrix when all remainders are zero (no constraints)
 - `prde_spde` — parametric Special Polynomial Differential Equation; reduces degree bound via Diophantine step
-- `is_deriv_k` — structure-theorem test for derivatives in a differential extension
+- `is_deriv_k` — checks if Df/f is the derivative of an element of k(t) using the structure theorem
+  - Validates that log + hyperexp monomial count equals transcendence degree
+  - Raises NotImplementedError for tangent-type (hypertangent) or non-elementary extensions
 - `is_log_deriv_k_t_radical` — verifies if an expression is the log-derivative of a radical in a tower of transcendental extensions:
   - Checks elementary extension validity; raises NotImplementedError if hypertangent monomials or unaccounted primitive extensions cause monomial count ≠ transcendence degree
   - Builds linear system from monomial derivatives, solves via `constant_system`

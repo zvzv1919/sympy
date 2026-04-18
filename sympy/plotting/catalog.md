@@ -14,7 +14,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
   - `plot()` — single-expression 2D plots over one variable.
   - `plot_parametric()` — 2D parametric curves from two expressions over one parameter.
   - `plot3d()` — 3D surface from one expression over two variables.
-  - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter.
+  - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter; parses args via `check_arguments(args, 3, 1)`, constructs `Parametric3DLineSeries` objects.
   - `plot3d_parametric_surface()` — 3D parametric surface from three coordinate expressions (x, y, z) each over two independent parameters (u, v). Uses `check_arguments(args, 3, 2)`, so inherits the expr_len==3 ambiguity limitation requiring explicit grouping for multiple plots.
 - `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
@@ -131,8 +131,8 @@ Bounded interval representation for pyglet variable ranges.
 ### `plot_curve.py`
 Curve rendering for 1D pyglet plots.
 
-- `PlotCurve` — calculates and caches vertices for wireframe curve drawing.
-  - `_on_calculate_verts()` — evaluates parametric positions; catches `NameError`/`ZeroDivisionError` and stores `None` for failed points.
+- `PlotCurve` — OpenGL vertex computation and caching for pyglet wireframe curve drawing (no argument parsing or series construction).
+  - `_on_calculate_verts()` — evaluates already-parsed expressions into GL vertex positions; catches `NameError`/`ZeroDivisionError` and stores `None` for failed points.
   - `draw_verts(use_cverts)` — emits OpenGL `GL_LINE_STRIP` segments; breaks the strip at `None` vertices to create visual discontinuities at undefined points.
 
 ### `plot_surface.py`

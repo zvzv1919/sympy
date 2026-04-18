@@ -185,7 +185,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
-- `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic.
+- `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic; owns its own `_latex` and `_pretty` rendering (not delegated to `printing.py`).
+  - `_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
 - `dyadic.py` — `Dyadic` class.

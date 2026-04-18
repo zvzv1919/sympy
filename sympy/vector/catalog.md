@@ -7,7 +7,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 - `BasisDependent(Expr)` — superclass providing arithmetic (+, -, *, /), `evalf`/`n` (numerical evaluation), `simplify`, `trigsimp`, `factor`, `diff` (rejects `BasisDependent` args with `TypeError`), `doit`.
 - `evalf` decomposes into scalar coefficients and basis units, evaluates each scalar via `components` mapping, then reassembles.
 - `BasisDependentAdd` — represents sums of basis-dependent terms.
-- `BasisDependentMul` — represents scalar × basis-dependent products.
+- `BasisDependentMul.__new__` — scalar × basis-dependent product; counts non-scalar operands and raises `ValueError` if more than one (prevents e.g. vector×vector); distributes scalar over `BasisDependentAdd` sums.
 - `BasisDependentZero` — zero element for basis-dependent quantities.
 
 ### [`vector.py`](vector.py)
@@ -69,7 +69,8 @@ Spatial point representation with parent-child hierarchy.
 
 ### [`functions.py`](functions.py)
 Vector calculus operations and coordinate re-expression.
-- `express(expr, system, variables=False)` — re-express vectors, dyadics, or scalars in a different coordinate system.
+- `express(expr, system, system2=None, variables=False)` — re-express vectors, dyadics, or scalars in a different coordinate system.
+  - For dyadics, accepts an optional `system2` for the second basis index; defaults to `system` when omitted. Raises `ValueError` if `system2` is given for non-dyadic expressions.
   - When `variables=True`, substitutes foreign-frame coordinate variables (base scalars) via each foreign system's `scalar_map`.
 - `curl`, `divergence`, `gradient` — convenience wrappers; computation logic lives in the `Del` operator class.
 - `is_conservative`, `is_solenoidal` — field property tests; both short-circuit to `True` for the zero vector without computing curl/divergence.

@@ -29,7 +29,7 @@ Base classes and core query functions for all random variable types.
 Infrastructure for continuous random variables.
 - `ContinuousDomain`, `SingleContinuousDomain`, `ProductContinuousDomain` (continuous subclass of `ProductDomain`), `ConditionalContinuousDomain`.
 - `ContinuousPSpace`: continuous probability space; holds a domain and a density (PDF).
-  - `compute_density(expr)`: if expr is one of the space's variables, marginalizes all other variables out of the joint PDF via integration; otherwise uses DiracDelta.
+  - `compute_density(expr)`: if expr is one of the space's variables, marginalizes others out of the joint PDF via integration; for non-trivial functions of random variables, uses DiracDelta as an integration kernel to derive the transformed density.
   - `compute_cdf(expr)`: integrates the density from the left bound; raises `ValueError` on multivariate domains.
 - `ContinuousDistributionHandmade`: internal distribution wrapper used by `ContinuousRV` (in `crv_types.py`); accepts a Lambda pdf and a set.
 - Integration-based expectation and probability computation over continuous intervals.

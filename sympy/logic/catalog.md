@@ -17,6 +17,10 @@ Core boolean types, operators, and normal-form conversions.
 - `_finger(eq)` — compute a 5-element structural fingerprint tuple per variable in a boolean expression (occurrence counts as bare symbol, negated, in compounds, etc.); groups variables with identical signatures as interchangeable.
 - `bool_map` — check equivalence of two boolean expressions under variable renaming; uses `_finger` to match variables by structural signature.
 - `_find_predicates` — extract atomic predicates from an expression.
+- Quine-McCluskey minimization helpers (used internally by `SOPform`/`POSform`):
+  - `_check_pair` — test if two binary term lists differ in exactly one bit position.
+  - `_simplified_pairs` — one QM reduction pass: merge all pairs differing in one bit (replacing that bit with don't-care 3), collect unmerged terms.
+  - `_rem_redundancy` — prime-implicant table method to eliminate redundant terms after simplification.
 
 ## Inference and Evaluation
 
@@ -44,7 +48,7 @@ Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple re
   - Returns True/False/None depending on whether the clause is satisfied, falsified, or indeterminate under partial assignment.
 - `unit_propagate` / `unit_propagate_int_repr` — simplify clauses by propagating unit clauses.
 - `find_pure_symbol` / `find_pure_symbol_int_repr` — find symbols appearing with only one polarity.
-- `find_unit_clause` / `find_unit_clause_int_repr` — find clauses with exactly one unbound literal.
+- `find_unit_clause` / `find_unit_clause_int_repr` — find a clause with exactly one unbound literal and return that variable with its required truth value (sign determines polarity).
 
 ### [`algorithms/dpll2.py`](algorithms/dpll2.py)
 Internal CDCL SAT backend (called by `inference.satisfiable`); iterative solver with clause learning, watched literals, and VSIDS heuristic.
