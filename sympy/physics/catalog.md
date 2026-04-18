@@ -56,7 +56,8 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors. `FermionState` subclass adds fermi-level logic: `_only_above_fermi(i)` returns True for symbolic indices without assumptions when no fermi level is set.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
 - `Dagger` — Hermitian conjugate for second-quantization operators (distinct from `quantum/dagger.py` which wraps `adjoint` for abstract quantum operators). `eval()` fallback for objects without `_dagger_()`: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
-- `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products.
+- `_sort_anticommuting_fermions(string1, key)` — bubble-sorts fermionic operator sequences into canonical order, tracking sign flips; raises `ViolationOfPauliPrinciple` if two identical operators are detected during sorting (Pauli exclusion enforcement at the operator-product level).
+- `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products via Einstein summation index substitution.
 - `contraction(a, b)` — evaluates the contraction of two operators.
 - `matrix_rep(op, basis)` — matrix representation in a Fock basis.
 

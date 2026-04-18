@@ -125,6 +125,8 @@ All concrete numeric types and their arithmetic operations.
 - `flatten()` merges adjacent non-commutative powers with same base (a^e1 * a^e2 → a^(e1+e2)) only when the combined exponent is not an Add; if the combined power turns out commutative, it is moved back to the commutative processing sequence
 - `flatten()` handles accumulated `(-1)**e` exponent: integer part toggles coefficient sign, denominator-2 remainder extracts `I`; other fractional remainders are absorbed into an existing rational-exponent term with matching denominator by negating its base, or left as unevaluated `(-1)**(p/q)`
 - `flatten()` extracts GCD of integer bases with fractional exponents to produce canonical form (e.g., `2**(1/3)*6**(1/4)` → `2**(1/3+1/4)*3**(1/4)`); iteratively factors shared prime components, accumulates integer-exponent parts into coefficient
+- `flatten()` zero-coefficient path: when running coeff is zero, checks remaining commutative factors for `is_finite == False`; if any infinite factor exists, returns `[S.NaN]` (indeterminate 0×∞); otherwise returns `[S.Zero]`
+- `flatten()` infinity-coefficient path: when coeff is ±∞, strips positive/negative finite factors (tracking sign flips) and drops them; non-finite or sign-unknown factors are kept
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors

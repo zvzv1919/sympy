@@ -25,6 +25,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Accepts non-Symbol solve targets (Indexed elements, derivatives, sub-expressions like `x+2`) — isolates them algebraically via substitution with a temporary Symbol.
   - Output format flags: `dict=True` returns list of {symbol: value} dicts; `set=True` returns `(sorted_keys, {value_tuples})` tuple built from those dicts. Default returns plain list.
   - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
+  - Preprocessing: masks non-invertible sub-expressions (Piecewise, compound functions) with Dummy symbols before solving; postprocessing restores them via `subs`. Raises NotImplementedError if the solution has an unexpected type (not dict, list, or empty).
   - Solution validation: automatically excludes candidates that make any denominator zero (via `denoms`); `check=False` flag bypasses both denominator filtering and assumption checks, recovering all raw candidates.
 - `_solve_system(exprs, symbols)` — internal system solver (used by `solve` for multi-equation inputs); handles:
   - Linear systems: converts each expression to Poly, extracts monomial coefficients to build an augmented matrix in-place, then dispatches to `solve_linear_system`.

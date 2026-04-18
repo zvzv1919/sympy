@@ -105,7 +105,7 @@ Concrete N-dimensional array types (dense/sparse, mutable/immutable) and array o
 Base class for all N-dim arrays.
 
 - `NDimArray` — abstract base providing shape, rank, `_parse_index` (converts multi-dim index tuple to flat offset; raises `ValueError` for wrong axis count), `applyfunc`, `tolist`.
-  - `diff(*args)` — differentiates each element w.r.t. given symbol(s); returns a new array of the **same shape**.
+  - `diff(*args)` — element-wise symbolic differentiation w.r.t. given symbol(s); returns a new array of the **same concrete type and shape** (preserves subclass via `type(self)`).
 - `ImmutableNDimArray` — immutable base (SymPy `Basic` subclass).
 
 ### array/dense_ndim_array.py

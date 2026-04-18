@@ -68,7 +68,8 @@ Point representations in n-dimensional Euclidean space.
 ### [`line3d.py`](line3d.py)
 3D linear entities: lines, rays, and segments.
 - `LinearEntity3D` — abstract base for 3D linear entities; constructed from two distinct `Point3D`s (raises `ValueError` on coincident points).
-  - `are_concurrent(*lines)`, `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
+  - `are_concurrent(*lines)` — static; tests if 3D lines all pass through a single common point (not a common line).
+  - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
   - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
   - `is_similar(other)` — checks if `self` and `other` are on the same line; only handles `Line3D` as `other`, raises `NotImplementedError` for `Ray3D`/`Segment3D`.

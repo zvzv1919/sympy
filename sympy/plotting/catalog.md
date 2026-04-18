@@ -6,7 +6,8 @@
 Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 
 - `_arity(f)` — cross-version (Py2/3) introspection helper; returns the number of positional-or-keyword arguments a callable accepts. Used by color/aesthetic logic to decide whether to pass parameters or coordinates to user-supplied color functions.
-- `Plot` — container for data series; dispatches rendering to backends (matplotlib, text, default). Manages an internal `_series` list of `BaseSeries` objects.
+- `Plot` — central figure container for data series; dispatches rendering to backends (matplotlib, text, default). Manages an internal `_series` list of `BaseSeries` objects.
+  - `__init__(*args, **kwargs)` — sets default display configuration (title, xlabel/ylabel, xlim/ylim, axis_center, aspect_ratio, autoscale, margin, axis visibility, xscale/yscale, legend). Applies user keyword overrides via `hasattr`/`setattr` — silently ignores unknown kwargs.
   - `__getitem__`, `__delitem__` — indexed read/delete on `_series`.
   - `__setitem__(index, *args)` — indexed replacement of a series in `_series`; accepts a single `BaseSeries` via varargs.
   - `append()`/`extend()` — add series from another `Plot` or individual `BaseSeries` objects.

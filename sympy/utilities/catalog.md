@@ -24,7 +24,8 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 ### [`codegen.py`](codegen.py)
 Generates source code files (C, C++, Fortran, Julia, Octave/Matlab) from SymPy expressions; does not compile or import modules (see `autowrap.py` for compilation and callable resolution).
 - `Routine` — represents a callable routine with inputs/outputs.
-- `CodeGen`, `CCodeGen`, `FCodeGen` — language-specific code generators.
+- `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen` — language-specific code generators.
+- `OctaveCodeGen.dump_m` — writes `.m` file; raises `ValueError` if the first routine's name doesn't match the output file prefix (Octave/Matlab requires function name = filename).
 - `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
 - `make_routine(name, expr)` — factory that creates a `Routine` from expressions; classifies `Equality` LHS as `OutputArgument` (or `InOutArgument`), non-equality expressions as return values; accepts optional `argument_sequence` and `global_vars`.
 - `codegen(name_expr, language)` — top-level convenience function; delegates to `make_routine` internally.
