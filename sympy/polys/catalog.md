@@ -270,6 +270,7 @@ High-level polynomial utility functions (symbolic level).
 - `symmetrize(poly)` — rewrite in terms of elementary symmetric polynomials; returns `(symmetric_part, non_symmetric_remainder)` pair.
   - **If input cannot be converted to polynomial and is a plain number, returns `(number, 0)` without error**; in `formal` mode, appends an empty symbol-mapping list.
   - **Non-homogeneous inputs have their constant term extracted first**; iterative decomposition then operates on the homogeneous remainder.
+  - Each iteration selects the monomial with **non-increasing exponent tuple and maximum weighted height** (weight = variable position from last, times exponent); **powers of elementary symmetric building blocks are determined by consecutive exponent differences** (`m_i − m_{i+1}`).
 - `horner(poly)` — convert polynomial to Horner form (symbolic rewriting, not evaluation).
 - `interpolate(data, x)` — construct interpolating polynomial.
 - `rational_interpolate(data, degnum, X)` — rational function interpolation.
@@ -285,7 +286,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub` — basic arithmetic; `dup_add` **only strips leading zeros when both operands share the same degree** (possible cancellation); skips stripping when one operand has strictly higher degree.
   - `dmp_sub` degree mismatch: **when the subtrahend has higher degree, negates the excess higher-order prefix via `dmp_neg`** before element-wise recursive subtraction on the aligned tail.
 - `dup_mul`, `dmp_mul` — multiplication; `dup_mul` **switches from naive O(n²) convolution to Karatsuba divide-and-conquer at `max(df,dg)+1 >= 100`**.
-- `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
+- `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation; **`dup_pow` raises `ValueError` for negative exponent `n`**; short-circuits for `n==0` (returns `[K.one]`), `n==1`, zero polynomial, or identity polynomial.
 - `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`.
   - **When exponent `i` exceeds the current degree, prepends the coefficient and zero-pads the gap** to extend the representation.
   - **`dmp_sub_term` delegates to `dup_add_term` with negated coefficient** (not `dup_sub_term`) when reducing to univariate.
@@ -319,11 +320,11 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_to_tuple`, `dmp_to_tuple` — convert coefficient lists to (nested) tuples for hashing; `dmp_to_tuple` **recursively converts each nesting level**, producing an immutable hashable form suitable for dict keys.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC`, `dmp_ground_TC` — degree/coefficient queries; `dmp_ground_LC`/`dmp_ground_TC` drill through each nesting level to extract the innermost leading/trailing coefficient.
 - `dmp_true_LT(f, u, K)` — leading term as `(monom_tuple, coeff)`; **if innermost univariate list is empty (zero poly), appends exponent 0** instead of computing `len-1` (which would give −1).
-- `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
+- `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates; **`dmp_ground(c, u)` delegates to `dmp_zero(u)` when `c` is falsy (e.g. 0)**, producing the canonical zero representation instead of wrapping zero in nested brackets.
 - `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
 - `dup_reverse(f)` — compute `x^n * f(1/x)` (reciprocal transformation) by reversing the coefficient list and stripping leading zeros.
 - `dup_deflate`, `dmp_deflate` — map `x^m → y` by computing the GCD of all nonzero-coefficient exponents and slicing; **returns stride 1 unchanged for degree ≤ 0**.
-- `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
+- `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**; **if a variable's accumulated exponent GCD remains 0 (variable never appears with nonzero exponent), replaces 0 with 1** to prevent division-by-zero during exponent reduction.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`; **raises `IndexError` if `m` ≤ 0; returns `f` unchanged if `m == 1` or `f` is empty**.
 - `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
 - `dup_strip` — remove leading zeros from univariate coefficient list; **short-circuits via `if not f or f[0]`** (returns immediately when list is empty or first coefficient is nonzero, avoiding iteration).
@@ -1005,6 +1006,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
+- `PythonRationalField` (in `pythonrationalfield.py`) — QQ domain backed by Python `PythonRational` (fraction type); `from_sympy` accepts Rational directly; **for Float inputs, routes through `RR.to_rational(a)` to obtain an exact rational approximation**, then wraps the integer numerator/denominator as a `PythonRational`; raises `CoercionFailed` for other types.
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain wrapper.
   - `__init__(domain_or_ring, symbols, order)` — **dual-path initialization**: if first arg is already a `PolyRing` and no other args given, reuses it directly; otherwise constructs a new `PolyRing` from the provided symbols, domain, and ordering.
   - `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.

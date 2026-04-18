@@ -152,7 +152,7 @@ Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those
   - `sinh`/`cosh` have `_eval_expand_trig` for addition-identity expansion; integer-multiple arguments n*t are split into t + (n−1)*t and recursively expanded.
 - `ReciprocalHyperbolicFunction` — base class for reciprocal hyperbolic forms (`csch`, `sech`, `coth`); `eval` checks argument sign symmetry via `_is_even`/`_is_odd` parity flags, delegates to `_reciprocal_of.eval()`, and inverts the result.
   - `_rewrite_reciprocal` — delegates rewrite to the underlying hyperbolic function and inverts; guard returns None if the delegated result equals the original expression unchanged (prevents identity rewrites).
-- `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
+- `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions; `eval` converts purely imaginary arguments to inverse circular trig equivalents (e.g., asinh(ix)→i·asin(x), atanh(ix)→i·atan(x)).
   - Odd-symmetry inverses (`asinh`, `atanh`, `acoth`, `acsch`): `eval` uses `_coeff_isneg` to detect negative leading coefficient → returns `−f(−arg)`.
   - `acosh.eval` — has a constant lookup table mapping known algebraic values (1/2, √3/2, etc.) to exact π-multiples; multiplies result by i when the argument is real (branch-cut convention).
   - `acsch.eval` — inverse hyperbolic cosecant; constant table maps known imaginary-unit multiples AND select real values (e.g., 2) to exact expressions; returns log forms for ±1.

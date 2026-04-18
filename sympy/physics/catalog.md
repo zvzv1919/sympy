@@ -117,7 +117,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `CG` (subclass of `Wigner3j`) — Clebsch-Gordan coefficient; inherits `is_symbolic` check and ValueError guard.
   - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
-- **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
+- **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary). JxOp/JyOp/JzOp each define `_eval_commutator_*` methods implementing angular momentum commutation relations ([Jx,Jy]=iℏJz, [Jy,Jz]=iℏJx, [Jz,Jx]=iℏJy).
   - `SpinOpBase._apply_op` — general operator-on-ket dispatch: rewrites ket into operator's own basis, then branches: single State → eigenvalue multiply, Sum → delegate to `_apply_operator_Sum`, else → fallback to `qapply`; raises NotImplementedError if qapply cannot simplify.
   - `SpinOpBase._apply_operator_TensorProduct` — distributes operator action across each factor of a tensor-product (multi-particle) state; restricted to coordinate-basis operators (Jx, Jy, Jz) only — raises NotImplementedError for J+, J−, J².
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1). Supports rewrite as Cartesian components (Jx²+Jy²+Jz²) or as ladder operators via symmetrized form: Jz² + ½(J+J− + J−J+).

@@ -38,7 +38,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - Within cols==b.rows case: if b is a row vector (b.cols != 1), transposes both self and b before multiplying.
   - Returns scalar for vectors, list for rectangular matrices.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches downward for non-zero pivots, swaps rows, scales, and eliminates; skips to next column when all entries below current pivot row are zero; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
-- **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
+- **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `berkowitz_eigenvals`, `berkowitz`.
+- `eigenvects`: computes (eigenvalue, multiplicity, basis) triples; converts Floats to Rationals before computation; for each eigenvalue, computes nullspace of (A−λI); if nullspace returns empty, retries with simplification enabled; raises `NotImplementedError` if retry also fails. `left_eigenvects`: transposes, calls `eigenvects`, transposes results.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
 - **Diagonalization**: `is_diagonalizable(reals_only=False)` (checks eigenvector multiplicities match algebraic multiplicities; `reals_only=True` rejects non-real eigenvalues), `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
@@ -263,7 +264,7 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 - `cholesky`: Hermitian decomposition on raw nested lists returning L and conjugate transpose; diagonal entries use `isqrt` (integer square root), restricting input to matrices where diagonal minus accumulated sum is a perfect square; off-diagonal entries use division by L[j][j].
 - `rref_solve`, `cholesky_solve`, `LU_solve`: solver routines on raw nested-list data. Each deep-copies the coefficient matrix, decomposes it, allocates a fresh symbolic `y` vector for intermediate results, then performs forward substitution (mutating `y` in-place) followed by backward substitution (mutating the caller's `variable` list in-place).
 - `cholesky_solve`: decomposes via `cholesky` into L and L*; `LU_solve`: decomposes via `LU` into L and U. Both rely on in-place mutation of passed vectors rather than returning new results.
-- `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it.
+- `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it. No singularity detection — zero diagonal entries cause silent division-by-zero (unlike `_lower/_upper_triangular_solve` in `dense.py` which explicitly check and raise).
 - These are internal backends (standalone functions, not methods); the public API lives in `MatrixBase` (`matrices.py`).
 
 ### [`densearith.py`](densearith.py)

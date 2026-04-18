@@ -114,9 +114,9 @@ Randomized numerical verification of symbolic expression equivalence (not doctes
 - `random_complex_number`, `verify_numerically`, `test_derivative_numerically`
 
 ### [`benchmarking.py`](benchmarking.py)
-Benchmarking framework via py.test.
+Py.test-integrated benchmarking framework for comparative performance reporting; does not select display units, perform log-scale conversion, or handle zero-time edge cases.
 - `Timer(timeit.Timer)` — subclass that compiles/executes timing code using caller-provided globals instead of `timeit`'s default isolated namespace.
-- `Function` — py.test item that extracts function source, runs calibration targeting ~0.2 s measurement windows for benchmark reporting (no unit selection or standalone timing).
+- `Function` — py.test item that extracts function source, runs calibration targeting ~0.2 s measurement windows for benchmark reporting.
 
 ## Miscellaneous
 

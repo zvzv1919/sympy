@@ -120,7 +120,9 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `hypersimp(f, k)` — compute consecutive-term ratio f(k+1)/f(k) for combinatorial/hypergeometric sequences; rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
 - `besselsimp(expr)` — simplify Bessel function expressions.
 - `nthroot(expr, n)` — compute real nth root of sum of surds; for negative `expr` with odd `n`, negates before root extraction and returns negated result.
-  - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial. For power-of-2 `n`, repeatedly sqrtdenests and halves `n`, returning early without polynomial solving.
+  - `_nthroot_solve(p, n, prec)` — helper; denests `p**(1/n)` using minimal polynomial and algebraic equation solving.
+    - Even-index reduction: while `n` is even, iteratively halves `n` and square-root-denests `p`, avoiding polynomial solving entirely for power-of-2 roots.
+    - Odd residual: computes minimal polynomial of the surd, solves it, and verifies candidate roots numerically against `p**(1/n)`.
 - `bottom_up(rv, F, atoms, nonbasic)` — apply function bottom-up through expression tree; recurses into `rv.args`.
   - If `rv` lacks `args` (non-Basic object): catches `AttributeError`; applies `F` only when `nonbasic=True` (catching `TypeError` if `F` rejects it).
   - `atoms=True`: applies `F` even to leaf nodes (args is empty).
@@ -159,7 +161,7 @@ Radical simplification, term collection, and rationalization.
 - `_split_gcd(*a)` — partition integers into a GCD-sharing group and a coprime remainder group.
 
 ### [`sqrtdenest.py`](sqrtdenest.py)
-Denests nested square root expressions (simplifies radical form, not denominator rationalization).
+Denests nested square root expressions only (reduces √(…√…) nesting depth); does not handle general nth-root denesting (see `_nthroot_solve` in `simplify.py`).
 
 - `sqrtdenest(expr)` — main entry; denests expressions like √(2+√3).
 - `_sqrt_match(p)` — decompose expression into `[a, b, r]` matching `a + b*sqrt(r)`, selecting the addend with maximal sqrt_depth as the radical part.

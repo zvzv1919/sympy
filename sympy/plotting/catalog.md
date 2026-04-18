@@ -60,17 +60,18 @@ Custom expression-to-function converter for internal plotting use.
 ## Interval Arithmetic (`plotting/intervalmath/`)
 
 ### `interval_arithmetic.py`
-Core interval class for bounded floating-point interval computations used by implicit plot region testing (not for variable range management or rendering discretization).
+Core `interval` class definition and all its arithmetic/comparison operator overloads, used by implicit plot region testing (not for variable range management or rendering discretization).
 
 - `interval` — represents [start, end] with `is_valid` ternary flag (True/False/None for partial validity).
   - Constructor auto-swaps arguments when given in descending order (upper < lower), so `interval(5, 2)` yields `[2, 5]`.
-- Supports arithmetic operators (+, -, *, /, **) and ternary comparison operators.
+- Arithmetic operators (`__add__`, `__sub__`, `__mul__`, `__div__`, `__pow__`) and ternary comparison operators, each with scalar and interval-typed dispatch paths.
+  - `__mul__`: interval×interval with invalid/uncertain validity expands result to (-inf, inf); interval×scalar simply scales endpoints preserving validity.
 - `__rpow__` — handles scalar**interval (reverse power); negative-base logic: invalidates wide exponents, rationalizes point exponents to check denominator parity.
 - `_pow_float` — `interval ** float` operator path; rationalizes exponent to rational form and checks numerator/denominator parity for domain validity.
   - Three-way outcome: fully invalid (entire interval negative + even denom), partially valid (spans negative + even denom), or valid.
 
 ### `lib_interval.py`
-Interval-aware math function library and ternary logic operators for implicit plotting.
+Standalone named math functions (`sin`, `cos`, `exp`, `log`, `sqrt`, etc.) applied to `interval` objects, plus ternary logic operators. Does NOT define the `interval` class or its arithmetic operators (those are in `interval_arithmetic.py`).
 
 - Standalone named math functions on `interval` objects: `Abs`, `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `acosh`, `asinh`, `atanh`, `ceil`, `floor`.
 - Each is a direct function call (e.g., `sqrt(x)`), not the `**` operator path; handles domain validation returning `is_valid=False` outside domain, `is_valid=None` for partial overlap.

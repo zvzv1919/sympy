@@ -118,6 +118,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `jscode(expr)` — main public entry point; instantiates `JavascriptCodePrinter` and delegates via `doprint`. Accepts `assign_to`, `precision`, `human`, `contract`, and `user_functions`.
 - `human=False` returns a tuple `(symbols_to_declare, not_supported_functions, code_text)` instead of a single string.
 - Piecewise expressions emit if/else blocks when `assign_to` is given, ternary operators otherwise; requires a default `(expr, True)` branch.
+- `indent_code` — auto-indents generated code using regex-matched block keywords (`if`/`else`/`function`/`for`/`while`/`end`); empty or newline-only lines are passed through without indentation.
 
 ### [`julia.py`](julia.py)
 `JuliaCodePrinter` — generates Julia code from expressions for a scientific computing language.
