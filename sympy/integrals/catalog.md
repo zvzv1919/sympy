@@ -11,7 +11,7 @@ Core symbolic integration engine and public API.
   - Raises `ValueError` when `conds='separate'` is used with multiple integration limits (multi-dimensional integrals)
   - Falls back to `_eval_integral` for antiderivative + interval evaluation
 - `Integral._eval_integral` — strategy cascade for antiderivative computation:
-  - Fast paths: polynomial, piecewise, constant integrands
+  - Fast paths: polynomial, piecewise, constant integrands, order terms (big-O): splits expr from asymptotic remainder, integrates each; if either part fails, returns None immediately without trying other strategies
   - Inline power rule for `(a*x+b)^c`: returns log when c==-1, general power otherwise; in `conds='piecewise'` mode emits a Piecewise distinguishing exp==-1 from general case
   - Rational functions via `ratint`, trig products, delta/singularity functions
   - Calls `risch_integrate` with `separate_integral=True`; if non-elementary remainder is returned, recursively evaluates it with other methods
@@ -66,7 +66,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - `IntegralTransform` — abstract base class for all transforms
 - Mellin: `mellin_transform`, `inverse_mellin_transform`, `MellinTransform`, `InverseMellinTransform`
   - `MellinTransform._collapse_extra` — merges convergence strips from multiple sub-results: takes Max of lower bounds, Min of upper bounds, And of auxiliary conditions; raises `IntegralTransformError('no combined convergence')` when strip intersection is empty (lower ≥ upper) or conditions are False
-  - `_inverse_mellin_transform` — computes inverse Mellin without direct contour integration: rewrites integrand as gamma products via `_rewrite_gamma`, constructs a Meijer G-function, then `hyperexpand`s it; validates convergence along the integration line using the G-function's `delta` and `argument` (symmetric vs absolute convergence)
+  - `_inverse_mellin_transform` — computes inverse Mellin without direct contour integration: rewrites integrand as gamma products via `_rewrite_gamma`, constructs a Meijer G-function, then `hyperexpand`s it; if expanded result is a 3-branch Piecewise, converts to continuous form using Heaviside step functions on |C|−x threshold; validates convergence along the integration line using the G-function's `delta` and `argument` (symmetric vs absolute convergence)
   - `InverseMellinTransform._compute_transform` validates input by traversing the expression and checking each function against a whitelist of allowed types (exp, gamma, sin, cos, tan, etc.); raises `IntegralTransformError` for unrecognized functions
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters (an, ap, bm, bq) for inverse Mellin transform
   - `left(c, is_numer)` — determines whether a pole at c lies left of the fundamental strip (integration contour); handles None/infinite strip boundaries with heuristic inequality checks
@@ -115,7 +115,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `splitfactor_sqf` — square-free version of splitting factorization; returns lists of (factor, multiplicity) pairs for normal and special parts
 - `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
-- `laurent_series` — contribution of a factor to the full partial fraction decomposition
+- `laurent_series(a, d, F, n, DE)` — computes principal parts of Laurent series of A/D at all zeros of factor F of multiplicity n in the square-free decomposition of D; creates a differential indeterminate extension, iterates through successive derivatives to accumulate contributions
 - `recognize_log_derivative(a, d, DE)` — tests whether f=a/d is a logarithmic derivative (dv/v for some v in the function field) by computing the resultant, splitting it via `splitfactor_sqf`, and checking that all real roots of the special factors are integers; known limitation: ignores complex roots (TODO)
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part in transcendental (non-rational) differential extensions; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
   - Computes resultant of d and (a − z·Dd); swaps resultant argument order when deg(Dd) > deg(d) to ensure correct polynomial remainder sequence

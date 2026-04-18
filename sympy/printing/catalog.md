@@ -127,7 +127,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `indent_code` — auto-indents generated code using regex-matched block keywords; lines that both close and open blocks (e.g., `elseif`, `else`) decrease indent before the line and increase after.
 
 ### [`octave.py`](octave.py)
-`OctaveCodePrinter` — generates Octave/MATLAB code from expressions.
+`OctaveCodePrinter` — generates Octave/MATLAB code from expressions for a numerical computing environment with 1-based indexing.
+- Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds). Loop syntax: `for VAR = start:stop` / `end`.
 - `octave_code()` — top-level API; returns Octave/Matlab-syntax string. Accepts `assign_to`, `precision`, `human`, `contract`, `inline`, and `user_functions`.
 - `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether each operand is a pure number; handles imaginary-number shorthand.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and element-wise vs scalar division.

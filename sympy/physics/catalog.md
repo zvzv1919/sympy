@@ -44,6 +44,7 @@ One-dimensional quantum harmonic oscillator: closed-form analytical wavefunction
 ### [`secondquant.py`](secondquant.py)
 Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
 - `BosonicOperator`, `CreateBoson` (B†), `AnnihilateBoson` (B) — bosonic ladder operators with commutation relations.
+  - `apply_operator(state)` — for concrete (non-symbolic) index on FockStateKet: creation yields √(n+1)·|n+1⟩, annihilation yields √n·|n−1⟩; symbolic index falls back to plain product Mul(op, state).
 - `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules and Fermi-level orbital properties (not mode-labeled like `quantum/fermion.py`).
   - `apply_operator(state)` — applies to FockStateKet directly; for Mul (product) expressions, checks if the first non-commutative factor is a FockStateKet and acts on it while preserving commutative prefactors; otherwise returns plain product.
   - `is_restricted` — returns +1 (above_fermi), −1 (below_fermi), or 0 (general/unrestricted) based on orbital index symbol assumptions.
@@ -98,7 +99,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - `enumerate_states(state, ...)` — generates indexed copies of an abstract vector (Ket/Bra) given a list of indices or a start index + count; delegates to `state._enumerate_state()`; returns empty list if the state raises NotImplementedError.
     - `_sympy_to_scalar` — converts SymPy scalar expressions to native Python types (int/float/complex) for numpy/scipy compatibility; handles Integer, Float, Rational, Number, NumberSymbol, and imaginary unit I (→ complex). Raises TypeError for non-numeric expressions.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
-    - `StateBase` — abstract base for all quantum states; `dual` property constructs the conjugate-class counterpart (via `dual_class()`) with same Hilbert space and args. `_eval_adjoint` delegates to `dual`, so the Hermitian conjugate of a ket is its bra and vice versa.
+    - `StateBase` — abstract base for all quantum states; `dual` property constructs the conjugate-class counterpart (via `dual_class()`) with same Hilbert space and args. `_eval_adjoint` delegates to `dual`, so the Hermitian conjugate of a ket is its bra and vice versa. `operators` property returns the operator(s) the state is an eigenstate of; lazy-imports `operatorset` internally to avoid circular dependency.
     - `Wavefunction` — continuous-basis representation (Function subclass). Constructor converts Python tuples to Tuple objects before parent call to avoid type-check errors.
     - `Wavefunction.norm` — L2 norm: integrates |expr|² over each coordinate variable within its bounds, returns sqrt of result. `is_normalized` compares norm to 1.0.
     - `Wavefunction.normalize()` — returns a rescaled Wavefunction with unit norm; raises NotImplementedError if norm is infinite (non-normalizable function).

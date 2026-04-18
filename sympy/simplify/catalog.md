@@ -47,7 +47,8 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `TRmorrie(rv)` — apply Morrie's law for cosine products.
 - `TR111(rv)` — convert negative trig powers to reciprocal functions (sec, csc, cot).
 - `L(rv)` — count trig functions in expression (used as complexity measure).
-- `trig_split(a, b)` — decompose pair of trig terms for identity matching.
+- `trig_split(a, b, two)` — decompose a pair of trig terms into `(gcd, s1, s2, a1, a2, bool)`: greatest common factor, sign indicators, angle arguments, and True if cos else sin.
+  - `two=True`: matches product pairs (cos·cos ± sin·sin or cos·sin ± sin·cos) into sum/difference angle identities; recognizes standard angle ratios via sqrt(2) and sqrt(3) to yield angles π/6, π/4, π/3.
 - `as_f_sign_1(e)` — decompose expression as g*(f ± 1) for factored-identity rules.
 - `process_common_addends(rv, do, key2, key1)` — group addends by absolute value of their coefficient (and optional `key2`), then apply `do` to each group with >1 member.
   - Negative coefficients: negates both coefficient and argument so sign is transferred to the argument before grouping.

@@ -101,12 +101,11 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 ### `plot_mode.py`
 Coordinate-system mode registry and argument interpretation only — no coordinate math or coordinate-to-Cartesian conversion (those live in `plot_modes.py`).
 
-- `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes; looks up the concrete mode class after `PygletPlot` has already determined expression/variable counts. Does not define the user-facing auto-detection rules (those are defined in `plot.py`'s `PygletPlot`).
-- `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class.
-  - If `mode_arg` is a `PlotMode` subclass, validates it was registered (checks `_was_initialized`); raises `ValueError` if the class hasn't been set up.
-  - If string alias, looks up in `_mode_map`; if empty string, returns the default mode for the given variable counts.
-- `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
-- `_find_i_vars()`, `_find_d_vars()` — infer independent/dependent variables from expressions.
+- `PlotMode` — factory + registry class; `__new__` is the main entry point that parses raw user arguments, determines variable counts, resolves the correct rendering subclass, and returns an instantiated subclass.
+- `__new__(*args, **kwargs)` — factory method: calls `_interpret_args` → `_find_i_vars` → `_get_mode` → `object.__new__(subcls)`, then fills intervals/vars on the new instance. Returns a fully initialized concrete mode subclass instance.
+- `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class from `_mode_map`/`_mode_default_map`.
+- `_interpret_args(args)` — separates raw args into (functions, intervals); enforces ordering: raises `ValueError` if a `PlotInterval` appears before any expression. Handles `GeometryEntity` specially by extracting coordinates via `arbitrary_point()`.
+- `_find_i_vars(functions, intervals)` — collects independent variables first from intervals (in order), then from free symbols of functions.
 - `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.
 
 ### `plot_mode_base.py`

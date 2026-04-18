@@ -62,6 +62,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensMul` — product of tensors with a scalar coefficient.
   - `__mul__` — Einstein summation: contracts matching upper/lower index pairs across factors.
   - `__div__` / `__truediv__` — division by scalars only; raises `ValueError('cannot divide by a tensor')` if divisor is a `TensExpr`.
+  - `__rdiv__` / `__truerdiv__` — unconditionally raises `ValueError('cannot divide by a tensor')`; prevents `scalar / TensMul`.
   - `equals(other)` — structural equality: handles zero (checks coeff), plain scalars (asserts no components), and general expressions via canonicalization tuple `(coeff, components, sorted free, sorted dum)`.
   - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (index and its negation), rebuilds the expression so those pairs become dummy/summation indices.
 - `TensAdd` — sum of tensors in canonical form.

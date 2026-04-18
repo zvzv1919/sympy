@@ -140,6 +140,8 @@ Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (i
 ### [`sathandlers.py`](sathandlers.py)
 **Defines and registers** logical inference rules (implications, equivalences) keyed by expression type; consumed by `satask.py`'s iterative fact collector. Also provides old-to-new assumption bridging utilities.
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
+  - Only handles a **fixed set** of predicates: sign (`Q.positive`, `Q.negative`, `Q.zero`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`), number type (`Q.rational`, `Q.irrational`, `Q.even`, `Q.odd`, `Q.integer`, `Q.imaginary`, `Q.commutative`).
+  - **Fallback**: predicates not in this set (e.g., `Q.real`, `Q.finite`, `Q.prime`) are returned unchanged as the original `AppliedPredicate` object.
   - Handles semantic mismatches between new and old assumptions for each sign predicate.
   - `Q.nonnegative` is handled asymmetrically: uses `fuzzy_or([e.is_zero, e.is_finite])` instead of just `e.is_finite` like other sign predicates (`Q.positive`, `Q.negative`, `Q.nonpositive`, `Q.nonzero`).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.

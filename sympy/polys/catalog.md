@@ -176,6 +176,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Content/primitive: `content`, `primitive`, `monic`.
     - `content()` — GCD of all coefficients; **only allows `polys` flag (not `auto`)**, unlike `monic` which accepts both.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
+  - `clear_denoms(convert=False)` — eliminate fractional coefficients; **if domain is not a field (`not has_Field`), returns `(S.One, self)` immediately** (no-op for integer-coefficient polynomials); otherwise computes LCM of denominators and scales; when `convert=True`, retracts result to the associated ring (e.g. QQ→ZZ).
   - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
   - `eval(a, j)` — evaluate polynomial at a point; **on `CoercionFailed`, auto-widens the coefficient domain** by constructing a domain for `a`, unifying with the current domain, converting, and retrying.
   - `_eval_subs(old, new)` — internal substitution: if `old` is a generator, evaluates at `new` when numeric.
@@ -384,6 +385,8 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dmp_zz_collins_resultant` / `dmp_qq_collins_resultant` — Collins's modular resultant in Z[X] / Q[X]; iterates over primes, **catches `HomomorphismFailed` from per-prime `dmp_zz_modular_resultant` and `continue`s to the next prime**; accumulates via CRT.
 - `dup_discriminant`, `dmp_discriminant` — discriminant as `resultant(f, f') / (LC(f) * sign_factor)`; sign factor is `(-1)^(d(d-1)/2)` where `d` is degree; **returns zero (in n−1 variables) for degree ≤ 0**.
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS).
+  - **Ring PRS GCD** (`dup_rr_prs_gcd`): extracts primitive parts, computes content GCD, takes last element of subresultant PRS, strips content, then **negates the content multiplier if the leading coefficient is negative** to ensure canonical positive leading coefficient.
+  - **Field PRS GCD** (`dup_ff_prs_gcd`): takes last element of subresultant PRS and **makes it monic** (no sign correction needed).
   - `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` — heuristic over Z; same triple-fallback verification as `heugcd` in `heuristicgcd.py` but on dense coefficient lists.
   - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover polynomial from a **single integer GCD value** using base-conversion-style symmetric remainder on dense coefficient lists (not `PolyElement` objects; contrast `_gcd_interpolate` in `heuristicgcd.py`).
     - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
