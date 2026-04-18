@@ -19,7 +19,7 @@ Finite difference weight generation, derivative approximation, and symbolic conv
 
 ### [`singularities.py`](singularities.py)
 Finds poles of rational functions (denominator zeros) and tests monotonicity on intervals.
-- `singularities(expr, sym)` — finds poles of a rational function (does not handle general discontinuities or rational-power expressions).
+- `singularities(expr, sym)` — finds poles of a rational function only (denominator zeros); raises `NotImplementedError` for non-rational inputs. Does not handle general continuity analysis or rational-power expressions (see `util.py:continuous_domain` for that).
 - `is_increasing`, `is_strictly_increasing`, `is_decreasing`, `is_strictly_decreasing` — interval monotonicity predicates.
 - `is_monotonic(f, interval, symbol)` — tests whether a function is monotonic on an interval.
 
@@ -28,6 +28,7 @@ Finds poles of rational functions (denominator zeros) and tests monotonicity on 
 ### [`util.py`](util.py)
 Domain/range analysis and interval-arithmetic accumulation bounds.
 - `continuous_domain(f, symbol, domain)` — returns intervals where a function is continuous; special-cases rational powers (half-integer exponents) by constraining domains and using a distinct singularity-search strategy vs. general expressions.
+  - Raises `NotImplementedError` when the internal singularity solver (solveset) throws an exception.
 - `function_range(f, symbol, domain)` — computes the range of a function over a domain.
 - `not_empty_in(finset_intersection, *syms)` — finds domains where a finite-set intersection is non-empty.
 - `AccumulationBounds` (alias `AccumBounds`) — represents a closed interval [a, b] for bounding accumulation points.

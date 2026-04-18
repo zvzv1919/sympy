@@ -244,6 +244,8 @@ Geometric and wave optics.
   - `RayTransferMatrix.__mul__` — type-dispatching multiplication: Matrix×BeamParameter extracts q, applies ABCD transform, reconstructs BeamParameter from real/imaginary parts; Matrix×GeometricRay returns GeometricRay.
   - `GeometricRay` — 2×1 column vector (height, angle) for geometric ray; constructor accepts two scalars or a single 2×1 Matrix. Raises ValueError if a single argument has wrong dimensions (e.g. 2×2).
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
+  - `gaussian_conj(s_in, z_r_in, f)` — Gaussian beam conjugation: computes output distance, output Rayleigh range, and magnification ratio for a beam passing through an element with focal length f.
+  - `conjugate_gauss_beams(wavelen, waist_in, waist_out, **kwargs)` — finds the optical setup (distances and focal length) that maps one beam waist to another. Currently only accepts `f=` (focal length) as keyword; passing `dist=` or `s_in=` raises NotImplementedError.
   - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
   - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
 - `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index n).

@@ -4,7 +4,7 @@
 
 ### [`autowrap.py`](autowrap.py)
 Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cython, or Ufuncify backends.
-- `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments.
+- `autowrap(expr)` — compile an expression to a binary callable; catches `CodeGenArgumentListError` from `make_routine`: silently appends missing output-only args and retries, but re-raises if any missing arg is not an `OutputArgument`.
 - `binary_function(symfunc, expr)` — returns a symbolic `UndefinedFunction` whose `.evalf()` delegates to a compiled native binary (autowrap + implemented_function).
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions; numpy backend enforces maxargs=32 limit on total (inputs+outputs), raises `ValueError` if exceeded.
 - `CodeWrapper` — base class; subclasses handle compilation and module import; `_get_wrapped_function(mod, name)` resolves the callable from the compiled module.
@@ -27,7 +27,7 @@ Builds procedural routine representations (`Routine`) from SymPy expressions and
 - `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen` — language-specific code generators.
 - `OctaveCodeGen.dump_m` — writes `.m` file; raises `ValueError` if the first routine's name doesn't match the output file prefix (Octave/Matlab requires function name = filename).
 - `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
-- `make_routine(name, expr)` — simplified factory that creates a single `Routine` object from expressions without generating any source files.
+- `make_routine(name, expr)` — simplified factory that creates a single `Routine` object from expressions without generating any source files; raises `CodeGenArgumentListError` (with `.missing_args`) if user-supplied argument list is incomplete — does not recover; callers (e.g. `autowrap`) handle recovery.
   - Classifies `Equality` LHS as `OutputArgument` (or `InOutArgument`); non-equality expressions become return values.
 - `codegen(name_expr, language)` — top-level convenience function; delegates to `make_routine` internally.
 

@@ -70,6 +70,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — primary user-facing linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples. Validates that all `symbols` are actual Symbol instances; raises ValueError if non-symbolic values (e.g. integers, strings) are passed.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
+  - Inconsistent systems: catches ValueError raised by the elimination step and returns EmptySet.
   - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
 - `linear_eq_to_matrix(equations, *symbols)` — standalone utility that converts linear equations to (A, b) matrix pair for external use. Does not solve; just extracts coefficients. Accepts both expressions (implicit =0) and Eq() relations.
 - `domain_check(f, symbol, p)` — solveset-internal singularity check; walks expression tree for infinite subexpressions at a candidate point. Not used by legacy `solve` (which has its own denominator-zero filter). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).

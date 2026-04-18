@@ -23,7 +23,7 @@ Base classes and core query functions for all random variable types.
   - When a condition is supplied, rewrites expr via `given()` and recurses to reduce to the unconditional case.
   - When `evaluate` is true and the result has a `doit` method, calls `doit()`; otherwise returns the raw result unchanged.
 - `where()`, `sample()`, `sample_iter()`: query domain of conditions and draw realizations.
-- `given(expr, condition)`: conditions a random expression on an event; for single-variable equality conditions, solves the equation and substitutes solutions; otherwise builds a full conditional probability space.
+- `given(expr, condition)`: conditions a random expression on an event; for single-variable equality conditions, solves via `solveset` and substitutes solutions — unwraps `Intersection` with `S.Reals` when the solver returns that form; otherwise builds a full conditional probability space.
 - `expectation(expr, condition)`: computes expected value of a random expression; exploits linearity (decomposes `Add` into per-term expectations) for efficiency; delegates final integration to `pspace().integrate()`.
 - `probability(condition, given_condition)`: computes probability that a condition holds; supports Monte Carlo sampling via `numsamples`.
   - Short-circuits without integration: returns `S.Zero` when `given_condition` is `False`, returns `S.One`/`S.Zero` when `condition` is trivially true/false.
@@ -39,7 +39,7 @@ Infrastructure for continuous random variables.
   - `compute_density(expr)`: if expr is one of the space's variables, marginalizes others out of the joint PDF via integration; for non-trivial functions of random variables, uses DiracDelta as an integration kernel to derive the transformed density.
   - `compute_cdf(expr)`: integrates the density from the left bound; raises `ValueError` on multivariate domains.
 - `SingleContinuousPSpace`: probability space for a single univariate continuous variable.
-  - `compute_density(expr)`: derives the density of a transformed variable (function of X) via change-of-variables; uses `solveset` to find inverses and unwraps `Intersection` with `S.Reals` when the solver returns that form.
+  - `compute_density(expr)`: derives the density of a transformed variable (function of X) via change-of-variables; uses `solveset` to find inverses and unwraps `Intersection` with `S.Reals`.
   - `compute_cdf(expr)`: delegates to the distribution's `compute_cdf` for the identity case; falls back to base class otherwise.
 - `ContinuousDistributionHandmade`: internal distribution wrapper used by `ContinuousRV` (in `crv_types.py`); accepts a Lambda pdf and a set.
 - `SingleContinuousDistribution`: base class for all named continuous distributions; provides default `compute_cdf` (integrates PDF from left bound) and `expectation` (integrates expr·PDF). Subclasses in `crv_types.py` override these with distribution-specific simplifications.

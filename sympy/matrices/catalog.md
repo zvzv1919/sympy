@@ -9,6 +9,20 @@ The `matrices` module has two layers:
 
 ---
 
+## Package Entry Point
+
+### [`__init__.py`](__init__.py)
+Package-level namespace — re-exports public symbols from submodules and defines convenience aliases.
+
+- Imports `MatrixBase`, `ShapeError`, `NonSquareMatrixError`, `DeferredVector` from `matrices.py`.
+- Imports dense factory functions (`Matrix`, `zeros`, `eye`, `ones`, `diag`, `randMatrix`, etc.) and utilities from `dense.py`.
+- Imports `MutableSparseMatrix` from `sparse.py`; imports `ImmutableMatrix`, `ImmutableSparseMatrix` from `immutable.py`.
+- Imports symbolic expression classes (`MatrixExpr`, `MatMul`, `MatAdd`, `Identity`, `ZeroMatrix`, etc.) from `expressions/`.
+- **Alias definitions**: `MutableDenseMatrix = MutableMatrix = Matrix`; `SparseMatrix = MutableSparseMatrix`; `ImmutableDenseMatrix = ImmutableMatrix`.
+- **Re-aliasing after immutable import**: after importing immutable variants, reassigns `MutableSparseMatrix = SparseMatrix` to restore the mutable alias that the immutable import would shadow.
+
+---
+
 ## Concrete Matrix Core
 
 ### [`matrices.py`](matrices.py)
@@ -21,6 +35,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Dot / element-wise products**: `multiply_elementwise`, `cross`.
   - `dot`: relaxed-dimension concrete inner product; accepts lists/sequences or Matrix.
   - Dimension fallback cascade: cols==b.rows→standard multiply, cols==b.cols→transposes b, rows==b.rows→transposes self.
+  - Within cols==b.rows case: if b is a row vector (b.cols != 1), transposes both self and b before multiplying.
   - Returns scalar for vectors, list for rectangular matrices.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches downward for non-zero pivots, swaps rows, scales, and eliminates; skips to next column when all entries below current pivot row are zero; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.

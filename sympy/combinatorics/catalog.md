@@ -77,7 +77,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 Factory functions returning `PermutationGroup` objects for standard finite groups, with pre-set algebraic properties (e.g. `_is_nilpotent`, `_is_solvable`, `_is_abelian`, `_is_transitive`). Contrast with `generators.py`, which yields individual permutation elements.
 - `SymmetricGroup(n)` — constructs Sn (full bijection group on n elements); pre-sets `_is_solvable = True` iff n < 5 (reflecting that An is simple for n ≥ 5).
 - `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
-- `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4). Pre-sets `_is_nilpotent = True` iff n is a power of 2.
+- `DihedralGroup(n)` — constructs Dn as a `PermutationGroup` from rotation + reflection generators (does not enumerate elements; for full element enumeration see `generators.py::dihedral`). Pre-sets `_is_nilpotent = True` iff n is a power of 2.
 - `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0). Deduplicates generators when both coincide (e.g. n=3), keeping only one.
 
 ### [`group_constructs.py`](group_constructs.py)
@@ -89,7 +89,9 @@ Composite group construction.
 ### [`generators.py`](generators.py)
 Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.
 - `symmetric(n)`, `cyclic(n)`, `alternating(n)` — yield all permutations of Sn, Cn, An respectively. `alternating` filters by `is_even`.
-- `dihedral(n)` — yields all 2n elements of Dn. Special-case embeddings for n=1 (in S2) and n=2 (Klein 4-group in S4) where Dn is not a subgroup of Sn.
+- `dihedral(n)` — yields all 2n individual `Permutation` elements of Dn.
+  - Contains the actual embedding logic for degenerate cases: n=1 yields 2 perms on 2 positions (S2), n=2 yields 4 perms on 4 positions (Klein 4-group in S4).
+  - These embeddings are needed because Dn cannot be a subgroup of Sn for n<3.
 - `rubik_cube_generators()` — standard 3×3 Rubik's cube face-turn permutations.
 - `rubik(n)` — NxN Rubik's cube permutation generator; raises `ValueError` for n < 2.
   - Represents each face as an n×n numbered matrix; simulates single-face rotations, slice-plane moves, and whole-cube rotations.

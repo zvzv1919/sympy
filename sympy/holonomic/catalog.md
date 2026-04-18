@@ -12,6 +12,7 @@ Main module: differential operator algebra, `HolonomicFunction` class, and conve
 
 - `DifferentialOperatorAlgebra` — parent ring (Weyl algebra) for differential operators.
 - `DifferentialOperator` — element of the Weyl algebra; list of polynomial coefficients + parent.
+  - `__pow__(n)` — exponentiation: fast path for `Dx` builds sparse list directly; general case uses binary exponentiation (squaring).
 - `DifferentialOperators(base, generator)` — factory returning algebra and derivative operator `Dx`.
 - `HolonomicFunction` — solution to L.f = 0; holds annihilator, variable, initial-condition point and values.
   - Arithmetic (`__add__`, `__mul__`, etc.): closure operations that build an ansatz matrix from operator derivatives, solve a homogeneous linear system, and iteratively increase matrix dimension until a nontrivial annihilator is found.

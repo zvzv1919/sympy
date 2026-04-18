@@ -266,6 +266,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
 - `Term` — efficient representation of `coeff*(numer/denom)` for commutative expressions; init decomposes factors via `decompose_power`, extracts `primitive()` content from Add bases into coeff, partitions into numer/denom by exponent sign
+  - Arithmetic: `mul`, `inv` (swaps numer↔denom, inverts coeff), `quo`, `pow` (negative exponent → inverts first then recurses with positive), `gcd`, `lcm`
 - `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n` as a dict mapping bases to exponents
   - Init from Number: negative → stores `-1` as separate key; Rational `p/q` → numerator `p` with exponent 1, denominator `q` with exponent -1
   - `as_expr()` — converts dict back to symbolic Mul; dispatches on exponent type: Python int → wraps in Integer, Rational → keeps as-is, symbolic → multiplies into existing base exponent
