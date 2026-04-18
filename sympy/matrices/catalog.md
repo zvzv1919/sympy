@@ -80,7 +80,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `row_del`, `col_del`: delete a row/column; each validates and converts negative indices internally (no external `a2idx` call), then removes the corresponding slice from the flat `_mat` list.
 - `copyin_matrix(key, value)`: copies a Matrix into the sub-region defined by `key`; raises `ShapeError` if source matrix dimensions don't match target slice dimensions.
 - `copyin_list(key, value)`: copies elements from an iterable into the sub-region defined by `key`; raises `TypeError` if `value` is not an ordered iterable (e.g. a plain scalar).
-- `__setitem__`: thin wrapper; actual assignment logic (including list→Matrix conversion) is `MatrixBase._setitem` in `matrices.py`.
+- `__setitem__`: delegates to `MatrixBase._setitem` for key parsing and list→Matrix conversion; when a single element is assigned, translates the (row, col) pair to flat-list position via `self._mat[i*self.cols + j]`.
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
 - **NumPy conversion utilities**: `matrix2numpy(m, dtype)` — converts a SymPy matrix to a NumPy array element-by-element; `list2numpy(l, dtype)` — converts a Python list of expressions to a NumPy array; `symarray(prefix, shape)` — creates a NumPy object array of named symbols.
@@ -200,7 +200,8 @@ Block-structured symbolic matrices.
 - `DotProduct`: symbolic dot product of two vector matrices (1×n or n×1); `doit()` auto-transposes arguments based on row/column orientation before multiplying and extracting the scalar.
 
 ### [`expressions/hadamard.py`](expressions/hadamard.py)
-- `HadamardProduct`: unevaluated symbolic element-wise matrix product (concrete version is `matrix_multiply_elementwise` in `dense.py`).
+- `hadamard_product(*matrices)`: factory function for elementwise (Hadamard) product; validates shapes, returns the matrix itself when only one argument is passed (no wrapping), returns `HadamardProduct(...).doit()` for multiple arguments. Raises `TypeError` on empty call.
+- `HadamardProduct`: unevaluated symbolic element-wise matrix product node (concrete version is `matrix_multiply_elementwise` in `dense.py`); `doit()` canonicalizes via `unpack`/`flatten` rules.
 
 ### [`expressions/funcmatrix.py`](expressions/funcmatrix.py)
 - `FunctionMatrix`: matrix defined by a lambda `f(i,j)` for each entry; has custom `_eval_trace` that delegates to `Trace._eval_rewrite_as_Sum` (symbolic summation over diagonal) rather than iterating entries directly.

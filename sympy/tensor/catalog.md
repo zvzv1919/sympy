@@ -138,10 +138,12 @@ Standalone functions for tensor-style operations on N-dim arrays.
 
 ### array/__init__.py
 
-Re-exports: `Array` (alias for `ImmutableDenseNDimArray`), dense/sparse array classes, `tensorproduct`, `tensorcontraction`, `derive_by_array`, `permutedims`.
-- Module docstring serves as the primary tutorial for the array subpackage: array construction, element-wise ops, conversion (`tolist`, `tomatrix`), and combining operations.
-- "Products and contractions" section: shows how to combine outer product + axis contraction to reproduce matrix multiplication, compute traces, etc.
-- "Derivatives by array" section: documents `derive_by_array` usage patterns.
+Defines package-level convenience aliases and re-exports all public array classes and operations.
+
+- `Array = ImmutableDenseNDimArray` — the default constructor name; produces an **immutable** dense array. This is the canonical location where the default type binding is set.
+- `NDimArray = ImmutableDenseNDimArray`, `DenseNDimArray = ImmutableDenseNDimArray`, `SparseNDimArray = ImmutableSparseNDimArray` — additional aliases, all defaulting to immutable variants.
+- Re-exports: dense/sparse mutable/immutable classes, `tensorproduct`, `tensorcontraction`, `derive_by_array`, `permutedims`.
+- Module docstring serves as the primary tutorial for the array subpackage: construction, element-wise ops, conversion, products, contractions, and array derivatives.
 
 ---
 

@@ -218,7 +218,8 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
 - `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation, `partial_velocity(frame, *gen_speeds)` returns partial angular velocities (single speed → bare Vector; multiple → tuple).
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration (`acc()`) in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
   - `acc(frame)` fallback: if acceleration not explicitly set, differentiates velocity; if velocity is also zero, returns zero vector.
-- `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
+- `functions.py` — module-level vector utilities: `dot`, `cross`, `express`, `outer`, `kinematic_equations`, and a standalone `partial_velocity(vel_vecs, gen_speeds)` function operating on velocity lists (distinct from Point.partial_velocity).
+  - `kinematic_equations(speeds, coords, rot_type, rot_order)` — generates angular velocity-to-generalized-speed kinematic differential equations for body/space Euler-angle rotations or quaternion parameterization. Quaternion mode raises ValueError if a rotation order is specified or if coordinate count ≠ 4.
   - `dynamicsymbols(names, level=0)` — creates time-dependent symbolic functions (UndefinedFunction of `t`); `level` applies pre-differentiation. Single name → bare expression; multiple names → list. Stores time variable as `dynamicsymbols._t`.
   - `get_motion_params(frame, **kwargs)` — computes acceleration/velocity/position from any one given; integrates using `_process_vector_differential`, which short-circuits when the input vector is zero (returns boundary condition directly without integrating).
 - `fieldfunctions.py` — scalar/vector field operations: gradient, divergence, curl.
@@ -287,6 +288,7 @@ High-energy physics.
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
   - `add(other)` — dimensional addition; raises TypeError for non-Dimension operand, raises ValueError when dimensions differ (e.g., length + time).
+  - `sub(other)` — subtraction delegates to `add`; dimensions have no notion of ordering/magnitude, so subtraction is equivalent to addition when operands match.
   - `DimensionSystem.get_dim(dim)` — looks up a dimension in the system; accepts string (matches against name or symbol) or Dimension object (matches by identity in list); returns None if not found. `__getitem__` shortcut raises KeyError on miss.
   - `DimensionSystem.print_dim_base(dim)` — formats a dimension as a human-readable string in terms of basis dimensions, sorted by decreasing power; skips zero-power, omits exponent for power=1.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set).

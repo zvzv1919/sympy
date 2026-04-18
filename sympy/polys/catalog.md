@@ -197,6 +197,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
     - `factor_list` (via `_generic_factor_list`): **when input is a rational expression (nontrivial denominator) and `frac=True`, returns `(coeff, numer_factors, denom_factors)` 3-tuple; when `frac=False` (default), silently drops denominator factors** and returns only `(coeff, numer_factors)`.
     - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
+- `_sorted_factors(factors, method)` — sort `(poly, exp)` factor pairs; **for `method='sqf'` (square-free), primary sort key is the exponent; for other methods (regular factorization), primary key is representation length** (`len(rep)`); secondary keys are rep length, generator count, and raw rep.
 - `to_rational_coeffs(f)` — transform polynomial with irrational coefficients to rational coefficients; **only applies to polynomials whose irrational coefficients involve exclusively square roots; returns `None` immediately if any coefficient contains a root of order > 2** (e.g. cube roots).
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression.
@@ -363,7 +364,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_discriminant`, `dmp_discriminant` — discriminant as `resultant(f, f') / (LC(f) * sign_factor)`; sign factor is `(-1)^(d(d-1)/2)` where `d` is degree; **returns zero (in n−1 variables) for degree ≤ 0**.
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS).
   - `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` — heuristic over Z; same triple-fallback verification as `heugcd` in `heuristicgcd.py` but on dense coefficient lists.
-  - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover univariate/multivariate polynomial from integer GCD image using **symmetric remainder**.
+  - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover polynomial from a **single integer GCD value** using base-conversion-style symmetric remainder on dense coefficient lists (not `PolyElement` objects; contrast `_gcd_interpolate` in `heuristicgcd.py`).
     - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
@@ -430,7 +431,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dmp_zz_factor` — top-level multivariate factorization over Z.
 - `dup_zz_hensel_step`, `dup_zz_hensel_lift` — univariate Hensel lifting.
 - `dmp_zz_wang_hensel_lifting` — **parallel Hensel lifting for multivariate factorization**; iteratively lifts univariate factor approximations to full multivariate factors; verifies final product matches original, raises `ExtraneousFactors` on mismatch.
-- `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
+- `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions; computes square-free norm, factors norm over the base domain; **if norm yields a single irreducible factor, returns the square-free part with multiplicity `n // deg(sqf_part)`** (handles powers of irreducibles); otherwise recovers factors via GCD with shifted norm factors and trial division.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities; **if domain is not exact (e.g. RR), converts to exact domain, factors there, then converts results back**.
   - For exact fields, the cleared denominator is folded into the leading coefficient (`coeff/denom`); **for inexact fields, the denominator is instead divided out of each factor individually** via `dmp_quo_ground` before converting back to the inexact domain.
@@ -797,6 +798,7 @@ FGLM algorithm for Gröbner basis conversion between monomial orderings.
 Sparse distributed module representations for submodule/syzygy computation.
 
 - Basic element operations: `sdm_add` (add two module elements with cancellation), `sdm_LC` (**returns `K.zero` for empty/zero module elements**), `sdm_from_dict`, `sdm_sort`, `sdm_strip` — element arithmetic and construction.
+- `sdm_mul_term(f, term, O, K)` — multiply module element by a polynomial term `(monomial, coeff)`; **if `K.is_one(c)`, skips coefficient multiplication** (returns original coefficients unchanged); returns `[]` if `f` is empty or `c` is zero.
 - Module monomial operations: `sdm_monomial_mul`, `sdm_monomial_deg`, `sdm_monomial_lcm`, `sdm_monomial_divides`.
   - `sdm_monomial_lcm(A, B)` — computes LCM by **preserving the generator index (first tuple element) and delegating `monomial_lcm` on the remaining exponent entries**; result is undefined if A and B belong to different generators.
   - `sdm_monomial_divides(A, B)` — checks if polynomial monomial X exists such that XA = B; **returns False if A and B belong to different free module generators** (different first tuple element), even if polynomial exponents satisfy divisibility.
@@ -805,6 +807,7 @@ Sparse distributed module representations for submodule/syzygy computation.
 - `sdm_nf_mora` — generalized Mora algorithm for weak normal forms with non-global orderings; **dynamically appends current element to the reducer set when the chosen reducer's ecart exceeds the element's ecart**.
 - `sdm_ecart(f)` — difference between total degree and leading monomial degree.
 - `sdm_groebner` — Gröbner basis (minimal standard basis) for submodules; uses "sugar" strategy for pair selection.
+  - **If all input generators are zero, returns `[]` (no basis); when `extended=True`, returns `([], [])` (empty basis + empty transition matrix)**.
   - Sugar priority: `max(degree_i − deg(LM_i), degree_j − deg(LM_j)) + deg(lcm(LM_i, LM_j))`, combining element degrees and leading monomial LCM degree.
   - Inner `update` applies **chain criterion to prune critical pairs** whose LCM is divisible by the new element's LCM with both pair members.
 - `sdm_spoly` — S-polynomial of two module elements; returns zero if leading terms involve different basis generators.

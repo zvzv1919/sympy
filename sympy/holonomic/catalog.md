@@ -38,7 +38,8 @@ Recurrence (shift) operator algebra and holonomic sequences — defines algebrai
 - `RecurrenceOperators(base, generator)` — factory returning algebra and shift operator `Sn`.
 - `RecurrenceOperatorAlgebra` — parent ring for recurrence operators; `__init__` handles generator: defaults to noncommutative symbol `Sn` when None, converts string to symbol, or accepts existing Symbol.
 - `RecurrenceOperator` — element of recurrence algebra; commutation rule `Sn * a(n) = a(n+1) * Sn`.
-- `HolonomicSequence` — sequence satisfying a linear recurrence with polynomial coefficients.
+- `HolonomicSequence` — sequence satisfying a linear recurrence with polynomial coefficients; holds recurrence, variable `n`, and optional initial values `u0`.
+  - `__eq__` — equality check comparing recurrence, variable, and initial conditions.
 
 ---
 

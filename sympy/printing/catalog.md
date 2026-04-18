@@ -46,6 +46,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 - `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
 - `_print_Subs` — renders evaluation-at-a-point notation: parenthesizes the expression, draws a vertical bar (`|`) to its right, and places variable=value assignment pairs as subscripts below the bar.
 - `_print_DMP` / `_print_DMF` — renders dense multivariate polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to `repr(p)`.
+- Algebraic domain printers (`_print_RealField`, `_print_ComplexField`, `_print_FiniteField`, `_print_IntegerRing`, `_print_RationalField`) — render number domains as Unicode double-struck letters (ℤ, ℚ, ℝ, ℂ) or ASCII fallbacks (ZZ, QQ, RR, CC); non-default precision is appended as a subscript.
 - `_print_Range` — renders discrete integer ranges; abbreviates with ellipsis (`…`) when the range has more than 4 elements or is infinite, showing only endpoints and step; shows all elements otherwise.
 - Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.

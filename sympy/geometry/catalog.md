@@ -126,7 +126,7 @@ Polygonal entities in 2D.
   - `arbitrary_point(parameter='t')` — returns a `Piecewise` expression mapping parameter 0→1 along the perimeter, each edge weighted by its fraction of total perimeter length; raises `ValueError` if parameter name collides with a free symbol.
   - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.
-  - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via rotating calipers. Pre-checks bounding circles around centroids; if they overlap, emits a warning (does not abort or raise) and continues computation, potentially returning erroneous results for intersecting polygons.
+  - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via rotating calipers. Selects starting vertices (upper-rightmost of e1, lower-leftmost of e2), then chooses initial traversal direction by comparing angles of neighboring edges against a horizontal support line; ties broken by selecting the shorter edge. Pre-checks bounding circles around centroids; if they overlap, emits a warning (does not abort or raise) and continues computation, potentially returning erroneous results for intersecting polygons.
 - `RegularPolygon` — `Polygon` subclass for regular n-gons; stored as center + radius + n (not explicit vertices). Adds `radius`, `interior_angle`, `exterior_angle`, `incircle`, `circumcircle`, `spin()`, `rotate()`.
   - `reflect(line)` — overrides `GeometryEntity.reflect`; reflects center and first vertex, computes angular spin at the new center, and negates the radius to encode the mirror-flip in orientation.
   - `scale(x, y, pt)` — overrides base; uniform scaling (x == y) preserves `RegularPolygon` type by scaling the radius; non-uniform scaling degrades to a plain `Polygon` with explicit vertices.
@@ -147,7 +147,7 @@ Standalone geometric utility functions.
   - Degenerate returns: single `Point` for one distinct vertex, `Segment` for two (including collinear cases), `Polygon` otherwise.
 - `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
-- `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
+- `farthest_points(*points)` — farthest pair(s) among a set of 2D points via convex-hull antipodal rotating calipers (point-to-point distance only, not polygon-to-polygon).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `are_coplanar(*entities)` — standalone coplanarity test checking whether multiple independent entities all share a common plane; extracts defining points, constructs a plane, and verifies all points lie on it. Not for checking if an entity lies in a given `Plane` — use `Plane.is_coplanar(o)` for that.
   - Returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.

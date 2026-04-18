@@ -135,7 +135,9 @@ Risch Differential Equation solver: solves Dy + f·y = g for y in a differential
   - primitive case: when deg(b)==deg(a)−1, calls `limited_integrate` to check if α is an integer-shifted derivative; when deg(b)==deg(a), uses `is_log_deriv_k_t_radical_in_field`
   - exp case: when deg(a)==deg(b), uses `parametric_log_deriv` to potentially raise the bound
 - `spde(a, b, c, n, DE)` — Rothstein's Special Polynomial Differential Equation; reduces RDE to equivalent equation with lower degree bound
-- Helper cases: `no_cancel_b_large`, `no_cancel_b_small`, `cancel_primitive`, `cancel_exp`
+- `no_cancel_b_large`, `no_cancel_b_small` — polynomial RDE helper cases when deg(b) is large or small relative to deg(D)
+- `cancel_primitive` — cancellation case for primitive (logarithmic) extensions; checks if b is a logarithmic derivative (Dz/z) via `is_log_deriv_k_t_radical_in_field`; raises NotImplementedError when b==Dz/z (needs unimplemented `is_deriv_in_field`)
+- `cancel_exp` — cancellation case for hyperexponential extensions
 
 ### [`prde.py`](prde.py)
 Parametric Risch Differential Equation solver (extension of RDE with undetermined constants).
