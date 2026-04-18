@@ -34,7 +34,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
 - **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `key2bounds`, `_setitem`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
-- **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
+- **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry. `_eval_simplify` is aliased to `simplify`, so the core simplification framework's internal hook dispatches here.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
 - **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower`, `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
 - `is_hermitian`: three-valued (True/False/None) via `fuzzy_and`; checks diagonal entries are real and off-diagonal pairs satisfy conjugate symmetry. Returns None when assumptions are insufficient (e.g. symbolic diagonal with no real assumption).
@@ -104,6 +104,7 @@ Base class for all symbolic (unevaluated) matrix expressions.
 - `MatrixExpr`: abstract symbolic matrix type; defines shape, arithmetic operators, and conversion.
 - **Operator dispatch**: `__pow__` handles special exponents (0→Identity, 1→self, -1→Inverse, non-square→ShapeError) before delegating to `MatPow`.
 - **Conversion to concrete form**: `as_explicit` iterates all (i,j) entries and returns an `ImmutableMatrix`; `as_mutable` converts further to mutable dense.
+- **Indexing**: `__getitem__` — tuple key (i,j) returns `_entry(i,j)` after validation; slice key returns `MatrixSlice`; single integer (flat index) decomposes via `divmod` by cols but raises `IndexError` when shape is symbolic (non-concrete dimensions); symbolic single index also rejected.
 - Properties: `shape`, `rows`, `cols`, `is_square`, `T` (transpose).
 - `MatrixElement`: represents a single symbolic entry M[i,j] as an `Expr` node; `doit(deep=True)` recursively evaluates parent matrix and indices before indexing, `doit(deep=False)` indexes with raw args.
 - `Identity(n)`: symbolic n×n identity matrix (square, `is_Identity`); `_eval_inverse` returns self.
@@ -176,7 +177,13 @@ Block-structured symbolic matrices.
 - `DFT`: discrete Fourier transform matrix.
 
 ### [`expressions/factorizations.py`](expressions/factorizations.py)
-- Symbolic matrix factorization nodes: `LofLU`, `UofLU`, `LofCholesky`, `UofCholesky`.
+Symbolic matrix factorization component nodes — each wraps a parent matrix expression and carries `predicates` for the assumption-query system.
+
+- `Factorization(MatrixExpr)`: base; inherits shape from wrapped arg.
+- LU: `LofLU` (lower_triangular), `UofLU` (upper_triangular). Cholesky: `LofCholesky`, `UofCholesky` (inherit from LU nodes).
+- QR: `QofQR` (orthogonal), `RofQR` (upper_triangular). Eigen: `EigenValues` (diagonal), `EigenVectors` (orthogonal).
+- SVD: `UofSVD` (orthogonal), `SofSVD` (diagonal), `VofSVD` (orthogonal).
+- Factory functions: `lu(expr)` → (L, U), `qr(expr)` → (Q, R), `eig(expr)` → (vals, vecs), `svd(expr)` → (U, S, V).
 
 ### [`expressions/slice.py`](expressions/slice.py)
 - `MatrixSlice`: symbolic submatrix slice expression M[i:j, k:l]; `__new__` auto-detects when the parent is itself a `MatrixSlice` and delegates to `mat_slice_of_slice` to collapse nesting.
@@ -194,8 +201,8 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
 - `LU` (raw list-of-lists LU without pivoting), `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
 - `cholesky`: Hermitian decomposition on raw nested lists returning L and conjugate transpose; diagonal entries use `isqrt` (integer square root), restricting input to matrices where diagonal minus accumulated sum is a perfect square; off-diagonal entries use division by L[j][j].
-- `rref_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
-- `LU_solve`: solves via LU decomposition on raw nested lists; creates intermediate symbolic variables (`y` vector), performs forward substitution on L, then backward substitution on U; mutates variable list in-place.
+- `rref_solve`, `cholesky_solve`, `LU_solve`: solver routines on raw nested-list data. Each deep-copies the coefficient matrix, decomposes it, allocates a fresh symbolic `y` vector for intermediate results, then performs forward substitution (mutating `y` in-place) followed by backward substitution (mutating the caller's `variable` list in-place).
+- `cholesky_solve`: decomposes via `cholesky` into L and L*; `LU_solve`: decomposes via `LU` into L and U. Both rely on in-place mutation of passed vectors rather than returning new results.
 - `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it.
 - These are internal backends (standalone functions, not methods); the public API lives in `MatrixBase` (`matrices.py`).
 

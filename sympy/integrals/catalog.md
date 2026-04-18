@@ -89,6 +89,8 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 ### [`risch.py`](risch.py)
 Risch algorithm for integration of transcendental elementary functions.
 - `risch_integrate(f, x)` — main entry point for the Risch decision procedure
+  - Iterates tower levels in reverse; skips levels where integrand is independent of current extension monomial
+  - Dispatches to exp/primitive sub-algorithms per level; applies back-substitutions at termination
 - `DifferentialExtension` — builds and represents a tower of differential field extensions; `increment_level`/`decrement_level` adjust the working extension depth (raises ValueError at boundary)
   - `_exp_part` — attempts to add an exponential monomial to the tower; uses `is_log_deriv_k_t_radical` to detect algebraic dependencies
     - Normalizes n==-1 radical degree to n==1 (inverts u, negates const/powers); restarts extension when algebraic radical avoidable

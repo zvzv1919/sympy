@@ -102,7 +102,7 @@ Sparse polynomial rings and their elements (dict-based representation).
 Sparse rational function fields and their elements.
 
 - `field()`, `xfield()`, `vfield()` — construct rational function field with explicit domain.
-- `sfield(exprs, *symbols)` — construct field from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
+- `sfield(exprs, *symbols)` — construct a **rational function field** from symbolic expressions; splits each expression into numerator/denominator, extracts dictionary representations, and **auto-infers domain from coefficients via `construct_domain`** when no domain is specified; pairs numerator/denominator reps (stepping by 2) to build `FracElement` objects.
 - `FracField` — multivariate distributed rational function field K(x₁,…,xₙ).
   - `__new__` — caches field objects; assigns generator symbols as attributes on the field; **skips `setattr` if an attribute with that name already exists (`hasattr` guard)**, preventing generator names like `'domain'` or `'ring'` from overwriting internal attributes.
   - `ground_new(element)` — create element from ground coefficient; **if ring coercion fails and domain has an associated field (e.g. ZZ→QQ), splits element into numer/denom via the field and constructs a proper fraction**.
@@ -177,10 +177,11 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
-- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **when exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction. For 3+ inputs or mixed Poly/expr inputs, collects all coefficients into one flat list to infer a single unified domain.
+- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**; **when exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction. For 3+ inputs or mixed Poly/expr inputs, collects all coefficients into one flat list to infer a single unified domain.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
+  - `gcd_list(seq)` — GCD of a list of polynomials; **two-phase fallback**: first attempts purely numerical GCD (via `construct_domain`) before polynomial conversion; if polynomial conversion fails, **retries numerical GCD on the failed expressions**; returns `S.Zero` for empty input.
   - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
@@ -258,6 +259,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
 - `dmp_nest(f, l, K)` — wrap a multivariate value in `l` additional nesting levels; **if `f` is not a list (plain scalar), delegates to `dmp_ground`** instead of wrapping in nested lists.
 - `dmp_ground_nth(f, N, u, K)` — extract ground-level coefficient at multi-index N from nested lists; **if polynomial at some level has degree −∞ (zero polynomial), sets degree to −1** to avoid indexing errors; returns `K.zero` if index exceeds length.
+- `dmp_swap(f, i, j, u, K)` — transpose two indeterminates by swapping positions `i` and `j` in each exponent tuple (via dict round-trip); **raises `IndexError` if either index is out of bounds**; returns `f` unchanged if `i == j`.
 - `dmp_permute(f, P, u, K)` — reorder indeterminates by applying a permutation vector P to exponent tuples (via dict round-trip).
 - `dmp_exclude(f, u, K)` — detect and remove variable dimensions unused by any term; returns `(removed_indices, reduced_poly, new_level)`.
 - `dmp_include(f, J, u, K)` — re-insert previously excluded variable dimensions at specified positions.
@@ -335,6 +337,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `func_field_modgcd` — modular GCD over algebraic function fields; **for multivariate inputs (n>1), extracts primitive parts w.r.t. leading variable via `_primitive_in_x0`** to prevent spurious content, then reattaches content GCDs after core computation.
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
   - **Branches on `isinstance(ring.domain, PolynomialRing)`**: if yes (has parameter vars), extracts inner domain for LCM and multiplies by `monom[1:]`; if no, uses `ring.domain` directly.
+- `_func_field_modgcd_p(f, g, minpoly, p)` — per-prime subroutine for function-field modular GCD; **recursively reduces parametric variables** by evaluating at random points in Z_p and interpolating; base case (no parametric indeterminates, i.e. domain is not a `PolynomialRing`) **falls back to `_euclidean_algorithm`**; returns `None` when reconstruction fails.
 - `_euclidean_algorithm(f, g, minpoly, p)` — monic GCD in Z_p[z]/(m(z))[x] via Euclidean algorithm; **returns `None` if a leading coefficient is not invertible mod m(z)** (detected via extended GCD when m(z) is not irreducible).
 - `_degree_bound_bivariate(f, g)` — estimate upper degree bounds for bivariate GCD; reduces mod a prime, evaluates at points.
   - **Falls back to `min(deg(f), deg(g))` if no evaluation point avoids vanishing of the leading coefficient GCD**.
@@ -460,6 +463,7 @@ Symbolic root-finding algorithms (closed-form solutions).
 
 - `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases.
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
+  - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; **returns empty list if leading coefficient ≠ 1 and dividing through produces any irrational coefficient** (requires all normalized coefficients to be rational); swaps resolvent parameters when numerical check against discriminant fails.
@@ -550,6 +554,7 @@ Option processing and validation for `Poly` constructors and functions.
 - `Domain.preprocess(domain)` — parses domain specification from string, `Domain` instance, or object with `to_domain()`.
   - **Regex-based string parsing**: `'Z'`/`'ZZ'` → ZZ, `'Q'`/`'QQ'` → QQ, `'EX'` → EX, `'RR_<prec>'`/`'CC_<prec>'` → `RealField(prec)`/`ComplexField(prec)` with extracted precision, `'GF(<p>)'` → FF(p), `'ZZ[x,y]'`/`'QQ(x,y)'` → polynomial ring/fraction field, `'QQ<a,b>'` → algebraic extension.
 - `Domain.postprocess` — **raises `GeneratorsError` if EX domain is requested without providing generators**, or if composite domain symbols overlap with polynomial generators.
+- `Symbols.default()` — returns a **lazy generator of numbered placeholder names** `s1, s2, s3, …` (via `numbered_symbols('s', start=1)`); used as default symbol names for algebraic decomposition when no explicit names are provided.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
 - `Extension.preprocess(extension)` — validates extension parameter; `1` → `True`, `0` → raises `OptionError`; **empty iterable (e.g. `[]`) → `None` (silently disables extension)** rather than raising an error; non-empty iterable → set of extensions.
 - `build_options(gens, args)` — if `args` has exactly one key `'opt'` and no generators, **returns the existing `Options` object directly** (reuse); otherwise constructs a new `Options`.

@@ -82,6 +82,8 @@ Elliptical entities in 2D.
   - `_do_ellipse_intersection(o)` — ellipse–ellipse / ellipse–circle intersection via solving simultaneous conic equations.
 - `Circle` — `Ellipse` subclass; constructed from center+radius, three points, or center+point. Adds `radius`, `circumference`, `equation()`.
   - Three-point construction: validates collinearity (raises `GeometryError` if collinear), then computes center/radius via `Triangle.circumcenter`/`circumradius`.
+  - `scale(x, y, pt)` — overrides `GeometryEntity.scale`; uniform scaling (x == y) preserves `Circle` type; non-uniform scaling returns an `Ellipse` instead.
+  - `reflect(line)` — overrides `GeometryEntity.reflect` since radius is not a `GeometryEntity`.
 
 ### [`parabola.py`](parabola.py)
 Parabolic entities defined by focus and directrix.

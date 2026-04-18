@@ -147,6 +147,7 @@ Subset generation and manipulation via binary, lexicographic, and Gray code enum
 ### [`prufer.py`](prufer.py)
 Prufer sequence correspondence for labeled trees.
 - `Prufer` — bijection between labeled trees (edge lists) and Prufer codes (length n−2 integer sequences).
+  - Constructor accepts an edge list or a Prufer sequence. When given edges, validates vertex labels are contiguous 0..max; raises `ValueError` listing absent vertices if gaps exist. An optional second arg `n` bypasses validation.
   - `to_prufer(tree, n)` — static; converts edge list to Prufer sequence by iteratively finding the smallest leaf node, recording its neighbor, and removing the edge.
   - `to_tree(prufer)` — static; reconstructs edge list from a Prufer sequence.
   - `prufer_repr` / `tree_repr` — lazy properties returning the Prufer sequence or edge list.
@@ -159,6 +160,9 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
 - `Polyhedron` — 3D solid defined by named corners, faces, and a permutation group (`pgroup`).
   - `rotate(perm)` — apply a permutation to vertices in place. Accepts `Permutation` or int index into `pgroup`. Validates permutation size matches vertex count; raises `ValueError` on mismatch.
   - Properties: `corners`, `faces`, `edges`, `pgroup`, `size`, `array_form`, `cyclic_form`.
+- `_pgroup_calcs()` — constructs all five Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron) with face definitions and rotation groups.
+  - Dual solids (octahedron from cube, icosahedron from dodecahedron) derive their rotation groups from the enclosing solid via `_pgroup_of_double`.
+  - Dodecahedron rotations use `_string_to_perm` to decode compact shorthand strings into composed permutations.
 
 ---
 

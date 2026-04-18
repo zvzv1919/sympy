@@ -78,6 +78,9 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
   - Handles metric tensors specially via covariant/contravariant signature lookup.
 - `_TensorManager` — singleton managing commutation groups and global tensor settings.
+  - `set_comm(i, j, c)` — registers commutation parameter (0=commuting, 1=anticommuting, None=no relation) between two named groups; new groups auto-commute with the universal group 0.
+  - `get_comm(i, j)` — returns commutation parameter for group pair; defaults to 0 if either is group 0, else None for unregistered pairs.
+  - `TensorManager` — module-level instance of `_TensorManager`.
 
 ---
 

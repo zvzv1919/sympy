@@ -71,7 +71,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `_solveset(f, symbol, domain, _check=False)` — internal helper that dispatches to type-specific solvers and optionally validates results.
   - Product decomposition: decomposes `f*g == 0` into `Union(f==0, g==0)` only when all factors are verified finite for finite inputs (`_is_finite_with_finite_vars`); prevents spurious solutions where one factor diverges at zeros of another.
   - Post-solve validation (`_check=True`): for FiniteSet results, filters out invalid candidates via `domain_check`, but exempts `RootOf` (implicit algebraic root) objects from validation. ConditionSet results bypass checking entirely.
-- `_solve_radical(f, symbol, solveset_solver)` — solves equations with radicals via `unrad`; when a cover (substitution) variable is returned, tests whether it can equal I — if not, replaces it with a real-constrained dummy before solving.
+- `_solve_radical(f, symbol, solveset_solver)` — solves equations with radicals via `unrad`; when a cover (substitution) variable is returned, tests whether it can equal I — if not, replaces it with a real-constrained dummy before solving. Filters final candidates through `checksol` to eliminate extraneous solutions introduced by radical removal (e.g. squaring both sides).
 - `_solve_abs(f, symbol, domain)` — solves equations involving Abs; real domain only (raises ValueError for complex domain). Decomposes `p*|q| + r` into two cases: solves with `q` non-negative and with `q` negative, intersecting each solution with the corresponding sign condition on the argument.
 - Represents unsolved/conditional results as ConditionSet (not Piecewise).
 

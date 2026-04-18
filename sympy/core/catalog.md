@@ -133,6 +133,7 @@ Named algebraic variables and temporary dummy symbols.
 
 - `Symbol` — cached algebraic variable; `__new_stage2__` manages assumptions via `StdFactKB`, preserves copy of user-specified assumptions (vs defaults) in `_generator` so serialization can distinguish explicit from implicit commutativity
 - `Symbol._sanitize()` — validates and coerces assumption values
+- `Symbol.as_real_imag(deep, **hints)` — decomposes into `(re(self), im(self))`; returns `None` (not a tuple) when `hints.get('ignore')` equals the symbol itself
 - `Dummy` — unique uncached symbol (internal counter `_count`); identity by index, not name
 - `Wild` — pattern-matching variable with optional `exclude`/`properties` constraints
 
@@ -178,6 +179,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - For Mul, non-commutative factors after the first dependent one are all grouped as dependent
 - `equals(other, failing_expression)` — determines symbolic equality when `simplify(self - other)` fails to produce zero; multi-stage: numerical probing, surd self-consistency, then minimal polynomial of the difference (if `mp.is_Symbol`, difference is zero → True; otherwise False)
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation moves value toward zero, else None
+  - When `c` is an Add, extracts its rational primitive before attempting factoring; when `c` is a Mul, recursively splits into two-term factors
   - Numeric `extract_additively`: requires diff has same sign as self AND smaller magnitude (overshooting zero returns None)
   - Add `extract_multiplicatively`: requires all terms individually divisible
 - `as_coefficient(expr)` — returns scalar multiplier `r` such that `self == r*expr`, or None if self is not a pure scalar multiple of expr
@@ -263,7 +265,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `expand_power_base(expr, deep, force)` — wrapper around `expand(power_base=True)`; splits `(a*b)**e` into `a**e * b**e`; `deep=False` applies only at top level (does not descend into subexpressions like `sin(...)`)
 - `expand_power_exp`, `expand_complex`, `expand_trig`, `expand_log`, `expand_func`, `expand_mul` — similar single-hint expand wrappers
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
-- `count_ops(expr, visual)` — tallies arithmetic operations in an expression; handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
+- `count_ops(expr, visual)` — tallies arithmetic operations in an expression; skips S.One entirely (0 ops); classifies other rationals by sign (NEG) and denominator (DIV); handles Add terms by classifying each as ADD or SUB; corrects count when leading term is negative (e.g., `-x + y`)
 - `nfloat(expr, n, exponent)` — converts all Rationals in an expression to Floats; by default protects exponents via Dummy replacement
   - When `exponent=True`, requires separate pass to float-ify Integer exponents because `Pow._eval_evalf` special-cases them
 

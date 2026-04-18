@@ -25,7 +25,8 @@ Main inference engine for the assumptions system.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive`, `Q.negative`, `Q.nonnegative`, `Q.nonpositive` each document the asymmetry between negation and "non" counterparts: e.g., `~Q.negative(I)` is `True` but `Q.nonnegative(I)` is `False`, because "non" predicates require realness.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
-    - Docstrings document structural requirements (e.g., squareness — non-square matrices immediately return False for orthogonal/unitary/positive_definite) and cross-predicate inference rules.
+    - Docstrings document structural requirements (e.g., squareness — non-square matrices immediately return False for orthogonal/unitary/positive_definite).
+    - Docstrings define cross-predicate inference rules (e.g., `Q.diagonal` iff both `Q.upper_triangular` and `Q.lower_triangular`; `Q.invertible` iff `Q.fullrank` ∧ `Q.square`).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `_extract_facts(expr, symbol)`: extracts assumption predicates relevant to a given symbol from a compound Boolean expression; applies De Morgan's law to push negations inward (converting negated And/Or).
 - `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then falls back in two tiers.
@@ -98,7 +99,7 @@ Handlers for **calculus predicates**: finiteness / boundedness.
 - `AskFiniteHandler`: evaluates `Q.finite` with methods for `Symbol`, `Add`, `Mul`, `Pow`, `log`, `exp`, `cos`, `sin`, number constants, `Infinity`, `NegativeInfinity`.
 
 ### [`handlers/matrices.py`](handlers/matrices.py)
-Handlers for **matrix property predicates**.
+Handlers that **evaluate** matrix property predicates for specific matrix expression types (e.g., `MatAdd`, `MatMul`, `Transpose`). Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
 - `AskSquareHandler`, `AskSymmetricHandler`, `AskInvertibleHandler`.
 - `AskOrthogonalHandler`, `AskUnitaryHandler`, `AskFullRankHandler`.
 - `AskPositiveDefiniteHandler`, `AskUpperTriangularHandler`, `AskLowerTriangularHandler`, `AskDiagonalHandler`.
