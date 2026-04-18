@@ -379,7 +379,8 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_invert(f, g, K)` / `dmp_invert` — modular inverse; **raises `NotInvertible("zero divisor")` if gcd(f,g) ≠ 1**.
 - `dup_euclidean_prs(f, g, K)` — Euclidean polynomial remainder sequence in `K[x]`; **iteratively computes `dup_rem` until remainder is zero**, collecting all remainders into a list starting with `[f, g, …]`.
 - `dmp_euclidean_prs` — multivariate wrapper; **raises `MultivariatePolynomialError` for `u > 0`** (univariate only).
-- `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
+- `dup_primitive_prs` — primitive PRS in `K[x]`; uses **pseudo-remainder (`dup_prem`) followed by content extraction (`dup_primitive`) at each step**, dividing out the GCD of coefficients from each remainder to control coefficient growth; distinct from Euclidean PRS which uses plain `dup_rem`.
+- `dup_inner_subresultants` (and `dmp_` variants) — subresultant polynomial remainder sequences.
   - `dmp_primitive_prs` — **raises `MultivariatePolynomialError` for `u > 0`** (same pattern as `dmp_euclidean_prs`; delegates to `dup_primitive_prs` when univariate).
   - `dup_inner_subresultants` — computes subresultant PRS and scalar subresultants; **abnormal case (degree drop `d > 1`)**: updates scalar subdeterminant via `c = (-lc)^d / c^(d-1)` (quotient formula); **normal case (`d == 1`)**: simply `c = -lc`.
   - `dmp_inner_subresultants` — multivariate subresultant PRS; swaps inputs if `deg(f) < deg(g)`.
@@ -468,7 +469,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities; **if domain is not exact (e.g. RR), converts to exact domain, factors there, then converts results back**.
   - For exact fields, the cleared denominator is folded into the leading coefficient (`coeff/denom`); **for inexact fields, the denominator is instead divided out of each factor individually** via `dmp_quo_ground` before converting back to the inexact domain.
-  - `dmp_factor_list` first extracts common variable powers via `dmp_terms_gcd`; **after core factorization, reinserts each extracted power as a separate monomial factor** (constructed as a single-term dict entry at the appropriate nesting level).
+  - `dmp_factor_list` first extracts common variable powers via `dmp_terms_gcd`; **for ZZ domain, uses `dmp_exclude`/`dmp_include` to remove indeterminates not present in the polynomial before factoring**, reducing the effective number of variables; **after core factorization, reinserts each extracted power as a separate monomial factor** (constructed as a single-term dict entry at the appropriate nesting level).
 - `dup_zz_irreducible_p` — integer polynomial irreducibility test via **Eisenstein's criterion** (checks if a prime divides all non-leading coefficients but its square does not divide the constant term).
 - `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing (general).
 - `dup_trial_division`, `dmp_trial_division` — determine factor multiplicities via repeated division; **includes factors with multiplicity 0** if candidate does not divide.
@@ -941,6 +942,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `SubQuotientModule` (in `modules.py`) — submodule of a quotient module; `__init__` builds a `base` submodule by placing original generators first, then killed-module generators (ordering is critical).
   - `_syzygies()` — computes kernel of the surjection onto the subquotient; **truncates full syzygy vectors to only the first `len(self.gens)` components**, projecting away the killed-module entries; relies on the generator ordering established in `__init__`.
+- `QuotientModuleElement.eq(d1, d2)` (in `modules.py`) — equality of quotient module elements; **returns `True` iff `d1 - d2` is in the killed submodule** (coset representative equivalence).
 - `QuotientModule.is_submodule(other)` (in `modules.py`) — for two QuotientModules, **requires killed submodules to be equal AND base modules to have containment**; for SubQuotientModule, checks container identity.
 - `QuotientModule.convert(elem)` (in `modules.py`) — when source is another QuotientModule, succeeds **only if `self.killed_module` is a submodule of `elem.module.killed_module`**; raises `CoercionFailed` otherwise.
 - `ModuleHomomorphism.__mul__` (in `homomorphisms.py`) — **if other is a `ModuleHomomorphism` with compatible domain/codomain, composes the two maps; otherwise attempts `ring.convert(other)` for scalar multiplication**; returns `NotImplemented` on `CoercionFailed`. `__rmul__` is aliased to `__mul__`.

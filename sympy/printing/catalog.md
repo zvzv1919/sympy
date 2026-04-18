@@ -109,6 +109,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `fcode()` — top-level API; accepts `assign_to`, `precision`, `source_format` ('fixed'/'free'), `standard` (66/77/90/95/2003/2008), `human`, `contract`, and `user_functions`.
 - Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds).
 - `_print_Add` — separates terms into pure-real, pure-imaginary, and mixed; when imaginary parts exist, wraps real+imaginary in `cmplx(re, im)` and appends the mixed (symbolic) portion with sign detection (leading `-` check).
+- `indent_code` — auto-indents by nesting level; in free format, adds extra padding for continuation lines; in fixed format, pads leading columns and wraps via `_wrap_fortran`.
 - `_wrap_fortran` — enforces Fortran fixed-format line length (72 chars) by wrapping long lines with continuation markers.
 - Loop syntax: `do VAR = start, stop` / `end do`.
 

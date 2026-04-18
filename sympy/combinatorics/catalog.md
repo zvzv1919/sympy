@@ -39,6 +39,7 @@ Individual permutation representation, construction, and properties.
 Permutation group (set of permutations) with group-theoretic algorithms.
 - `PermutationGroup` — the main group class, constructed from generating permutations.
   - **BSGS framework**: `schreier_sims`, `schreier_sims_incremental`, `schreier_vector`.
+  - `schreier_sims` — wrapper that caches BSGS results; when the base is empty (trivial group), sets `_transversals` and `_basic_orbits` to empty lists and returns early without computing orbit/transversal data.
   - `schreier_sims_incremental` — deterministic BSGS construction: computes Schreier generators, sifts each through the chain via `_strip`/`_strip_af`, and handles failures — extends the base when a non-identity residual survives all levels, or adds a new strong generator at the level where sifting failed.
   - `schreier_sims_random` — randomized BSGS computation: orchestrates a sifting loop that samples random elements, decides when to extend the base sequence (new anchor points), and amends stabilizer chains/orbits when sifting fails. Uses `_strip` from `util.py` as a subroutine.
   - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`.
@@ -67,7 +68,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
 - Standalone orbit functions (module-level, not `PermutationGroup` methods):
   - `_orbit(degree, generators, alpha)` — computes the set of elements reachable from a starting point under group generators.
   - `_orbits(degree, generators)` — partitions all domain elements into disjoint equivalence classes by iterating single-point orbits.
-  - `_orbit_transversal` — finds representative group elements mapping a point to each member of its orbit.
+  - `_orbit_transversal(degree, generators, alpha, pairs, af)` — finds representative group elements mapping a point to each member of its orbit.
+    - `pairs=True` returns list of `(point, element)` tuples; `af=True` keeps elements in raw array form (skips `Permutation` wrapping). When both are True, returns raw array-form tuples without conversion.
 
 ---
 

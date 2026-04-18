@@ -89,7 +89,8 @@ All concrete numeric types and their arithmetic operations.
 - `NumberSymbol` — base for named constants (pi, E, etc.)
 - `Infinity` / `NegativeInfinity` — signed unbounded sentinels; each implements `_eval_power`
   - `Infinity.__add__`/`__sub__`/`__mul__` — arithmetic operators; when operand is Float, returns `Float('inf')`/`Float('-inf')` (preserving float type) except Float zero × infinity → NaN; when operand is exact zero (S.Zero), also returns NaN; when operand is non-Float Number, returns symbolic `S.Infinity`/`S.NegativeInfinity`
-  - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN; complex (non-real) numeric exponent: extracts real part — positive real part → ComplexInfinity, negative → 0, zero → NaN
+  - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN
+  - Complex (non-real) numeric exponent: extracts real part — positive → ComplexInfinity, negative → 0, zero → NaN, indeterminate sign → falls back to `self**expt.evalf()`
   - `NegativeInfinity.__add__`/`__sub__`/`__mul__`/`__div__` — same float-vs-symbolic branching as Infinity; Float operands yield Float results, exact operands yield symbolic singletons; zero × -oo → NaN for both exact and Float zero
   - `NegativeInfinity.__sub__` — indeterminate self-subtraction: `-oo - (-oo)` → NaN; `-oo - Float('-inf')` → Float('nan'); subtracting any other Number returns -oo
   - `NegativeInfinity._eval_power` — integer exponents: odd → -oo, even → oo; non-integer numeric exponents: decomposes as `(-1)**expt * oo**expt` instead of returning a direct result
@@ -150,6 +151,7 @@ All concrete numeric types and their arithmetic operations.
 - `Pow._eval_nseries` — n-series expansion around bounded nonzero base limit; rewrites `b` as `b0*(1+z)` and computes binomial Taylor expansion; falls back to first-order `1+z` when big-O of `z` or scaled order is zero (non-polynomial order like `O(exp(-1/x))`)
 - `Pow._eval_expand_power_base` — distributes exponent over a product `(a*b)**n → a**n * b**n`; for NC factors: positive integer exponent repeats the NC sequence e times, negative integer inverts; non-integer exponents keep NC factors grouped (undistributed)
   - Sifts commutative bases into nonneg/neg/other/imag categories; consolidates `I` factors via mod-4 cycle (e.g., two I's become -1, canceling an existing negative factor or adding one)
+  - Non-integer exponent negative-factor handling: multiple negatives are made positive (residual -1 in other); single negative with other unseparable factors: numeric (not -1) splits into -1 + positive part, literal -1 stays grouped unseparated
 - `Pow._eval_expand_power_exp` — splits `a**(n+m) → a**n * a**m` when exponent is a commutative Add
 - `Pow.as_content_primitive(radical, clear)` — extracts positive Rational from `base**exp`; when base is rational, decomposes exponent into integer + fractional parts via `divmod` and splits the power accordingly; when base is Mul, recursively extracts content from base
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag

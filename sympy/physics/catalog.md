@@ -74,6 +74,7 @@ Legacy physical-units module with ~200 predefined units, physical constants, and
 
 ### [`wigner.py`](wigner.py)
 Exact angular-momentum coupling coefficients (returns rationals × √rational).
+- `_Factlist` / `_calc_factlist(nn)` — module-level factorial cache (list); lazily extends on demand up to nn, avoiding redundant recalculation across all coefficient functions.
 - `wigner_3j(j1,j2,j3,m1,m2,m3)` — Wigner 3-j symbol; validates integer/half-integer inputs (doubles values and checks integrality, raises ValueError otherwise); returns 0 early for selection-rule violations (triangle inequality, m1+m2+m3≠0, |m|>j); guards against imaginary parts from factorial square-roots.
 - `wigner_6j`, `wigner_9j` — higher-order recoupling coefficients.
 - `clebsch_gordan(j1,j2,j3,m1,m2,m3)` — Clebsch-Gordan coefficient (wrapper around wigner_3j).
