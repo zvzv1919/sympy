@@ -44,6 +44,7 @@ One-dimensional quantum harmonic oscillator: closed-form analytical wavefunction
 Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
 - `BosonicOperator`, `CreateBoson` (B†), `AnnihilateBoson` (B) — bosonic ladder operators with commutation relations.
 - `FermionicOperator`, `CreateFermion` (Fd), `AnnihilateFermion` (F) — many-body fermionic ladder operators with fixed anticommutation rules and Fermi-level orbital properties (not mode-labeled like `quantum/fermion.py`).
+  - `apply_operator(state)` — applies to FockStateKet directly; for Mul (product) expressions, checks if the first non-commutative factor is a FockStateKet and acts on it while preserving commutative prefactors; otherwise returns plain product.
   - `is_restricted` — returns +1 (above_fermi), −1 (below_fermi), or 0 (general/unrestricted) based on orbital index symbol assumptions.
   - `is_above_fermi`/`is_below_fermi` — whether the index *allows* values above/below Fermi level (general indices allow both).
 - `NO` — normal-ordering bracket for `secondquant` operators (CreateBoson/AnnihilateBoson, CreateFermion/AnnihilateFermion); reorders into creation-before-annihilation form.
@@ -199,8 +200,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 
 ### [`vector/`](vector/catalog.md)
 Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
-- `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic; owns its own `_latex` and `_pretty` rendering (not delegated to `printing.py`).
-  - `_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
+- `vector.py` — `Vector` class: 3-D vector with frame-aware arithmetic; owns its own `__str__`, `_latex`, and `_pretty` rendering (not delegated to `printing.py`).
+  - `__str__`/`_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
   - `Vector.doit(**hints)` — propagates keyword hints (e.g. `deep=False`) element-wise to each scalar coefficient via `applyfunc`; `simplify()` and `subs()` follow the same per-component pattern.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.

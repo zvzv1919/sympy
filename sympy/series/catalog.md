@@ -15,7 +15,7 @@ The `series` module handles series expansions, limits, sequences, and asymptotic
 ### [`limits.py`](limits.py)
 Limit computation entry point and heuristic evaluator. Tries fast heuristic decomposition of composite expressions (Mul, Add, Pow, Function) first; falls back to Gruntz algorithm when heuristics bail out.
 - `limit(e, z, z0, dir)` — compute limit of expression; main entry point.
-- `Limit(Expr)` — unevaluated limit object; `.doit()` evaluates via heuristics or Gruntz; also detects sequence limits via `limit_seq()`.
+- `Limit(Expr)` — unevaluated limit object; `.doit()` orchestrates a multi-layered fallback chain: rewrite factorials → reciprocal substitution → gruntz → heuristics (on PoleError/ValueError) → `limit_seq()` (on NotImplementedError when z0 is ∞).
 - `heuristics(e, z, z0, dir)` — fast-path that evaluates sub-expressions individually and reconstructs the result.
   - Returns `None` (bailing out to Gruntz) if any sub-limit is unevaluated (`Limit`), indeterminate (infinite with unknown finiteness), `NaN`, or if the reconstructed expression is `NaN`.
   - For infinite target points, substitutes reciprocal variable and re-evaluates at zero.
@@ -68,7 +68,7 @@ Fourier series decomposition into sine/cosine components.
 Discrete sequence representations and term-wise arithmetic on raw index-based sequences (not formal power series — FPS arithmetic is in `formal.py`).
 - `sequence(seq, limits)` — factory function to create sequence objects.
 - `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`, `._ith_point(i)`.
-- `_ith_point(i)` — position of i-th element in a sequence; iterates backward from stop when start is negative infinity.
+- `_ith_point(i)` — inherited point-indexing helper (parallel to `SeriesBase._ith_point`).
 - `EmptySequence(SeqBase)` — singleton trivial/empty sequence; interval is the empty set.
 - `SeqFormula(SeqExpr)` — formula-defined sequence (e.g., n²).
 - `SeqPer(SeqExpr)` — periodic sequence from a tuple of repeating values.
@@ -111,8 +111,8 @@ Finite difference operators for symbolic sums.
 
 ### [`series_class.py`](series_class.py)
 Abstract base class for all series representations.
-- `SeriesBase(Expr)` — abstract base for series (not sequences); `.interval`, `.start`, `.stop`, `.length`, `.term(pt)`.
-- `_ith_point(i)` — compute position of i-th element; iterates backward from stop when start is negative infinity. Used by `__iter__` and `__getitem__`.
+- `SeriesBase(Expr)` — canonical abstract base for ordered mathematical expansions (not discrete sequences); `.interval`, `.start`, `.stop`, `.length`, `.term(pt)`.
+- `_ith_point(i)` — canonical definition: compute position of i-th element; reverses direction (iterates backward from stop) when start is negative infinity. Drives `__iter__` and `__getitem__`.
 
 ### [`__init__.py`](__init__.py)
 Package initialization; aggregates public API exports from all submodules.

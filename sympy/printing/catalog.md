@@ -81,7 +81,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 ### [`str.py`](str.py)
 `StrPrinter` — generates readable **1D flat-text** string representations with precedence-based parenthesization. No 2D layout, fraction bars, or spatial arrangement.
 - `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
-- `_print_Mul` — splits factors into numerator/denominator lists; uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator (prevents re-simplification), but allows evaluation when exponent is exactly `-1` (since negation yields 1, collapsing to the base).
+- `_print_Mul` — splits factors into numerator/denominator lists; formats as `a*b/c` (single denominator, no parens) or `a*b/(c*d)` (multiple denominators wrapped in parentheses).
+  - Uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator; allows evaluation when exponent is exactly `-1` (negation yields 1, collapsing to base).
 - `_print_MatrixSlice` — renders matrix sub-range access as flat 1D `A[start:stop:step, ...]` text; simplifies by omitting unit step, collapsing single-element ranges, and dropping zero start index.
 
 ### [`codeprinter.py`](codeprinter.py)

@@ -96,7 +96,12 @@ Handlers that **evaluate** set-membership predicates for specific expression typ
 
 ### [`handlers/ntheory.py`](handlers/ntheory.py)
 Handlers for **number-theory predicates**: prime, composite, even, odd.
-- `AskPrimeHandler`, `AskCompositeHandler`, `AskEvenHandler`, `AskOddHandler`.
+- `AskPrimeHandler`: dispatch on `Basic`, `Integer`, `Rational`, `Infinity`, `NegativeInfinity`, `ImaginaryUnit`, `Float`, `Mul`, `Pow`, `Integer`, `NumberSymbol`.
+- `AskCompositeHandler`: dispatch on `Basic`, `Expr`, `Integer`.
+- `AskEvenHandler`: dispatch on `Basic`, `Expr`, `Mul`, `Add`, `Pow`, `Integer`, `Rational`, `Infinity`, `NegativeInfinity`, `ImaginaryUnit`, `NumberSymbol`, `Abs`, `re`, `im`.
+  - `Abs`, `re`: if argument is real, delegates to `Q.even` on the argument.
+  - `im`: if argument is real, returns `True` (since `im(real) = 0` and 0 is even).
+- `AskOddHandler`: dispatch on `Expr`, `Basic`; derives oddness from `Q.integer` ∧ ¬`Q.even`.
 
 ### [`handlers/calculus.py`](handlers/calculus.py)
 Handlers for **calculus predicates**: finiteness / boundedness.

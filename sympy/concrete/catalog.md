@@ -77,6 +77,7 @@ Gosper's algorithm for hypergeometric indefinite summation.
 - `gosper_normal(f, g, n)` — compute Gosper's normal form of f/g.
 - `gosper_term(f, n)` — compute Gosper's hypergeometric term.
 - `gosper_sum(f, k)` — closed-form **definite** hypergeometric summation over finite ranges (returns result or None). Called as subroutine by `eval_sum_symbolic`; does **not** handle infinite series.
+  - Falls back to symbolic `limit()` when substituting summation bounds into the antidifference produces an undefined (NaN) result.
 
 ### [`delta.py`](delta.py)
 Simplification of sums and products containing Kronecker delta functions.

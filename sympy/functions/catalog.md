@@ -172,6 +172,8 @@ Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFa
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)
 Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`, `stirling`.
+- `fibonacci` — Fibonacci numbers F(n) (0,1,1,2,3,5,8,...); also generates Fibonacci polynomials when called with two args. `eval` returns ∞ for n=∞.
+- `lucas` — Lucas numbers L(n) (2,1,3,4,7,11,...); companion sequence to Fibonacci with initial values L₀=2, L₁=1. `eval` returns ∞ for n=∞; integer n delegates to `fibonacci(n+1)+fibonacci(n-1)`.
 - `catalan` — Catalan number C_n = binomial(2n,n)/(n+1); `eval` returns gamma-based closed form for nonneg integers and negative non-integers; for negative integers returns 0 (n≤−2) or −1/2 (n=−1).
 - `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
   - `_eval_expand_func` — decomposes integer-shifted arguments: H(n+k) adds positive reciprocal terms, H(n−k) adds negative reciprocal terms; rational arguments expand via trigonometric digit-extraction sums.

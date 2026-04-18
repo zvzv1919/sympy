@@ -110,6 +110,7 @@ All concrete numeric types and their arithmetic operations.
 ### [`mul.py`](mul.py)
 `Mul` class — commutative n-ary product. `flatten()` collects powers, coefficients, and separates commutative/non-commutative factors.
 - `flatten()` canonicalizes negative numeric bases with non-integer rational exponents by extracting the sign into a running `(-1)**e` accumulator and storing the positive base separately for later combination
+- `flatten()` merges adjacent non-commutative powers with same base (a^e1 * a^e2 → a^(e1+e2)) only when the combined exponent is not an Add; this allows integer merging (a^2*a^3→a^5) but prohibits symbolic (a^x*a^y stays separate)
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
@@ -129,6 +130,8 @@ All concrete numeric types and their arithmetic operations.
 - `Pow._eval_power` — simplifies nested powers like `(x**a)**b`
 - `Pow._eval_evalf(prec)` — numerical evaluation of `base**exp`; when exponent is negative and base is non-real, rewrites as `conjugate(base)/|base|²` with negated exponent to avoid complex-power precision issues
 - `Pow._eval_nseries` — n-series expansion around bounded nonzero base limit; rewrites `b` as `b0*(1+z)` and computes binomial Taylor expansion; falls back to first-order `1+z` when big-O of `z` or scaled order is zero (non-polynomial order like `O(exp(-1/x))`)
+- `Pow._eval_expand_power_base` — distributes exponent over a product `(a*b)**n → a**n * b**n`; for NC factors: positive integer exponent repeats the NC sequence e times, negative integer inverts; non-integer exponents keep NC factors grouped (undistributed)
+- `Pow._eval_expand_power_exp` — splits `a**(n+m) → a**n * a**m` when exponent is a commutative Add
 - `Pow.as_content_primitive(radical, clear)` — extracts positive Rational from `base**exp`; when base is rational, decomposes exponent into integer + fractional parts via `divmod` and splits the power accordingly; when base is Mul, recursively extracts content from base
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag
 

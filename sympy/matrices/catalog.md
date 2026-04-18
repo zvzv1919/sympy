@@ -31,7 +31,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
-- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve` (symmetric→direct Cholesky; overdetermined rows≥cols→normal equations A^T·A then Cholesky; underdetermined→raises), `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**:
@@ -168,7 +168,10 @@ Block-structured symbolic matrices.
 - `refine_MatMul`: assumption-based simplification of matrix products — reduces X·Xᵀ→Identity when X is orthogonal, X·conjugate(X)→Identity when X is unitary. Registered as `handlers_dict['MatMul']` for the refine system.
 
 ### [`expressions/matadd.py`](expressions/matadd.py)
-- `MatAdd`: unevaluated symbolic matrix sum A+B+C…; `doit()` evaluates.
+- `MatAdd`: unevaluated symbolic matrix sum A+B+C…; `doit()` evaluates via `canonicalize`.
+- `validate`: checks all args are matrices with matching shapes.
+- **Canonicalization rules**: `rm_id` (remove zeros), `unpack`, `flatten`, `glom` (combine like matrix terms by coefficient), `merge_explicit`, `sort`.
+- `merge_explicit`: merges concrete `MatrixBase` summands into one; requires >1 explicit matrix to act, otherwise returns input unchanged.
 
 ### [`expressions/determinant.py`](expressions/determinant.py)
 - `Determinant`: unevaluated symbolic determinant det(M); `doit()` delegates to `_eval_determinant`.

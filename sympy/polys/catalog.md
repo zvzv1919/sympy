@@ -131,6 +131,7 @@ Sparse rational function fields and their elements.
 User-facing `Poly` class and public free functions for polynomial manipulation.
 
 - `Poly` — main symbolic polynomial class.
+  - `free_symbols_in_domain` — symbols appearing only in the coefficient ring (not the indeterminates); **for composite domains (`is_Composite`), collects free symbols from the domain's sub-generators; for expression domain (`is_EX`), iterates over all coefficient values and collects their free symbols**; returns empty set for simple numeric domains.
   - `new(rep, *gens)` — construct Poly from raw `DMP` representation; **raises `PolynomialError` if `rep.lev != len(gens) - 1`** (nesting level must match generator count minus one).
   - `_from_poly(rep, opt)` — construct from existing Poly; **if generators are the same set in different order, calls `reorder`; if generators differ, falls back to `_from_expr`**.
   - `_from_expr`, `_from_dict`, `_from_list` — alternative constructors.
@@ -275,7 +276,8 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`; **raises `IndexError` if `m` ≤ 0; returns `f` unchanged if `m == 1` or `f` is empty**.
 - `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
-- `dmp_strip`, `dmp_terms_gcd` — structural manipulation.
+- `dmp_strip` — strip leading zero coefficients from nested lists.
+- `dup_terms_gcd`, `dmp_terms_gcd` — remove GCD of term exponents; `dup_terms_gcd` returns `(0, f)` unchanged when trailing coefficient is nonzero or polynomial is empty.
 - `dmp_inject(f, u, K, front)` — flatten `K[X][Y]` → `K[X,Y]`; when `front=True`, coefficient-ring generators precede outer generators in monomial tuples.
 - `dmp_eject(f, u, K, front)` — reverse of inject: `K[X,Y]` → `K[X][Y]`; **splits monomial tuple using `K.ngens`: when `front=False` (default), trailing positions map to coefficient ring generators; when `front=True`, leading positions do**.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).

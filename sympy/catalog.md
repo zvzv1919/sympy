@@ -524,6 +524,7 @@ New-style 3D vector algebra module (sympy.vector). NOT physics.vector.
 - `functions.py` — `express`, `matrix_to_vector`, `scalar_potential`, `scalar_potential_difference` (potential difference between points; scalar input used directly without computing potential from vector field); `_path` (find traversal route between two nodes in parent-child hierarchy via lowest common ancestor; raises ValueError if no shared root).
 - `deloperator.py` — `Del`: vector differential operator (nabla); `gradient` (always creates Derivative instances), `dot` (divergence; uses `_diff_conditional` which skips differentiation when component is independent of coordinate variable, returning zero directly), `cross` (curl).
 - `orienters.py` — `ThreeAngleOrienter` (base for Body/Space orienters; `__new__` converts X/Y/Z axis letters to 1/2/3 numerals, validates against approved rotation sequences — raises TypeError for invalid orders like 'XYY'), `QuaternionOrienter`, `BodyOrienter` (`_in_order=True`: multiply elementary rotations in given order), `SpaceOrienter` (`_in_order=False`: reverse multiplication order), `AxisOrienter` (`rotation_matrix(system)`: computes 3×3 DCM via Rodrigues' formula — transposes result before returning; NOT just a parameter container).
+- `dyadic.py` — `Dyadic`: second-rank tensor (outer product of vectors) for new-style vector module; `BaseDyadic.__new__` (zero-vector input → returns Dyadic.zero), `DyadicMul`, `DyadicAdd`, `DyadicZero`.
 - Caveats: Separate from `physics/vector/` which uses `ReferenceFrame`-based classical mechanics vectors. `scalar_map` is here, NOT in `physics/vector/frame.py`.
 
 ### [`stats/`](stats/catalog.md)
@@ -674,6 +675,7 @@ Holonomic function representation via differential equations.
 Abstract index notation for tensors: `TensorHead`, `TensorIndex`, `TIDS`, Einstein summation.
 - `tensor.py` — `TensMul.canon_bp` (canonicalization), `TensAdd`, `TensorIndexType` (`data` setter: 1D array auto-expanded to 2D diagonal matrix for metric; also sets Kronecker delta data; `get_epsilon`: construct Levi-Civita epsilon tensor; returns None when eps_dim is symbolic/non-integer), `TIDS.from_components_and_indices`; `TensorSymmetry` (monoterm slot symmetry via BSGS; `__new__` accepts 1 tuple or 2 args; raises TypeError on >2 args), `tensorsymmetry` (factory from Young tableaux shapes).
   - `tensor_indices`: create named indices from comma-separated string; returns bare object for single name, list for multiple.
+  - `tensorhead`: convenience factory — accepts index type list and nested-list symmetry spec, internally constructs `tensorsymmetry` and `TensorType`, returns named `TensorHead`(s).
 - `index_methods.py` — `get_contraction_structure` (recursive analysis of repeated/dummy indices in expressions; returns nested dict mapping index tuples to term sets; Pow/exp recurse base and exponent independently), `get_indices`.
 - `indexed.py` — `Idx` (integer subscript for array access; single dimension arg→lower=0, upper=dim-1; numeric label short-circuits to number), `Indexed`, `IndexedBase`.
 - `array/` — N-dimensional arrays (dense/sparse, mutable/immutable): `Array`, `tensorproduct`, `tensorcontraction` (index summation), `derive_by_array` (element-wise symbolic derivatives); `NDimArray._scan_iterable_shape` (recursive nested-collection validator: infers shape from iterable structure, raises ValueError "could not determine shape unambiguously" on ragged/inconsistent nesting depths); `NDimArray._parse_index` (convert multi-axis coordinate tuple to flat storage index via row-major linearization; validates rank and per-axis bounds).
@@ -686,7 +688,7 @@ Abstract index notation for tensors: `TensorHead`, `TensorIndex`, `TIDS`, Einste
 
 ### [`sets/`](sets/catalog.md)
 Set theory: intervals, finite sets, unions, complements, images.
-- `sets.py` — `Set` base class (`_infimum_key`: sorting key via infimum; returns ∞ on failure), `Interval`, `FiniteSet`, `Union` (with `reduce`: merge FiniteSets then iterative pairwise simplification; `__iter__`: round-robin interleaving of constituent set iterators for fair ordering), `Complement`, `ProductSet` (Cartesian product of sets; `_union`: simplifies only when first or last factor matches — middle-only match returns None; `_intersect`: pairwise intersection of corresponding factors).
+- `sets.py` — `Set` base class (`_infimum_key`: sorting key via infimum; returns ∞ on failure), `Interval`, `FiniteSet`, `Union` (with `reduce`: merge FiniteSets then iterative pairwise simplification; `__iter__`: round-robin interleaving of constituent set iterators for fair ordering), `Complement`, `ProductSet` (Cartesian product of sets; `_union`: simplifies only when first or last factor matches — middle-only match returns None; `_intersect`: pairwise intersection of corresponding factors); `imageset` (compute image of set under transformation; normalizes lambda/FunctionClass/Python-lambda inputs; composes nested ImageSet transformations into single Lambda; identity map → returns base set unchanged).
   - `Interval._eval_Eq`: returns None (unevaluated) for compound set types (Union/Complement/Intersection/ProductSet), returns false for all other non-Interval types.
   - `Interval._eval_imageset`: piecewise function image via progressive domain removal; continuous function image via critical points.
 - `conditionset.py` — `ConditionSet`: set defined by a condition over a base set; FiniteSet base → sifts elements via fuzzy_bool into true/false/indeterminate; indeterminate elements remain wrapped in a new ConditionSet.
@@ -727,7 +729,7 @@ Category theory: objects, morphisms, diagrams.
 
 ### [`parsing/`](parsing/catalog.md)
 Expression parsing: string-to-SymPy conversion, Mathematica/Maxima translators.
-- `sympy_parser.py` — `parse_expr`, `implicit_multiplication`, `implicit_application`.
+- `sympy_parser.py` — `parse_expr`, `implicit_multiplication`, `implicit_application`; `evaluateFalse` (rewrite AST with `evaluate=False` on all operators), `EvaluateFalseTransformer` (AST node visitor: maps binary ops to SymPy calls with evaluate=False; division with negated numerator swaps Pow(-1) to left operand and performs additional swap when both operands are negated).
   - `lambda_notation`: converts `lambda` keyword to `Lambda()` call; raises `TokenError` on starred arguments (`*`/`**`) in lambda parameters.
   - `split_symbols_custom`: break multi-char names into chars for implicit multiplication; known names emitted as direct refs, unknown wrapped in Symbol().
   - `convert_equals_signs`: nested `=` to `Eq()` via recursive parenthesis grouping.
@@ -751,6 +753,7 @@ Unification algorithms for expression pattern matching.
 ### [`crypto/`](crypto/catalog.md)
 Classical cryptographic ciphers and key exchange protocols (educational).
 - `crypto.py` — ciphers, `encode_morse`/`decode_morse` (Morse code encoding/decoding; `encode_morse` preserves trailing whitespace by appending double-separator), `lfsr_sequence`, `lfsr_autocorrelation` (raises TypeError if input is not a list), `lfsr_connection_polynomial` (Berlekamp-Massey).
+  - `rsa_public_key` (validates both inputs are prime, checks exponent coprime to Euler totient, returns (n, e) pair or False), `rsa_private_key`.
   - `dh_private_key`/`dh_public_key` (Diffie-Hellman), `elgamal_private_key` (ElGamal).
 
 ### [`external/`](external/catalog.md)

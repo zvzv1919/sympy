@@ -56,7 +56,9 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 ### [`trigsimp.py`](trigsimp.py)
 High-level trigonometric simplification entry points and Gröbner-basis trig solver.
 
-- `trigsimp(expr, **opts)` — main entry point; dispatches to Gröbner, Fu-based, or old pattern-matching strategies.
+- `trigsimp(expr, **opts)` — main entry point and strategy dispatcher; `method` parameter selects named strategy: 'matching' (default, Fu-based via `futrig`), 'fu', 'groebner', 'combined' (groebner then futrig), or 'old' (legacy pattern-matching).
+  - `old=True` flag forces method to 'old', bypassing all other options.
+  - First attempts `expr._eval_trigsimp()` delegation before falling back to strategy dispatch.
   - `recursive` option: uses CSE to extract common subexpressions, simplifies the reduced expression, then back-substitutes in reverse order, re-simplifying after each substitution.
 - `trigsimp_groebner(expr, hints)` — simplifies trig expressions via polynomial Gröbner basis over trig generators; minimizes total degree of the result.
   - Numeric hints (e.g. `2`) expand search space to find double-angle/multiple-angle forms like sin(x)·cos(x) → sin(2x)/2.

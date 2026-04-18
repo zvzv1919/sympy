@@ -22,7 +22,7 @@ Public namespace for the solvers package. Assembles and re-exports all user-faci
 ### [`solvers.py`](solvers.py)
 Legacy general-purpose algebraic equation solver. Returns solutions as lists or dicts.
 
-- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
+- `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Accepts non-Symbol solve targets (Indexed elements, derivatives, sub-expressions like `x+2`) — isolates them algebraically via substitution with a temporary Symbol.
   - Output format flags: `dict=True` returns list of {symbol: value} dicts; `set=True` returns `(sorted_keys, {value_tuples})` tuple built from those dicts. Default returns plain list.
   - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
   - Solution validation: automatically excludes candidates that make any denominator zero (via `denoms`); `check=False` flag bypasses both denominator filtering and assumption checks, recovering all raw candidates.
