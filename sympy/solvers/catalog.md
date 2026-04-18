@@ -69,7 +69,8 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`, then subtracts denominator-zero points (via `_invalid_solutions`) from the result; falls back to ConditionSet on NotImplementedError.
 - `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
-- `linsolve(system, *symbols)` — primary user-facing linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples. Validates that all `symbols` are actual Symbol instances; raises ValueError if non-symbolic values (e.g. integers, strings) are passed.
+- `linsolve(system, *symbols)` — primary user-facing linear system solver for under-, over-, and fully-determined systems; returns parametric solutions with free unknowns for underdetermined cases.
+  - Uses Gauss-Jordan elimination; returns FiniteSet of ordered solution tuples. Validates symbols are actual Symbol instances; raises ValueError for non-symbolic values.
   - Symbol unwrapping: if `symbols[0]` is iterable, unwraps one level — so `linsolve(sys, [x, y, z])` is equivalent to `linsolve(sys, x, y, z)`.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
   - Inconsistent systems: catches ValueError raised by the elimination step and returns EmptySet.

@@ -56,7 +56,7 @@ Large collection of iterable/container utility functions.
 - `partitions(n, m, k)` — generator of unordered integer partitions of n; yields mutable dicts {part: count}; terminates when decomposition capacity is exhausted.
 - `ordered_partitions(n, m)` — generator of sorted integer compositions of n into m additive parts (lists); reuses the same list object across iterations when m is given; recursive strategy iterates a base value and decomposes the remainder.
 - `_set_partitions(n)` — generator enumerating all ways to assign n distinct elements into non-overlapping groups (restricted growth strings / Knuth 7.2.1.5H); uses a constrained n-digit counter where each digit ≤ 1 + max of all digits to its left; yields (num_groups, mutable assignment vector).
-- `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
+- `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection (possibly with repeats) into non-overlapping groups; sorts input to guarantee canonical output order regardless of input ordering; special-cases all-identical elements (integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
 - `kbins(l, k, ordered)` — partition a list into k bins; `ordered` is a 2-digit flag (00/01/10/11) controlling whether bin order and item order matter; raises `ValueError` for unsupported values.
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
 - `numbered_symbols` — infinite generator of Symbol objects.

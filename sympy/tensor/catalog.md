@@ -70,7 +70,8 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `__new__` flattens nested sums, coerces plain-scalar addends into index-free tensor products, canonicalizes each term, sorts and collects like terms.
   - `_tensAdd_flatten` — separates scalar (non-tensor-expression) addends from indexed ones, sums the scalars, wraps result as an index-free product, and flattens any nested `TensAdd`.
   - `equals(other)` — equality for sums: compares argument sets when both are `TensAdd`; otherwise falls back to computing `self - other` and checking all coefficients are zero.
-- `TensExpr` — abstract base for tensor expressions.
+- `TensExpr` — abstract base for tensor expressions; provides simplification delegation, numeric data conversion, and power operations.
+  - `_eval_simplify` — walks all unique `TensorHead` components in the expression; if a head defines a custom simplification hook, delegates to it; enables per-head-type reduction logic.
   - `__pow__(other)` — requires `.data` (ndarray); contracts the expression with itself via each free index's metric (numpy tensordot), producing a scalar norm², then returns `norm² ** (other/2)`.
   - `get_matrix()` — converts abstract tensor expression's attached ndarray component data to a `Matrix`; handles rank-1 (flat list) and rank-2 (nested lists); raises `NotImplementedError` for rank > 2.
 - `canon_bp(p)` — canonicalize tensor via Butler-Portugal algorithm.

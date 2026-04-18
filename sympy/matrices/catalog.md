@@ -44,7 +44,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Diagonalization**: `is_diagonalizable(reals_only=False)` (checks eigenvector multiplicities match algebraic multiplicities; `reals_only=True` rejects non-real eigenvalues), `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
 - `_jordan_block_structure`: computes generalized eigenvector chain leaders per eigenvalue and block size; iterates block sizes largest-first, excluding vectors from smaller kernels and already-used chains.
-- **Decompositions** (public wrappers that validate preconditions, then delegate to internal `_cholesky`/`_LDLdecomposition` in dense/sparse layers):
+- **Decompositions** (public wrappers on `MatrixBase` that validate preconditions, then delegate to internal `_cholesky`/`_LDLdecomposition` in the dense layer; `SparseMatrix` overrides these with its own public methods in `sparse.py`):
   - `cholesky`, `LDLdecomposition`: both enforce squareness (`NonSquareMatrixError`) and symmetry (`ValueError`) before delegating. LDL is the square-root-free variant (L·D·Lᵀ).
   - `QRdecomposition`: orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring.
   - `LUdecomposition`.
@@ -130,6 +130,7 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `liupc`: Liu's algorithm for elimination tree pre-determination; collects below-diagonal non-zero indices per row, iterates each row's off-diagonal entries (excludes diagonal via `[:-1]`) to build parent/virtual arrays. Returns (row index lists, parent list).
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees (calls `liupc`); used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
+- Public `cholesky` and `LDLdecomposition` methods on `SparseMatrix` (separate from `MatrixBase` wrappers in `matrices.py`): enforce symmetry, then delegate to `_cholesky_sparse`/`_LDL_sparse`, then post-hoc validate by checking resulting factors for `nan`/`oo` to detect non-positive-definite input.
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
 - `_eval_inverse`: sparse inversion dispatch (CH or LDL); for non-symmetric matrices, symmetrizes via M^T·M, solves, then divides result by a scale factor derived from the first row of the original matrix times the first column of the solution.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).

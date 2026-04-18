@@ -11,8 +11,8 @@ This module implements their symbolic algebra, numerical evaluation, recurrence 
 Main module: differential operator algebra, `HolonomicFunction` class, and conversion utilities.
 
 - `DifferentialOperatorAlgebra` — parent ring (Weyl algebra) for differential operators.
-- `DifferentialOperator` — element of the Weyl algebra; list of polynomial coefficients + parent.
-  - `__pow__(n)` — exponentiation: fast path for `Dx` builds sparse list directly; general case uses binary exponentiation (squaring).
+- `DifferentialOperator` — element of the Weyl algebra (ODE/derivation context); list of polynomial coefficients + parent.
+  - `__pow__(n)` — exponentiation of the ODE operator: fast path when operator is base derivation `Dx` builds sparse list directly; general case uses binary exponentiation.
 - `DifferentialOperators(base, generator)` — factory returning algebra and derivative operator `Dx`.
 - `HolonomicFunction` — solution to L.f = 0; holds annihilator, variable, initial-condition point and values.
   - Arithmetic (`__add__`, `__mul__`, etc.): closure operations that build an ansatz matrix from operator derivatives, solve a homogeneous linear system, and iteratively increase matrix dimension until a nontrivial annihilator is found.
@@ -38,7 +38,8 @@ Recurrence (shift) operator algebra and holonomic sequences — defines algebrai
 
 - `RecurrenceOperators(base, generator)` — factory returning algebra and shift operator `Sn`.
 - `RecurrenceOperatorAlgebra` — parent ring for recurrence operators; `__init__` handles generator: defaults to noncommutative symbol `Sn` when None, converts string to symbol, or accepts existing Symbol.
-- `RecurrenceOperator` — element of recurrence algebra; commutation rule `Sn * a(n) = a(n+1) * Sn`.
+- `RecurrenceOperator` — element of recurrence (difference/shift) algebra; commutation rule `Sn * a(n) = a(n+1) * Sn`.
+  - `__pow__(n)` — exponentiation of the shift operator: fast path when operator is shift `Sn`; general case uses binary exponentiation.
 - `HolonomicSequence` — sequence satisfying a linear recurrence with polynomial coefficients; holds recurrence, variable `n`, and optional initial values `u0`.
   - `__eq__` — equality check comparing recurrence, variable, and initial conditions.
 

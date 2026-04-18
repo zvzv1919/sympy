@@ -51,7 +51,8 @@ Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple re
   - Returns True/False/None depending on whether the clause is satisfied, falsified, or indeterminate under partial assignment.
 - `unit_propagate(clauses, symbol)` — simplify a symbolic clause list by a unit literal: removes clauses containing the symbol; deletes ¬symbol from others.
   - Non-`Or` clauses (single literals) are kept unconditionally without symbol-matching.
-- `unit_propagate_int_repr` — integer-encoded equivalent; filters out clauses containing the symbol and strips its negation from the rest.
+- `unit_propagate_int_repr(clauses, s)` — unit propagation on integer-encoded clause sets (sets of ints, positive = affirmed, negative = negated).
+  - Removes every clause containing `s`; strips `-s` from the rest. Implemented via set difference in a single list comprehension.
 - `find_pure_symbol` / `find_pure_symbol_int_repr` — find symbols appearing with only one polarity.
 - `find_unit_clause(clauses, model)` — iterate disjunctive clauses counting literals not yet bound in `model`; when exactly one literal is unbound, return that variable and its forced truth value (positive literal → True, negated → False).
 - `find_unit_clause_int_repr` — integer-encoded equivalent of `find_unit_clause`.
