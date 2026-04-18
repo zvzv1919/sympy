@@ -10,6 +10,7 @@ Exports `CartanType` as the main entry point.
 ### [`cartan_type.py`](cartan_type.py)
 Factory and base classes for Cartan type objects.
 - `CartanType_generator` — parses string/list input (e.g. "A3", "D4") and instantiates the correct `Type*` class.
+- Caveat: if series letter is valid but rank is out of range (e.g. E5, F3, G4), silently returns `None` instead of raising an error.
 - `Standard_Cartan` — base class for all series; stores `series` letter and `rank`.
 
 ### [`cartan_matrix.py`](cartan_matrix.py)
@@ -62,7 +63,8 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 - `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots (unlike B_n).
 
 ### [`type_e.py`](type_e.py)
-`TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all ranks.
+`TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all ranks. Branching Dynkin diagram (trivalent node).
+- `cartan_matrix()` — builds Cartan matrix with hardcoded off-diagonal entries for the branching node (indices 0–3), then a loop for the linear chain portion (index 3 onward).
 - `positive_roots()` — rank-dependent enumeration (branches on n=6/7/8); uses Rational(±1/2) vectors with even-count sign constraint on 8-dimensional coordinates.
 
 ### [`type_f.py`](type_f.py)

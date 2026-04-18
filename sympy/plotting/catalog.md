@@ -17,7 +17,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
   - `plot3d()` — 3D surface from one expression over two variables.
   - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter; parses args via `check_arguments(args, 3, 1)`, constructs `Parametric3DLineSeries` objects.
   - `plot3d_parametric_surface()` — 3D parametric surface from three coordinate expressions (x, y, z) each over two independent parameters (u, v). Uses `check_arguments(args, 3, 2)`, so inherits the expr_len==3 ambiguity limitation requiring explicit grouping for multiple plots.
-- `LineOver1DRangeSeries` — evaluates single expression over 1D range; adaptive subdivision with collinearity check.
+- `LineOver1DRangeSeries` — evaluates single expression over 1D range into *numeric* (numpy) arrays; adaptive subdivision with collinearity check.
 - `Parametric2DLineSeries` — 2D parametric curve series; `get_segments()` uses recursive adaptive subdivision with complex-value handling (samples 10 intermediate points when both endpoints are non-real).
 - `Parametric3DLineSeries` — 3D parametric curve from three expressions and a range.
 - `SurfaceBaseSeries` — base class for 3D surfaces; `get_color_array()` dispatches callable coloring by arity and `is_parametric` flag (uses parameter meshes vs coordinate meshes).
@@ -128,8 +128,9 @@ Bounded interval representation for pyglet variable ranges (discretized sample p
 
 - `PlotInterval` — stores [variable, min, max, steps] with property accessors and validation.
   - `__init__(*args)` — flexible constructor: accepts a string (parsed via `eval`), a tuple/list of bounds, copy from another `PlotInterval`, or positional args `(symbol, min, max, steps)` with optional leading symbol.
+  - Property setters validate types: `v_min`/`v_max` must be sympifiable to a numeric value (tested via `float(evalf())`), `v_steps` must be a positive integer.
 - `fill_from(b)` — merges defaults from another interval for partial specifications.
-- `vrange()` — yields v_steps+1 evenly-spaced sympy numbers from v_min to v_max (individual sample points).
+- `vrange()` — yields v_steps+1 evenly-spaced *symbolic* (sympy) numbers from v_min to v_max; guarded by `@require_all_args` decorator that raises if any interval parameter is `None`.
 - `vrange2()` — yields v_steps consecutive adjacent (a, b) pairs sharing endpoints, covering v_min to v_max (used for line segments/mesh cells).
 - `frange()` — float version of `vrange()`; evaluates each sympy number to float.
 

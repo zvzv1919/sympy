@@ -20,10 +20,13 @@ Base classes and core query functions for all random variable types.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
 - `Density` class + `density()`: compute probability density of a random expression. `Density.doit()` returns a DiracDelta-based Lambda for deterministic (non-stochastic) expressions.
 - `cdf(expr, condition)`: computes cumulative distribution function. When a condition is supplied, reduces to the unconditional case by rewriting expr via `given()` and recursing. Otherwise delegates to `pspace().compute_cdf()`.
-- `where()`, `given()`, `sample()`, `sample_iter()`: query domain of conditions, condition expressions, and draw realizations.
+- `where()`, `sample()`, `sample_iter()`: query domain of conditions and draw realizations.
+- `given(expr, condition)`: conditions a random expression on an event; for single-variable equality conditions, solves the equation via `solveset` and substitutes solutions (unwraps `Intersection` with `S.Reals` to extract finite solution sets); otherwise builds a full conditional probability space.
 - `expectation(expr, condition)`: computes expected value of a random expression; exploits linearity (decomposes `Add` into per-term expectations) for efficiency; delegates final integration to `pspace().integrate()`.
 - `probability(condition, given_condition)`: computes probability that a condition holds; supports Monte Carlo sampling via `numsamples`.
 - `sampling_E`, `sampling_P`, `sampling_density`: Monte Carlo approximations of expectation, probability, and density.
+- `_value_check(condition, message)`: parameter validation utility used across all distribution types; uses `condition == False` (not `not condition`), so symbolic/unevaluable conditions silently pass.
+- `NamedArgsMixin`: mixin providing attribute-style access to positional `args` via `_argnames` tuple.
 
 ### [`crv.py`](crv.py)
 Infrastructure for continuous random variables.

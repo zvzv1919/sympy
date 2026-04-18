@@ -25,7 +25,10 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Diagonalization**: `is_diagonalizable`, `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
 - `_jordan_block_structure`: computes generalized eigenvector chain leaders per eigenvalue and block size; iterates block sizes largest-first, excluding vectors from smaller kernels and already-used chains.
-- **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`.
+- **Decompositions** (public wrappers that validate preconditions, then delegate to internal `_cholesky`/`_LDLdecomposition` in dense/sparse layers):
+  - `cholesky`, `LDLdecomposition`: both enforce squareness (`NonSquareMatrixError`) and symmetry (`ValueError`) before delegating. LDL is the square-root-free variant (L·D·Lᵀ).
+  - `QRdecomposition`: orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring.
+  - `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.

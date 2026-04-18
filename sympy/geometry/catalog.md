@@ -140,7 +140,7 @@ Standalone geometric utility functions.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `are_coplanar(*entities)` — standalone coplanarity test for 3D points/lines; returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
-- `are_similar(e1, e2)` — tests geometric similarity via double dispatch: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check.
+- `are_similar(e1, e2)` — convenience dispatcher for geometric similarity: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check. Contains no similarity logic itself; all algorithms live in each entity's `is_similar` method (e.g., `Triangle.is_similar`).
 - `centroid(*args)` — weighted center of mass for a homogeneous collection of Points (equal weight), Segments (weighted by length), or Polygons (weighted by area). Returns None for mixed types.
 - `idiff(eq, y, x, n=1)` — implicit differentiation: computes dy/dx (up to order `n`) assuming `eq == 0`.
   - `y` must be a `Symbol` or list of `Symbol`s (first element is primary dependent variable); raises `ValueError` if `y` is neither.

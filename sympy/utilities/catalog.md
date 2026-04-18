@@ -5,7 +5,7 @@
 ### [`autowrap.py`](autowrap.py)
 Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cython, or Ufuncify backends.
 - `autowrap(expr)` — compile an expression to a binary callable; auto-recovers from incomplete argument lists by appending missing output-only arguments.
-- `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
+- `binary_function(symfunc, expr)` — returns a symbolic `UndefinedFunction` whose `.evalf()` delegates to a compiled native binary (autowrap + implemented_function).
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions; numpy backend enforces maxargs=32 limit on total (inputs+outputs), raises `ValueError` if exceeded.
 - `CodeWrapper` — base class; subclasses handle compilation and module import; `_get_wrapped_function(mod, name)` resolves the callable from the compiled module.
   - `wrap_code(routine)` — compiles a routine: creates a temp directory if no filepath given, generates/compiles/imports the module, then cleans up; silently swallows `OSError` on temp directory removal (Windows file-locking edge case).

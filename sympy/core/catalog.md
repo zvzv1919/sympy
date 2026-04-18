@@ -260,6 +260,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 
 - `Function.__new__` — after evaluation, checks `_should_evalf` on all args; auto-calls `evalf` only if **every** arg is floating-point (min precision > 0); mixed float/symbolic args remain unevaluated
 - `Function._eval_evalf(prec)` — numerical evaluation of symbolic functions; looks up matching mpmath function by name, falling back to `MPMATH_TRANSLATIONS` table; if no mpmath match, tries user-provided `_imp_` numerical implementation; returns None if all fallbacks fail
+  - After converting args to mpmath at elevated precision, validates each via inner `bad()` check: inspects mpf/mpc tuple structure to detect args that failed to achieve meaningful significance (precision element == 1); raises ValueError to abort if any arg is insignificant
 - `Function.fdiff(argindex)` — first derivative w.r.t. the given argument position; if target arg is a plain Symbol that also appears free in another argument, falls through to Dummy-substitution path (returns `Subs(Derivative(...))`) to avoid incorrect results
 - `Function._eval_nseries` — series expansion for symbolic functions; handles infinite-argument cases via leading-term substitution; general algorithm uses repeated differentiation at zero with NaN→limit fallback and PoleError on infinite results
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
@@ -271,6 +272,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
+- `Subs._eval_derivative(s)` — chain rule for deferred substitutions: differentiates the inner expression directly, plus adds contributions from differentiating each substitution point value w.r.t. s
 - `diff(f, *symbols)` — top-level convenience function for symbolic differentiation; dispatches to `f._eval_diff()` if available, falls back to constructing `Derivative(f, ...)` on `AttributeError`; sets `evaluate=True` by default
 - `expand(expr, deep=True, **hints)` — main expansion entry point; dispatches named hints (e.g., `mul`, `log`, `trig`, `power_base`) to per-object `_eval_expand_<hint>()` methods
   - When `deep=True` (default), recursively applies hints to subexpressions; when `deep=False`, only top-level expression is expanded

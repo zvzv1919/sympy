@@ -160,6 +160,7 @@ Solves partial differential equations via method dispatch.
 - `pdsolve(eq, func, hint)` — main PDE solver; supports meta-hints "all"/"all_Integral" returning a dict where failed strategies store the NotImplementedError exception object as value.
 - `classify_pde(eq, func)` — classifies PDE into applicable hints.
   - Pre-classification normalization: if the unknown function raised to some power multiplies highest-order derivative coefficients, divides the entire equation by the smallest such power to reduce to standard form.
+  - First-order two-variable classification: uses two-pass pattern matching — first attempts with wildcards excluding independent variables (constant coefficients); on failure, relaxes wildcards to allow dependence on independent variables (variable coefficients).
 - `checkpdesol(pde, sol, func)` — validates PDE solution by substitution.
   - If `func` is omitted, auto-detects via `_preprocess`; on failure, falls back to extracting applied undefined functions from the solution's atoms (raises ValueError if not exactly one found).
   - When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.

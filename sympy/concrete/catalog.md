@@ -28,7 +28,7 @@ Base class for expressions with **integer** limits — shared by Sum and Product
 
 - **`ReorderError`** — raised when dependent limits cannot be reordered.
 - **`ExprWithIntLimits(ExprWithLimits)`**:
-  - `change_index(var, trafo, newvar)` — substitute a new index variable via a linear mapping (e.g. `i → k-i`); rewrites bounds accordingly.
+  - `change_index(var, trafo, newvar)` — substitute a new index variable via a linear mapping (`i → a*i+b`, `a=±1` only); rewrites bounds to match the new variable. Does **not** negate the summand/product.
   - `index(x)` — return the positional index of a dummy variable in the limits list.
   - `reorder(*arg)` — reorder limits by swapping pairs; each pair can mix numeric positions and symbolic variable names. Raises `ValueError` if any pair has length ≠ 2.
   - `reorder_limit(x, y)` — interchange two specific limit tuples.
@@ -45,7 +45,7 @@ Unevaluated and evaluated finite/infinite summations.
   - `doit()` — evaluate the sum; handles reversed ranges by swapping bounds and negating the summand.
   - `is_convergent()` / `is_absolutely_convergent()` — convergence tests for infinite series.
   - `euler_maclaurin(m, n, eps, eval_integral)` — Euler–Maclaurin approximation.
-  - `reverse_order(*indices)` — reverse the order of specific limits.
+  - `reverse_order(*indices)` — flip selected iteration bounds: swaps upper↔lower (each shifted by 1) and negates the summand once per flipped index; even flips cancel the sign.
   - `eval_zeta_function(f, limits)` — detect Riemann zeta function form.
   - `_eval_derivative`, `_eval_difference_delta`, `_eval_simplify`.
 - `summation(f, *symbols)` — convenience wrapper that calls `Sum(...).doit()`.

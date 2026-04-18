@@ -52,7 +52,8 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
 - `erf2` — two-argument error function erf(x,y); carries its own conversion methods to `uppergamma`, `expint`, Fresnel, Meijer G, and hypergeometric forms.
 - `Ei` — exponential integral Ei(x).
-- `expint` — generalized exponential integral E_ν(z); `eval` handles analytic continuation by extracting winding number (branch factor) from z and applying distinct correction formulas for integer ν vs non-integer ν.
+- `expint` — generalized exponential integral E_ν(z); `eval` simplifies non-positive integer orders and half-integer orders (checked via `(2*nu).is_Integer`) to expressions involving `uppergamma`, reducing to error functions at half-integers.
+  - Also handles analytic continuation by extracting winding number (branch factor) from z and applying distinct correction formulas for integer ν vs non-integer ν.
   - `_eval_nseries` — series expansion branches on order: ν=1 rewrites via trig integrals (Si/Ci), integer ν>1 rewrites via Ei, otherwise falls back to default.
 - `li` — logarithmic integral li(z) = ∫₀ᶻ dt/ln(t); branch-cut aware `_eval_conjugate` excludes negative reals.
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
@@ -108,7 +109,7 @@ B-spline basis functions constructed as Piecewise expressions via recursive Cox-
 #### [`special/singularity_functions.py`](special/singularity_functions.py)
 `SingularityFunction` — Macaulay bracket function <x−a>^n for beam/structural analysis; discontinuous, piecewise-like.
 - `eval` — simplifies to `(x-a)**n*Heaviside(x-a)` for n≥0, `Derivative(DiracDelta(...))` for n<0.
-- `fdiff` — derivative convention: n>0 applies power rule (n·<x−a>^(n−1)); n=0 or n=−1 decrements exponent without coefficient (step-like/distributional case).
+- `fdiff` — derivative convention: n>0 applies power rule (n·<x−a>^(n−1)); n=0 or n=−1 decrements exponent without coefficient (step-like/distributional case); n=−2 (minimum) silently returns None (unhandled).
 
 ### [`elementary/`](elementary/)
 Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, complex, rounding.
@@ -136,7 +137,9 @@ Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those
   - `sinh`/`cosh` have `_eval_expand_trig` for addition-identity expansion; integer-multiple arguments n*t are split into t + (n−1)*t and recursively expanded.
 - `ReciprocalHyperbolicFunction` — hyperbolic counterpart of `ReciprocalTrigonometricFunction` (in `trigonometric.py`); base class for `csch`, `sech`; same delegation/rewrite-guard pattern.
 - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
+  - Odd-symmetry inverses (`asinh`, `atanh`, `acoth`, `acsch`): `eval` uses `_coeff_isneg` to detect negative leading coefficient → returns `−f(−arg)`.
   - `acosh.eval` — has a constant lookup table mapping known algebraic values (1/2, √3/2, etc.) to exact π-multiples; multiplies result by i when the argument is real (branch-cut convention).
+  - `acsch.eval` — constant table for purely imaginary arguments (maps to π-fraction multiples of i); returns exact log expressions for ±1.
 
 #### [`elementary/complexes.py`](elementary/complexes.py)
 Complex number component functions.

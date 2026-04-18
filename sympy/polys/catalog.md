@@ -74,6 +74,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `add(*objs)` / `mul(*objs)` — aggregate a sequence of polynomials or nested containers (including generators) by sum/product; **recursively flattens nested lists and generator objects** via `is_sequence`; starts from `self.zero` / `self.one` respectively.
   - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
   - `drop_to_ground(*gens)` — remove generators and inject them into the domain; **if no generators remain after removal, returns `self` unchanged** (does not reduce to the domain).
+- `ring_new(element)` — convert Python object to ring element; **for list input, first tries `from_terms` (list of `(expv, coeff)` pairs); on `ValueError`, falls back to `from_list` (dense nested-list representation)**.
 - `PolyElement` — element of a `PolyRing` (dict: monomial tuple → coefficient).
   - `_rebuild_expr(expr, mapping)` — recursively convert symbolic expression to ring element.
     - **Pow with non-negative integer exponents**: decomposed (base rebuilt and raised to the power).
@@ -273,7 +274,9 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`; **raises `IndexError` if `m` ≤ 0; returns `f` unchanged if `m == 1` or `f` is empty**.
 - `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
-- `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
+- `dmp_strip`, `dmp_terms_gcd` — structural manipulation.
+- `dmp_inject(f, u, K, front)` — flatten `K[X][Y]` → `K[X,Y]`; when `front=True`, coefficient-ring generators precede outer generators in monomial tuples.
+- `dmp_eject(f, u, K, front)` — reverse of inject: `K[X,Y]` → `K[X][Y]`; **splits monomial tuple using `K.ngens`: when `front=False` (default), trailing positions map to coefficient ring generators; when `front=True`, leading positions do**.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
 - `dmp_nest(f, l, K)` — wrap a multivariate value in `l` additional nesting levels; **if `f` is not a list (plain scalar), delegates to `dmp_ground`** instead of wrapping in nested lists.
 - `dmp_ground_nth(f, N, u, K)` — extract ground-level coefficient at multi-index N from nested lists; **if polynomial at some level has degree −∞ (zero polynomial), sets degree to −1** to avoid indexing errors; returns `K.zero` if index exceeds length.
@@ -371,6 +374,9 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_rational_function_reconstruction(c, p, m)` — recover rational function `a/b` in `Z_p(t)` from congruence residue `c mod m` via partial extended Euclidean algorithm with degree bounds.
   - **Returns `None` if denominator shares a common factor with modulus** (non-invertible).
 - `_integer_rational_reconstruction(c, m, domain)` — reconstruct rational `a/b` from `c ≡ a/b mod m` via Euclidean algorithm; **returns `None` if denominator coefficient is zero (`s1 == 0`) or `|s1| ≥ bound`** (non-invertible); negates both `a, b` when `s1 < 0` to ensure positive denominator.
+- `_rational_reconstruction_func_coeffs(hm, p, m, ring, k)` — reconstruct each coefficient as a rational function in parameter `t_k`.
+  - **When `k == 0`, directly calls `_rational_function_reconstruction`; when `k > 0`, drops one variable layer and reconstructs each sub-coefficient**.
+  - Returns `None` if any single coefficient reconstruction fails.
 - `_rational_reconstruction_int_coeffs(hm, m, ring)` — reconstruct rational coefficients from integer image. Returns `None` if any coefficient fails.
   - **If `ring.domain` is a `PolynomialRing` (nested coefficients), recurses on itself; otherwise delegates to `_integer_rational_reconstruction`**.
 - `_trial_division` — verify candidate GCD by **fraction-free pseudo-division in a quotient ring** `K[t₁,…,tₖ][z]/(m(z))`; two-level reduction: outer loop reduces by the candidate divisor in `x`, inner loop reduces modulo the minimal polynomial in `z`; optionally truncates coefficients mod a prime.
@@ -824,6 +830,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial rings, fraction fields, expression domain.
 
 - `Domain` (in `domain.py`) — abstract base class for all domains; `__getitem__` supports bracket syntax `K[x]` / `K[x, y]` to construct polynomial rings.
+  - `map(seq)` — recursively convert all elements of a nested list to this domain; **recurses on sublists, calls `self(elt)` on leaf elements**; only handles `list` (not tuples or other iterables).
   - `convert(element, base=None)` — coerce element to this domain; **when `base` is None, dispatches by Python type** (int → ZZ, float → RR, complex → CC, GMPY types, `DomainElement` → parent, `Basic` → `from_sympy`).
     - **For unknown non-Basic, non-sequence types, attempts `sympify(element)` then retries via `from_sympy`**; raises `CoercionFailed` if all strategies fail.
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
@@ -864,6 +871,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - For product/mixed orders given as tuples, builds the product order first, then checks `order.is_global`.
 - `GlobalPolynomialRing` (in `old_polynomialring.py`) — legacy generalized polynomial ring using `DMP` dtype; `from_FractionField` converts only if **denominator is trivial (one)**, else returns None (silent failure). `from_GlobalPolynomialRing` handles cross-ring conversion: same gens → direct rep copy; different gens → reorders monomials via `_dict_reorder` and converts coefficients if domains differ.
 - `FractionField` (in `fractionfield.py`) — multivariate rational function field domain `K(x₁,…,xₙ)` using `FracField` dtype.
+  - `is_positive(a)` / `is_negative(a)` — sign determination; **inspects only the leading coefficient of the numerator** (`a.numer.LC`), delegating to the base domain's sign check; denominator sign is ignored.
   - `from_AlgebraicField(a, K0)` — converts algebraic number to fraction field element **only if `K1.domain == K0`** (target's ground domain equals source field).
   - **Silently returns `None` otherwise** (no error, no attempt), unlike other `from_*` methods which always delegate to `K1.domain.convert`.
   - `from_PolynomialRing(a, K0)` — converts polynomial ring element; requires same or subset generators; **returns `None` if generators are incompatible**.

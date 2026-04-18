@@ -157,7 +157,7 @@ Prufer sequence correspondence for labeled trees.
   - `to_tree(prufer)` — static; reconstructs edge list from a Prufer sequence.
   - `prufer_repr` / `tree_repr` — lazy properties returning the Prufer sequence or edge list.
   - `prufer_rank` / `unrank(rank, n)` — ranking and unranking of Prufer sequences.
-  - `edges(*runs)` — static; builds edges from sequences of node-index runs.
+  - `edges(*runs)` — static; builds deduplicated edges from sequences of node-index runs; validates all node labels in min..max range are present and raises `ValueError` listing missing nodes if gaps exist; normalizes labels to start from 0.
   - `next(delta)`, `prev(delta)` — navigate to adjacent Prufer sequences by rank.
 
 ### [`polyhedron.py`](polyhedron.py)

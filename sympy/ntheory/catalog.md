@@ -17,7 +17,8 @@ Generating, counting, and enumerating primes and composites.
 Primality testing algorithms.
 - `isprime(n)` — main primality test; layered strategy: trial division, Fermat test with pseudoprime exclusion for small n, sieve bisection, deterministic Miller-Rabin for n < 2^64, strong BPSW for larger
 - `mr(n, bases)` — Miller-Rabin strong pseudoprime test
-- `is_lucas_prp`, `is_strong_lucas_prp`, `is_extra_strong_lucas_prp` — Lucas probable-prime tests
+- `_lucas_sequence(n, P, Q, k)` — modular Lucas sequence (U_k, V_k, Q^k mod n) via binary doubling ladder; three optimized branches for Q=1, P=1∧Q=−1, and general case
+- `is_lucas_prp`, `is_strong_lucas_prp`, `is_extra_strong_lucas_prp` — Lucas probable-prime tests (use `_lucas_sequence` internally)
 - `is_square(n)` — fast perfect-square test; uses two-stage bitwise modular filtering (mod 128 and mod 63 with magic constants) to quickly reject non-squares before expensive exact verification via `perfect_power`
 
 ## Factorization and Divisor Analysis

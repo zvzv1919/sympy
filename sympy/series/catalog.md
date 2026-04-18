@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 The `series` module handles series expansions, limits, sequences, and asymptotic analysis.
-- **Limit computation**: `limits.py` (interface) → `gruntz.py` (algorithm); `limitseq.py` (discrete sequence limits).
+- **Limit computation**: `limits.py` (entry point + heuristic evaluation of composite expressions) → `gruntz.py` (full Gruntz algorithm when heuristics bail out); `limitseq.py` (discrete sequence limits).
 - **Series expansions**: `series.py` (thin wrapper), `formal.py` (formal power series), `fourier.py` (Fourier series).
 - **Sequence algebra**: `sequences.py` — discrete sequence objects and term-wise arithmetic operations.
 - **Utilities**: `order.py` (big-O), `residues.py`, `approximants.py`, `acceleration.py`, `kauers.py` (finite differences).
@@ -13,7 +13,7 @@ The `series` module handles series expansions, limits, sequences, and asymptotic
 ## Limit Computation
 
 ### [`limits.py`](limits.py)
-General limit computation interface. Tries heuristics first, falls back to Gruntz algorithm.
+Limit computation entry point and heuristic evaluator. Tries fast heuristic decomposition of composite expressions (Mul, Add, Pow, Function) first; falls back to Gruntz algorithm when heuristics bail out.
 - `limit(e, z, z0, dir)` — compute limit of expression; main entry point.
 - `Limit(Expr)` — unevaluated limit object; `.doit()` evaluates via heuristics or Gruntz; also detects sequence limits via `limit_seq()`.
 - `heuristics(e, z, z0, dir)` — fast-path that evaluates sub-expressions individually and reconstructs the result.
