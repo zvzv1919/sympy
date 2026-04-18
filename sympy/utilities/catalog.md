@@ -12,6 +12,7 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `CythonCodeWrapper` — Cython backend; `_get_wrapped_function` appends `'_c'` suffix to the routine name when retrieving the callable from the built extension module.
   - `dump_pyx(routines, f, prefix)` — writes the `.pyx` bridge file: emits `cdef extern` headers and Python wrapper functions; constructs the function body differently for void routines (call then return output args) vs value-returning routines (return call result).
   - `_partition_args(args)` — categorizes routine arguments into py_args, py_returns, py_locals, and py_inferred; infers array dimension parameters from InputArgument/InOutArgument shapes so they need not be passed explicitly.
+  - `_call_arg` / `_prototype_arg` / `_declare_arg` — format each argument for the C call, typed declaration, and initialization respectively; arrays→C pointer cast via `.data`, ResultBase outputs→address-of `&`, scalars→pass by name.
 - `F2PyCodeWrapper`, `DummyWrapper` — Fortran/dummy backends; resolve callable by original routine name (no suffix).
 - `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
   - `wrap_code(routines)` — compiles multiple expression routines into a single binary; generates a unique exported function name (not derived from routine names) via `id()`.

@@ -100,7 +100,9 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `separatevars(expr, symbols, dict, force)` — factor expression into product of single-variable terms.
   - `dict=True` delegates to `_separatevars_dict`: returns a dict mapping each symbol to its factor plus a `'coeff'` key; returns `{'coeff': expr}` if symbols is None, None if unseparable.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
-- `logcombine(expr, force)` — combine/split logarithms using log rules.
+- `logcombine(expr, force)` — merge additive log terms: log(x)+log(y)→log(x·y) when args positive; a·log(x)→log(x^a) when a is real and x positive.
+  - `force=True`: assumes positivity/realness when no conflicting assumption exists; does not override explicit assumptions (e.g. imaginary coefficient).
+  - Coefficient of −1 is explicitly excluded from exponent absorption even though it is real; other negative real coefficients are allowed.
 - `nsimplify(expr, constants, tolerance)` — find simple closed-form for numerical expressions.
 - `hypersimp(f, k)` — compute consecutive-term ratio f(k+1)/f(k) for combinatorial/hypergeometric sequences; rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
 - `besselsimp(expr)` — simplify Bessel function expressions.

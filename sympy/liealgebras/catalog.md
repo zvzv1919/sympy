@@ -62,10 +62,12 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 - `positive_roots()` — generates two kinds of positive roots: difference vectors (e_i−e_j) and sum vectors (e_i+e_j). No unit-vector roots (unlike B_n).
 
 ### [`type_e.py`](type_e.py)
-`TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all. Complex positive-root enumeration with Rationals.
+`TypeE` — E_6, E_7, E_8 exceptional algebras. Dimension 8 for all ranks.
+- `positive_roots()` — rank-dependent enumeration (branches on n=6/7/8); uses Rational(±1/2) vectors with even-count sign constraint on 8-dimensional coordinates.
 
 ### [`type_f.py`](type_f.py)
-`TypeF` — F_4 exceptional algebra. Dimension 4. 48 roots. Explicit 4×4 Cartan matrix.
+`TypeF` — F_4 exceptional algebra. Rank 4, dimension 4. 48 roots. Explicit 4×4 Cartan matrix.
+- `positive_roots()` — constructs 24 positive roots in three groups: difference/sum vectors (e_i±e_j), unit vectors (e_i), and half-integer vectors (±1/2 coordinate 4-vectors) enumerated by explicit sign combinations.
 
 ### [`type_g.py`](type_g.py)
 `TypeG` — G_2 exceptional algebra. Dimension 3. 12 roots. Cartan matrix has −3 entry.

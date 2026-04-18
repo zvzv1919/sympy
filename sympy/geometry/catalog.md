@@ -29,7 +29,9 @@ Point representations in n-dimensional Euclidean space.
   - `Point.is_collinear(*points)` — static method testing if points are collinear; deduplicates inputs, returns `True` for ≤2 unique points.
   - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks containment.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
-- `Point2D` — 2D specialization; adds `x`, `y` coordinate properties and `transform(Matrix)`.
+- `Point2D` — 2D specialization; adds `x`, `y` coordinate properties, `transform(Matrix)`, and overrides `rotate(angle, pt)`, `scale(x, y, pt)`, `translate(x, y)`.
+  - `scale(x, y, pt)` — scales coordinates by `x`, `y` relative to reference point `pt`; uses `if pt:` (falsy check) instead of `if pt is not None:`, so passing the origin as `pt` is silently ignored.
+  - `rotate(angle, pt)` — rotates counterclockwise about `pt`; uses `if pt is not None:` to guard the reference-point shift.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`, `scale(x, y, z, pt)`, `translate(x, y, z)`, `transform(matrix)`.
   - `scale(x, y, z, pt)` — multiplies each coordinate by the respective factor; when a reference point `pt` is given, translates to origin first, scales, then translates back.
   - `direction_cosine(point)` — divides displacement components by magnitude; no guard against zero magnitude (identical points → division by zero).

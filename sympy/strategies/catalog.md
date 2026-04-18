@@ -63,7 +63,12 @@ Strategic trees: nested list/tuple structures encoding alternative and sequentia
 - `brute(tree, objective=)` — exhaustive search then pick minimum.
 
 ### [`util.py`](util.py)
-Shared helpers: `new` (Basic constructor), `basic_fns` and `expr_fns` (tree-access function dicts).
+Shared helpers and tree-access primitive dicts for strategy-based rewriting.
+- `new` — alias for `Basic.__new__` (low-level constructor).
+- `assoc(d, k, v)` — return a shallow copy of dict `d` with `d[k] = v`.
+- `basic_fns` — dict of tree primitives; `'new'` key uses `Basic.__new__` (bypasses `__init__`).
+- `expr_fns` — variant of `basic_fns` where `'new'` calls `op(*args)` (normal callable invocation, triggers full class machinery).
+- The `basic_fns` vs `expr_fns` split defines two node-reconstruction modes for tree rewriting.
 
 ## Branching (Non-Deterministic) Strategies — `branch/`
 

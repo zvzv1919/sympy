@@ -71,6 +71,7 @@ Sparse polynomial rings and their elements (dict-based representation).
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
+  - `add(*objs)` / `mul(*objs)` — aggregate a sequence of polynomials or nested containers (including generators) by sum/product; **recursively flattens nested lists and generator objects** via `is_sequence`; starts from `self.zero` / `self.one` respectively.
   - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
   - `drop_to_ground(*gens)` — remove generators and inject them into the domain; **if no generators remain after removal, returns `self` unchanged** (does not reduce to the domain).
 - `PolyElement` — element of a `PolyRing` (dict: monomial tuple → coefficient).
@@ -316,7 +317,9 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 
 - `dup_half_gcdex`, `dup_gcdex`, `dmp_half_gcdex`, `dmp_gcdex` — extended Euclidean algorithms.
 - `dup_invert(f, g, K)` / `dmp_invert` — modular inverse; **raises `NotInvertible("zero divisor")` if gcd(f,g) ≠ 1**.
-- `dup_euclidean_prs`, `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — polynomial remainder sequences.
+- `dup_euclidean_prs(f, g, K)` — Euclidean polynomial remainder sequence in `K[x]`; **iteratively computes `dup_rem` until remainder is zero**, collecting all remainders into a list starting with `[f, g, …]`.
+- `dmp_euclidean_prs` — multivariate wrapper; **raises `MultivariatePolynomialError` for `u > 0`** (univariate only).
+- `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
 - `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
@@ -618,6 +621,8 @@ Monomial tuple arithmetic and generation.
 - `term_div(a, b, domain)` — divide two `(monomial, coefficient)` terms; **over a field, only checks monomial divisibility; over a ring, additionally requires coefficient divides evenly**; returns `None` on failure.
 - `Monomial` — symbolic monomial class (pure power-product, coefficient must be 1).
   - `__init__(monom, gens)` — accepts exponent tuple or symbolic expression; **raises `ValueError` if expression has non-unit coefficient or multiple terms**.
+  - `__mul__`, `__div__`, `__floordiv__`, `__truediv__` — monomial multiplication/division via `monomial_mul`/`monomial_div`; accept `Monomial`, `tuple`, or `Tuple`; **for unrecognized types, `return NotImplementedError` (returns the class, does not raise)** — known bug.
+  - `__pow__(n)` — exponentiation via repeated `monomial_mul`; **raises `ValueError` for negative `n`**.
 - `MonomialOps` — optimized monomial operation dispatcher.
 
 ### [`orderings.py`](orderings.py)
@@ -851,6 +856,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
   - `GeneralizedPolynomialRing.new(a)` — construct element; **validates that the denominator's leading term under the ring's ordering has all-zero exponents** (i.e., denominator is a unit in the localization); raises `CoercionFailed` otherwise.
+  - `PolynomialRingBase.__init__(dom, *gens, **opts)` — initializes the ring; **if `order` key is absent from opts (e.g. when constructed via `inject`), falls back to `default_order` ("grevlex")** via `monomial_key`.
   - `PolynomialRingBase.revert(a)` — multiplicative inverse; attempts `1/a` and **catches both `ExactQuotientFailed` and `ZeroDivisionError`**, raising `NotReversible` if the element is not a unit.
   - `PolynomialRingBase.from_AlgebraicField(a, K0)` — convert algebraic number field element; **returns `None` (silent failure) if `K1.dom != K0`** (ground domain mismatch), unlike other `from_*` methods which always attempt conversion.
   - `GeneralizedPolynomialRing._vector_to_sdm` — converts a vector of rational function elements to sparse distributed module form.
@@ -864,6 +870,6 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `FractionField` (in `old_fractionfield.py`) — legacy rational function field domain using `DMF` dtype.
   - `from_sympy` — splits expression into numerator/denominator, converts coefficients, then **calls `.cancel()` to ensure reduced form**.
   - `from_FractionField(a, K0)` — convert between fraction fields: same gens → direct copy or domain conversion; source gens ⊂ target gens → reorders monomials; **incompatible gens → implicitly returns `None`** (silent conversion failure).
-  - `from_GlobalPolynomialRing` — cross-ring conversion mirrors the polynomial ring's reorder logic.
+  - `from_GlobalPolynomialRing` — cross-ring conversion: **same gens + same domain → direct rep copy; same gens + different domain → converts element to target domain first**; different gens → reorders monomials via `_dict_reorder` and converts coefficients.
 - `QuotientRing` (in `quotientring.py`) — commutative quotient ring `R/I`; `QuotientRingElement.__eq__` checks equality of coset representatives by testing whether their difference belongs to the ideal.
   - `revert(a)` — compute multiplicative inverse of `a` in `R/I`; **forms the sum of the principal ideal `(a)` and the base ideal, then tests if 1 is expressible in their generators**; raises `NotReversible` if not a unit.

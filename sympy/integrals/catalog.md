@@ -191,7 +191,12 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - Tries multiple splitting-point shifts; if a result still contains unevaluated `hyper`/`meijerg`, collects it as a fallback candidate rather than returning immediately
   - If all shifts yield unevaluated special functions and f contains HyperbolicFunction, rewrites hyperbolics as exponentials and retries
   - Returns the best (simplest) collected result if no clean closed-form is found
-- `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
+- `meijerint_definite(f, x, a, b)` — definite integral via G-function rewriting; multi-stage pipeline:
+  - Tries multiple algebraic rewritings of the integrand (expand_mul, expand, trig expansion) via a guess-and-check loop, deduplicating equivalent forms
+  - For each rewriting, first attempts direct G-function integration; if that fails and the integrand is a sum, falls back to linearity — splits into addends, integrates each term separately, and combines results
+  - Core engine rewrites integrand as one or a product of two G-functions, then applies convolution/integral theorems
+  - When the two-G-function approach fails convergence checks, retries with full polar branch substitution enabled
+  - Collects boolean convergence conditions; abandons a path if conditions are always False
 - `_check_antecedents_inversion(g, x)` — validates convergence conditions for inverse transform integrals:
   - Checks "condition A" (parameter differences must not be positive integers)
   - When p >= q: uses asymptotic Slater expansion directly

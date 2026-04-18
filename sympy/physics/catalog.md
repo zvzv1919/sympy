@@ -152,7 +152,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `RkGate` — parametric phase-rotation gate R_k; constructor simplifies small k values: k=1→ZGate, k=2→PhaseGate, k=3→TGate (returns different gate type, not RkGate).
   - `Fourier` (QFT/IQFT) — `_represent_ZGate` builds Fourier matrix and embeds into full Hilbert space via tensor products with identity matrices on both sides when gate doesn't start at qubit 0 or total qubits exceed gate range.
   - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
-- **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
+- **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace. `QubitState.flip(*bits)` toggles specified bit positions using reversed indexing (dimension−i−1) to map user-facing LSB-right convention to internal tuple order.
   - `Qubit._represent_ZGate` — Z-basis column vector: iterates bit values in reverse to compute binary→integer index, sets a 1 at that position in a 2^n-length vector. Supports sympy, numpy, scipy.sparse formats.
   - `IntQubit` — integer-to-binary qubit encoding: single int arg → uses minimum bits needed; two-int args → second specifies bit width, raises ValueError if width is insufficient to represent the integer. `as_int()` reconstructs integer from stored binary tuple.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
@@ -267,7 +267,7 @@ High-energy physics.
   - `extract_type_tens(expression)` — separates gamma-matrix tensors from non-gamma tensors in an expression; accepts single `Tensor` or `TensMul` only, raises `ValueError('wrong type')` for other expression types (e.g. `TensAdd` sums).
   - `_trace_single_line` — evaluates fermion-line traces; returns hardcoded 4 (D=4 only) when the line contains only a spinor identity (delta) and no gamma matrices.
   - `_gamma_trace1` — computes trace of gamma-matrix products; returns 4 for empty trace (identity).
-  - `_kahane_simplify` — cancels contracted gamma matrices using Kahane's algorithm.
+  - `_kahane_simplify` — cancels contracted (dummy-index) gamma matrices using Kahane's algorithm; inserts virtual indices to handle consecutive dummy indices with no free indices between them.
 
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).

@@ -36,6 +36,7 @@ Main module: differential operator algebra, `HolonomicFunction` class, and conve
 Recurrence (shift) operator algebra and holonomic sequences — defines algebraic structures only; ODE-to-recurrence conversion lives in `holonomic.py`.
 
 - `RecurrenceOperators(base, generator)` — factory returning algebra and shift operator `Sn`.
+- `RecurrenceOperatorAlgebra` — parent ring for recurrence operators; `__init__` handles generator: defaults to noncommutative symbol `Sn` when None, converts string to symbol, or accepts existing Symbol.
 - `RecurrenceOperator` — element of recurrence algebra; commutation rule `Sn * a(n) = a(n+1) * Sn`.
 - `HolonomicSequence` — sequence satisfying a linear recurrence with polynomial coefficients.
 

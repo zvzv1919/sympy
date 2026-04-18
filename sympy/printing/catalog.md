@@ -53,9 +53,9 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 
 ### [`pretty/pretty_symbology.py`](pretty/pretty_symbology.py)
 Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not** a printer — it provides building blocks that `pretty.py` consumes.
-- `xobj(symb, length)` — constructs multi-line spatial objects (brackets, braces, integral signs) of a given height; handles even-height adjustment for centered middle pieces (e.g., curly braces).
+- `xobj(symb, length)` — constructs multi-line spatial objects (brackets, braces, integral signs) of a given height; when a glyph has a defined center piece (e.g., curly braces), silently increments even lengths to odd to maintain center symmetry.
 - `pretty_atom(atom_name, default=None)` — returns pretty representation of named atoms (pi, infinity, etc.); raises `KeyError('only unicode')` in ASCII mode when no default is provided.
-- `pretty_symbol(symb_name)` — translates symbol names to Unicode glyphs (Greek letters, sub/superscripts). If any superscript character fails Unicode mapping, **both** super- and subscript prettification are abandoned and the name falls back to underscore-delimited ASCII. Passive lookup only — rendering overrides live in `pretty.py`'s `_print_*` methods.
+- `pretty_symbol(symb_name)` — translates symbol names to Unicode glyphs (Greek letters, sub/superscripts). Delegates name decomposition (base/super/sub parsing) to `conventions.split_super_sub`. If any superscript character fails Unicode mapping, **both** super- and subscript prettification are abandoned and the name falls back to underscore-delimited ASCII. Passive lookup only — rendering overrides live in `pretty.py`'s `_print_*` methods.
 - `xsym(sym)` — resolves operator characters (comparison `<=`/`>=`/`!=`, arithmetic `*`/`.`, arrows `-->`/`==>`, assignment `:=`/`+=`) to Unicode or ASCII display form via `_xsym` lookup table.
 - `vobj(symb, height)` / `hobj(symb, width)` — vertical/horizontal object constructors.
 - Key data: `atoms_table` (atom→Unicode mapping), `_xobj_unicode`/`_xobj_ascii` (bracket/delimiter glyph tables).

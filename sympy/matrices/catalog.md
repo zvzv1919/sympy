@@ -22,7 +22,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
-- **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
+- **Diagonalization**: `is_diagonalizable`, `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
+- `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
 - `_jordan_block_structure`: computes generalized eigenvector chain leaders per eigenvalue and block size; iterates block sizes largest-first, excluding vectors from smaller kernels and already-used chains.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
@@ -49,6 +50,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; single-row matrices use inline `Matrix([...])` format; multi-row matrices insert a leading newline `Matrix([\n...])`; zero-dimension matrices embed explicit dimensions).
 - `table`: tabular text formatter with per-column width alignment; returns `'[]'` for zero-row or zero-col matrices; maps alignment strings to Python justification methods.
 - `DeferredVector`: lazily-evaluated symbolic vector; `__getitem__` creates named `Symbol` components on-the-fly. Rejects negative indices (raises `IndexError`); normalizes negative zero to 0.
+- `classof(A, B)`: standalone function determining result type when combining matrices of different types; immutability is contagious (`_class_priority` comparison). Falls back to numpy detection: if either operand is a `numpy.ndarray`, the other operand's class wins. Raises `TypeError` if neither path resolves.
+- `a2idx(j, n)`: standalone function converting an index to a validated non-negative integer; used by element/slice access throughout the module.
 - `MatrixError`, `ShapeError`, `NonSquareMatrixError`: exception hierarchy.
 
 ### [`dense.py`](dense.py)
