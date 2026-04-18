@@ -52,7 +52,7 @@ Custom expression-to-function converter for internal plotting use.
 ## Interval Arithmetic (`plotting/intervalmath/`)
 
 ### `interval_arithmetic.py`
-Core interval class for bounded floating-point interval computations.
+Core interval class for bounded floating-point interval computations used by implicit plot region testing (not for variable range management or rendering discretization).
 
 - `interval` — represents [start, end] with `is_valid` ternary flag (True/False/None for partial validity).
   - Constructor auto-swaps arguments when given in descending order (upper < lower), so `interval(5, 2)` yields `[2, 5]`.
@@ -119,12 +119,13 @@ Concrete plot mode implementations for various coordinate systems.
 - `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
 - `ParametricCurve2D`, `ParametricCurve3D`, `ParametricSurface3D` — parametric modes.
 - `Polar`, `Cylindrical`, `Spherical` — curvilinear coordinate modes.
-- Each implements `_get_sympy_evaluator()` and `_get_lambda_evaluator()` for its coordinate transform.
+- Each implements `_get_sympy_evaluator()` (uses chained `.subs()` to substitute variable values into expressions) and `_get_lambda_evaluator()` (uses `lambdify` for fast numeric evaluation).
 
 ### `plot_interval.py`
-Bounded interval representation for pyglet variable ranges.
+Bounded interval representation for pyglet variable ranges (discretized sample points for rendering, not interval arithmetic).
 
 - `PlotInterval` — stores [variable, min, max, steps] with property accessors and validation.
+  - `__init__(*args)` — flexible constructor: accepts a string (parsed via `eval`), a tuple/list of bounds, copy from another `PlotInterval`, or positional args `(symbol, min, max, steps)` with optional leading symbol.
 - `fill_from(b)` — merges defaults from another interval for partial specifications.
 - `vrange()` — yields v_steps+1 evenly-spaced sympy numbers from v_min to v_max (individual sample points).
 - `vrange2()` — yields v_steps consecutive adjacent (a, b) pairs sharing endpoints, covering v_min to v_max (used for line segments/mesh cells).

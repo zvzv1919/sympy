@@ -164,7 +164,7 @@ Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Int
   - If no permutation yields a rational function, falls back to rewriting the integrand in terms of tan/tanh and retries
   - `_exponent` helper computes upper degree bound for the polynomial ansatz; handles fractional rational powers specially (p/q with q≠1 yields p+q−1 or |p+q|)
   - `_splitter` recursively decomposes polynomials via derivation and GCD for denominator factoring
-- `heurisch_wrapper(f, x)` — wrapper with retry logic for edge cases
+- `heurisch_wrapper(f, x)` — wraps `heurisch`; detects new symbolic poles in the antiderivative's denominators (not present in original integrand), re-evaluates under each special-case substitution, and returns a Piecewise over those parameter conditions
 - `DiffCache` — caches derivatives during integration; for cylindrical (Bessel-type) functions, simultaneously stores derivatives for orders n and n−1 to avoid introducing a third algebraically dependent transcendental
 - `components(f, x)` — collects the functional building blocks (atoms) of an expression that depend on x; for power expressions: integer exponents yield only base components, rational non-integer exponents add base^(1/denominator), symbolic/irrational exponents add both full power and exponent components
 

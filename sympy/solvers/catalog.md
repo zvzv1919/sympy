@@ -62,6 +62,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `linear_eq_to_matrix(equations, *symbols)` — standalone utility that converts linear equations to (A, b) matrix pair for external use. Does not solve; just extracts coefficients. Accepts both expressions (implicit =0) and Eq() relations.
 - `domain_check(f, symbol, p)` — solveset-internal singularity check; walks expression tree for infinite subexpressions at a candidate point. Not used by legacy `solve` (which has its own denominator-zero filter). Caveat: misses singularities if auto-simplification has already reduced the expression (e.g. x/x → 1).
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
+  - Caveat: domain intersection (filtering against reals/complexes) is applied only when the result is a FiniteSet; infinite/continuous solution sets (ImageSet, Union, etc.) pass through unfiltered.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
   - `_invert_complex` exp handling: maps each target value to an ImageSet over Integers (adding 2nπi branches); requires `g_ys` to be a FiniteSet.
   - Caveat: silently returns the expression unchanged for infinite target sets (Integers, Union, etc.) — exp inversion only proceeds for finite discrete inputs.

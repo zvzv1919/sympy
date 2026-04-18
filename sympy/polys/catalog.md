@@ -172,6 +172,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - GCD/resultant: `gcd`, `lcm`, `cofactors`, `resultant`, `discriminant`, `subresultants`.
     - `resultant(g, includePRS)` — when `includePRS=True`, returns `(resultant_value, [PRS_polys])` tuple instead of a single scalar.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
+    - `factor_list` (via `_generic_factor_list`): **when input is a rational expression (nontrivial denominator) and `frac=True`, returns `(coeff, numer_factors, denom_factors)` 3-tuple; when `frac=False` (default), silently drops denominator factors** and returns only `(coeff, numer_factors)`.
     - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
 - `to_rational_coeffs(f)` — transform polynomial with irrational (square-root) coefficients to rational coefficients.
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
@@ -195,6 +196,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **raises `MultivariatePolynomialError` for multivariate input**.
   - **Validates `eps > 0` (raises `ValueError` if not positive)**; for a single expression, wraps as `Poly` and delegates.
+  - **Returns empty list `[]` for a single constant/non-polynomial input** (catches `GeneratorsNeeded` silently), unlike `count_roots`/`refine_root` which raise `PolynomialError` in the same situation.
 - `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions; **each catches `GeneratorsNeeded` and re-raises as `PolynomialError`** when input has no generators (e.g. plain integer).
 - `poly(expr)` — efficiently convert expression to `Poly` by recursively decomposing `Add`/`Mul`/`Pow` nodes; **non-sum factors in a product are collected separately: numeric factors are multiplied as scalars, while symbolic non-sum factors are converted to `Poly` via `_from_expr`** before multiplication.
 - `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
@@ -233,6 +235,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
   - **`dmp_sub_term` delegates to `dup_add_term` with negated coefficient** (not `dup_sub_term`) when reducing to univariate.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
+- `dup_add_ground`, `dmp_add_ground`, `dup_sub_ground`, `dmp_sub_ground` — add/subtract a ground domain scalar from a polynomial; **multivariate variants promote the scalar to nested representation via `dmp_ground`** before delegating to `*_add_term`/`*_sub_term` at degree 0.
 - `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).

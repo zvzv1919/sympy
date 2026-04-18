@@ -117,7 +117,7 @@ Trigonometric functions and their inverses.
 - `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions; `sin`/`cos` have `_eval_expand_trig` for multiple-angle expansion using Chebyshev T (odd n) and Chebyshev U (even n) polynomials from `special/polynomials.py`.
 - `ReciprocalTrigonometricFunction` — base class for reciprocal trig forms (`sec`, `csc`, `cot`); delegates rewrites/eval to the underlying base function (e.g., cos for sec) and inverts.
   - `_rewrite_reciprocal` guards against trivial identity rewrites by returning None if the delegated result equals the original expression unchanged.
-- `asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2` — inverse trig.
+- `asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2` — inverse trig; `eval` converts purely imaginary arguments to inverse hyperbolic equivalents (e.g., atan(ix)→i·atanh(x)).
 - `_pi_coeff` — helper to normalize arguments by π.
 
 #### [`elementary/exponential.py`](elementary/exponential.py)

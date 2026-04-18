@@ -21,6 +21,7 @@ Public API surface of the `core` module. Re-exports all fundamental types and ut
 Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
 
 - `Basic` — base class: `__eq__`, `__hash__`, `compare()`, `atoms()`, `subs()`, `replace()`, `rewrite()`, `dummy_eq()`, canonical ordering
+  - `compare(other)` — pairwise comparison of `_hashable_content` elements; wraps `frozenset` elements into `Basic(*)` before recursive comparison (handles set-like content in ordering)
   - `atoms(*types)` — collects all leaf (atomic) subexpressions; when types given, filters by isinstance; instance args are converted via `type()` (e.g., `S(1)` filters by `One`, not `Integer`)
   - `__eq__` — structural equality; special-cases `Pow` with exponent equal to 1 (e.g., `a**1.0 == a`) by comparing base to other operand
   - `subs()` — substitution; silently drops pairs where old/new cannot be sympified (non-string, non-symbolic objects)
@@ -47,6 +48,7 @@ Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicM
 ### [`numbers.py`](numbers.py)
 All concrete numeric types and their arithmetic operations.
 
+- `comp(z1, z2, tol)` — module-level numerical comparison; with nonzero tol uses relative error (`diff/|z1|`) when z2 is nonzero and `|z1| > 1`, otherwise absolute error; with tol=None uses precision-based significance test; with tol='' uses exact string comparison
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
   - `__mul__` returns `NotImplemented` (not parent delegation) when other is a `Tuple`, deferring to the container's own multiplication
   - `_eval_subs(old, new)` — if `old` equals the negation of self, returns `-new`; otherwise returns self unchanged (handles e.g., substituting `-3` when atom is `3`)
@@ -56,7 +58,7 @@ All concrete numeric types and their arithmetic operations.
   - `_eval_power` — negative Float base with rational exponent p/q where p=1 and q is odd: factors out `(-1)**(1/q)` and recurses on positive base, avoiding spurious complex result
   - `__eq__` — equality comparison; short-circuits to False when other is an irrational `NumberSymbol` (e.g., pi, E) without numerical comparison
   - `__gt__`/`__ge__` — ordering comparisons; checks `other.is_comparable` to decide whether to numerically evaluate the other operand before mpf comparison
-  - `__mod__` — modulo operator; when divisor is a non-integer Rational (q≠1), converts self to exact Rational first, computes mod in exact arithmetic, then rounds result back to Float precision (avoids precision loss from float mod)
+  - `__mod__` — modulo operator; when divisor is a non-integer Rational (q≠1), converts self to exact Rational first, computes mod in exact arithmetic, then rounds result back to Float precision; when divisor is Float and `self/other` is exact integer, short-circuits to `Float(0)` at max precision of both operands
   - `__lt__`/`__le__` — ordering comparisons; checks `other.is_real and other.is_number` (different predicate from `__gt__`/`__ge__`) to decide whether to evalf the other operand
 - `Rational` — exact p/q fractions; auto-reduces via GCD; `_eval_power` handles concrete rational exponentiation including negative-base sign separation for complex phase
   - `gcd(other)` — greatest common divisor of two Rationals: `igcd(numerators) / ilcm(denominators)`
@@ -94,6 +96,7 @@ All concrete numeric types and their arithmetic operations.
 `Add` class — commutative n-ary sum. `flatten()` collects coefficients, separates commutative/non-commutative terms.
 
 - `as_coeff_add(*deps)` — without deps, returns `(leading_number, remaining_terms)`; with deps, partitions terms into symbol-independent sum and symbol-dependent tuple (not numeric extraction)
+- `as_coeff_Add(rational=False)` — efficiently extracts leading numeric coefficient; when `rational=True`, only extracts Rational coefficients (irrational Numbers like pi are not separated); when False (default), any Number is extracted
 - `as_numer_denom()` — converts sum to (numerator, denominator) form; collects per-term numerators/denominators; special-cases zero-denominator terms (infinity) by moving them into the numerator under denominator 1
 - `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
 - `as_content_primitive(radical, clear)` — recursive content extraction; when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
@@ -111,6 +114,7 @@ All concrete numeric types and their arithmetic operations.
 - `as_coeff_mul(*deps, rational=True)` — splits leading numeric coefficient from remaining factors; with `rational=True`, non-rational negative leading numbers return `(-1, (abs_num, ...))` instead of the number itself
 - `_eval_power(b, e)` — raising a product to a power; separates commutative from non-commutative factors; NC factors stay grouped (not distributed) to preserve ordering
 - `_eval_evalf(prec)` — numerical evaluation; when coefficient is -1 and remainder is non-Mul, individually evaluates remainder (falls back to original if None); otherwise delegates to AssocOp
+- `as_real_imag()` — decomposes product into real/imaginary parts; classifies factors as real, imaginary, or complex; detects complex conjugate pairs among commutative factors and replaces them with `|x|²` (real coefficient); Add factors accumulated separately and expanded last
 - `_eval_conjugate` — conjugate of product preserves factor order: `conjugate(a*b) = conjugate(a)*conjugate(b)`
 - `_eval_transpose` — transpose of product reverses factor order: `transpose(a*b) = transpose(b)*transpose(a)` (non-commutative algebra rule)
 - `_eval_adjoint` — adjoint of product reverses factor order (like transpose)
@@ -308,7 +312,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 - `_Greater` / `_Less` — internal base classes providing `.gts` (greater-than side) and `.lts` (less-than side) properties; `_Greater` maps gts→arg[0], lts→arg[1]; `_Less` swaps them (gts→arg[1], lts→arg[0])
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 - `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
-- `Unequality.__new__` — negation of Equality; delegates to `Equality` then negates
+- `Unequality.__new__` — delegates to `Equality`; if result is a `BooleanAtom` (True/False), returns its negation; if equality is indeterminate, falls through to create an unevaluated `Relational` node
 
 ---
 
@@ -365,3 +369,6 @@ Exception classes only: `BaseCoreError`, `NonCommutativeExpression`. No conversi
 
 ### [`trace.py`](trace.py)
 `Tr` class — symbolic matrix/operator trace with cyclic permutation of arguments.
+
+- `_cycle_permute(l)` — computes canonical rotation of a cyclic sequence; finds all positions of the minimum element, builds sublists between consecutive minima, picks the lexicographically smallest rotation; used in `_hashable_content` so cyclically equivalent products hash identically
+- `_is_scalar(e)` — helper classifying scalars (Integer, Float, Rational, Number, commutative Symbol)

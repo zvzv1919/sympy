@@ -8,6 +8,17 @@ Two parallel APIs exist:
 - **Deterministic** (top-level): rules return a single expression.
 - **Branching** (`branch/`): rules are generators that `yield` multiple alternative results (non-deterministic).
 
+## Package API
+
+### [`__init__.py`](__init__.py)
+Public surface of the `strategies` package. Selectively re-exports from submodules.
+- Re-exports from `rl`: `rm_id`, `unpack`, `flatten`, `sort`, `glom`, `distribute`, `rebuild`.
+- Re-exports from `core`: `condition`, `debug`, `chain`, `null_safe`, `do_one`, `exhaust`, `minimize`, `tryit`.
+- Re-exports from `tools`: `canon`, `typed`.
+- Re-exports from `util`: `new`.
+- Imports `rl`, `traverse`, and `branch` as namespace submodules.
+- **Not re-exported**: `switch`, `memoize`, `identity` (from `core`), `subs` (from `rl`). External code must import these from their submodules directly.
+
 ## Deterministic Strategies
 
 ### [`core.py`](core.py)

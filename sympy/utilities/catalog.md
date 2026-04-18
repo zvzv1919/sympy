@@ -8,6 +8,7 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
 - `binary_function(symfunc, expr)` — attach compiled numerics to a SymPy Function.
 - `ufuncify(args, expr)` — top-level entry for creating NumPy ufunc-compatible C extensions; numpy backend enforces maxargs=32 limit on total (inputs+outputs), raises `ValueError` if exceeded.
 - `CodeWrapper` — base class; subclasses handle compilation and module import; `_get_wrapped_function(mod, name)` resolves the callable from the compiled module.
+  - `wrap_code(routine)` — compiles a routine: creates a temp directory if no filepath given, generates/compiles/imports the module, then cleans up; silently swallows `OSError` on temp directory removal (Windows file-locking edge case).
 - `CythonCodeWrapper` — Cython backend; `_get_wrapped_function` appends `'_c'` suffix to the routine name when retrieving the callable from the built extension module.
   - `dump_pyx(routines, f, prefix)` — writes the `.pyx` bridge file: emits `cdef extern` headers and Python wrapper functions; constructs the function body differently for void routines (call then return output args) vs value-returning routines (return call result).
   - `_partition_args(args)` — categorizes routine arguments into py_args, py_returns, py_locals, and py_inferred; infers array dimension parameters from InputArgument/InOutArgument shapes so they need not be passed explicitly.
@@ -75,6 +76,7 @@ Interactive source code inspection and dotted-path class resolution.
 
 ### [`runtests.py`](runtests.py)
 SymPy's built-in testing framework (py.test-compatible, no external dependencies).
+- `convert_to_native_paths(lst)` — converts forward-slash-delimited paths to OS-native paths; on Windows, re-inserts the backslash after a drive letter colon when `os.path.join` drops it.
 - `test(*paths)` — run tests; supports `split='a/b'` to partition test files into segments for parallel CI.
 - `_test()` — internal runner; when `slow=True`, deterministically shuffles tests (fixed seed) before splitting to ensure even workload distribution across segments.
 - `split_list(l, split)` — partition a list into segment `a` of `b` (e.g. `'2/3'`); used by `_test` and `_doctest` for CI splitting.

@@ -39,7 +39,7 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 
 ## Type Series — Root System Definitions
 
-Each `type_*.py` file defines root-system properties (simple roots, positive roots, Cartan matrix, Dynkin diagram, dimension, basis count) for one Cartan series. They do **not** contain Weyl group matrix representations.
+Each `type_*.py` file defines root-system properties (simple roots, positive roots, Cartan matrix, Dynkin diagram, dimension, basis count) for one Cartan series. They contain **no** Weyl group logic — group order, generators, element operations, and reflection matrices all live in `weyl_group.py`.
 
 ### [`type_a.py`](type_a.py)
 `TypeA` — A_n series (first classical series). Lie algebra su(n+1). Dimension n+1. Roots: n(n+1).

@@ -111,6 +111,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `uncouple()`/`_uncouple()` — decomposes spin eigenstates into sums of tensor-product states weighted by CG coefficients. Accepts both `CoupledSpinState` (extracts coupling from state) and plain `SpinState` (requires explicit j-values; auto-generates default sequential coupling scheme if none provided: space 1+2, then result+3, etc.).
     - Numeric j,m: enumerates valid magnetic projection configurations explicitly. Symbolic j,m: returns symbolic Sum over CG products.
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices and decomposition methods.
+  - `Gate._represent_ZGate` — Z-basis matrix representation; validates nqubits (raises QuantumError if zero or less than `min_qubits` for the gate) before building the representation matrix via `represent_zbasis`.
   - `OneQubitGate._eval_commutator` — short-circuits to zero when two single-qubit gates act on different targets OR are the same gate class; otherwise falls back to generic Operator commutator.
   - `Gate._apply_operator_Qubit` — applies a gate to a qubit state: selects a target-matrix column via bit-shifted index from target qubits, then flips bits to construct the output state superposition.
   - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self, **except** exp=−1 delegates to parent `Gate._eval_power` instead of returning self.
@@ -194,7 +195,8 @@ Reference-frame-aware 3-D vector and dyadic algebra, kinematics, and calculus.
   - `_latex`/`_pretty` — custom coefficient formatting: wraps `Add` (sum) coefficients in parentheses for readability; extracts leading minus signs for sign-aware concatenation.
   - `Vector.diff(var, frame)` — partial derivative in a frame; three branches: same-frame → direct diff, cross-frame no DCM dependency → diff in place.
   - Cross-frame with DCM dependency on var → re-expresses into derivative frame, differentiates, then converts back. `var_in_dcm` flag controls this.
-- `dyadic.py` — `Dyadic` class.
+- `dyadic.py` — `Dyadic` class: tensor product of two vectors; owns its own `_pretty` and `_latex` rendering (not delegated to `printing.py`).
+  - `_pretty` — wraps `Add` (sum) coefficients in parentheses via `.parens()` for readability; simple scalars printed directly.
 - `frame.py` — `ReferenceFrame`: orientation, angular velocity, DCM computation, `partial_velocity(frame, *gen_speeds)` returns partial angular velocities (single speed → bare Vector; multiple → tuple).
 - `point.py` — `Point`: position, velocity (`vel()`), acceleration (`acc()`) in reference frames; `partial_velocity(frame, *gen_speeds)` returns partial velocities (single speed → bare Vector; multiple → tuple of Vectors). Two-point (`v2pt_theory`) and one-point (`v1pt_theory`) velocity theorems.
   - `acc(frame)` fallback: if acceleration not explicitly set, differentiates velocity; if velocity is also zero, returns zero vector.

@@ -114,8 +114,9 @@ Polygonal entities in 2D.
   - `arbitrary_point(parameter='t')` — parameterized perimeter point (0→1); raises `ValueError` if parameter name collides with a free symbol in the polygon's vertex coordinates.
   - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.
-  - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via angular-sweep over edge pairs (rotating calipers).
+  - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via rotating calipers. Pre-checks bounding circles around centroids; if they overlap, emits a warning (does not abort or raise) and continues computation, potentially returning erroneous results for intersecting polygons.
 - `RegularPolygon` — `Polygon` subclass for regular n-gons; stored as center + radius + n (not explicit vertices). Adds `radius`, `interior_angle`, `exterior_angle`, `incircle`, `circumcircle`, `spin()`, `rotate()`.
+  - `reflect(line)` — overrides `GeometryEntity.reflect`; reflects center and first vertex, computes angular spin at the new center, and negates the radius to encode the mirror-flip in orientation.
   - `scale(x, y, pt)` — overrides base; uniform scaling (x == y) preserves `RegularPolygon` type by scaling the radius; non-uniform scaling degrades to a plain `Polygon` with explicit vertices.
   - `encloses_point(p)` — optimized containment: rejects if distance ≥ circumradius, accepts if distance < inradius, falls back to general `Polygon.encloses_point` only for the annular region between.
   - `__eq__(o)` — cross-type equality: if compared to a plain `Polygon`, delegates to `Polygon.__eq__` to resolve center/radius vs explicit-vertices mismatch.
