@@ -104,7 +104,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear
 - `derivation(p, DE)` — computes Dp for polynomial p in the differential extension tower; `coefficientD=True` computes the coefficient derivation (treats top-level variable as constant)
-- Polynomial utilities: `gcdex_diophantine` (extended GCD solving s*a + t*b == c with degree bound; reduces s modulo b via degree comparison when s.degree() >= b.degree()), `frac_in`, `as_poly_1t`
+- Polynomial utilities: `gcdex_diophantine` (Extended Euclidean Algorithm, Diophantine version — solves s*a + t*b == c ensuring deg(s) < deg(b) by reducing s modulo b), `frac_in`, `as_poly_1t`
 - `splitfactor(p, DE)` — splitting factorization: decomposes polynomial p into (p_n, p_s) where p_s is special and each square factor of p_n is normal
   - When p does not involve the current extension variable DE.t, re-expresses p and its derivative in the coefficient field variables to compute the GCD
 - `splitfactor_sqf` — square-free version of splitting factorization; returns lists of (factor, multiplicity) pairs for normal and special parts

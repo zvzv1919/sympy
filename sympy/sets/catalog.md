@@ -25,11 +25,11 @@ Foundation of all set types and operations.
 - `FiniteSet` — finite collection of discrete symbolic elements; supports powerset
   - `_contains` — three-valued membership: iterates elements, evaluates `Eq`, returns true/false/None when equality is indeterminate
   - `as_relational` — converts to `Or(*[Eq(symbol, elem) ...])` disjunction of equality predicates
-- **`imageset(*args)`** — standalone function; computes the image of a set under a transformation (Lambda, FunctionClass, or Python lambda)
-  - Two-argument form `imageset(f, set)`: accepts Lambda, FunctionClass (e.g. `cos`), or Python `<lambda>`; raises `TypeError` for any other callable type (e.g. plain strings or unsupported callables)
+- **`imageset(*args)`** — standalone entry point; constructs an ImageSet from a transformation and a base set; delegates domain-specific simplification to each set's `_eval_imageset`
+  - Two-argument form `imageset(f, set)`: accepts Lambda, FunctionClass (e.g. `cos`), or Python `<lambda>`
   - Three-argument form `imageset(var, expr, set)`: wraps into a Lambda internally
-  - Composes nested univariate transformations: when the result is an ImageSet whose base is also an ImageSet and both lambdas are single-variable, recursively composes them into one transformation over the innermost base set
-  - Returns unevaluated `ImageSet` if it cannot simplify
+  - Composes nested univariate ImageSets into one transformation over the innermost base set
+  - Returns unevaluated `ImageSet` if the set's `_eval_imageset` cannot simplify
 
 ## Specialized / "Fancy" Sets
 
@@ -38,7 +38,8 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 
 - `Naturals` / `Naturals0` — positive integers / non-negative integers (singletons)
   - `_contains` — three-valued membership: returns true if integer+positive/nonnegative, false if not integer or not positive/nonnegative, `None` when sign is indeterminate
-- `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
+- `Integers` — all integers (positive, negative, zero)
+  - `_eval_imageset` — simplifies mapped sets over integers: for `a*n + b`, reduces offset via `b % a` (canonical shift); exploits symmetry around zero by choosing between `f(n)` and `f(−n)` to minimize negative coefficients
   - `_intersect` — intersection with an `Interval`: builds a `Range` from `ceiling(left)` to `floor(right)+1`, then re-intersects with the original interval to exclude open-boundary endpoints
 - `Reals` — all reals; subclass of `Interval(−∞, ∞)` singleton; inherits `_contains` and all interval behavior from `Interval` in `sets.py`
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases

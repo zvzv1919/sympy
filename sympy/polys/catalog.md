@@ -179,6 +179,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - Also falls back to expression-level subs when `old` is not a generator.
   - `_gen_to_level(gen)` — resolve generator to internal nesting level; accepts integer index (supports **Python-style negative indexing**, e.g. -1 for last generator) or symbolic variable; **raises `PolynomialError` if integer index is out of range**.
   - `homogenize(s)` — make polynomial homogeneous using symbol `s`; **if `s` is already a generator, reuses its index; if new, appends it to generators**. Raises `TypeError` if `s` is not a `Symbol`.
+  - `is_ground` — `True` if polynomial is an element of the ground (coefficient) domain; **symbols not among declared generators are part of the ground domain** (e.g. `Poly(y, x).is_ground` is `True`).
   - `is_univariate`, `is_multivariate` — determined purely by **number of declared generators** (`len(gens)`), not by which symbols actually appear in the expression; e.g. `Poly(x**2, x, y).is_multivariate` returns `True`.
   - `homogeneous_order()` — return the total degree if all terms share the same degree; `is_homogeneous` for a boolean check.
   - `unify(g)` / `_unify(g)` — reconcile two Polys to a common variable ordering and coefficient domain.
@@ -231,9 +232,10 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
-- `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **raises `MultivariatePolynomialError` for multivariate input**.
-  - **Validates `eps > 0` (raises `ValueError` if not positive)**; for a single expression, wraps as `Poly` and delegates.
-  - **Returns empty list `[]` for a single constant/non-polynomial input** (catches `GeneratorsNeeded` silently), unlike `count_roots`/`refine_root` which raise `PolynomialError` in the same situation.
+- `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **accepts a single expression or an iterable of expressions**.
+  - **Single expression**: wraps as `Poly` and delegates; **returns empty list `[]` for a constant/non-polynomial input** (catches `GeneratorsNeeded` silently).
+  - **Iterable of expressions**: converts all via `parallel_poly_from_expr` into a common QQ domain; **raises `MultivariatePolynomialError` if more than one generator is detected**; delegates to `dup_isolate_real_roots_list`.
+  - **Validates `eps > 0` (raises `ValueError` if not positive)**.
 - `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions; **each catches `GeneratorsNeeded` and re-raises as `PolynomialError`** when input has no generators (e.g. plain integer).
   - `Poly.nroots(n, maxsteps)` — compute numerical root approximations; **for QQ coefficients, multiplies through by LCM of all denominators to convert to ZZ** before passing to the iterative solver (for accuracy); for ZZ, casts to Python `int`; for other domains, evaluates coefficients numerically.
 - `poly(expr)` — efficiently convert expression to `Poly` by recursively decomposing `Add`/`Mul`/`Pow` nodes; **non-sum factors in a product are collected separately: numeric factors are multiplied as scalars, while symbolic non-sum factors are converted to `Poly` via `_from_expr`** before multiplication.

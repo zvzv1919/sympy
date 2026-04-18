@@ -42,6 +42,7 @@ Infrastructure for continuous random variables.
 ### [`drv.py`](drv.py)
 Infrastructure for discrete random variables with infinite support.
 - `SingleDiscreteDistribution`: base class with `pdf()`, `cdf()`, `sample()`, `expectation()` (summation-based).
+  - `compute_cdf()`: sums the PDF from the infimum of the support set up to z, then wraps the result in a Piecewise that forces zero for any argument below the left boundary.
 - `SingleDiscretePSpace`: probability space for a single discrete variable.
   - `integrate()`: computes expected values by delegating to `distribution.expectation()`; catches broad `Exception` and falls back to a raw `Sum` expression.
   - `compute_cdf()`, `compute_density()`: delegate to the underlying distribution.
@@ -51,7 +52,7 @@ Infrastructure for finite random variables (discrete, finite support).
 - `FiniteDensity`, `FiniteDomain`, `SingleFiniteDomain`, `ProductFiniteDomain`, `ConditionalFiniteDomain`.
 - `SingleFiniteDistribution`: base class whose subclasses define a `.dict` mapping outcomes to probabilities.
 - `FinitePSpace`: probability space for finitely many outcomes; `integrate` computes expected values as the weighted sum Σ f(x)·P(x) over all domain elements.
-- `compute_density`, `compute_cdf`, `sorted_cdf`: derive density/CDF dicts by iterating the finite domain.
+- `compute_density`, `compute_cdf`, `sorted_cdf`: derive density/CDF dicts by iterating and accumulating over the finite domain's enumerated outcomes.
 
 ---
 

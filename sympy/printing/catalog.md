@@ -48,6 +48,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 - `_print_DMP` / `_print_DMF` — renders dense multivariate polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to `repr(p)`.
 - Algebraic domain printers (`_print_RealField`, `_print_ComplexField`, `_print_FiniteField`, `_print_IntegerRing`, `_print_RationalField`) — render number domains as Unicode double-struck letters (ℤ, ℚ, ℝ, ℂ) or ASCII fallbacks (ZZ, QQ, RR, CC); non-default precision is appended as a subscript.
 - `_print_Range` — renders discrete integer ranges; abbreviates with ellipsis (`…`) when the range has more than 4 elements or is infinite, showing only endpoints and step; shows all elements otherwise.
+- `_print_matrix_contents` — generic grid layout: computes per-column max width, horizontally centers each cell with right-bias on odd padding (`wleft = delta//2`, `wright = delta - wleft`), vertical alignment is implicit via baselines.
 - Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.
 - `_print_Float` — when `full_prec` setting is `"auto"`, shows full precision only at the top print level (`_print_level == 1`); nested floats use reduced precision.
@@ -103,6 +104,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `FCodePrinter` — generates Fortran code with language-specific operators and formatting (source format, precision, contraction).
 - `fcode()` — top-level API; accepts `assign_to`, `precision`, `source_format` ('fixed'/'free'), `standard` (66/77/90/95/2003/2008), `human`, `contract`, and `user_functions`.
 - Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds).
+- `_print_Add` — separates terms into pure-real, pure-imaginary, and mixed; when imaginary parts exist, wraps real+imaginary in `cmplx(re, im)` and appends the mixed (symbolic) portion with sign detection (leading `-` check).
 - `_wrap_fortran` — enforces Fortran fixed-format line length (72 chars) by wrapping long lines with continuation markers.
 - Loop syntax: `do VAR = start, stop` / `end do`.
 
@@ -202,7 +204,10 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 GTK-based MathML viewer for expressions.
 
 ### [`theanocode.py`](theanocode.py)
-`TheanoPrinter` — converts expressions to Theano computational graph variables.
+`TheanoPrinter` — converts expressions to Theano computational graph variables (`tt.TensorVariable`).
+- `_print_Piecewise` — converts piecewise to nested `tt.switch`; single-branch fallback is `np.nan`.
+- `_print_Derivative` — symbolic differentiation via `tt.Rop`.
+- `theano_function(inputs, outputs)` — end-to-end: builds Theano function from SymPy expressions with dimension/broadcasting handling.
 
 ### [`llvmjitcode.py`](llvmjitcode.py)
 `LLVMJitPrinter` — JIT-compiles expressions to machine code via LLVM IR using llvmlite.

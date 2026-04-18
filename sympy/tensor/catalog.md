@@ -42,7 +42,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`). Negation (`-idx`) returns a new index with flipped variance (upper ↔ lower).
 - `TensorHead` — named tensor ("head" of an indexed tensor expression) with index types, rank, symmetry, and commutation properties.
   - `__new__` validates the `name` argument (must be string or Symbol; raises `ValueError` otherwise).
-  - `_check_auto_matrix_indices_in_call` — when `True` is passed as an index placeholder, auto-fills slots: first occurrence of a type gets `auto_left`, second gets negated `auto_right`.
+  - `_check_auto_matrix_indices_in_call` — validates and auto-fills missing index slots when called with fewer indices than rank (omitted trailing indices) or with `True` placeholders; allows at most 2 missing slots (raises `ValueError` if more); first auto-slot of a type gets `auto_left`, second gets negated `auto_right`.
   - `__call__` — returns a `Tensor` with indices; supports auto-matrix index behavior via `True` placeholders or omitted trailing indices.
 - `TensorSymmetry` — symmetry specification for tensor indices.
 - `TensorType` — pairs a list of `TensorIndexType`s with a `TensorSymmetry`.

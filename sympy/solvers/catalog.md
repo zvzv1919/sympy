@@ -125,7 +125,7 @@ Solves Diophantine equations (polynomial equations over integers).
 ### [`inequalities.py`](inequalities.py)
 Solves inequality constraints and returns interval-based solutions.
 
-- `reduce_inequalities(inequalities, symbols)` — general entry point for mixed inequality systems.
+- `reduce_inequalities(inequalities, symbols)` — general entry point for mixed inequality systems. Preprocessing: recasts symbols without an explicit real assumption as real-valued Dummy placeholders before solving, then restores original symbols in the final result.
 - `solve_univariate_inequality(expr, gen)` — solves a single real-valued univariate inequality. Substitutes a real-constrained dummy for the generator to decouple from user assumptions on the original symbol.
 - `solve_poly_inequality(poly, rel)` — polynomial inequality → interval list.
 - `solve_rational_inequalities(eqs)` — rational expression inequalities.
