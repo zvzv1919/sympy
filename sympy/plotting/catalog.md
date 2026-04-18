@@ -16,7 +16,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
   - Does NOT determine curve-vs-surface or coordinate mode — each `plot*()` entry point already knows its series type.
   - Explicitly excludes the "series of plots with same range" branch when expr_len == 3, because 3-element tuples are ambiguous between expression groups and range tuples.
 - Public API entry points (matplotlib-based):
-  - `plot()` — single-expression 2D plots over one variable.
+  - `plot()` — 2D line plots over one variable; accepts multiple expressions sharing the same free symbol. Raises `ValueError` if expressions use different free variables (e.g., `sin(x)` and `cos(y)`).
   - `plot_parametric()` — 2D parametric curves from two expressions over one parameter.
   - `plot3d()` — 3D surface from one expression over two variables.
   - `plot3d_parametric_line()` — 3D parametric curve from three expressions over one parameter; parses args via `check_arguments(args, 3, 1)`, constructs `Parametric3DLineSeries` objects.
@@ -104,7 +104,8 @@ Coordinate-system mode registry and argument interpretation only — no coordina
 
 - `PlotMode` — factory + registry class; `__new__` is the main entry point that parses raw user arguments, determines variable counts, resolves the correct rendering subclass, and returns an instantiated subclass.
 - `__new__(*args, **kwargs)` — factory method: calls `_interpret_args` → `_find_i_vars` → `_get_mode` → `object.__new__(subcls)`, then fills intervals/vars on the new instance. Returns a fully initialized concrete mode subclass instance.
-- `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class from `_mode_map`/`_mode_default_map`.
+- `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class from `_mode_map`/`_mode_default_map`. Delegates to `_get_default_mode` (empty string) or `_get_aliased_mode` (named alias).
+- `_get_default_mode(i, d)` / `_get_aliased_mode(alias, i, d)` — look up mode by d_var/i_var count; on `TypeError` (no mode registered for exact i_var count), recursively retry with incremented i_var count up to `_i_var_max` before raising `ValueError`.
 - `_interpret_args(args)` — separates raw args into (functions, intervals); enforces ordering: raises `ValueError` if a `PlotInterval` appears before any expression. Handles `GeometryEntity` specially by extracting coordinates via `arbitrary_point()`.
 - `_find_i_vars(functions, intervals)` — collects independent variables first from intervals (in order), then from free symbols of functions.
 - `_fill_intervals()` — copies default intervals, merges user-provided ranges, then assigns orphan intervals (those without a variable) to remaining unused free parameters.

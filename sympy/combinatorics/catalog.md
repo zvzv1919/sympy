@@ -82,14 +82,20 @@ Factory functions returning `PermutationGroup` objects for standard finite group
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
-- `DirectProduct(*groups)` — N-ary direct product of arbitrarily many permutation groups in a single pass; shifts each group's generators onto disjoint index slices of a combined identity mapping. Faster than repeated pairwise `__mul__` calls.
+- `DirectProduct(*groups)` — N-ary direct product of arbitrarily many permutation groups in a single pass. Faster than repeated pairwise `__mul__` calls.
+  - Shifts each group's generators onto disjoint index slices of a combined identity mapping.
+  - Deduplicates embedded generators (via `uniq`) before constructing the result group with `dups=False`.
 
 ### [`generators.py`](generators.py)
 Yields individual `Permutation` elements (not `PermutationGroup` objects) for standard groups. Contrast with `named_groups.py`, which returns constructed `PermutationGroup` objects with pre-set properties.
 - `symmetric(n)`, `cyclic(n)`, `alternating(n)` — yield all permutations of Sn, Cn, An respectively. `alternating` filters by `is_even`.
 - `dihedral(n)` — yields all 2n elements of Dn. Special-case embeddings for n=1 (in S2) and n=2 (Klein 4-group in S4) where Dn is not a subgroup of Sn.
 - `rubik_cube_generators()` — standard 3×3 Rubik's cube face-turn permutations.
-- `rubik(n)` — NxN Rubik's cube permutation generator; represents each face as an n×n numbered matrix, simulates single-face rotations, slice-plane moves, and whole-cube rotations (cycling face matrices and rotating adjacent faces), then records each resulting state as a `Permutation`.
+- `rubik(n)` — NxN Rubik's cube permutation generator; raises `ValueError` for n < 2.
+  - Represents each face as an n×n numbered matrix; simulates single-face rotations, slice-plane moves, and whole-cube rotations.
+  - Records each resulting state as a `Permutation`.
+  - Uses a dual-purpose `perm(show)` inner function: `show=0` appends the current state as a `Permutation` to the group list; `show=1` returns the flat state list for identity verification.
+  - After each set of slice rotations (front, right, bottom), asserts `perm(1) == I` to verify the cube is restored to its original configuration.
 
 ---
 

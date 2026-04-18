@@ -11,6 +11,7 @@ Primary string-to-SymPy parser for Python-like expressions.
 - `_implicit_multiplication()` — inserts `*` tokens where multiplication is implied between adjacent tokens.
 - `_implicit_application()` — inserts function application where implied.
 - `AppliedFunction` — wrapper for a function token and its argument group.
+- `_re_repeated` — regex that matches already-tokenized repeating-decimal literals (e.g. `0.3[3]`) and converts them to `Rational`.
 - `stringify_expr()` — converts string to valid Python via token transformations.
 - `eval_expr()` — evaluates the transformed code string.
 - `evaluateFalse()` — rewrites AST to wrap operators with `evaluate=False`.
@@ -24,7 +25,7 @@ Lightweight AST-based parser that wraps literal numbers as `Integer`/`Float` and
 - **Caveat**: Does NOT support token-level transformations or `evaluate=False`; use `sympy_parser.parse_expr` for those.
 
 ### [`sympy_tokenize.py`](sympy_tokenize.py)
-Python tokenizer producing 5-tuples of (type, string, start, end, line). Used by `sympy_parser`.
+Custom lexical analyzer (tokenizer) that breaks source text into lexical units as 5-tuples of (type, string, start, end, line). Used by `sympy_parser`.
 - Defines regex patterns for token classification: `Number`, `Floatnumber`, `Intnumber`, `Imagnumber`, `String`, `Operator`, etc.
 - Includes `Repeatedfloat` pattern for repeating decimal notation (e.g. `3.4[31]` where brackets denote the repeating portion).
 - `group()`, `any()`, `maybe()` — regex combinator helpers used to build token patterns.

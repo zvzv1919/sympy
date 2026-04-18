@@ -688,6 +688,7 @@ Option processing and validation for `Poly` constructors and functions.
 - `Gen.preprocess(arg)` — validates generator index; accepts only `Basic` or `int`; **raises `OptionError` for other types** (e.g. strings).
 - `Auto` — boolean flag; defaults to `True`; **`postprocess` automatically sets `auto=False` when `domain` or `field` is explicitly provided** (disables automatic domain inference).
 - `Frac` — boolean flag for fraction field mode; defaults to `False`.
+- `Gaussian` — boolean option; `postprocess` **translates `gaussian=True` into `extension={I}` (the imaginary unit) and delegates to `Extension.postprocess`**, converting a boolean flag into an algebraic number field configuration.
 - `Extension.preprocess(extension)` — validates extension parameter; `1` → `True`, `0` → raises `OptionError`; **empty iterable (e.g. `[]`) → `None` (silently disables extension)** rather than raising an error; non-empty iterable → set of extensions.
 - `build_options(gens, args)` — if `args` has exactly one key `'opt'` and no generators, **returns the existing `Options` object directly** (reuse); otherwise constructs a new `Options`.
 
@@ -754,7 +755,8 @@ Exception classes for polynomial operations.
 - `NotInvertible` — raised when polynomial modular inverse does not exist.
 - `GeneratorsNeeded`, `GeneratorsError` — generator-related errors.
 - `PolificationFailed` — raised when expression-to-Poly conversion fails; `__init__` **wraps single expressions in a list** so `.exprs` and `.origs` are always iterables (uniform interface for single and multi-expression cases).
-- `ComputationFailed`, `RefinementFailed` — computation errors.
+- `ComputationFailed` — raised when a polynomial computation fails without generators; `__str__` **displays only the first `nargs` expressions** from the inner exception's `.exprs` list (sliced via `exprs[:nargs]`), not all stored expressions.
+- `RefinementFailed` — raised when root refinement fails.
 
 ---
 

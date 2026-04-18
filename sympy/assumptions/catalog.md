@@ -50,6 +50,7 @@ Predicate definitions and global assumptions context.
 - `Predicate`: base class representing a named predicate with registered handlers.
   - `eval(expr, assumptions)`: dispatches to `AskHandler` static methods (not logical inference rules) by walking the expression type's MRO; raises `ValueError` on conflicting results. Relies on handler classes registered via `register_handler()`.
 - `AppliedPredicate`: result of `Q.property(expr)`; a Boolean-valued object; delegates to `Predicate.eval` via `_eval_ask`.
+  - `__new__`: constructs the applied predicate; sympifies the argument **unless** it is a Python `bool` (kept as-is since no `Basic` type exists for `True`/`False`).
   - `args` returns only the expression (`_args[1:]`), hiding the predicate; `func` returns the predicate (`_args[0]`). Public arg tuple differs from internal `_args`.
 - `AssumptionsContext` / `global_assumptions`: mutable set of globally active assumptions.
 - `assuming(*assumptions)`: context manager for temporary local assumptions.

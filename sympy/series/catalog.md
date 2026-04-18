@@ -67,8 +67,7 @@ Fourier series decomposition into sine/cosine components.
 ### [`sequences.py`](sequences.py)
 Discrete sequence representations and term-wise arithmetic on raw index-based sequences (not formal power series — FPS arithmetic is in `formal.py`).
 - `sequence(seq, limits)` — factory function to create sequence objects.
-- `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`, `._ith_point(i)`.
-- `_ith_point(i)` — inherited point-indexing helper (parallel to `SeriesBase._ith_point`).
+- `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`, `._ith_point(i)` (own copy of point-indexing logic).
 - `EmptySequence(SeqBase)` — singleton trivial/empty sequence; interval is the empty set.
 - `SeqFormula(SeqExpr)` — formula-defined sequence (e.g., n²).
 - `SeqPer(SeqExpr)` — periodic sequence from a tuple of repeating values.

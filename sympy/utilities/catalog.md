@@ -96,6 +96,7 @@ SymPy's built-in testing framework (py.test-compatible, no external dependencies
 - `SymPyDocTestFinder` — recursive doctest discovery; filters classes/functions by module ownership; for properties, checks `val.fget.__module__` instead of `val.__module__`.
   - `_get_test` — extracts doctest from an object; when obj is a raw string (compiled polys modules), parses line number from the name via regex `"line \d+"`; for property descriptors, resolves source line via `obj.fget` and skips if `obj.fget.__doc__` is None.
 - `SymPyOutputChecker` — custom output checker that supports approximate float comparison in doctest output, including handling of trailing-dot ellipsis in expected values.
+- `SymPyTests.test_file` — discovers and runs unit tests from a file; collects `test_`-prefixed functions, unpacks generator-based tests (yields tuples of (func, *args)) into individual callable sub-tests, and supports keyword filtering and slow-test selection.
 - `SymPyTests._enhance_asserts(source)` — rewrites assertion statements via AST transformation (`NodeTransformer`); replaces comparison-based `assert` with temporary variable assignments and a formatted message displaying actual compared values on failure.
 - `sympytestfile(filename)` — runs embedded code examples from a standalone file; assembles a globals namespace from `globs`/`extraglobs` (copied, not shared), defaults `__name__` to `'__main__'` if absent.
 - `SymPyDocTestRunner` — custom runner that patches stdout/pdb/linecache during doctest execution.
