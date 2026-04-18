@@ -138,6 +138,8 @@ All concrete numeric types and their arithmetic operations.
 - `_eval_transpose` — transpose of product reverses factor order: `transpose(a*b) = transpose(b)*transpose(a)` (non-commutative algebra rule)
 - `_eval_adjoint` — adjoint of product reverses factor order (like transpose)
 - `_eval_is_rational`, `_eval_is_algebraic` — assumption handlers with zero-fallback for mixed cases
+- `matches(expr)` — pattern matching for Mul; if both commutative, delegates to `AssocOp._matches_commutative`; if commutativity mismatches, returns None immediately; if both non-commutative, splits into commutative/non-commutative parts via `args_cnc()` and matches each separately
+- `_matches(expr)` — non-commutative Mul matching helper; handles NegativeOne prefixes and two-term decomposition
 
 ### [`power.py`](power.py)
 `Pow` class — symbolic `base**exp` expression and simplification rules.

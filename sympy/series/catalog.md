@@ -85,6 +85,8 @@ Discrete sequence representations and term-wise arithmetic on raw index-based se
 ### [`order.py`](order.py)
 Big-O notation for asymptotic expansions.
 - `Order(Expr)` (alias `O`) — represents O(f(x)) as x → a; containment checks, arithmetic, simplification.
+- `Order.__new__` — constructor extracts the leading term via `as_leading_term`; selects the dominant monomial depending on the limit point (lowest power near 0, highest power near ∞).
+- Supports multivariate O with per-variable limit points; default limit point is zero when none specified.
 
 ### [`residues.py`](residues.py)
 Residue computation via Laurent series coefficient extraction.

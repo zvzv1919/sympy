@@ -94,6 +94,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with internal `doprint(assign_to)` for assignment-statement rendering; not called directly — language-specific convenience functions (e.g., `jscode()`, `fcode()`, `julia_code()`) are the public entry points.
 - `_format_code(lines)` and `indent_code(code)` are **abstract stubs** (`NotImplementedError`); actual formatting/indentation logic lives in language-specific subclasses (e.g., `julia.py`, `fcode.py`).
 - `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as flat 1D text `a*b/c` or `a*b/(c*d)` (no 2D fraction bars).
+- Logical operators (`_print_And`, `_print_Or`, `_print_Not`, `_print_Xor`, `_print_Equivalent`) — look up symbols in `self._operators` dict; And/Or/Not assume the operator always exists, but Xor and Equivalent check for `None` and fall back to `_print_not_supported` if the target language has no mapping.
 
 ### [`ccode.py`](ccode.py)
 `CCodePrinter` — generates C code, mapping SymPy functions to C math library equivalents.

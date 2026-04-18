@@ -51,7 +51,7 @@ Dirac delta and Heaviside step function classes.
 
 #### [`special/error_functions.py`](special/error_functions.py)
 Error functions and related integrals (special cases of incomplete gamma).
-- `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family.
+- `erf`, `erfc`, `erfi`, `erf2`, `erfinv`, `erfcinv`, `erf2inv` — error function family; `erf`, `erfc`, `erfi` each implement `as_real_imag` for complex-argument decomposition into real and imaginary components.
 - `erf2` — two-argument error function erf(x,y); carries its own conversion methods to `uppergamma`, `expint`, Fresnel, Meijer G, and hypergeometric forms.
 - `Ei` — exponential integral Ei(x).
 - `expint` — generalized exponential integral E_ν(z); `eval` simplifies non-positive integer orders and half-integer orders (checked via `(2*nu).is_Integer`) to expressions involving `uppergamma`, reducing to error functions at half-integers.
@@ -161,7 +161,9 @@ Complex number component functions.
 - `re`, `im` — real/imaginary parts.
 - `sign` — signum function; `Abs` — absolute value.
 - `arg`, `conjugate`, `transpose`, `adjoint` — generic operator classes; function-specific conjugate/adjoint logic (`_eval_conjugate`) lives in each function's own file.
-- `polar_lift`, `periodic_argument`, `principal_branch` — branch-cut handling.
+- `polar_lift` — lifts argument to the Riemann surface of the logarithm.
+- `periodic_argument` — computes the argument of a polar number modulo a period.
+- `principal_branch` — reduces a polar number to its principal branch; `_eval_evalf` returns unevaluated (self) if the angular argument falls outside (−π, π] (i.e., abs(p)>π or p=−π), otherwise evaluates to abs(z)·exp(I·p).
 
 #### [`elementary/piecewise.py`](elementary/piecewise.py)
 `Piecewise` — piecewise-defined expressions with condition-expression pairs.

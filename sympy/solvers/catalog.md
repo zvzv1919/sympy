@@ -64,6 +64,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
   - Boolean vs numeric edge case: boolean `True` (from a relational always satisfied) returns full domain; `False` returns EmptySet.
   - Numeric `0` also returns domain (Eq(0,0) is true), but `1` returns EmptySet. Boolean/numeric dispatch occurs before expression analysis.
   - Constant (variable-free) expressions: returns domain if equal to 0, EmptySet if nonzero; raises NotImplementedError if equality to zero is undetermined.
+  - Input validation: after sympification, raises `ValueError` if `f` is not an `Expr` or `Number` instance (e.g. strings or unsupported types).
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`, then subtracts denominator-zero points (via `_invalid_solutions`) from the result; falls back to ConditionSet on NotImplementedError.
 - `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.

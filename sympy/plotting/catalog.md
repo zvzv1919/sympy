@@ -130,7 +130,8 @@ Base class providing shared infrastructure for all pyglet plot modes, including 
 Concrete plot mode classes with coordinate-to-Cartesian conversion logic for all supported coordinate systems.
 
 - `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; used only by Cartesian and parametric sympy evaluators.
-- `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
+- `Cartesian2D` — single-variable y=f(x) curve embedded into 3D by returning (x, y, 0.0) in both sympy and lambda evaluators.
+- `Cartesian3D` — z=f(x,y) surface mode; sympy evaluator chains two sequential `subs()` calls for x then y.
 - `ParametricCurve2D` — 2D parametric curve embedded into 3D by hardcoding z=0.0 in both sympy and lambda evaluators.
 - `ParametricCurve3D`, `ParametricSurface` — 3D parametric curve and surface modes using all three coordinate expressions.
 - `Polar` — polar-to-Cartesian (r,θ → x,y) curve mode.

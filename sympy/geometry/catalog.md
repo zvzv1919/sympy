@@ -74,7 +74,9 @@ Point representations in n-dimensional Euclidean space.
   - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
   - `is_similar(other)` — checks if `self` and `other` are on the same line; only handles `Line3D` as `other`, raises `NotImplementedError` for `Ray3D`/`Segment3D`.
   - `arbitrary_point(parameter='t')` — parametric point on the 3D entity; raises `ValueError` if parameter name collides with a free symbol already in the entity's definition.
-  - `direction_ratio`, `direction_cosine`, `angle_between(l1, l2)`.
+  - `direction_ratio` — raw displacement components between the two defining points of the 3D line.
+  - `direction_cosine` — unit-normalized orientation components of the 3D line (squared components sum to 1); delegates to `Point3D.direction_cosine`.
+  - `angle_between(l1, l2)`.
 - `Line3D`, `Ray3D`, `Segment3D` — 3D counterparts of the 2D entities.
 
 ## Curves & Conics

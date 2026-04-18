@@ -926,6 +926,9 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModule.submodule(*gens)` (in `modules.py`) — create a nested submodule from given generators; **raises `ValueError` if any generator is not contained in the parent module** (validates via `subset` check before construction).
 - `SubModule.union(other)` (in `modules.py`) — combine generators of `self` and `other` into a single submodule; **raises `ValueError` if `other` belongs to a different free module container** (same check in `intersect` and `module_quotient`).
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
+- `SubModulePolyRing` (in `modules.py`) — submodule of a free module over a polynomial ring with Gröbner basis support.
+  - Uses `ModuleOrder` for monomial comparison — extends `ProductOrder` (from `orderings.py`) with a zeroth component for the module generator index.
+  - **`TOP=True` (default): term ordering takes priority over component index; `TOP=False`: component index takes priority**.
 - `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient (colon ideal) `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
   - **Single generator**: embeds into a higher-rank free module with an elimination ordering (`ilex`) and extracts quotient from Gröbner basis elements whose non-last components are all zero.
   - **Multiple generators**: reduces to intersection of pairwise single-generator colon ideals.
