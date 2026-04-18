@@ -62,7 +62,7 @@ Unevaluated and evaluated finite/infinite products.
   - `doit()` — evaluate the product; handles reversed ranges (upper < lower) by swapping bounds ±1 and inverting the term (`f → 1/f`).
   - `_eval_product(term, limits)` — core evaluation: polynomial factoring via `RisingFactorial`, direct expansion; delegates KroneckerDelta products to `delta.py`.
   - `is_convergent()` — convergence test for infinite products.
-  - `reverse_order(*indices)` — reverse the order of specific limits.
+  - `reverse_order(*indices)` — flip selected iteration bounds: swaps upper↔lower (each shifted by 1) and inverts the term (`f → 1/f`) once per flipped index; even flips cancel the inversion so the function body is unchanged.
   - `_eval_rewrite_as_Sum()` — rewrite as `exp(Sum(log(f), ...))`.
   - `_eval_simplify`, `_eval_adjoint`, `_eval_conjugate`, `_eval_transpose`.
 - `product(*args, **kwargs)` — convenience wrapper that calls `Product(...).doit()`.

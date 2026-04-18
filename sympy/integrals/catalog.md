@@ -105,7 +105,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
 - `recognize_log_derivative(a, d, DE)` — tests whether f=a/d is a logarithmic derivative (dv/v for some v in the function field) by computing the resultant, splitting it via `splitfactor_sqf`, and checking that all real roots of the special factors are integers; known limitation: ignores complex roots (TODO)
-- `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
+- `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part in transcendental (non-rational) differential extensions; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
 - `integrate_primitive_polynomial(p, DE)` — iteratively reduces polynomial degree in a logarithmic (primitive) tower extension
   - Peels off leading coefficient each iteration, calls `limited_integrate` to solve for it, subtracts partial antiderivative's derivative from remainder
   - Raises `NonElementaryIntegralException` when the leading coefficient has no elementary antiderivative
@@ -177,8 +177,9 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 - `ratint_ratpart(f, g, x)` — Horowitz-Ostrogradsky algorithm: decomposes f/g into A' + B where B has square-free denominator
   - Computes GCD of denominator g with its derivative to split g into repeated-factor part u and square-free part v
   - Sets up undetermined polynomial coefficients for numerators A and B, solves the resulting linear system
-- `ratint_logpart(f, g, x)` — Lazard-Rioboo-Trager algorithm for the logarithmic part of rational integration; computes resultant-based decomposition into RootSum-log terms
-  - Shortcuts when denominator degree equals the multiplicity from the resultant's square-free decomposition (appends (g, q) directly); otherwise normalizes via leading-coefficient inversion
+- `ratint_logpart(f, g, x)` — Lazard-Rioboo-Trager algorithm for the logarithmic part of pure rational function integration (p(x)/q(x) only, not transcendental extensions)
+  - Computes resultant with subresultant polynomial remainder sequence (PRS), then square-free decomposes the resultant
+  - Shortcuts when denominator degree equals the multiplicity from square-free decomposition (appends (g, q) directly); otherwise normalizes each PRS polynomial by inverting its leading coefficient modulo the corresponding square-free resultant factor
 - `log_to_real`, `log_to_atan` — convert complex logarithmic terms to real arctangent/logarithm forms
 
 ---

@@ -24,7 +24,7 @@ Standard physics matrices as SymPy Matrix objects.
 
 ### [`paulialgebra.py`](paulialgebra.py)
 Pauli matrix algebra via pure symbolic manipulation (Symbol subclass, not quantum operators or states). No kets, bras, or operator framework — for those see `quantum/pauli.py`.
-- `Pauli(i)` — Symbol subclass representing σ_i; algebraic multiplication yields products and scalar I automatically.
+- `Pauli(i)` — Symbol subclass representing σ_i (i must be 1, 2, or 3; raises `IndexError` otherwise); algebraic multiplication yields products and scalar I automatically.
   - `_eval_power` reduces exponent mod 2 for positive integers (σ²=1); returns None (Symbol fallback) for non-positive/non-integer exponents.
 - `delta(i, j)` — Kronecker delta helper; returns 1 if i == j, else 0.
 - `epsilon(i, j, k)` — Levi-Civita symbol helper; returns +1 for even permutations of (1,2,3), −1 for odd, 0 otherwise (including repeated indices).
@@ -87,6 +87,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (non-commuting Operator base class, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator), `hilbert.py` (Hilbert spaces).
   - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
     - `TensorProductHilbertSpace.eval` — merges adjacent like Hilbert spaces into `TensorPowerHilbertSpace`: two powers with same base → combined exponent; plain space adjacent to its power → exponent+1; two identical plain spaces → power of 2.
+    - `TensorPowerHilbertSpace.eval` — validates exponent when raising a Hilbert space to a power: single-atom exponent must be a non-negative Integer or Symbol (raises ValueError otherwise); multi-term exponent (e.g. n+42) only checks each atom is Integer or Symbol but does NOT enforce non-negativity of integer components.
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
@@ -129,10 +130,10 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `generate_equivalent_ids(gate_seq)` — finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
   - `bfs_identity_search(gate_list, nqubits, max_depth)` — BFS over operator product sequences to find those equivalent to a scalar; prunes trivially decomposable sequences via `is_reducible`.
   - `GateIdentity` — represents a gate sequence that multiplies to a scalar; stores equivalent permutations. `is_degenerate` checks if a candidate is a permutation of an existing identity.
-  - `is_scalar_sparse_matrix(circuit, nqubits, identity_only)` — checks if a gate sequence's scipy.sparse matrix form is a scalar matrix (bI); handles edge case where `represent()` returns a plain int instead of a matrix (short-circuits to identity check or True).
+  - `is_scalar_sparse_matrix(circuit, nqubits, identity_only, eps)` — checks if a gate sequence's scipy.sparse matrix form is a scalar matrix (bI); splits complex entries into real/imaginary parts and zeros near-zero values within eps tolerance before checking diagonal uniformity and trace. Handles edge case where `represent()` returns a plain int instead of a matrix.
   - `is_scalar_nonsparse_matrix` — dense-matrix variant (fallback when scipy unavailable); same edge case handling for scalar `represent()` returns. Checks diagonal + uniform trace.
   - `is_reducible(circuit, nqubits, begin, end)` — checks if a circuit interval contains a scalar subcircuit; only tests right-anchored subcircuits (grows leftward from `end`), so left-anchored-only reductions within the range may be missed.
-  - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
+  - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations on two-sided circuit equalities. First letter = source side (L/R), second = end removed: `ll_op` takes leftmost of left side; `lr_op` takes rightmost of left side; `rl_op` takes leftmost of right side, daggers it, prepends to left side; `rr_op` takes rightmost of right side. Each verifies unitarity before rewriting.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
   - `BosonOp` — mode-labeled bosonic ladder operator; `_eval_commutator_BosonOp` returns −1 for [a†,a] same-name, 0 with `independent` hint, None otherwise.
     - `__mul__`: when multiplied by a Mul expression, separates commutative and non-commutative factors, iteratively multiplies non-commutative parts, then recombines with commutative prefactor.

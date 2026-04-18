@@ -166,6 +166,7 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
   - `rotate(perm)` — apply a permutation to vertices in place. Accepts `Permutation` or int index into `pgroup`. Validates permutation size matches vertex count; raises `ValueError` on mismatch.
   - Properties: `corners`, `faces`, `edges`, `pgroup`, `size`, `array_form`, `cyclic_form`.
 - `_pgroup_calcs()` — constructs all five Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron) with face definitions and rotation groups.
+  - Rotation groups are **not** algebraic groups in the strict sense; they are curated so powers of individual elements alone generate all valid orientations (no mixed products like a*b needed).
   - Dual solids (octahedron from cube, icosahedron from dodecahedron) derive their rotation groups from the enclosing solid via `_pgroup_of_double`.
   - Dodecahedron rotations use `_string_to_perm` to decode compact shorthand strings into composed permutations.
 

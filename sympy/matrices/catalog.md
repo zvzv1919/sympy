@@ -34,7 +34,10 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
-- **Inversion strategies**: `inverse_ADJ` (cofactor/adjugate), `inverse_LU` (LU decomposition via `LUsolve`), `inverse_GE` (Gaussian elimination — augments [self | I], row-reduces via `rref`, checks diagonal entries of reduced form for singularity, returns right half).
+- **Inversion strategies**:
+  - `inverse_ADJ`: cofactor/adjugate — computes `berkowitz_det`, checks `d.equals(0)`; if indeterminate (None), falls back to `rref` diagonal-pivot check for singularity.
+  - `inverse_LU`: LU decomposition via `LUsolve`; checks rref diagonal for singularity.
+  - `inverse_GE`: Gaussian elimination — augments [self | I], row-reduces via `rref`, checks diagonal entries for singularity, returns right half.
 - **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
 - `normalized`: returns unit-length version of a vector; raises `ShapeError` if self is a non-vector matrix (both rows>1 and cols>1).
 - `vec`: reshapes matrix into single-column by stacking columns. `vech`: extracts unique entries from a symmetric matrix into a single column (lower triangle); verifies symmetry by simplifying and comparing to transpose.

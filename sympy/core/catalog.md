@@ -26,6 +26,8 @@ Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
   - `__eq__` — structural equality; special-cases `Pow` with exponent equal to 1 (e.g., `a**1.0 == a`) by comparing base to other operand
   - `subs()` — substitution; silently drops pairs where old/new cannot be sympified (non-string, non-symbolic objects)
   - `_subs()` — internal recursive substitution; fallback traverses args and reconstructs via `self.func(*args)`; in simultaneous mode, prevents type-collapse when a Mul reconstruction loses its Mul type by manually separating numeric coefficients
+  - `xreplace(rule)` — dict-based whole-node replacement throughout the expression tree; delegates to `_xreplace`
+  - `_xreplace(rule)` — recursive helper; if a sub-argument lacks `_xreplace` (e.g., raw Python object), catches `AttributeError` and keeps the argument as-is
   - `replace(query, value, simultaneous)` — wildcard-capable replacement; in simultaneous mode, creates Dummy placeholders defaulting commutativity to True when replacement's `is_commutative` is None
   - `dummy_eq(other, symbol)` — structural comparison tolerant of anonymous placeholder variables; raises ValueError if left side has more than one Dummy; also raises ValueError if `symbol` is None and right side has multiple free symbols
 - `is_comparable` — property; True if expression evaluates to a real number with meaningful precision; decomposes into real/imag parts via `as_real_imag()`, evaluates numerically, returns False if imaginary part is nonzero or real part has precision=1 (indeterminate/no significant digits)

@@ -9,6 +9,7 @@ Symbolic objects with indices: abstract tensor algebra and indexed array express
 Defines basic indexed objects for representing array elements like `M[i, j]`.
 
 - `Indexed` — represents a complete indexed object (base + indices); properties: `base`, `indices`, `rank`, `shape`, `ranges`.
+  - `shape` — returns base shape if defined; otherwise infers dimensions from each `Idx`'s `upper - lower + 1`. Raises `IndexException` if indices lack bounds attributes or if bounds are None.
   - `_eval_derivative(wrt)` — derivative w.r.t. another `Indexed`: returns product of KroneckerDeltas if same base and equal index count; raises `IndexException` if index counts differ; returns zero for different bases.
 - `IndexedBase` — the stem/base of a concrete array-element expression (e.g., `A` in `A[i,j]`); supports `__getitem__` to create `Indexed`. Not related to abstract tensor algebra.
 - `Idx` — integer index with optional range; properties: `label`, `lower`, `upper`.

@@ -177,4 +177,5 @@ Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harm
   - `_eval_expand_func` — decomposes integer-shifted arguments: H(n+k) adds positive reciprocal terms, H(n−k) adds negative reciprocal terms; rational arguments expand via trigonometric digit-extraction sums.
 - `genocchi` — Genocchi numbers G_n, the integer sequence with generating function 2t/(eᵗ+1); related to Bernoulli numbers via G_n = 2(1−2ⁿ)B_n.
   - Assumption predicates (`_eval_is_negative`, `_eval_is_positive`) determine sign of even-indexed terms by parity of n/2; odd-indexed G_n (n>1) are zero.
+  - `_eval_is_prime` — only n=8 yields a prime (G_8=17); negatives are not considered prime (so G_6=−3 is excluded).
 - `stirling` — Stirling numbers S(n,k) of first or second kind; helpers `_stirling1`/`_stirling2` implement cached recursive computation with closed-form shortcuts for special k values (e.g., k=n−1, k=n−2, k=2).

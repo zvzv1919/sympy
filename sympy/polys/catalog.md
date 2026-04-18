@@ -58,7 +58,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
   - `pow(n)` — for negative `n`, **computes modular inverse via `dup_invert` first**, then raises to `|n|`; result is always reduced modulo the defining relation.
   - `div(f, g)` — returns `(quotient, zero)`; `rem` always returns zero (field-like semantics via modular inverse).
-  - `unify(g)` — reconcile two ANPs to a common domain/modulus; builds a local `per` closure.
+  - `unify(g)` — reconcile two ANPs to a common domain/modulus; builds a local `per` closure. **When unified domain matches one original domain, reuses that original's modulus directly (no conversion); when it matches neither, converts the modulus from `f`'s domain**.
   - `LC`, `TC` — leading/trailing coefficient.
   - Conversion: `to_dict`, `to_sympy_dict`, `to_list`, `to_sympy_list`, `to_tuple`, `from_list`.
 
@@ -186,6 +186,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - **Auto-promotes ring domain to its fraction field** for division, then attempts to retract results back to the ring (keeps field results if retraction fails).
 - `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
 - `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
+- `div`, `rem`, `quo`, `exquo` — public free functions for polynomial division; each **catches `PolificationFailed` and re-raises as `ComputationFailed`**; `div`/`rem` accept `auto` flag for automatic ring→field promotion; `rem` over ZZ may return the dividend unchanged (LC not divisible), while over QQ produces a reduced remainder.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**.
@@ -323,6 +324,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_euclidean_prs(f, g, K)` — Euclidean polynomial remainder sequence in `K[x]`; **iteratively computes `dup_rem` until remainder is zero**, collecting all remainders into a list starting with `[f, g, …]`.
 - `dmp_euclidean_prs` — multivariate wrapper; **raises `MultivariatePolynomialError` for `u > 0`** (univariate only).
 - `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
+  - `dmp_inner_subresultants` — swaps inputs if `deg(f) < deg(g)`; **returns `([], [])` if both are zero; returns `([f], [K.one ground])` if only `g` is zero** (single-element PRS with unit cofactor).
 - `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
@@ -532,6 +534,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
   - `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence.
   - `method=0` scales remainders by `LC(p)^(deg_diff)` for modified subresultant coefficients; `method=1` produces plain (unscaled) coefficients.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
+  - `euclid_amv` — Euclidean PRS using **Collins-Brown-Traub coefficient reduction**: initializes reduction variable `c = -1`, iteratively updates via `c = (-LC)^(δ-1) / c^(δ-2)`, and normalizes each remainder by dividing by `|c^(δ-1) · σ|`; produces subresultant coefficients without determinant evaluation.
   - `euclid_q` — Euclidean sequence in Q[x]; **normalizes LC(p) to positive before computing remainders (negating both inputs); after completion, negates entire output sequence if original LC was negative**; removes trailing zero/NaN entry.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv`, `subresultants_vv_2` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`); `subresultants_vv_2` is the **implicit-matrix variant** (Sylvester matrix not stored explicitly) for large-dimension cases; **returns `[f, g]` early if `deg(f) > 0` and `deg(g) == 0`** (constant second input).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
@@ -760,6 +763,7 @@ Power series arithmetic in sparse polynomial rings.
 - `_invert_monoms(p1)` — compute `x^n * p1(1/x)` for a sparse univariate polynomial, reversing the coefficient ordering by mapping degree k to degree (n−k).
 - `rs_trunc` — truncate series to given precision.
 - `rs_add`, `rs_mul`, `rs_pow`, `rs_series_inversion` — ring series operations.
+  - `rs_mul` — truncated series multiplication; **single-generator rings use a fast path that manually constructs exponent tuples via integer addition; multi-generator rings use `monomial_mul`** for general exponent combination.
 - `rs_exp`, `rs_log`, `rs_sin`, `rs_cos`, `rs_tan`, `rs_atan` — transcendental series.
 - `rs_nth_root`, `rs_compose` — composition and roots.
 - `rs_compose_add(p1, p2)` — composed sum `prod(p2(x - β) for β root of p1)` via Newton sums and Hadamard exponential transforms; **if result degree < deg(p1)*deg(p2), multiplies by x^dp to account for shared roots**.

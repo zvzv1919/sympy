@@ -111,6 +111,9 @@ Base class providing shared infrastructure for all pyglet plot modes, including 
 - Thread-safe rendering stack: `push_wireframe()`, `push_solid()` with `_draw_lock`.
 - `_render_stack_top()` — consumes top of render stack: compiles callable into GL display list, returns cached list if valid, or regenerates via `_create_display_list()` if `glIsList()` reports the list invalid (e.g., after context loss).
 - `_on_calculate()` — triggers vertex/color vertex computation in background threads.
+- `_calculate_verts()` / `_calculate_cverts()` — thread-coordination wrappers around concrete `_on_calculate_verts`/`_on_calculate_cverts` callbacks.
+  - `_calculate_cverts` skips immediately if geometry verts are still computing (`_calculating_verts` event); busy-waits if a prior color calc is running.
+  - `_calculate_verts` guards against concurrent re-entry via `_calculating_verts` event; invokes `bounds_callback` on completion.
 - `style` property (`_set_style`) — when style is set to empty string, auto-selects rendering appearance: computes max v_steps across intervals and picks 'both' (wireframe+solid) if ≤ 40, or 'solid' (filled only) if > 40.
 - Class-level attributes: `styles` (render style bitmask dict), `style_override` (forces rendering style when non-empty), `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
 
@@ -138,7 +141,7 @@ Bounded interval representation for pyglet variable ranges (discretized sample p
 Curve rendering for 1D pyglet plots.
 
 - `PlotCurve` — OpenGL vertex computation and caching for pyglet wireframe curve drawing (no argument parsing or series construction).
-  - `_on_calculate_verts()` — evaluates already-parsed expressions into GL vertex positions; catches `NameError`/`ZeroDivisionError` and stores `None` for failed points.
+  - `_on_calculate_verts()` / `_on_calculate_cverts()` — concrete callbacks invoked by `PlotModeBase._calculate_verts`/`_calculate_cverts` (thread coordination lives in base class, not here).
   - `draw_verts(use_cverts)` — emits OpenGL `GL_LINE_STRIP` segments; breaks the strip at `None` vertices to create visual discontinuities at undefined points.
 
 ### `plot_surface.py`
