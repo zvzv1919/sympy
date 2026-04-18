@@ -113,7 +113,9 @@ Finitely presented groups, coset enumeration, and subgroup presentations.
   - `scan_check(alpha, word)` — boolean-returning variant of `scan`; returns False on inconsistent completion instead of calling `coincidence`. Used in `low_index_subgroups`.
   - `coincidence(alpha, beta)` / `coincidence_f` — merges two cosets found to be equivalent.
 - Coset enumeration: `coset_enumeration_r`, `coset_enumeration_c`.
-- `low_index_subgroups`, `reidemeister_presentation`.
+- `low_index_subgroups` — enumerates subgroups up to a given index bound via systematic coset-table completion; uses `first_in_class` to prune redundant branches.
+- `first_in_class(C, Y)` — canonicity test for low-index subgroup search; checks whether a coset table is the lexicographically smallest representative of its conjugacy class by remapping each non-trivial coset as the new origin and comparing entry-by-entry.
+- `reidemeister_presentation`.
 - `_simplification_technique_1(rels)` — reduces multi-syllable relators using single-generator relators of the form g^n; bounds exponents to (-n/2, n/2] via modular arithmetic and deletes syllables whose exponent is an exact multiple of n.
 - Subgroup presentation pipeline:
   - `define_schreier_generators(C)` — builds Schreier generators for a subgroup from a coset table.

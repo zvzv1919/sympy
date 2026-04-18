@@ -50,7 +50,8 @@ Integer factorization, divisor enumeration, and digit/base decomposition.
 ### [`residue_ntheory.py`](residue_ntheory.py)
 Modular roots, residues, and multiplicative-order computations.
 - `n_order(a, n)` — multiplicative order of a modulo n; raises ValueError if a and n are not coprime
-- `primitive_root(p)`, `is_primitive_root(a, p)` — primitive root lookup/test
+- `primitive_root(p)` — smallest generator of the multiplicative group mod p, or None if none exists (only 1, 2, 4, p^k, 2·p^k for odd prime p have primitive roots; powers of 2 > 4 return None)
+- `is_primitive_root(a, p)` — test whether a is a primitive root mod p
 - `sqrt_mod(a, p)`, `sqrt_mod_iter(a, p)` — modular square root (single / iterator); returns root ≤ p//2 (returns p//2 only when it is the sole root; otherwise fetches a second candidate); for composite p, factorizes and combines per-prime-power roots via CRT
 - `nthroot_mod(a, n, p)` — modular nth root; raises `NotImplementedError` when p has no primitive root (e.g. most composite moduli)
 - `is_quad_residue(a, p)`, `quadratic_residues(p)` — quadratic residue test / enumeration

@@ -281,4 +281,7 @@ Low-level matrix utilities on list-of-lists: `trace`, `transpose`, `conjugate`, 
 - `row(matlist, i)`: returns ith row of a nested list. `col(matlist, i)`: returns ith column — transposes the entire structure via `zip` to extract one column (explicitly documented as expensive).
 
 ### [`sparsetools.py`](sparsetools.py)
-Sparse format conversion utilities: `_doktocsr` (DOK→CSR), `_csrtodok` (CSR→DOK).
+Sparse format conversion utilities between dictionary-of-keys and compressed sparse row representations.
+
+- `_doktocsr`: converts DOK sparse matrix to CSR format; returns [A, JA, IA, shape]. Builds the row-pointer array (IA) incrementally: pads leading zeros for empty initial rows, extends index entries for gaps between populated rows, and pads trailing entries for empty final rows. Handles fully empty matrices (no entries) as a special case.
+- `_csrtodok`: converts CSR representation back to DOK `SparseMatrix`; iterates IA to recover per-row non-zero slices.

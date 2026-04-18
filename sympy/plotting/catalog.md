@@ -97,8 +97,8 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 `PygletPlot` class implementation for interactive 3D visualization with OpenGL/pyglet.
 
 - Module-level pyglet dependency check: imports `pyglet.gl` in a try/except at the top of the file; raises `ImportError` immediately with a descriptive message if pyglet is not installed (eager failure, unlike `__init__.py`'s lazy-error pattern).
-- `PygletPlot` — top-level plot object and authoritative source for auto-detection rules: 1 expr → Cartesian, 2–3 → parametric; 1 var → curve, 2 vars → surface. Manages plot objects, axes, camera, window, and rendering thread. Supported modes by variable count: 1-var: parametric/cartesian/polar; 2-var: parametric/cartesian/cylindrical/spherical.
-- `__init__(*fargs, **win_args)` — pops `axes` option string from kwargs, parses it via `parse_option_string()`, and configures the `PlotAxes` object separately before passing remaining kwargs to the window.
+- `PygletPlot` — top-level user-facing 3D plot class; its docstring is the authoritative definition of auto-detection rules (1 expr → Cartesian, 2–3 → parametric; 1 var → curve, 2 vars → surface) and supported coordinate modes. Manages plot objects, axes, camera, window, and rendering thread.
+- `__init__(*fargs, **win_args)` — constructor: extracts `axes` keyword (semicolon-delimited key=value option string like `"style=ordinate; stride=0.25"`), parses it via `parse_option_string()`, and builds `PlotAxes`. Registers initial expressions at index 0 via `self[0] = fargs`. Conditionally shows the window based on `visible` kwarg (default True).
 - `__setitem__(i, args)` — indexed assignment (`p[1] = expr`); parses args into a `PlotMode` and stores it.
   - Wraps `GeometryEntity` in a list even though it satisfies `is_sequence()`, preventing geometry objects from being unpacked as multiple arguments.
   - Passes `PlotObject` instances through directly without parsing.
@@ -106,8 +106,8 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
 ### `plot_mode.py`
 Coordinate-system mode registry and argument interpretation only — no coordinate math or coordinate-to-Cartesian conversion (those live in `plot_modes.py`).
 
-- `PlotMode` — factory + registry class; `__new__` is the main entry point that parses raw user arguments, determines variable counts, resolves the correct rendering subclass, and returns an instantiated subclass.
-- `__new__(*args, **kwargs)` — factory method: calls `_interpret_args` → `_find_i_vars` → `_get_mode` → `object.__new__(subcls)`, then fills intervals/vars on the new instance. Returns a fully initialized concrete mode subclass instance.
+- `PlotMode` — internal factory + registry class invoked by `PygletPlot.__setitem__`; resolves a concrete mode subclass from the registry given already-determined variable counts. Does not define auto-detection rules or user-facing API (those belong to `PygletPlot` in `plot.py`).
+- `__new__(*args, **kwargs)` — factory method: separates expressions from intervals, counts variables, looks up the matching mode subclass in the registry, and returns an instantiated subclass.
 - `_get_mode(mode_arg, i_var_count, d_var_count)` — resolves a mode argument (string alias or class) to a concrete mode class from `_mode_map`/`_mode_default_map`. Delegates to `_get_default_mode` (empty string) or `_get_aliased_mode` (named alias).
 - `_get_default_mode(i, d)` / `_get_aliased_mode(alias, i, d)` — look up mode by d_var/i_var count; on `TypeError` (no mode registered for exact i_var count), recursively retry with incremented i_var count up to `_i_var_max` before raising `ValueError`.
 - `_interpret_args(args)` — separates raw args into (functions, intervals); enforces ordering: raises `ValueError` if a `PlotInterval` appears before any expression. Handles `GeometryEntity` specially by extracting coordinates via `arbitrary_point()`.

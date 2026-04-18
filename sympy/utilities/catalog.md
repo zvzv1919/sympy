@@ -26,7 +26,8 @@ Builds procedural routine representations (`Routine`) from SymPy expressions and
 - `Routine` — represents a callable routine with inputs/outputs.
 - `CodeGen`, `CCodeGen`, `FCodeGen`, `JuliaCodeGen`, `OctaveCodeGen` — language-specific code generators.
 - `OctaveCodeGen.dump_m` — writes `.m` file; raises `ValueError` if the first routine's name doesn't match the output file prefix (Octave/Matlab requires function name = filename).
-- `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
+- `JuliaCodeGen._get_routine_opening` — raises `CodeGenError` if any `OutputArgument` appears in the routine; Julia supports multiple return values natively, so pure output-only parameters are invalid in its function signatures.
+- `CodeGen.routine()` — builds a `Routine` from an expression; partitions free symbols: `Idx` labels → local iteration variables, free symbols of `Idx` bound/range → function parameters; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
 - `make_routine(name, expr)` — simplified factory that creates a single `Routine` object from expressions without generating any source files; raises `CodeGenArgumentListError` (with `.missing_args`) if user-supplied argument list is incomplete — does not recover; callers (e.g. `autowrap`) handle recovery.
   - Classifies `Equality` LHS as `OutputArgument` (or `InOutArgument`); non-equality expressions become return values.
 - `codegen(name_expr, language)` — top-level convenience function; delegates to `make_routine` internally.

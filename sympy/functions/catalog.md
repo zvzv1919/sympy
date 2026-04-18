@@ -132,7 +132,9 @@ Elementary mathematical functions: trig, exponential, hyperbolic, piecewise, com
 
 #### [`elementary/trigonometric.py`](elementary/trigonometric.py)
 Trigonometric functions and their inverses (NOT trigonometric integrals Si, Ci — those are in `special/error_functions.py`).
-- `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions; `sin`/`cos` have `_eval_expand_trig` for multiple-angle expansion using Chebyshev T (odd n) and Chebyshev U (even n) polynomials from `special/polynomials.py`.
+- `sin`, `cos`, `tan`, `cot`, `sec`, `csc`, `sinc` — trig functions.
+  - `sin._eval_expand_trig` / `cos._eval_expand_trig` — multiple-angle expansion for sin(n*x)/cos(n*x): odd n uses chebyshevt(n, sin/cos(x)); even n uses cos/sin(x)·chebyshevu(n−1, sin/cos(x)). Branching logic lives here, not in `special/polynomials.py`.
+  - `sin.taylor_term` / `cos.taylor_term` — Taylor series coefficients; optimized to reuse prior computed terms (recurrence: multiply previous term by −x²/(n(n−1))) instead of recomputing from scratch via factorial.
 - `ReciprocalTrigonometricFunction` — base class for reciprocal circular trig forms (`sec`, `csc`, `cot`); delegates rewrites to the underlying base function (e.g., cos for sec) and inverts.
   - `_rewrite_reciprocal` guards against trivial identity rewrites by returning None if the delegated result equals the original expression unchanged.
 - `asin`, `acos`, `atan`, `acot`, `asec`, `acsc`, `atan2` — inverse trig; `eval` converts purely imaginary arguments to inverse hyperbolic equivalents (e.g., atan(ix)→i·atanh(x)).

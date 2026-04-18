@@ -78,6 +78,8 @@ Sparse polynomial rings and their elements (dict-based representation).
 
 - `ring()`, `xring()`, `vring()` — ring constructor functions with explicit domain.
   - **`ring` returns `(ring,) + gens` (flat tuple); `xring` returns `(ring, gens)` (nested tuple for tuple-unpacking); `vring` injects gens into global namespace**.
+- `_parse_symbols(symbols)` — normalize generator symbols for ring construction; accepts string (comma-separated), single `Expr`, or sequence.
+  - **Requires homogeneous sequences**: all strings or all `Expr`; mixed types (e.g. `['x', Symbol('y')]`) raise `GeneratorsError`.
 - `sring(exprs, *symbols)` — construct ring from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `__new__` — caches ring objects; **when domain is composite, raises `GeneratorsError` if new ring symbols overlap with the domain's existing generators**.
@@ -510,6 +512,8 @@ Caveat: For native GF(p) polynomial square-free and factorization, see `galoisto
 ### [`galoistools.py`](galoistools.py)
 Self-contained arithmetic, square-free, irreducibility, and factorization for **univariate polynomials over GF(p)**, represented as coefficient lists.
 
+- `gf_degree(f)` — leading degree; **returns −1 for empty list** (zero polynomial).
+- `gf_LC(f, K)`, `gf_TC(f, K)` — leading/trailing coefficient; **returns `K.zero` for empty list** (zero polynomial) instead of raising an index error.
 - `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
 - `gf_strip` — strip leading zeros; **short-circuits via `if not f or f[0]`** (returns immediately when list is empty or first element is nonzero, same optimization as `dup_strip`). `gf_trunc` — reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
@@ -1024,6 +1028,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
+- `GMPYIntegerRing` (in `gmpyintegerring.py`) — ZZ domain backed by GMPY `mpz`; `from_sympy` same pattern: accepts Integer and **also accepts Float if `int(a) == a`** (whole-number check); raises `CoercionFailed` otherwise.
 - `PythonRational` (in `pythonrational.py`) — pure-Python rational number type (numerator `p`, denominator `q`); used as the element type for `PythonRationalField`.
   - `__init__(p, q)` — auto-reduces via GCD; **negates both if `q < 0`** to enforce positive denominator.
   - Arithmetic: `__add__`, `__sub__`, `__mul__`, `__div__`, `__pow__`; each returns `NotImplemented` for non-`PythonRational`/non-integer operands.

@@ -30,7 +30,7 @@ Custom lexical analyzer (tokenizer) that breaks source text into lexical units a
 - Defines regex patterns for token classification: `Number`, `Floatnumber`, `Intnumber`, `Imagnumber`, `String`, `Operator`, etc.
 - Includes `Repeatedfloat` pattern for repeating decimal notation (e.g. `3.4[31]` where brackets denote the repeating portion).
 - `group()`, `any()`, `maybe()` — regex combinator helpers used to build token patterns.
-- `generate_tokens(readline)` — generator that yields token 5-tuples from a readline callable. Tracks bracket/paren/brace nesting depth; newlines inside open grouping delimiters emit NL (continuation) instead of NEWLINE (statement terminator). Also handles indentation (INDENT/DEDENT), continued statements via backslash, and multi-line strings.
+- `generate_tokens(readline)` — generator that yields token 5-tuples from a readline callable. Tracks bracket/paren/brace nesting depth; newlines inside open grouping delimiters emit NL (continuation) instead of NEWLINE (statement terminator). Also handles indentation (INDENT/DEDENT), continued statements via backslash, and multi-line strings. Yields ERRORTOKEN for broken single-quoted string continuations (line lacks trailing backslash).
 - `tokenize(readline, tokeneater)` — callback-based tokenization interface.
 - `Untokenizer` — reconstructs source code from token streams. `untokenize()` reassembles tokens into a string; delegates to `compat()` for 2-element (type, value) tuples, which handles spacing between adjacent NAME/NUMBER/STRING tokens (e.g. prevents consecutive string literals from merging). `add_whitespace()` handles whitespace for full 5-tuples.
 - `TokenError` — raised on malformed token streams.

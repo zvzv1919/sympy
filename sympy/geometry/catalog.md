@@ -161,7 +161,7 @@ Standalone geometric utility functions.
 - `convex_hull(*args, polygon=True)` — smallest enclosing convex boundary of 2D entities; accepts mixed geometry types (Points, Segments, Polygons) and extracts their vertices before computing the hull via Andrew's monotone chain algorithm.
   - Degenerate returns: single `Point` for one distinct vertex, `Segment` for two (including collinear cases), `Polygon` otherwise.
   - `polygon` kwarg: when `True` (default) returns the convex `Polygon`/`Segment`/`Point`; when `False` returns a `(upper_hull, lower_hull)` tuple (or `(entity, None)` for degenerate cases).
-- `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
+- `closest_points(*points)` — sweep-line nearest-pair search among individual 2D points (point-to-point distance only, not polygon-to-polygon or shape-to-shape); computes distances internally (not via `Point.distance`).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among a set of 2D points via convex-hull antipodal rotating calipers (point-to-point distance only, not polygon-to-polygon).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
