@@ -65,6 +65,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
   - Caveat: silently returns the expression unchanged for infinite target sets (Integers, Union, etc.) — exp inversion only proceeds for finite discrete inputs.
 - `_solve_as_poly(f, symbol, domain)` — solves via polynomial techniques (roots, Poly.all_roots); falls back to ConditionSet when root count is incomplete.
   - Post-processing: simplifies complex solutions via `expand_complex` (e.g. `-sqrt(-I)` → `sqrt(2)/2 - sqrt(2)*I/2`) only when all solutions are fully numeric (no free symbols) and none are `RootOf` objects; skips simplification otherwise to avoid complicating parametric/algebraic results.
+- `_is_function_class_equation(func_class, f, symbol)` — tests whether an equation is composed exclusively of a given function family (e.g. TrigonometricFunction, HyperbolicFunction) with linear-in-symbol arguments, combined only with symbol-independent terms. Recursively checks Add/Mul/Pow structure.
 - `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
 - `_solveset(f, symbol, domain, _check=False)` — internal helper that dispatches to type-specific solvers and optionally validates results.
   - Product decomposition: decomposes `f*g == 0` into `Union(f==0, g==0)` only when all factors are verified finite for finite inputs (`_is_finite_with_finite_vars`); prevents spurious solutions where one factor diverges at zeros of another.
@@ -115,7 +116,7 @@ Solves inequality constraints and returns interval-based solutions.
 Solves zero-dimensional (fully determined) systems of polynomial equations via Groebner bases. Does not handle underdetermined subset enumeration — that logic lives in `_solve_system` in `solvers.py`.
 
 - `solve_poly_system(seq, *gens)` — general polynomial system solver; requires #equations ≥ #variables for a finite solution set.
-- `solve_biquadratic(f, g, opt)` — two bivariate quadratic equations.
+- `solve_biquadratic(f, g, opt)` — two bivariate quadratic equations via Groebner basis. Raises `SolveFailed` if the basis has more than 2 elements (caller falls back to `solve_generic`).
 - `solve_generic(polys, opt)` — zero-dimensional systems via Groebner basis elimination.
 - `solve_triangulated(polys, *gens)` — Gianni-Kalkbrenner triangulation algorithm.
 

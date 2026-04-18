@@ -71,6 +71,8 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
   - Raises `MellinTransformStripError` if a pole falls inside the critical strip; raises NotImplementedError if numerator gamma poles partially overlap the strip
 - Laplace: `laplace_transform`, `inverse_laplace_transform`, `LaplaceTransform`, `InverseLaplaceTransform`
 - `_inverse_laplace_transform` — backend for inverse Laplace; tries inverse Mellin transform first (change of variables), falls back to `meijerint_inversion` if that fails
+  - When fallback returns a Piecewise that still contains an unevaluated `Integral`, raises `IntegralTransformError` ('inversion integral of unrecognised form')
+  - If result is still Piecewise after processing, returns early without Heaviside/exp simplification (booleans in args break those transforms)
 - `_fourier_transform(f, x, k, a, b)` — backend computing generalized F(k) = a·∫exp(b·i·x·k)f(x)dx over (−∞,∞); extracts first branch if result is Piecewise
 - Fourier: `fourier_transform`, `inverse_fourier_transform`, `FourierTransform`, `InverseFourierTransform`
 - `_sine_cosine_transform` — backend for sine/cosine transforms; integrates over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
@@ -92,7 +94,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `NonElementaryIntegralException` — raised when integral is provably non-elementary
 - `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear
 - `derivation(p, DE)` — computes Dp for polynomial p in the differential extension tower; `coefficientD=True` computes the coefficient derivation (treats top-level variable as constant)
-- Polynomial utilities: `gcdex_diophantine` (extended GCD, Diophantine version — degree-bounded Bézout coefficients), `frac_in`, `as_poly_1t`
+- Polynomial utilities: `gcdex_diophantine` (extended GCD solving s*a + t*b == c with degree bound; reduces s modulo b via degree comparison when s.degree() >= b.degree()), `frac_in`, `as_poly_1t`
 - `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
@@ -161,6 +163,10 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - If all shifts yield unevaluated special functions and f contains HyperbolicFunction, rewrites hyperbolics as exponentials and retries
   - Returns the best (simplest) collected result if no clean closed-form is found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function lookup tables
+- `_check_antecedents_inversion(g, x)` — validates convergence conditions for inverse transform integrals:
+  - Checks "condition A" (parameter differences must not be positive integers)
+  - When p >= q: uses asymptotic Slater expansion directly
+  - When p < q: applies multiple theorems from [L] §5.10 (angle/delta conditions, rho positivity, tau bounds) to verify convergence
 - `meijerint_inversion(f, x, t)` — inverse Laplace transform via G-function rewriting
   - Pre-processes product-form integrands by filtering out `exp(a*x)` and `base^(a*x)` factors, accumulating their exponents into a cumulative shift applied to the final result
   - When coefficient extraction from a power exponent fails (`_CoeffExpValueError`), treats the factor as non-exponential (keeps it in the integrand unchanged)

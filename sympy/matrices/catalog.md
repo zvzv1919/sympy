@@ -53,7 +53,8 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - DenseMatrix solver methods (operate on matrix objects, not raw lists): `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution), `_diagonal_solve`; each checks for zero diagonal and raises on singular matrices.
-- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_del`, `col_del`, `row_op`, `col_op`, `fill`.
+- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_op`, `col_op`, `fill`.
+- `row_del`, `col_del`: delete a row/column; each validates and converts negative indices internally (no external `a2idx` call), then removes the corresponding slice from the flat `_mat` list.
 - `copyin_matrix(key, value)`: copies a Matrix into the sub-region defined by `key`; raises `ShapeError` if source matrix dimensions don't match target slice dimensions.
 - `copyin_list(key, value)`: copies elements from an iterable into the sub-region defined by `key`; raises `TypeError` if `value` is not an ordered iterable (e.g. a plain scalar).
 - `__setitem__`: thin wrapper; actual assignment logic (including list→Matrix conversion) is `MatrixBase._setitem` in `matrices.py`.
@@ -186,8 +187,10 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`: forward elimination on raw nested lists.
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
-- `LU` (raw list-of-lists LU without pivoting), `cholesky`, `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
-- `rref_solve`, `LU_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
+- `LU` (raw list-of-lists LU without pivoting), `LDL` (L·D·Lᵀ factorization for hermitian matrices; rational entries only): decomposition routines on raw nested lists. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
+- `cholesky`: Hermitian decomposition on raw nested lists returning L and conjugate transpose; diagonal entries use `isqrt` (integer square root), restricting input to matrices where diagonal minus accumulated sum is a perfect square; off-diagonal entries use division by L[j][j].
+- `rref_solve`, `cholesky_solve` (symmetric positive-definite solve via Cholesky factorization into L and L* then two-pass substitution): solver routines on raw nested-list data.
+- `LU_solve`: solves via LU decomposition on raw nested lists; creates intermediate symbolic variables (`y` vector), performs forward substitution on L, then backward substitution on U; mutates variable list in-place.
 - `forward_substitution`, `backward_substitution`: standalone lower/upper-triangular solvers on raw nested lists; mutate the `variable` list in-place and return it.
 - These are internal backends (standalone functions, not methods); the public API lives in `MatrixBase` (`matrices.py`).
 

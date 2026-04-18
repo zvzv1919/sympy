@@ -25,6 +25,7 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
 - `_matplotlib_list(interval_list)` — converts bounding rectangular intervals to x/y coordinate lists for matplotlib `fill()`; returns lists of four `None`s when input is empty (workaround because matplotlib rejects empty lists for `fill`).
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
+  - `__init__` — enforces dimensional consistency: raises `ValueError` if series mix 2D and 3D data (all series must be uniformly 2D or 3D).
   - Implicit plot rendering: interval-arithmetic results rendered with `fill()`; contour-based results use `contour` (equality) vs `contourf` (inequality).
 - `TextBackend` — ASCII fallback backend; `show()` raises `ValueError` if more than one series or if series is not `LineOver1DRangeSeries`. Delegates single-expression rendering to `textplot()`.
 - `DefaultBackend` — auto-selects `MatplotlibBackend` if matplotlib is available, otherwise `TextBackend`.
@@ -138,7 +139,8 @@ Curve rendering for 1D pyglet plots.
 Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
 
 - `PlotSurface` — OpenGL vertex grid for pyglet surface rendering; supports wireframe and solid draw styles (not used by matplotlib-based plotting).
-  - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points; tracks spatial bounding box (not color bounds).
+  - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points.
+    - Computes per-axis bounding box; zero-span guard sets axis range to 1.0 when surface is flat along that axis to prevent division-by-zero.
   - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points.
 
 ### `plot_axes.py`

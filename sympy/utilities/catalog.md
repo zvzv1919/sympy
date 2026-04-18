@@ -86,8 +86,11 @@ SymPy's built-in testing framework (py.test-compatible, no external dependencies
 - `SymPyDocTestRunner` — custom runner that patches stdout/pdb/linecache during doctest execution.
 
 ### [`pytest.py`](pytest.py)
-py.test integration helpers.
-- `raises`, `XFAIL`, `skip`
+Custom test-assertion utilities and py.test integration helpers; provides its own implementations when py.test is unavailable.
+- `raises(expectedException, code)` — exception-assertion utility; dispatches on the second argument: `None` → context manager (`RaisesContext`), callable → invoke and assert, `str` → raises `TypeError` with migration message guiding users to lambdas/`with` blocks, other types → `TypeError`.
+- `XFAIL` — decorator marking expected-failure tests; catches exceptions as `XFail`, raises `XPass` on unexpected success, converts timeouts to `Skipped`.
+- `skip`, `SKIP` — skip a test with a reason; `SKIP` is a decorator form.
+- `slow` — decorator marking slow tests.
 
 ### [`randtest.py`](randtest.py)
 Randomized numerical verification of symbolic expression equivalence (not doctest output checking).

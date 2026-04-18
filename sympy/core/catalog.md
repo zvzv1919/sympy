@@ -220,7 +220,9 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 - `AssocOp.__new__` — constructor: sympifies args, filters identity elements; when `evaluate=False` (or `global_evaluate[0]` is off), returns unevaluated via `_from_args`; when evaluating, calls `flatten()` then determines `is_commutative` based on whether the non-commutative partition is empty
 - `_from_args(args, is_commutative)` — creates instance from pre-processed args; when `is_commutative` is None, infers via `fuzzy_and` over args
-- `_new_rawargs(*args)` — fast instance creation with minimal overhead; inherits commutativity from `self` (not recomputed from new args)
+- `_new_rawargs(*args, reeval=True)` — fast instance creation for rebuilding Add/Mul from a subset of original args
+  - When self is non-commutative and `reeval` is True (default), forces recomputation of commutativity from new args as a safety mechanism
+  - When self is commutative, inherits commutativity from self without recomputation
 
 - `_eval_evalf(prec)` — numerical evaluation for Add/Mul; splits into numeric-independent and dependent parts; guards against infinite recursion when the independent part is itself an AssocOp Function
 - `_matches_commutative` — pattern matching for Add/Mul; after removing exact (non-wild) parts, rejects match if inverse-combined expression has more ops than original (count_ops guard)
@@ -246,6 +248,10 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
 - `diff(f, *symbols)` — top-level convenience function for symbolic differentiation; dispatches to `f._eval_diff()` if available, falls back to constructing `Derivative(f, ...)` on `AttributeError`; sets `evaluate=True` by default
+- `expand(expr, deep=True, **hints)` — main expansion entry point; dispatches named hints (e.g., `mul`, `log`, `trig`, `power_base`) to per-object `_eval_expand_<hint>()` methods
+  - When `deep=True` (default), recursively applies hints to subexpressions; when `deep=False`, only top-level expression is expanded
+  - Custom classes define `_eval_expand_hint(**hints)` to implement their own expansion behavior; the method should only expand the top level — `expand()` handles recursion
+  - Metahints (e.g., `force`, `modulus`) are passed through to `_eval_expand_hint` methods; `deep` is handled by `expand()` itself and not forwarded
 - `expand_power_base(expr, deep, force)` — wrapper around `expand(power_base=True)`; splits `(a*b)**e` into `a**e * b**e`; `deep=False` applies only at top level (does not descend into subexpressions like `sin(...)`)
 - `expand_power_exp`, `expand_complex`, `expand_trig`, `expand_log`, `expand_func`, `expand_mul` — similar single-hint expand wrappers
 - `_coeff_isneg(a)` — returns True only if the leading numeric factor is a negative Number; a symbol with `negative=True` assumption returns False (coeff is implicitly 1)
@@ -313,7 +319,9 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`compatibility.py`](compatibility.py)
 Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`, `as_int()`.
 
-- `default_sort_key(item, order)` — canonical ordering key for arbitrary objects (not just SymPy types); handles plain ints/floats by attempting sympification, strings by wrapping in a tuple key, dicts/sets by recursively sorting keys; more robust than `sort_key()` method since it accepts non-SymPy objects
+- `default_sort_key(item, order)` — canonical ordering key for arbitrary objects (not just SymPy types); more robust than `sort_key()` method
+  - Handles plain ints/floats by attempting sympification, strings by wrapping in a tuple key, dicts/sets by recursively sorting keys
+  - When sympification fails (e.g., lambda functions), catches `SympifyError` and falls through to string-based key with class index 0
 - `as_int(n)` — converts argument to Python `int` with strict equality validation; raises `ValueError` if `int(n) != n` (e.g., `sqrt(10)` → 3 but not equal)
   - Catches `TypeError` from the equality check (e.g., objects where `int(x) != x` is undefined) and re-raises as `ValueError`
 - `iterable(i, exclude=(str, dict, NotIterable))` — checks if object is iterable in the SymPy sense; if object has `_iterable` boolean attribute, returns it directly (bypasses both `iter()` check and type exclusion); otherwise calls `iter()` then applies `exclude` filter

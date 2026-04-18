@@ -80,7 +80,7 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 
 ### [`quantum/`](quantum/catalog.md)
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
-- **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (Operator/Hermitian/Unitary/OuterProduct), `hilbert.py` (Hilbert spaces).
+- **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (non-commuting Operator base class, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator), `hilbert.py` (Hilbert spaces).
   - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
@@ -161,7 +161,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - `_eval_conjugate` — conjugate of ⟨a|b⟩ returns InnerProduct(Dagger(ket), Dagger(bra)), i.e. swaps and daggers both components.
     - Concrete overlap formulas (DiracDelta, plane-wave, etc.) live in `_eval_innerproduct_*` methods on state classes, not here.
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
-  - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
+  - `flatten_scalar` — extracts the element from a 1×1 matrix (returns larger matrices unchanged); does NOT check whether a circuit is a scalar matrix (see `identitysearch.py` for that).
+  - Also: `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra and states: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
     - `SHOKet`/`SHOBra` — ket/bra states for 1-D SHO; each provides `_represent_NumberOp` to produce column/row vectors in the number basis.
     - Caveat: error conditions (n ≥ ndim, non-integer n) use `return ValueError(...)` instead of `raise`, silently returning the error object as a value.
@@ -245,5 +246,7 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit. Arithmetic: `add`/`sub` (same-unit only, auto-converts), `mul`/`div`/`rdiv`, `pow`. `pow(other)` calls `evalf()` on the computed factor because symbolic Pow instances are incompatible with the Quantity constructor.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.
 - `simplifiers.py` — `dim_simplify`: recursive simplification of compound `Dimension` expressions (Add, Mul, Pow). Handles the CAS rewriting `Add(L,L)→Mul(2,L)` by stripping non-Dimension numeric factors from Mul before reducing. Also `qsimplify` for Quantity expressions.
-- `systems/` — concrete unit-system definitions: `mks.py` (meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base), `mksa.py` (MKS + ampere for electromagnetism).
+- `systems/` — concrete unit-system definitions:
+  - `mks.py` — meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base.
+  - `mksa.py` — MKS + ampere; defines electromagnetic Dimension objects (current, voltage, impedance, conductance, capacitance, inductance, charge, magnetic_density, magnetic_flux) and units (A/V/ohm/S/F/H/C/T/Wb).
   - `natural.py` — natural unit system (c=ℏ=1): redefines base dimensions as action, energy, velocity; length, mass, time become derived quantities. Base units: ℏ (action), eV (energy), c (velocity).

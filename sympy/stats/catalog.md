@@ -21,6 +21,8 @@ Base classes and core query functions for all random variable types.
 - `Density` class + `density()`: compute probability density of a random expression. `Density.doit()` returns a DiracDelta-based Lambda for deterministic (non-stochastic) expressions.
 - `cdf(expr, condition)`: computes cumulative distribution function. When a condition is supplied, reduces to the unconditional case by rewriting expr via `given()` and recursing. Otherwise delegates to `pspace().compute_cdf()`.
 - `where()`, `given()`, `sample()`, `sample_iter()`: query domain of conditions, condition expressions, and draw realizations.
+- `expectation(expr, condition)`: computes expected value of a random expression; exploits linearity (decomposes `Add` into per-term expectations) for efficiency; delegates final integration to `pspace().integrate()`.
+- `probability(condition, given_condition)`: computes probability that a condition holds; supports Monte Carlo sampling via `numsamples`.
 - `sampling_E`, `sampling_P`, `sampling_density`: Monte Carlo approximations of expectation, probability, and density.
 
 ### [`crv.py`](crv.py)
@@ -79,7 +81,7 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 ## User-Facing API
 
 ### [`rv_interface.py`](rv_interface.py)
-Statistical convenience functions; re-exports core query functions (`P`, `E`, `density`, `cdf`, `where`, `given`, `sample`, `pspace`) from `rv.py` and defines additional ones.
+Higher-level statistical convenience functions built on top of `rv.py`; re-exports `E`/`P`/`density`/`cdf`/`where`/`given`/`sample`/`pspace` as thin aliases (implementation lives in `rv.py`).
 - `moment()`, `variance()`, `std()`, `covariance()`, `correlation()`, `cmoment()`, `smoment()`, `skewness()`.
 - `covariance(X, Y)`: computes `E((X-E(X))*(Y-E(Y)))` by calling `expectation()` for each argument independently, then for the product.
 - `variance(X)`: delegates to `cmoment(X, 2)` (second central moment).

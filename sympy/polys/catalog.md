@@ -27,6 +27,7 @@
 OO wrappers for dense polynomial representations used internally by `Poly`.
 
 - `DMP` — Dense Multivariate Polynomial over domain K.
+  - `__init__(rep, dom, lev, ring)` — three-way input dispatch when `lev` is provided: **dict → `dmp_from_dict`; non-list scalar → `dmp_ground` (constant poly); list → used directly**. When `lev` is omitted, validates the nested list via `dmp_validate` and infers the nesting depth.
   - `per(rep, dom, kill, ring)` — construct new DMP from internal rep; **if `kill=True` and `lev==0`, returns the raw coefficient instead of a DMP**.
   - `unify(g)` — reconcile two DMPs to a common domain; builds a local `per` closure with the same kill-at-zero-level behavior.
   - `__eq__` — catches `UnificationFailed` and returns `False` silently (never raises on incompatible domains).
@@ -135,6 +136,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
   - Content/primitive: `content`, `primitive`, `monic`.
+    - `content()` — GCD of all coefficients; **only allows `polys` flag (not `auto`)**, unlike `monic` which accepts both.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
   - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
   - `_eval_subs(old, new)` — internal substitution: if `old` is a generator, evaluates at `new` when numeric.
@@ -214,8 +216,9 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
+  - `dup_ff_div`, `dup_rr_div`, `dmp_ff_div`, `dmp_rr_div` — **raise `PolynomialDivisionFailed` if remainder degree fails to strictly decrease** between loop iterations (stall detection to prevent infinite loops).
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — remainder, quotient, exact quotient.
-- `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **raise `PolynomialDivisionFailed` if remainder degree fails to decrease between iterations**.
+- `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **same `PolynomialDivisionFailed` stall detection as regular division**.
 - `dup_pquo`, `dmp_pquo` — pseudo-quotient (discards remainder).
 - `dup_pexquo`, `dmp_pexquo` — exact pseudo-quotient; **raises `ExactQuotientFailed` if pseudo-remainder is nonzero**.
 - `dup_abs` — absolute values of coefficients.
@@ -314,7 +317,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `_primitive_in_x0(f)` — content and primitive part of `f ∈ Q(α)[x₀,…,xₙ₋₁]` viewed as univariate in x₀; iteratively GCDs coefficients via `func_field_modgcd`.
   - **Returns the original polynomial immediately (early exit) if running content becomes unit**.
-- `func_field_modgcd` — modular GCD over algebraic function fields.
+- `func_field_modgcd` — modular GCD over algebraic function fields; **for multivariate inputs (n>1), extracts primitive parts w.r.t. leading variable via `_primitive_in_x0`** to prevent spurious content, then reattaches content GCDs after core computation.
 - `_to_ZZ_poly(f, ring)` — **converts polynomial from Q(α)[x₀,…,xₙ₋₁] to Z[…][x₀, z]** by clearing denominators and replacing α with a formal indeterminate z.
   - **Branches on `isinstance(ring.domain, PolynomialRing)`**: if yes (has parameter vars), extracts inner domain for LCM and multiplies by `monom[1:]`; if no, uses `ring.domain` directly.
 - `_euclidean_algorithm(f, g, minpoly, p)` — monic GCD in Z_p[z]/(m(z))[x] via Euclidean algorithm; **returns `None` if a leading coefficient is not invertible mod m(z)** (detected via extended GCD when m(z) is not irreducible).
@@ -356,7 +359,8 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_zz_diophantine`, `dmp_zz_diophantine` — Wang/EEZ Diophantine equation solvers; `dup_zz_diophantine` for >2 inputs **builds cumulative products and recursively reduces to the 2-input base case** (extended GCD).
   - `dmp_zz_diophantine` recursively peels evaluation points from the list, reducing dimension by one each step; **uses Taylor-like expansion with successive differentiation at evaluation points** to lift solutions back to full dimension.
 - `dup_zz_mignotte_bound`, `dmp_zz_mignotte_bound` — coefficient bounds for factors.
-- `dup_cyclotomic_p`, `dup_zz_cyclotomic_factor` — cyclotomic polynomial detection/factoring.
+- `dup_cyclotomic_p` — cyclotomic polynomial predicate.
+- `dup_zz_cyclotomic_factor` — efficient factorization of `x^n ± 1` in Z[x]; **validates input form: leading coeff must be 1, trailing coeff must be ±1, all interior coefficients must be zero**; returns `None` if input doesn't match either binomial form; uses cyclotomic decomposition based on prime factorization of `n`.
 
 ### [`sqfreetools.py`](sqfreetools.py)
 Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic extensions).
@@ -763,6 +767,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `convert(element, base=None)` — coerce element to this domain; **when `base` is None, dispatches by Python type** (int → ZZ, float → RR, complex → CC, GMPY types, `DomainElement` → parent, `Basic` → `from_sympy`).
     - **For unknown non-Basic, non-sequence types, attempts `sympify(element)` then retries via `from_sympy`**; raises `CoercionFailed` if all strategies fail.
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
+  - Base arithmetic: `half_gcdex(a, b)` **delegates to `gcdex` and discards second Bézout coefficient**; `gcdex`, `gcd`, `lcm` raise `NotImplementedError` at base level — subclasses must override. `cofactors(a, b)` computes GCD then derives cofactors via `quo`.
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
     - When both are `FiniteField` (GF(p)), **selects the one with the larger modulus** (via `default_sort_key`); if no known pairing matches, falls back to the expression domain `EX`.

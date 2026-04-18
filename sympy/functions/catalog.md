@@ -24,7 +24,7 @@ Special mathematical functions: gamma, error, Bessel, orthogonal polynomials, di
 
 #### [`special/gamma_functions.py`](special/gamma_functions.py)
 Gamma function family: complete, incomplete, polygamma, loggamma.
-- `gamma` — complete gamma function Γ(x); evaluates special values. The `factorial` class (in `combinatorial/factorials.py`) handles n! computation and negative-integer edge cases.
+- `gamma` — complete gamma function Γ(x); evaluates special values; `fdiff` returns Γ(x)·ψ(x) for argindex 1, raises `ArgumentIndexError` otherwise. The `factorial` class (in `combinatorial/factorials.py`) handles n! computation and negative-integer edge cases.
 - `lowergamma` — lower incomplete gamma function γ(s, x).
 - `uppergamma` — upper incomplete gamma function Γ(s, x); `fdiff` uses Meijer G-function for derivative w.r.t. order parameter.
 - `polygamma` — polygamma function ψ^(n)(z), includes `digamma` (n=0) and `trigamma` (n=1).

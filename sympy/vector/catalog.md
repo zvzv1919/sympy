@@ -57,8 +57,13 @@ Rotation-parameterization objects that construct direction cosine matrices from 
 - `QuaternionOrienter` — constructs a 3×3 direction cosine matrix from four quaternion parameters (finite rotation about a unit axis).
 
 ### [`point.py`](point.py)
-Spatial point representation.
-- `Point` — 3-D point with `position_wrt`, `locate_new`, `distance`.
+Spatial point representation with parent-child hierarchy.
+- `Point` — 3-D point linked to an optional parent point, forming a tree of spatial locations.
+- `position_wrt(other)` — computes relative displacement vector to another point; handles direct parent/child as special cases.
+  - For non-adjacent points, traverses the point tree up to the common ancestor, accumulating and subtracting stored displacements along the path.
+- `locate_new(name, position)` — creates a new child point at a given displacement from this point.
+- `express_coordinates(coord_sys)` — returns (x, y, z) tuple of this point's position relative to a coordinate system's origin.
+- Each `Point` stores `_parent`, `_pos` (displacement from parent), and `_root` (tree root); tree structure enables `position_wrt` between any two points sharing a common root.
 
 ## Operations & Calculus
 

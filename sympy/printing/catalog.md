@@ -42,6 +42,7 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 - `_print_Integral` — builds integral signs with limits and spacing.
 - Special-case `_print_*` overrides for functions whose names collide with Greek/Unicode symbols (e.g., `_print_Chi` keeps Latin "Chi" instead of Greek χ, `_print_gamma`/`_print_lowergamma`/`_print_uppergamma` use explicit Γ/γ glyphs).
 - `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
+- `_print_Subs` — renders evaluation-at-a-point notation: parenthesizes the expression, draws a vertical bar (`|`) to its right, and places variable=value assignment pairs as subscripts below the bar.
 - Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.
 - `_print_Float` — when `full_prec` setting is `"auto"`, shows full precision only at the top print level (`_print_level == 1`); nested floats use reduced precision.
