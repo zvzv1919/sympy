@@ -40,7 +40,7 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `orient_new_axis` — create a new system rotated about an arbitrary axis.
 - `orient_new_body` — create a new system via body-fixed (Euler/Tait-Bryan) rotations; each successive rotation is about the *moving* frame's axes.
   - Accepts `rotation_order` string (length-3, XYZ or 123); consecutive same-axis forbidden ('XYX' ok, 'XXY' invalid).
-- `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors.
+- `orient_new_space` — create a new system via space-fixed rotations; each successive rotation is about the *parent* (fixed) frame's unit vectors (rotation matrices applied in reversed order compared to `orient_new_body`).
 - `orient_new_quaternion` — create a new system oriented by quaternion parameters (q0=cos(θ/2), q1–q3=direction-sine components λ·sin(θ/2)); the user-facing API for finite-rotation frame creation via quaternions.
 - `orient_new` — generic factory accepting a single `Orienter` or an iterable of orienters; composes multiple rotation matrices sequentially. Applies `trigsimp` only for a single orienter (not for iterable case).
 - `locate_new` — create a translated system sharing the same orientation.
@@ -48,7 +48,7 @@ Cartesian coordinate system definition and creation — the **user-facing API** 
 - `scalar_map` — returns substitution dict mapping this system's base scalars to another's (used internally by `express`).
 
 ### [`orienters.py`](orienters.py)
-Rotation-parameterization objects that construct direction cosine matrices from rotation parameters.
+Internal rotation-parameterization objects that construct direction cosine matrices; consumed by `CoordSysCartesian.orient_new_*` methods in `coordsysrect.py`.
 - `Orienter` — base class; `rotation_matrix(system)`.
 - `AxisOrienter` — rotation about an arbitrary axis by an angle.
 - `ThreeAngleOrienter` — base for three-angle orienters; `_in_order` flag controls elementary rotation matrix multiplication order.

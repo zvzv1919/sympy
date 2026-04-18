@@ -91,6 +91,9 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`fcode.py`](fcode.py)
 `FCodePrinter` — generates Fortran code with language-specific operators and formatting (source format, precision, contraction).
+- Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds).
+- `_wrap_fortran` — enforces Fortran fixed-format line length (72 chars) by wrapping long lines with continuation markers.
+- Loop syntax: `do VAR = start, stop` / `end do`.
 
 ### [`jscode.py`](jscode.py)
 `JavascriptCodePrinter` — generates JavaScript code from expressions.
@@ -98,6 +101,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`julia.py`](julia.py)
 `JuliaCodePrinter` — generates Julia code from expressions for a scientific computing language.
+- Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds). Loop syntax: `for VAR = start:stop` / `end`.
 - Emits element-wise dot operators (`.^`, `./`, `.*`) **by default** for regular `Symbol` operands to support vectorized code; uses standard operators (`^`, `/`, `*`) only for pure numbers or `MatrixSymbol` operands.
 - `julia_code()` — top-level API; returns Julia-syntax string with dot-operator rules, assignment support, and custom function dispatch.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.

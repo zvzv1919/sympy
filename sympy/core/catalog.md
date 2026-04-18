@@ -151,8 +151,10 @@ Adaptive arbitrary-precision numerical evaluation engine using mpmath.
 - `evalf_pow(v, prec, options)` — power evaluation with special-case handling
 - `evalf_log`, `evalf_atan`, `evalf_trig` — specialized transcendental evaluators
 - `pure_complex(v)` — extracts a + b*I form
-- `complex_accuracy`, `fastlog`, `bitcount` — precision/accuracy utilities
-- `iszero`, `scaled_zero` — zero detection and underflow representation
+- `fastlog(x)` — bit-level log2 approximation from mpf exponent+mantissa; returns approximate magnitude, not a fallback for overflow
+- `complex_accuracy`, `bitcount` — precision/accuracy utilities
+- `iszero(mpf)` — tests whether an mpf tuple represents zero
+- `scaled_zero(mag, sign)` — constructs a power-of-two mpf placeholder for zero with given magnitude; validates sign is exactly +1 or -1 (raises ValueError otherwise); also unwraps previously created scaled-zero tuples
 
 **Caveat**: `evalf_mul` NaN/infinity check only inspects `arg[0]` (real part); a purely-imaginary infinity (arg[0] is None) is skipped by this check.
 
@@ -176,6 +178,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - Add `extract_multiplicatively`: requires all terms individually divisible
 - `as_coefficient(expr)` — returns scalar multiplier `r` such that `self == r*expr`, or None if self is not a pure scalar multiple of expr
   - Calls `extract_multiplicatively` then rejects if result still `.has(expr)` (e.g., `2*sin(E)*E` w.r.t. `E` → None because `sin(E)` contains `E`)
+- `args_cnc(cset, warn, split_1)` — separates factors into commutative and non-commutative lists; when `cset=True`, returns commutative part as a set and raises ValueError if duplicate commutative factors exist (e.g., from unevaluated Mul)
 - `coeff(x, n)` — extracts coefficient of `x**n` from a sum; when x is the multiplicative identity (1), returns only additive terms whose leading numeric factor is 1; for noncommutative expressions, tries common prefix/suffix matching first
 - `could_extract_minus_sign()` — canonical choice between `{e, -e}`; final tiebreaker uses `sort_key()` comparison
 - `sort_key()` — canonical ordering key; decomposes expression via `as_coeff_Mul` then splits Pow nodes into (base, exp), non-Pow defaults to exp=S.One; Dummy atoms use recursive sort_key (identity-based), other atoms use string representation

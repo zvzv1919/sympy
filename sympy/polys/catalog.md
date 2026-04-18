@@ -139,6 +139,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
     - `content()` — GCD of all coefficients; **only allows `polys` flag (not `auto`)**, unlike `monic` which accepts both.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
   - `per(rep, gens, remove)` — construct Poly from internal rep; **if `remove` index is given and removing that generator leaves no remaining generators, returns a plain SymPy scalar** (via `dom.to_sympy`) instead of a Poly.
+  - `eval(a, j)` — evaluate polynomial at a point; **on `CoercionFailed`, auto-widens the coefficient domain** by constructing a domain for `a`, unifying with the current domain, converting, and retrying.
   - `_eval_subs(old, new)` — internal substitution: if `old` is a generator, evaluates at `new` when numeric.
     - **For non-numeric `new`, tries `replace(old, new)`; silently falls back to `as_expr().subs(old, new)` on `PolynomialError`**.
     - Also falls back to expression-level subs when `old` is not a generator.
@@ -211,13 +212,15 @@ Low-level dense polynomial arithmetic on coefficient lists.
 
 - `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub`, `dup_mul`, `dmp_mul` — basic arithmetic.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
+- `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`; **`dmp_sub_term` delegates to `dup_add_term` with negated coefficient** (not `dup_sub_term`) when reducing to univariate.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
 - `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
   - `dup_ff_div`, `dup_rr_div`, `dmp_ff_div`, `dmp_rr_div` — **raise `PolynomialDivisionFailed` if remainder degree fails to strictly decrease** between loop iterations (stall detection to prevent infinite loops).
-- `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo`, `dup_exquo`, `dmp_exquo` — remainder, quotient, exact quotient.
+- `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo` — remainder, quotient.
+- `dup_exquo`, `dmp_exquo` — exact quotient; **raises `ExactQuotientFailed` if remainder is nonzero**.
 - `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **same `PolynomialDivisionFailed` stall detection as regular division**.
 - `dup_pquo`, `dmp_pquo` — pseudo-quotient (discards remainder).
 - `dup_pexquo`, `dmp_pexquo` — exact pseudo-quotient; **raises `ExactQuotientFailed` if pseudo-remainder is nonzero**.
@@ -232,6 +235,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dmp_validate`, `dmp_normal`, `dmp_convert` — validation and domain conversion.
 - `dup_from_dict`, `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy`, `dmp_to_tuple` — format conversions; `dup_from_dict` **accepts both integer keys and single-element tuple keys** `{(k,): c}`, dispatching by `type(max_key) is int`.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC`, `dmp_ground_TC` — degree/coefficient queries; `dmp_ground_LC`/`dmp_ground_TC` drill through each nesting level to extract the innermost leading/trailing coefficient.
+- `dmp_true_LT(f, u, K)` — leading term as `(monom_tuple, coeff)`; **if innermost univariate list is empty (zero poly), appends exponent 0** instead of computing `len-1` (which would give −1).
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
 - `dmp_ground_p(f, c, u)` — test if polynomial is a constant; **if `c` is `None`, checks if `f` is any ground element** (not a specific value); if `c` is falsy (e.g. 0), delegates to `dmp_zero_p`.
 - `dup_reverse(f)` — compute `x^n * f(1/x)` (reciprocal transformation) by reversing the coefficient list and stripping leading zeros.
@@ -390,7 +394,7 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is zero poly and `a % p == 0`, returns `[]`**. Also `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg`.
 - `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval`, `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — standard operations and GCD/LCM.
 - `gf_sqf_p`, `gf_sqf_part`, `gf_sqf_list` — square-free testing and decomposition in GF(p).
-- `gf_irreducible_p`, `gf_irred_p_ben_or`, `gf_irred_p_rabin` — irreducibility testing.
+- `gf_irreducible_p` — irreducibility dispatch; queries `GF_IRRED_METHOD` config and **defaults to `gf_irred_p_rabin` when no preference is set**. `gf_irred_p_ben_or`, `gf_irred_p_rabin` — the two concrete algorithms.
 - `gf_ddf_zassenhaus` — distinct degree factorization (DDF); **appends non-trivial remainder as a factor of its own degree**.
 - `gf_edf_zassenhaus` — probabilistic equal degree factorization (EDF). Also `gf_ddf_shoup`, `gf_edf_shoup` (Shoup variants).
 - `gf_Qmatrix` — compute Berlekamp's Q matrix (rows are `x^(ip) mod f` for each i).
@@ -623,7 +627,7 @@ Partial fraction decomposition.
   - `full=False` (default): uses undetermined coefficients method; `full=True`: uses Bronstein's algorithm.
 - `apart_undetermined_coeffs(P, Q)` — partial fractions via undetermined coefficients; factors denominator, assigns symbolic unknowns per factor power, builds a linear system by matching polynomial powers, and solves for unknowns.
 - `apart_full_decomposition(P, Q)` — Bronstein's full partial fraction decomposition.
-- `apart_list` — structured partial fraction representation.
+- `apart_list(f, x)` — structured partial fraction as `(common, poly_part, fraction_list)` tuple; **if input is atomic (plain number or symbol), returns the expression directly** (not a tuple), making the return type inconsistent for non-rational-function inputs.
 - `assemble_partfrac_list` — reassemble from structured representation; **if roots are given as a `Poly`, constructs a `RootSum`; if roots are an explicit list of algebraic numbers, directly evaluates numerator/denominator at each root**.
 
 ### [`orthopolys.py`](orthopolys.py)

@@ -137,6 +137,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `Fourier` (QFT/IQFT) — `_represent_ZGate` builds Fourier matrix and embeds into full Hilbert space via tensor products with identity matrices on both sides when gate doesn't start at qubit 0 or total qubits exceed gate range.
   - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
 - **Qubits**: `qubit.py` — `Qubit`, `IntQubit`, qubit-state manipulation, measurement, and partial trace.
+  - `IntQubit` — integer-to-binary qubit encoding: single int arg → uses minimum bits needed; two-int args → second specifies bit width, raises ValueError if width is insufficient to represent the integer. `as_int()` reconstructs integer from stored binary tuple.
   - `Qubit._eval_trace(bra, indices)` — partial trace over selected subsystem indices; sorts indices to trace from most-significant qubit, returns scalar for full trace or density operator for partial trace.
   - `matrix_to_qubit(matrix)` — converts a numerical column/row vector into a symbolic superposition of basis states; determines Ket vs Bra from matrix shape. Raises QuantumError if vector length is not a power of 2.
   - `measure_all(qubit, format='sympy')` — full ensemble measurement: returns list of (basis-state, probability) pairs for all non-zero-amplitude outcomes. Accepts format parameter ('sympy', 'numpy', 'scipy.sparse') but only 'sympy' is implemented; others raise NotImplementedError.

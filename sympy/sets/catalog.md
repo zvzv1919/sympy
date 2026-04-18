@@ -29,6 +29,7 @@ Foundation of all set types and operations.
 Named infinite sets, image sets, integer ranges, and complex-plane regions.
 
 - `Naturals` / `Naturals0` — positive integers / non-negative integers (singletons)
+  - `_contains` — three-valued membership: returns true if integer+positive/nonnegative, false if not integer or not positive/nonnegative, `None` when sign is indeterminate
 - `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
 - `Reals` — all reals as Interval(−∞, ∞) singleton
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases

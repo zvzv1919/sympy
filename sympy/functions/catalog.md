@@ -160,4 +160,5 @@ Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFa
 Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harmonic`, `euler`, `catalan`, `genocchi`, `stirling`.
 - `catalan` — Catalan number C_n = binomial(2n,n)/(n+1); `eval` returns gamma-based closed form for nonneg integers and negative non-integers; for negative integers returns 0 (n≤−2) or −1/2 (n=−1).
 - `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
+  - `_eval_expand_func` — decomposes integer-shifted arguments: H(n+k) adds positive reciprocal terms, H(n−k) adds negative reciprocal terms; rational arguments expand via trigonometric digit-extraction sums.
 - `stirling` — Stirling numbers S(n,k) of first or second kind; helpers `_stirling1`/`_stirling2` implement cached recursive computation with closed-form shortcuts for special k values (e.g., k=n−1, k=n−2, k=2).

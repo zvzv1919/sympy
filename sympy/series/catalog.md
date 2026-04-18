@@ -24,8 +24,8 @@ General limit computation interface. Tries heuristics first, falls back to Grunt
 Gruntz algorithm for computing limits via most-rapidly-varying (MRV) subexpression analysis.
 - `gruntz(e, z, z0, dir)` — main entry; converts finite-point limits to limits at infinity.
 - `limitinf(e, x)` — compute limit as x → ∞ using MRV sets.
-- `mrv(e, x)` — find most rapidly varying subexpressions.
-- `compare(a, b, x)` — compare growth rates of two expressions.
+- `mrv(e, x)` — find most rapidly varying subexpressions in continuous-variable limits.
+- `compare(a, b, x)` — compare growth rates of two subexpressions (continuous limits, not discrete additive-term dominance).
 - `rewrite(e, Omega, x, wsym)` — rewrite expression in terms of MRV representative.
 - `mrv_leadterm(e, x)` — extract leading term from MRV expansion.
 - `SubsSet(dict)` — internal substitution tracking dictionary.
@@ -34,7 +34,7 @@ Gruntz algorithm for computing limits via most-rapidly-varying (MRV) subexpressi
 Limits of discrete sequences (n → ∞).
 - `limit_seq(expr, n, trials)` — compute limit of a sequence expression using dominant-term analysis.
 - `difference_delta(expr, n, step)` — discrete difference operator: expr(n+step) − expr(n).
-- `dominant(expr, n)` — find the most dominating term as n → ∞.
+- `dominant(expr, n)` — split expression into additive terms, compare pairwise growth rates via ratio limits, return the single fastest-growing term; returns `None` if two or more terms grow at the same asymptotic rate (comparable).
 
 ---
 

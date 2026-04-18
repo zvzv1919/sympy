@@ -64,6 +64,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
   - `InverseMellinTransform._compute_transform` validates input by traversing the expression and checking each function against a whitelist of allowed types (exp, gamma, sin, cos, tan, etc.); raises `IntegralTransformError` for unrecognized functions
 - `_rewrite_gamma` — rewrites gamma/trig products into Meijer G-function parameters (an, ap, bm, bq) for inverse Mellin transform
   - `left(c, is_numer)` — determines whether a pole at c lies left of the fundamental strip (integration contour); handles None/infinite strip boundaries with heuristic inequality checks
+    - When pole position is indeterminate: returns None for numerator factors; for denominator factors, returns None if strip bounds or pole contain free symbols, otherwise raises `MellinTransformStripError`
   - Poles are classified as left/right of contour to assign them to bm vs bq (or an vs ap) G-function parameter lists
   - Polynomial factors: degree-1 extracts linear root directly; degree>1 factors via `roots()`, falls back to `CRootOf.all_roots()` when roots() doesn't find all roots
   - Trig factors (sin, cos, tan, cot): rewrites as pairs of gamma functions; sin uses `_rewrite_sin` for denominator strip checking
@@ -100,6 +101,10 @@ Risch algorithm for integration of transcendental elementary functions.
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
 - `recognize_log_derivative(a, d, DE)` — tests whether f=a/d is a logarithmic derivative (dv/v for some v in the function field) by computing the resultant, splitting it via `splitfactor_sqf`, and checking that all real roots of the special factors are integers; known limitation: ignores complex roots (TODO)
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part of an antiderivative; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
+- `integrate_primitive_polynomial(p, DE)` — iteratively reduces polynomial degree in a logarithmic (primitive) tower extension
+  - Peels off leading coefficient each iteration, calls `limited_integrate` to solve for it, subtracts partial antiderivative's derivative from remainder
+  - Raises `NonElementaryIntegralException` when the leading coefficient has no elementary antiderivative
+- `integrate_primitive(a, d, DE)` — integrates primitive (logarithmic) functions; uses Hermite reduction + residue reduction + `integrate_primitive_polynomial` pipeline
 - `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
   - In piecewise mode, emits a Piecewise to handle the case where the exponential monomial equals 1 (zero exponent), avoiding division by zero by substituting t=1 and integrating separately
 
@@ -149,7 +154,10 @@ Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Int
 ### [`rationaltools.py`](rationaltools.py)
 Integration of rational functions p(x)/q(x) via partial fractions and logarithmic parts.
 - `ratint(f, x)` — main rational function integrator; auto-detects real/complex context from atom assumptions and selects between real arctangent/log forms vs RootSum over algebraic roots for the logarithmic part
-- `ratint_ratpart`, `ratint_logpart` — rational and logarithmic part sub-routines (Horowitz-Ostrogradsky decomposition)
+- `ratint_ratpart(f, g, x)` — Horowitz-Ostrogradsky algorithm: decomposes f/g into A' + B where B has square-free denominator
+  - Computes GCD of denominator g with its derivative to split g into repeated-factor part u and square-free part v
+  - Sets up undetermined polynomial coefficients for numerators A and B, solves the resulting linear system
+- `ratint_logpart(f, g, x)` — logarithmic part of rational integration; computes resultant-based decomposition into RootSum-log terms
 - `log_to_real`, `log_to_atan` — convert complex logarithmic terms to real arctangent/logarithm forms
 
 ---

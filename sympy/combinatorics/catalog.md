@@ -110,6 +110,7 @@ Free groups with symbolic generators.
   - Comparison: `__lt__` implements short-lex total ordering — shorter words first, then lexicographic by generator index; each inverse is ordered between its positive generator and the next smaller generator.
   - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.
   - `identity_cyclic_reduction` — returns the unique cyclically reduced form of a word: combines exponents of first and last syllables, stripping them if they cancel completely.
+  - `is_dependent(word)` / `is_independent(word)` — checks whether one word appears as a substring of another (or its inverse) in letter form; `is_independent` is the boolean negation.
   - Word operations: `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `letter_form`.
 
 ---
@@ -164,7 +165,8 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
 Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
 - `transversal2coset(size, base, transversal)` — converts BSGS transversals to coset representation; fills identity for positions not in base, then trims trailing identity entries so the returned list may be shorter than `size`.
-- `get_symmetric_group_sgs`, `tensor_gens`, `perm_af_direct_product`, `dummy_sgs`.
+- `get_symmetric_group_sgs(n, antisym)` — returns minimal BSGS for a rank-n (anti)symmetric tensor; encodes sign via trailing positions: symmetric appends `[n, n+1]`, antisymmetric appends `[n+1, n]`.
+- `tensor_gens`, `perm_af_direct_product`, `bsgs_direct_product`, `dummy_sgs`.
 - `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal.
 - `_is_minimal_bsgs` — verifies a BSGS has the lexicographically smallest base by reconstructing the base from generators and comparing to the given one.
 - `get_transversals` — returns transversals for a group given its BSGS.

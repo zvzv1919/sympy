@@ -11,6 +11,7 @@ Package entry point; re-exports all public geometric entities and utility functi
 ### [`entity.py`](entity.py)
 Base classes for all geometric entities.
 - `GeometryEntity` — abstract base; provides `intersection()`, `translate()`, `rotate()`, `scale()`, `reflect()`, `encloses_point()`, `equals()`.
+  - `reflect(line)` — mirrors across a line; optimizes axis-aligned cases (x-axis → `scale(y=-1)`, y-axis → `scale(x=-1)`), uses point-by-point translation for offset horizontal/vertical lines, and compose translate-rotate-scale-rotate-translate for arbitrary slopes.
   - `encloses(o)` — type-dispatching containment check; delegates to each subclass's `encloses_point` method.
   - `_eval_subs(old, new)` — substitution hook; converts sequence arguments to `Point3D` if entity is 3D, else `Point`.
 - `GeometrySet` — extends `GeometryEntity` with set-theoretic operations (`union`, `intersection`, `difference`, `contains`).
@@ -57,7 +58,8 @@ Point representations in n-dimensional Euclidean space.
 3D linear entities: lines, rays, and segments.
 - `LinearEntity3D` — abstract base for 3D linear entities.
   - `are_concurrent(*lines)`, `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
-  - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`, `projection(o)`.
+  - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
+  - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line; for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
   - `direction_ratio`, `direction_cosine`, `angle_between(l1, l2)`.
 - `Line3D`, `Ray3D`, `Segment3D` — 3D counterparts of the 2D entities.
 
@@ -104,6 +106,7 @@ Polygonal entities in 2D.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.
   - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via angular-sweep over edge pairs (rotating calipers).
 - `RegularPolygon` — `Polygon` subclass for regular n-gons; stored as center + radius + n (not explicit vertices). Adds `radius`, `interior_angle`, `exterior_angle`, `incircle`, `circumcircle`, `spin()`, `rotate()`.
+  - `scale(x, y, pt)` — overrides base; uniform scaling (x == y) preserves `RegularPolygon` type by scaling the radius; non-uniform scaling degrades to a plain `Polygon` with explicit vertices.
   - `encloses_point(p)` — optimized containment: rejects if distance ≥ circumradius, accepts if distance < inradius, falls back to general `Polygon.encloses_point` only for the annular region between.
   - `__eq__(o)` — cross-type equality: if compared to a plain `Polygon`, delegates to `Polygon.__eq__` to resolve center/radius vs explicit-vertices mismatch.
 - `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incircle`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
