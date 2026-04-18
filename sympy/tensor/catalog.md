@@ -152,7 +152,11 @@ Defines package-level convenience aliases and re-exports all public array classe
 - `Array = ImmutableDenseNDimArray` — the default constructor name; produces an **immutable** dense array. This is the canonical location where the default type binding is set.
 - `NDimArray = ImmutableDenseNDimArray`, `DenseNDimArray = ImmutableDenseNDimArray`, `SparseNDimArray = ImmutableSparseNDimArray` — additional aliases, all defaulting to immutable variants.
 - Re-exports: dense/sparse mutable/immutable classes, `tensorproduct`, `tensorcontraction`, `derive_by_array`, `permutedims`.
-- Module docstring serves as the primary tutorial for the array subpackage: construction, element-wise ops, conversion, products, contractions, and array derivatives.
+- Module docstring is the **primary tutorial/documentation** for the array subpackage, covering:
+  - Constructing N-dim arrays from nested lists (auto-detected shape) or from a flat sequence plus an explicit shape tuple.
+  - Slicing, element-wise differentiation, `applyfunc`, `tolist`, `tomatrix` conversion.
+  - Tensor product (`tensorproduct`) combined with `tensorcontraction` over shared axes to replicate standard matrix multiplication.
+  - Array-level symbolic derivatives via `derive_by_array`.
 
 ---
 

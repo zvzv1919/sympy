@@ -25,6 +25,6 @@ Class and function definitions for differential geometry on manifolds.
 ### [`rn.py`](rn.py)
 Module-level predefined instances of R² and R³ manifolds with standard coordinate systems and preregistered transformations.
 - Instantiates `R2` (rectangular, polar) and `R3` (rectangular, cylindrical, spherical) manifolds, patches, and coord systems.
-- Registers all pairwise coordinate transformations via `connect_to` with `inverse=False, fill_in_gaps=False` (automatic inverse derivation explicitly disabled; both directions registered manually).
+- Registers all pairwise coordinate transformations via `connect_to`; all six directional maps between R³'s three charts are specified by hand with `inverse=False, fill_in_gaps=False` (automatic inverse and composition explicitly disabled).
 - Exposes coordinate functions, basis vectors, and basis oneforms as attributes on coord system objects.
 - For R2 only: also aliases coordinate functions, basis vectors, and oneforms onto the manifold and patch objects.

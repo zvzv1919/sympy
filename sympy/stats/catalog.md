@@ -28,6 +28,8 @@ Base classes and core query functions for all random variable types.
 - `probability(condition, given_condition)`: computes probability that a condition holds; supports Monte Carlo sampling via `numsamples`.
   - Short-circuits without integration: returns `S.Zero` when `given_condition` is `False`, returns `S.One`/`S.Zero` when `condition` is trivially true/false.
 - `sampling_E`, `sampling_P`, `sampling_density`: Monte Carlo approximations of expectation, probability, and density.
+- `dependent(a, b)` / `independent(a, b)`: two-step statistical dependence check — first `pspace_independent` for a fast structural test (disjoint probability spaces), then compares conditional vs unconditional densities.
+- `pspace_independent(a, b)`: checks if underlying probability spaces share no symbols (quick structural independence test).
 - `_value_check(condition, message)`: parameter validation utility used across all distribution types; uses `condition == False` (not `not condition`), so symbolic/unevaluable conditions silently pass.
 - `NamedArgsMixin`: mixin providing attribute-style access to positional `args` via `_argnames` tuple.
 
@@ -96,6 +98,7 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 ### [`rv_interface.py`](rv_interface.py)
 Higher-level statistical convenience functions built on top of `rv.py`; re-exports `E`/`P`/`density`/`cdf`/`where`/`given`/`sample`/`pspace` as thin aliases (implementation lives in `rv.py`).
 - `moment()`, `variance()`, `std()`, `covariance()`, `correlation()`, `cmoment()`, `smoment()`, `skewness()`.
+- `smoment(X, n)`: nth standardized moment — factors out `(1/sigma)**n` and multiplies by the nth central moment, rather than computing `E(((X-mu)/sigma)**n)` directly. Division by zero if sigma is 0 (degenerate distribution).
 - `covariance(X, Y)`: numerically computes `E((X-E(X))*(Y-E(Y)))` via integration; no algebraic decomposition of arguments (contrast `Covariance.doit()` in `symbolic_probability.py`).
 - `variance(X)`: delegates to `cmoment(X, 2)` (second central moment).
 

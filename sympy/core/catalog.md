@@ -366,7 +366,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
   - Recursion prevention: `Expr.__ge__`/`__lt__`/etc. may delegate back to `_Inequality.__new__`; callers must pass `evaluate=False` to break the cycle
 - `_Greater` / `_Less` — internal base classes providing `.gts` (greater-than side) and `.lts` (less-than side) properties; `_Greater` maps gts→arg[0], lts→arg[1]; `_Less` swaps them (gts→arg[1], lts→arg[0])
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
-- `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
+- `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio fallback when difference is inconclusive: decomposes `(lhs-rhs)` into numerator/denominator — finite numerator with infinite denominator → True (equal); also checks if denominator-infinity condition would make original equality trivially true before concluding False
 - `Unequality.__new__` — delegates to `Equality`; if result is a `BooleanAtom` (True/False), returns its negation; if equality is indeterminate, falls through to create an unevaluated `Relational` node
 - `GreaterThan._eval_relation` / `LessThan._eval_relation` / `StrictGreaterThan._eval_relation` / `StrictLessThan._eval_relation` — concrete inequality evaluation; each calls the corresponding dunder method directly (e.g., `lhs.__ge__(rhs)`) wrapped in `_sympify`, rather than using the operator symbol (workaround for issue #7951)
 
@@ -388,7 +388,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`cache.py`](cache.py)
 `cacheit` — SymPy-specific memoization wrapper; selects between `fastcache.clru_cache` (if installed) or the backported `lru_cache` from `compatibility.py` as the underlying cache engine.
 
-- `__cacheit` — fallback decorator (used when fastcache unavailable); wraps `compatibility.lru_cache`; catches `TypeError` on unhashable args and silently falls back to calling the original uncached function
+- `__cacheit` — fallback decorator (used when fastcache unavailable); thin outer wrapper around `compatibility.lru_cache`; adds a redundant `TypeError` catch around the cached call as a safety net (the core unhashable-args handling lives inside `lru_cache` itself)
 - `CACHE` — global registry (`_cache` list) with `print_cache()` and `clear_cache()` helpers
 
 ### [`decorators.py`](decorators.py)

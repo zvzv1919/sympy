@@ -23,7 +23,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 
 ### [`conventions.py`](conventions.py)
 - `split_super_sub()` — parses symbol names into base + superscripts (`^`/`__`) + subscripts (`_`); trailing digits on the base name are auto-split into a leading subscript (e.g., `alpha11` → name `alpha`, sub `11`).
-- `requires_partial()` — checks if partial derivative notation is needed.
+- `requires_partial()` — determines if partial derivative symbol (∂) is needed by counting non-integer free symbols; returns True when more than one exists. Falls back to checking the expression's variable list when free_symbols is not iterable.
 
 ### [`defaults.py`](defaults.py)
 `DefaultPrinting` mixin providing `__str__`/`__repr__` using `sstr()`.
@@ -127,7 +127,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - Emits element-wise dot operators (`.^`, `./`, `.*`) **by default** for regular `Symbol` operands to support vectorized code; uses standard operators (`^`, `/`, `*`) only for pure numbers or `MatrixSymbol` operands.
 - `julia_code()` — top-level API; returns Julia-syntax string with dot-operator rules, assignment support, and custom function dispatch.
 - `_print_Assignment` — overrides base: when inline=False and RHS is Piecewise, decomposes into per-branch assignments and re-wraps as a new Piecewise for multi-line `if/elseif` output.
-- `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.
+- `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and scalar (`/`) vs element-wise (`./`) division based on whether the base is numeric.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested ternary `(cond) ? (expr) :` chains; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 - `indent_code` — auto-indents generated code using regex-matched block keywords; lines that both close and open blocks (e.g., `elseif`, `else`) decrease indent before the line and increase after.
 
