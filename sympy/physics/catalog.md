@@ -31,8 +31,9 @@ Pauli matrix algebra via pure symbolic manipulation (Symbol subclass, not quantu
 - `evaluate_pauli_product(arg)` — simplifies a product of Pauli matrices using algebraic rules.
 
 ### [`pring.py`](pring.py)
-Quantum particle on a ring.
-- `wavefunction(n, x)` — eigenfunctions. `energy(n, m, r)` — energy levels.
+Quantum particle on a ring (circular-path constraint).
+- `wavefunction(n, x)` — angular eigenfunctions (complex exponentials); no integer validation on quantum number n.
+- `energy(n, m, r)` — quantized kinetic energy levels (n²ℏ²/2mr²); raises ValueError if n is not an integer.
 
 ### [`qho_1d.py`](qho_1d.py)
 One-dimensional quantum harmonic oscillator: closed-form analytical wavefunctions and energy formulas (no operator algebra).
@@ -111,6 +112,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
+  - `SpinState._rewrite_basis` — converts spin eigenstates between measurement bases (Jx↔Jy↔Jz); numeric j enumerates D-matrix elements, symbolic j returns Sum with auto-generated summation index that avoids collisions with symbols already in the state.
   - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes; auto-generates a default sequential coupling order when none provided (space 1+2, then result+3, etc., with accumulated partial j sums).
     - `_build_coupled(jcoupling, length)` — parses a coupling scheme (list of (n1,n2,j) tuples) into paired subsystem index groups and intermediate j values; used by both the constructor and `uncouple()`.
     - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
@@ -228,7 +230,8 @@ Geometric and wave optics.
 - `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index n).
   - Properties: `speed` (propagation velocity = c/n, medium-dependent), `wavelength` (= c/(f·n)), `angular_velocity`, `wavenumber`.
   - Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
-- `medium.py` — `Medium` class: electromagnetic propagation material with refractive index, permittivity, permeability, intrinsic impedance (wave impedance = √(μ/ε)), and wave speed.
+- `medium.py` — `Medium` class: electromagnetic propagation material with refractive index (n), permittivity (ε), permeability (μ), intrinsic impedance (√(μ/ε)), and wave speed.
+  - Constructor derives missing parameter when n plus one of ε/μ are given; raises ValueError on inconsistency when all three are provided. Caveat: consistency-check condition has a typo (`permittivity != None and permittivity != None` instead of checking permeability), causing incorrect branching when n + μ given without ε.
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection). Accepts incident/normal as Matrix, Ray3D, or sequence; when both are Ray3D and no plane is given, validates geometric intersection — raises ValueError if rays are not concurrent. When a Plane is given, computes intersection point and returns a Ray3D result.
   - `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_formula(n_lens, n_surr, r1, r2)` (thin-lens focal length; accepts Medium objects or numeric indices), `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
 
@@ -276,6 +279,7 @@ High-energy physics.
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
+  - `add(other)` — dimensional addition; raises TypeError for non-Dimension operand, raises ValueError when dimensions differ (e.g., length + time).
   - `DimensionSystem.get_dim(dim)` — looks up a dimension in the system; accepts string (matches against name or symbol) or Dimension object (matches by identity in list); returns None if not found. `__getitem__` shortcut raises KeyError on miss.
   - `DimensionSystem.print_dim_base(dim)` — formats a dimension as a human-readable string in terms of basis dimensions, sorted by decreasing power; skips zero-power, omits exponent for power=1.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.

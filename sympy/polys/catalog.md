@@ -104,6 +104,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
   - `cancel(g)` — simplify fraction `f/g` by removing shared factors; **over non-field domains, divides by GCD and negates if denominator is negative; over field domains, clears denominators to ring, computes cofactors, then converts back with sign normalization** — if both numerator and denominator are negative, negates both; if only one is negative, shifts the sign to the content multiplier.
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
+  - `drop(gen)` — remove a generator from the polynomial; **univariate case: returns ground domain scalar if polynomial is constant, raises `ValueError` if polynomial depends on the generator**; multivariate case: drops the variable position from each monomial, raising `ValueError` if any term has nonzero exponent in that generator.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
   - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`, `__divmod__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
@@ -138,6 +139,7 @@ Sparse rational function fields and their elements.
 User-facing `Poly` class and public free functions for polynomial manipulation.
 
 - `Poly` — main symbolic polynomial class.
+  - `__new__(cls, rep, *gens, **args)` — type-based dispatch: **dict → `_from_dict`; other iterable → `_from_list`; existing Poly → `_from_poly`; other expression → `_from_expr`**. Distinct from `DMP.__init__` which dispatches on dict/non-list-scalar/list for internal dense representations.
   - `free_symbols_in_domain` — symbols appearing only in the coefficient ring (not the indeterminates); **for composite domains (`is_Composite`), collects free symbols from the domain's sub-generators; for expression domain (`is_EX`), iterates over all coefficient values and collects their free symbols**; returns empty set for simple numeric domains.
   - `new(rep, *gens)` — construct Poly from raw `DMP` representation; **raises `PolynomialError` if `rep.lev != len(gens) - 1`** (nesting level must match generator count minus one).
   - `_from_poly(rep, opt)` — construct from existing Poly; **if generators are the same set in different order, calls `reorder`; if generators differ, falls back to `_from_expr`**.
@@ -204,7 +206,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - **When exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction.
   - For 3+ inputs or mixed Poly/expr inputs, **converts any already-constructed Poly objects back to symbolic expressions via `as_expr()`** before uniform dictionary extraction.
   - Then collects all coefficients into one flat list to infer a single unified domain.
-- `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
+- `degree`, `degree_list`, `LM`, `LT`, `content`, `monic` — query functions.
+- `LC(f, order)` — leading coefficient; **when `order` is specified, delegates to `coeffs(order)` and returns first element** (re-sorts by custom ordering); when `order` is None, calls internal rep's `LC()` and converts via `dom.to_sympy`.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
   - `gcd_list(seq)` — GCD of a list of polynomials; returns `S.Zero` for empty input.
@@ -841,7 +844,9 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
   - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.
-- `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
+- `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient (colon ideal) `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
+  - **Single generator**: embeds into a higher-rank free module with an elimination ordering (`ilex`) and extracts quotient from Gröbner basis elements whose non-last components are all zero.
+  - **Multiple generators**: reduces to intersection of pairwise single-generator colon ideals.
 - `SubModule.syzygy_module()` (in `modules.py`) — compute kernel of the map from a free module to `self`; **filters out zero relations** from the result for convenience.
 - `FreeModule.convert(elem)` (in `modules.py`) — coerces lists (checks length matches rank), `FreeModuleElement` from other modules (checks rank compatibility), or literal `0` (creates zero vector); raises `CoercionFailed` otherwise.
 - `SubQuotientModule` (in `modules.py`) — submodule of a quotient module; `__init__` builds a `base` submodule by placing original generators first, then killed-module generators (ordering is critical).
@@ -903,8 +908,9 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `ModularIntegerFactory(_mod, _dom, _sym, parent)` — creates and caches a `ModularInteger` subclass for a given modulus; **raises `ValueError` if modulus < 1**; names class `SymmetricModularIntegerMod<n>` or `ModularIntegerMod<n>` depending on `_sym` flag.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
+- `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
-- `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
+- `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None. `from_AlgebraicField(a, K0)` — **succeeds only if `K1.domain == K0`** (target ring's coefficient domain matches the source algebraic field); **implicitly returns `None` otherwise** (silent failure, no conversion attempted).
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.
   - **If monomial order is global → `GlobalPolynomialRing` (DMP-based); otherwise → `GeneralizedPolynomialRing` (DMF-based, localization)**.
   - `GeneralizedPolynomialRing.new(a)` — construct element; **validates that the denominator's leading term under the ring's ordering has all-zero exponents** (i.e., denominator is a unit in the localization); raises `CoercionFailed` otherwise.

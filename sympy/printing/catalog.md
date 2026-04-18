@@ -195,4 +195,6 @@ GTK-based MathML viewer for expressions.
 `TheanoPrinter` — converts expressions to Theano computational graph variables.
 
 ### [`llvmjitcode.py`](llvmjitcode.py)
-`LLVMJitPrinter` — JIT-compiles expressions to machine code via LLVM IR.
+`LLVMJitPrinter` — JIT-compiles expressions to machine code via LLVM IR using llvmlite.
+- `_print_Pow` — optimizes common exponent special cases for native code: exp==-1 → fdiv, exp==0.5 → sqrt intrinsic, exp==2 → fmul self-multiply; general case calls external `pow`.
+- `LLVMJitCode` — manages LLVM module/engine lifecycle; wraps compiled IR into callable `ctypes` function pointers.

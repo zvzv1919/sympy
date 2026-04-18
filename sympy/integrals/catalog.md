@@ -203,6 +203,9 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - Core engine rewrites integrand as one or a product of two G-functions, then applies convolution/integral theorems
   - When the two-G-function approach fails convergence checks, retries with full polar branch substitution enabled
   - Collects boolean convergence conditions; abandons a path if conditions are always False
+- `_check_antecedents_1(g, x)` — validates convergence conditions for a single Meijer G-function's Mellin transform:
+  - When p > q (more upper than lower parameters), applies a parameter transformation (1−x mapping on all params, swaps a/b groups) and recurses to reduce to the p ≤ q case
+  - For p ≤ q: builds case-by-case convergence conditions (cases 1–3 + extra cases from Prudnikov §2.24.2) involving delta, arg(eta), parameter strip constraints (cond_3, cond_3_star), and nu-based bounds (cond_4)
 - `_check_antecedents_inversion(g, x)` — validates convergence conditions for inverse transform integrals:
   - Checks "condition A" (parameter differences must not be positive integers)
   - When p >= q: uses asymptotic Slater expansion directly

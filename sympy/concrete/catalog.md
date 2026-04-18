@@ -48,7 +48,8 @@ Unevaluated and evaluated finite/infinite summations.
   - `euler_maclaurin(m, n, eps, eval_integral)` — Euler–Maclaurin approximation.
   - `reverse_order(*indices)` — flip selected iteration bounds: swaps upper↔lower (each shifted by 1) and negates the summand once per flipped index; even flips cancel the sign.
   - `eval_zeta_function(f, limits)` — detect Riemann zeta function form.
-  - `_eval_derivative`, `_eval_difference_delta`, `_eval_simplify`.
+  - `_eval_derivative` — differentiate w.r.t. a variable; requires each limit tuple to have explicit lower and upper bounds (separate check from `__new__`).
+  - `_eval_difference_delta`, `_eval_simplify`.
 - `summation(f, *symbols)` — convenience wrapper that calls `Sum(...).doit()`.
 - `eval_sum(f, limits)` — main evaluation dispatcher; handles Piecewise summands (folds when conditions are index-independent, bails out for index-dependent conditions with symbolic/large ranges), KroneckerDelta, finite direct, symbolic, and hypergeometric paths.
 - `telescopic(L, R, limits)` — detect telescoping (collapsing/canceling) sums via pattern matching; matches `L(i+k)` against `-R` to find shift `k`, validates shift is integer and cancellation holds, falls back to `solve` if match fails.

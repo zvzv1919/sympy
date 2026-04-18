@@ -13,7 +13,8 @@ Compiles SymPy expressions into binary-callable functions via Fortran (f2py), Cy
   - `dump_pyx(routines, f, prefix)` — writes the `.pyx` bridge file: emits `cdef extern` headers and Python wrapper functions; constructs the function body differently for void routines (call then return output args) vs value-returning routines (return call result).
   - `_partition_args(args)` — categorizes routine arguments into py_args, py_returns, py_locals, and py_inferred; infers array dimension parameters from InputArgument/InOutArgument shapes so they need not be passed explicitly.
   - `_call_arg` / `_prototype_arg` / `_declare_arg` — format each argument for the C call, typed declaration, and initialization respectively; arrays→C pointer cast via `.data`, ResultBase outputs→address-of `&`, scalars→pass by name.
-- `F2PyCodeWrapper`, `DummyWrapper` — Fortran/dummy backends; resolve callable by original routine name (no suffix).
+- `F2PyCodeWrapper` — Fortran (f2py) backend; resolves callable by original routine name (no suffix).
+- `DummyWrapper` — backend-independent mock wrapper for testing; `_generate_code` writes a Python module whose function metadata labels each return value as `'nameless'` (unnamed `Result`) or by variable name (`OutputArgument`).
 - `UfuncifyCodeWrapper` — generates C extension code wrapping routines as NumPy ufuncs.
   - `wrap_code(routines)` — compiles multiple expression routines into a single binary; generates a unique exported function name (not derived from routine names) via `id()`.
   - `dump_c(routines, f, prefix, funcname)` — writes C extension source wrapping routines as broadcasting-capable NumPy ufuncs; raises `ValueError` if multiple output routines are given without an explicit `funcname`; all types hardcoded to `NPY_DOUBLE`; assumes all routines share the same input arguments.

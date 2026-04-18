@@ -20,7 +20,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `exp`: matrix exponential — decomposes via `jordan_cells`, splits each Jordan block into diagonal + nilpotent parts, computes factorial power series for the nilpotent component, recombines via P·eJ·P⁻¹.
 - **Dot / element-wise products**: `dot` (relaxed-dimension concrete inner product — accepts plain Python lists/sequences (wraps to Matrix) or Matrix; auto-transposes both operands when b has cols>1; returns scalar for vectors, list for rectangular), `multiply_elementwise`, `cross`.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
-- **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
+- **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
 - **Diagonalization**: `is_diagonalizable(reals_only=False)` (checks eigenvector multiplicities match algebraic multiplicities; `reals_only=True` rejects non-real eigenvalues), `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
@@ -223,7 +223,7 @@ Symbolic matrix factorization component nodes — each wraps a parent matrix exp
 ### [`densesolve.py`](densesolve.py)
 Low-level solvers operating on raw list-of-lists (not matrix objects).
 
-- `row_echelon`: forward elimination on raw nested lists.
+- `row_echelon`: forward elimination on raw nested lists; **no row-swapping/pivoting** — zero diagonal elements are left in place (skips normalization but still eliminates below), so rank-deficient matrices may produce incorrect results.
 - `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
 - `LU`: raw list-of-lists LU decomposition without pivoting. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
 - `LDL`: square-root-free L·D·Lᵀ factorization for hermitian/self-adjoint matrices on raw nested lists.

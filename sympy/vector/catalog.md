@@ -83,7 +83,8 @@ Vector calculus operations and coordinate re-expression.
 Vector differential operator (∇), bound to a specific `CoordSysCartesian`.
 - `Del` — symbolic nabla operator tied to a coordinate system; `__call__` is aliased to `gradient`.
   - `gradient` — re-expresses the scalar field into the operator's own coordinate system (via `express`) before taking partial derivatives along each axis.
-  - `dot` (divergence), `cross` (curl) — analogous vector calculus operations on vector fields.
+  - `dot(vect)` — computes ∇·F (divergence); always returns a **scalar** expression. Note: the reverse `Vector.dot(Del)` (directional derivative) is handled in `vector.py`.
+  - `cross(vect)` — computes ∇×F (curl); returns a Vector.
 - `_diff_conditional` — re-expresses an expr into a coordinate system, returns `S(0)` if the base scalar is absent, else returns `Derivative`. Used only by `Del.dot`.
 
 ## Package Init

@@ -2,7 +2,7 @@
 
 ## Glossary
 
-- **BSGS**: Base and Strong Generating Set — a compact representation of a permutation group enabling efficient membership testing and enumeration.
+- **BSGS**: Base and Strong Generating Set — a compact representation of a permutation group as a stabilizer chain, enabling efficient membership testing (sifting/stripping) and enumeration.
 - **Coset decomposition**: Factoring a group element via Schreier-Sims transversals; used for group-level ranking/unranking (`coset_rank`/`coset_unrank` in `perm_groups.py`).
 - **Lexicographic rank/unrank**: Converting between a single permutation and its position in lex order; lives in `permutations.py` (`rank`, `unrank_lex`).
 - **Non-lex rank/unrank**: Linear-time ranking that does not enforce lexicographic order; also in `permutations.py` (`rank_nonlex`, `unrank_nonlex`).
@@ -196,8 +196,8 @@ Low-level algorithms for computational group theory.
 - `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
 - `_base_ordering` — reorders `{0..n-1}` so that base points appear first; produces an index mapping, does not verify or compute minimal bases.
 - `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
-- `_strip` — single-pass sift of one permutation through an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
-- `_strip_af` — optimized array-form variant of `_strip`; skips levels already known to be fixed (parameter `j`), and exits early when the residual equals a coset representative mid-chain, returning `(False, base_len + 1)` instead of computing further products.
+- `_strip` — decomposes (sifts) one permutation element through the stabilizer chain of an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
+- `_strip_af` — array-form optimized variant of `_strip`; skips levels already known to be fixed (parameter `j`), and detects identity early when the residual equals a coset representative mid-chain, returning `(False, base_len + 1)` instead of computing further products.
 - `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.
 - `_strong_gens_from_distr`, `_check_cycles_alt_sym`.
 

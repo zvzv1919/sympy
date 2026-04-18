@@ -40,7 +40,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Multi-generator different-base handling: for nested transcendental functions (e.g. log(x) and log(log(x)-1)), substitutes the shallowest function with a dummy variable, solves the simplified equation, then inverts to recover solutions.
   - Transcendental fallback via `_tsolve`.
 - `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables. Accepts Equality as `lhs` (extracts sides internally); raises ValueError if `lhs` is an Equality and `rhs` is nonzero (ambiguous RHS). Returns `(symbol, solution)` if linear, `(0, 1)` if trivially zero, `(0, 0)` if no solution, or `(numer, denom)` if not linear.
-- `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
+- `solve_linear_system(matrix, *syms)` — internal linear system solver from augmented matrix (use `linsolve` in `solveset.py` for the user-facing equivalent).
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — solves for unknown algebraic coefficients in a polynomial identity (not ODE-related; see `ode.py` for the ODE undetermined coefficients method).
 - Post-solve assumption filtering: checks each candidate against the symbol's declared properties (e.g. positive, real) via `check_assumptions`.
   - Drops solutions that definitively violate assumptions (test=False); keeps solutions where verification is inconclusive (test=None) with optional warning.
@@ -63,7 +63,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`, then subtracts denominator-zero points (via `_invalid_solutions`) from the result; falls back to ConditionSet on NotImplementedError.
 - `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
-- `linsolve(system, *symbols)` — linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples.
+- `linsolve(system, *symbols)` — primary user-facing linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples. Validates that all `symbols` are actual Symbol instances; raises ValueError if non-symbolic values (e.g. integers, strings) are passed.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
   - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
 - `linear_eq_to_matrix(equations, *symbols)` — standalone utility that converts linear equations to (A, b) matrix pair for external use. Does not solve; just extracts coefficients. Accepts both expressions (implicit =0) and Eq() relations.
@@ -71,6 +71,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `_invert(f_x, y, x, domain)` — set-based function inversion; reduces f(x)=y to simpler form. Returns solution sets (FiniteSet/ImageSet). Distinct from `solvers._invert` which uses algebraic peeling and returns scalar tuples.
   - Caveat: domain intersection (filtering against reals/complexes) is applied only when the result is a FiniteSet; infinite/continuous solution sets (ImageSet, Union, etc.) pass through unfiltered.
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
+  - `_invert_real` recursively inverts real-valued functions; Abs handling: splits into positive branch ([0,∞) kept as-is) and negative branch ((-∞,0] negated), then unions results.
   - `_invert_complex` exp handling: maps each target value to an ImageSet over Integers (adding 2nπi branches); requires `g_ys` to be a FiniteSet.
   - Caveat: silently returns the expression unchanged for infinite target sets (Integers, Union, etc.) — exp inversion only proceeds for finite discrete inputs.
 - `_solve_as_poly(f, symbol, domain)` — solves via polynomial techniques (roots, Poly.all_roots); falls back to ConditionSet when root count is incomplete.
