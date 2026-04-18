@@ -152,7 +152,7 @@ Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those
 - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` — inverse hyperbolic functions.
   - Odd-symmetry inverses (`asinh`, `atanh`, `acoth`, `acsch`): `eval` uses `_coeff_isneg` to detect negative leading coefficient → returns `−f(−arg)`.
   - `acosh.eval` — has a constant lookup table mapping known algebraic values (1/2, √3/2, etc.) to exact π-multiples; multiplies result by i when the argument is real (branch-cut convention).
-  - `acsch.eval` — constant table for purely imaginary arguments (maps to π-fraction multiples of i); returns exact log expressions for ±1.
+  - `acsch.eval` — inverse hyperbolic cosecant; constant table maps known imaginary-unit multiples AND select real values (e.g., 2) to exact expressions; returns log forms for ±1.
 
 #### [`elementary/complexes.py`](elementary/complexes.py)
 Complex number component functions.

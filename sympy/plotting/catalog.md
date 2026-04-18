@@ -128,7 +128,8 @@ Concrete plot mode classes with coordinate-to-Cartesian conversion logic for all
 
 - `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; used only by Cartesian and parametric sympy evaluators.
 - `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
-- `ParametricCurve2D`, `ParametricCurve3D`, `ParametricSurface3D` — parametric modes.
+- `ParametricCurve2D` — 2D parametric curve embedded into 3D by hardcoding z=0.0 in both sympy and lambda evaluators.
+- `ParametricCurve3D`, `ParametricSurface` — 3D parametric curve and surface modes using all three coordinate expressions.
 - `Polar` — polar-to-Cartesian (r,θ → x,y) curve mode.
 - `Cylindrical` — cylindrical-to-Cartesian (r,θ,h → x,y,z) surface mode.
 - `Spherical` — spherical-to-Cartesian (r,θ,φ → x,y,z) surface mode; physics convention (azimuth 0–2π, polar 0–π).

@@ -41,6 +41,7 @@ Infrastructure for continuous random variables.
   - `compute_density(expr)`: derives the density of a transformed variable (function of X) via change-of-variables; uses `solveset` to find inverses and unwraps `Intersection` with `S.Reals` when the solver returns that form.
   - `compute_cdf(expr)`: delegates to the distribution's `compute_cdf` for the identity case; falls back to base class otherwise.
 - `ContinuousDistributionHandmade`: internal distribution wrapper used by `ContinuousRV` (in `crv_types.py`); accepts a Lambda pdf and a set.
+- `SingleContinuousDistribution`: base class for all named continuous distributions; provides default `compute_cdf` (integrates PDF from left bound) and `expectation` (integrates expr·PDF). Subclasses in `crv_types.py` override these with distribution-specific simplifications.
 - Integration-based expectation and probability computation over continuous intervals.
 
 ### [`drv.py`](drv.py)
@@ -68,7 +69,7 @@ All built-in continuous probability distributions (~28) plus a factory for user-
 - `rv(symbol, cls, args)`: internal factory used by all named distribution constructors; calls `dist.check(*args)` for parameter validation before creating the pspace.
 - Named distributions: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
-- Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).
+- Some distributions override `compute_cdf` or `expectation` with post-processing that simplifies symbolic results (e.g., `UniformDistribution.compute_cdf` substitutes `Min` expressions after generic integration to resolve symbolic boundary ordering).
 - Some distributions override `sample()` to bypass the generic inverse-CDF sampling in the base class (e.g., `LogNormalDistribution` delegates to `random.lognormvariate`).
 
 ### [`drv_types.py`](drv_types.py)

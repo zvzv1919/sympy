@@ -20,6 +20,7 @@
 Individual permutation representation, construction, and properties.
 - `Cycle` — wrapper around dict for disjoint cycle notation.
 - `Permutation` — core permutation class (array form, cyclic form, composition, inversion).
+  - `__mul__` (`*` operator) — composes two permutations; pads the shorter array with identity-mapped indices to match the longer one before computing the product.
   - Ranking/unranking of individual permutations in lexicographic order: `rank`, `unrank_lex`, `next_lex`.
   - Non-lex ranking: `rank_nonlex`, `unrank_nonlex`, `rank_trotterjohnson`, `unrank_trotterjohnson`.
   - Properties: `is_even`, `is_odd`, `parity`, `inversions`, `support`.

@@ -232,7 +232,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `gcd_list(seq)` — GCD of a list of polynomials; returns `S.Zero` for empty input.
     - **Two-phase fallback**: first tries numerical GCD (via `construct_domain`); if polynomial conversion fails, **retries numerical GCD on the failed expressions**.
     - **Early-exits the iterative reduction when the running GCD becomes one** (cannot reduce further).
-  - `gcd(f, g)` — on `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
+  - `gcd(f, g)` — **if `f` is iterable, delegates to `gcd_list`; when `g` is also provided, `g` is prepended to generators (not treated as a polynomial input)**.
+    - On `PolificationFailed`, **falls back to `construct_domain` on raw expressions and delegates to `domain.gcd`**; raises `ComputationFailed` if domain doesn't support GCD.
 - `half_gcdex`, `gcdex`, `invert` — extended Euclidean algorithm and modular inverse; **on `PolificationFailed`, fall back to `construct_domain` on raw expressions and delegate to `domain.gcdex`/`domain.invert`; raise `ComputationFailed` if domain doesn't support the operation**.
 - `cofactors(f, g)` — GCD with quotient factors; **if polification fails, falls back to `construct_domain` on raw expressions and calls `domain.cofactors`; raises `ComputationFailed` if the fallback domain raises `NotImplementedError`**.
 - `intervals(F, eps, inf, sup)` — compute isolating intervals for real roots; **accepts a single expression or an iterable of expressions**.
@@ -382,6 +383,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
     - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
+  - Asymmetric extraction: **uses leading coefficient for the degree-0 input but content (GCD of all coefficients in x₀) for the non-constant input**; then computes GCD in the remaining variables.
 - `_dup_rr_trivial_gcd`, `_dmp_rr_trivial_gcd` (ring), `_dup_ff_trivial_gcd`, `_dmp_ff_trivial_gcd` (field) — short-circuit trivial GCD cases: both zero → zero; one zero → normalized non-zero; **`_dmp_rr_trivial_gcd` returns `(1, f, g)` immediately when either input is the constant 1** (unit polynomial).
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
 - `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**; internally dispatches to `_rr_lcm` (ring: primitive-part based) vs `_ff_lcm` (field: normalizes to monic).
@@ -709,7 +711,8 @@ Monomial tuple arithmetic and generation.
   - `__init__(monom, gens)` — accepts exponent tuple or symbolic expression; **raises `ValueError` if expression has non-unit coefficient or multiple terms**.
   - `__mul__`, `__div__`, `__floordiv__`, `__truediv__` — monomial multiplication/division via `monomial_mul`/`monomial_div`; accept `Monomial`, `tuple`, or `Tuple`; **for unrecognized types, `return NotImplementedError` (returns the class, does not raise)** — known bug.
   - `__pow__(n)` — exponentiation via repeated `monomial_mul`; **raises `ValueError` for negative `n`**.
-- `MonomialOps` — optimized monomial operation dispatcher.
+- `MonomialOps` — code-generation engine for fast exponent-vector arithmetic; generates specialized Python functions (via `exec`) for `mul`, `div`, `ldiv`, `pow`, `mulpow`, `lcm`, `gcd` on fixed-arity monomial tuples.
+  - Generated `div` — component-wise subtraction with **early `return None` if any result component is negative** (non-divisibility); contrast `ldiv` which allows negative exponents.
 
 ### [`orderings.py`](orderings.py)
 Monomial orderings for polynomial rings.
@@ -751,8 +754,11 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `_minimal_polynomial_sq(p, n, x)` — minimal polynomial for `p^(1/n)` where `p` is a sum of surds; eliminates square roots via repeated `_separate_sq`.
   - **When `n==1`, skips factorization and directly normalizes** (sign correction + primitive part), since elimination already yields a constant multiple of the minimal polynomial.
 - `_minpoly_exp(ex, x)` — minimal polynomial of `exp(ex)`; for `e^(i·p·π/q)`, **uses hardcoded results for small primes q; general case generates cyclotomic polynomials for divisors of 2q and picks the correct factor**.
-- `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
-- `primitive_element(*extensions)` — compute primitive element of algebraic extension.
+- `_minpoly_compose` — compositional minimal polynomial; dispatches by expression type (Add, Mul, Pow, sin, cos, exp, CRootOf).
+  - **Mul over QQ**: separates rational-base/rational-exponent factors from others; computes LCM of exponent denominators across rational factors.
+  - Constructs a separate annihilating polynomial for the rational product, then combines with the non-rational part via `_minpoly_op_algebraic_element`.
+- `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
+- `primitive_element(*extensions)` — compute primitive element of algebraic extension; **in explicit mode (`ex=True`), validates each extension: raises `ValueError` if a `Poly` extension is multivariate** (only univariate minimal polynomials accepted).
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields; **returns `None` early if `deg(b.minpoly) % deg(a.minpoly) != 0`** (degree-divisibility check); otherwise tries PSLQ (fast path, default) then factorization.
 - `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
 - `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial; otherwise computes minimal polynomial, gets candidate intervals, and **doubles mpmath precision repeatedly until interval-arithmetic evaluation fits within one candidate**.

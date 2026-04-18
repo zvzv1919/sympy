@@ -113,6 +113,7 @@ Risch algorithm for integration of transcendental elementary functions.
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
 - `recognize_log_derivative(a, d, DE)` — tests whether f=a/d is a logarithmic derivative (dv/v for some v in the function field) by computing the resultant, splitting it via `splitfactor_sqf`, and checking that all real roots of the special factors are integers; known limitation: ignores complex roots (TODO)
 - `residue_reduce` — Lazard-Rioboo-Rothstein-Trager resultant reduction for the logarithmic part in transcendental (non-rational) differential extensions; returns (s_i, S_i) pairs for RootSum-log terms and a Boolean indicating whether the remaining integral is elementary
+  - Computes resultant of d and (a − z·Dd); swaps resultant argument order when deg(Dd) > deg(d) to ensure correct polynomial remainder sequence
 - `integrate_primitive_polynomial(p, DE)` — iteratively reduces polynomial degree in a logarithmic (primitive) tower extension
   - Peels off leading coefficient each iteration, calls `limited_integrate` to solve for it, subtracts partial antiderivative's derivative from remainder
   - Raises `NonElementaryIntegralException` when the leading coefficient has no elementary antiderivative
