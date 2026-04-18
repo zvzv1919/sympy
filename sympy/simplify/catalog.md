@@ -2,7 +2,7 @@
 
 ## Glossary
 - **TR rules** (`fu.py`): Individual named transformation rules (TR0–TR22, TRmorrie, TR111) each applying one trig identity.
-- **Fu algorithm** (`fu.py`): Orchestrates TR rules via combination transforms (CTR1–4) and rule lists (RL1, RL2) to find simplest trig form.
+- **Fu algorithm** (`fu.py`): Orchestrates TR rules via combination transforms (CTR1–4) and rule lists (RL1, RL2); uses single-metric measure (trig count) to pick simplest form.
 - **Gröbner trig simplification** (`trigsimp.py`): Uses polynomial ideal / Gröbner basis over trig generators to simplify trig expressions.
 
 ## Notes
@@ -17,7 +17,7 @@
 ### [`fu.py`](fu.py)
 Individual trig transformation rules and the Fu simplification algorithm. Each TR rule applies one specific trig identity.
 
-- `fu(rv, measure)` — main Fu algorithm; applies TR rules via CTR and RL sequences, selects simplest result.
+- `fu(rv, measure)` — main Fu algorithm; applies TR rules via CTR and RL sequences, selects simplest by caller-supplied `measure` (defaults to `L`, i.e. trig-function count only).
   - Uses JIT factoring: extracts common factors to attempt trig combination, discards factoring if it doesn't simplify.
 - `TR0(rv)` — rational polynomial normalization (combine like terms); uses `.normal().factor().expand()` instead of `cancel` to support noncommutative expressions.
 - `TR1(rv)` — replace sec/csc with 1/cos and 1/sin.
@@ -84,7 +84,7 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 - `futrig(expr)` — applies Fu-like transformation tree for trig simplification; uses `_futrig` helper internally.
   - Post-processing: if result differs from input and is a Mul whose first arg is Rational, redistributes the leading coefficient via `as_coeff_Mul()`.
   - Hyperbolic handling: when `hyper=True` (default), converts hyperbolic sub-expressions to trig via `hyper_as_trig`, simplifies, then converts back.
-  - `_futrig` builds a nested rule tree of TR transforms and applies them via greedy search with a multi-criteria objective ranking candidates by (trig count, op count, node count, arg count, is_Add).
+  - `_futrig` builds a nested rule tree of TR transforms and applies them via `greedy` search strategy; defines its own composite objective function `Lops` ranking candidates by tuple (trig count via L, op count, node count, arg count, is_Add) to determine simplest form.
 
 ---
 

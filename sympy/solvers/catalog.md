@@ -10,6 +10,13 @@
 
 ---
 
+## Package Entry Point
+
+### [`__init__.py`](__init__.py)
+Public namespace for the solvers package. Assembles and re-exports all user-facing functions from submodules: general solving (`solvers.py`), integer-only/Diophantine (`diophantine.py`), recurrence relations (`recurr.py`), ODEs (`ode.py`), PDEs (`pde.py`), polynomial systems (`polysys.py`), inequalities (`inequalities.py`), functional decomposition (`decompogen.py`), set-based solving (`solveset.py`), and DE utilities (`deutils.py`).
+
+---
+
 ## Core Equation Solvers
 
 ### [`solvers.py`](solvers.py)

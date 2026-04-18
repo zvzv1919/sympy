@@ -131,7 +131,7 @@ Polygonal entities in 2D.
 ### [`util.py`](util.py)
 Standalone geometric utility functions.
 - `intersection(*entities)` — convenience dispatcher; delegates to each entity's own `.intersection()` method. Contains no intersection math itself.
-- `convex_hull(*points)` — returns convex hull as a `Polygon`, `Segment`, or `Point`.
+- `convex_hull(*points)` — computes 2D convex hull via Andrew's monotone chain algorithm; returns `Polygon` for non-degenerate hulls, `Segment` when all points are collinear, or `Point` for single-point input.
 - `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.

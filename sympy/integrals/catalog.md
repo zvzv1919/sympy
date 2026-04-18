@@ -152,11 +152,13 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
   - Builds linear system from monomial derivatives, solves via `constant_system`
   - Verifies rationality of solution coefficients; raises NotImplementedError for non-rational coefficients
   - Computes multiplicative constant correction between exp(f) and the radical
-- `is_log_deriv_k_t_radical_in_field` — field-level variant; checks if f is Du/u for some k(t)-radical u; uses `splitfactor` for denominator simplicity, then `residue_reduce`
+- `is_log_deriv_k_t_radical_in_field` — field-level variant; checks if f=fa/fd is Du/u for some k(t)-radical u; dispatches on case (exp/primitive/base/tan)
+  - Base case: immediately returns None if fd is not square-free or deg(fa) >= deg(fd); otherwise computes n and u from residue terms
+  - Uses `splitfactor` for denominator simplicity check, then `residue_reduce`; returns None if not all resultant roots are rational
 - `parametric_log_deriv_heu` — heuristic for n·f = Dv/v + m·Dθ/θ (n,m∈ℤ, v∈k(t)*); branches on whether deg(q) exceeds a derivation-degree bound B, solving coefficient equations in each branch
 
 ### [`heurisch.py`](heurisch.py)
-Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert).
+Semi-decision (heuristic) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
   - Substitutes subexpressions with placeholder symbols; tries all permutations of the substitution ordering until the result is rational in placeholders
   - Two-phase coefficient domain strategy: first solves the undetermined-coefficients system over the rationals ('Q'); if that fails, retries without a field restriction (general domain)

@@ -6,7 +6,8 @@ Mathematical function classes (symbolic, unevaluated). Defines function behavior
 
 - **ultraspherical polynomials**: synonym for Gegenbauer polynomials (`gegenbauer` in `special/polynomials.py`).
 - **unit step function**: the Heaviside function (`Heaviside` in `special/delta_functions.py`), NOT in `elementary/piecewise.py`.
-- **generalized factorial function / upper incomplete gamma**: `uppergamma` in `special/gamma_functions.py`.
+- **generalized factorial function**: the gamma function Γ(n)=(n−1)!; `gamma` in `special/gamma_functions.py`. Its logarithm is `loggamma` in the same file.
+- **upper incomplete gamma**: `uppergamma` in `special/gamma_functions.py`.
 - **signum function**: `sign` class in `elementary/complexes.py`; Heaviside-to-sign rewriting is in `special/delta_functions.py`.
 - **fdiff**: method on Function subclasses returning symbolic partial derivatives; lives alongside the class definition.
 - **rewrite**: `_eval_rewrite_as_*` methods live on the source class, not the target class.
@@ -28,7 +29,7 @@ Gamma function family: complete, incomplete, polygamma, loggamma.
 - `lowergamma` — lower incomplete gamma function γ(s, x).
 - `uppergamma` — upper incomplete gamma function Γ(s, x); `fdiff` uses Meijer G-function for derivative w.r.t. order parameter.
 - `polygamma` — polygamma function ψ^(n)(z), includes `digamma` (n=0) and `trigamma` (n=1).
-- `loggamma` — log-gamma function log Γ(x).
+- `loggamma` — log-gamma function log Γ(x); `eval` returns closed-form expressions for integer, half-integer (denominator=2), and general rational arguments.
 
 #### [`special/polynomials.py`](special/polynomials.py)
 Orthogonal polynomial families. Base class `OrthogonalPolynomial`; each subclass has `eval` (special-value logic) and `fdiff`.

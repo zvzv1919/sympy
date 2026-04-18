@@ -37,6 +37,8 @@ Implicit equation/inequality data series; computes raster data via interval arit
 - `plot_implicit()` — public API; plots relations (Eq, And, Or, inequalities) over 2D region.
   - Variable inference: bare expressions auto-wrapped as `Eq(expr, 0)`; single-variable expressions get a synthetic dummy symbol for the missing axis.
 - `ImplicitSeries` — data series for implicit plots; `_get_raster_interval()` recursively subdivides rectangles using interval arithmetic to determine inclusion.
+  - Jitter mechanism: adds small random perturbations to grid sample boundaries to prevent false positives where aligned intervals (e.g., x∈[1,2], y∈[1,2]) incorrectly satisfy equality expressions (e.g., y==x), which would otherwise render spurious filled rectangles instead of curves.
+  - Fallback: if interval evaluation raises `AttributeError`, warns and falls back to uniform mesh grid (`_get_meshes_grid`).
 
 ### `textplot.py`
 Low-level ASCII art grid renderer (called by `TextBackend`; does not validate input count).

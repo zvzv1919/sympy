@@ -93,6 +93,7 @@ Finitely presented groups, coset enumeration, and subgroup presentations.
   - `coincidence(alpha, beta)` / `coincidence_f` — merges two cosets found to be equivalent.
 - Coset enumeration: `coset_enumeration_r`, `coset_enumeration_c`.
 - `low_index_subgroups`, `reidemeister_presentation`.
+- `_simplification_technique_1(rels)` — reduces multi-syllable relators using single-generator relators of the form g^n; bounds exponents to (-n/2, n/2] via modular arithmetic and deletes syllables whose exponent is an exact multiple of n.
 - Subgroup presentation pipeline:
   - `define_schreier_generators(C)` — builds Schreier generators for a subgroup from a coset table.
   - `reidemeister_relators(C)` — computes defining relators for the subgroup; simplifies by eliminating trivial (order-1) generators and removing cyclic-conjugate duplicates (Tietze transformation TT_1).

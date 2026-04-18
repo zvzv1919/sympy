@@ -109,7 +109,8 @@ Finite difference operators for symbolic sums.
 
 ### [`series_class.py`](series_class.py)
 Abstract base class for all series representations.
-- `SeriesBase(Expr)` — abstract base for series (not sequences); `.interval`, `.start`, `.stop`, `.length`, `.term(pt)`, `._ith_point(i)`.
+- `SeriesBase(Expr)` — abstract base for series (not sequences); `.interval`, `.start`, `.stop`, `.length`, `.term(pt)`.
+- `_ith_point(i)` — compute position of i-th element; iterates backward from stop when start is negative infinity. Used by `__iter__` and `__getitem__`.
 
 ### [`__init__.py`](__init__.py)
 Package initialization; aggregates public API exports from all submodules.

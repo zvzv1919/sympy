@@ -61,7 +61,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 
 ### [`units.py`](units.py)
 Legacy physical-units module with ~200 predefined units, physical constants, and `find_unit()` search.
-- `Unit` — base class for physical units (AtomicExpr subclass); stores `name` and `abbrev`. Equality (`__eq__`) compares only `name`, ignoring `abbrev` — two units with the same name but different abbreviations are considered equal.
+- `Unit` — base class for physical units (AtomicExpr subclass); stores `name` and `abbrev`. Sets `is_positive=True` so sqrt(unit²) simplifies to unit (not Abs(unit)). Equality (`__eq__`) compares only `name`, ignoring `abbrev` — two units with the same name but different abbreviations are considered equal.
 - `find_unit(quantity)` — two modes: string input → substring match against module namespace; unit expression input → strips numeric coefficient via `as_coeff_Mul()`, compares the dimensional part against all defined symbols in the module. Results sorted by name length.
 
 ### [`wigner.py`](wigner.py)
@@ -84,12 +84,15 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (non-commuting Operator base class, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator), `hilbert.py` (Hilbert spaces).
   - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
+    - `TensorProductHilbertSpace.eval` — merges adjacent like Hilbert spaces into `TensorPowerHilbertSpace`: two powers with same base → combined exponent; plain space adjacent to its power → exponent+1; two identical plain spaces → power of 2.
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components. Also `DifferentialOperator` (d/dx applied to wavefunctions).
   - `qexpr.py` — `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
     - `enumerate_states(state, ...)` — generates indexed copies of an abstract vector (Ket/Bra) given a list of indices or a start index + count; delegates to `state._enumerate_state()`; returns empty list if the state raises NotImplementedError.
     - `_sympy_to_scalar` — converts SymPy scalar expressions to native Python types (int/float/complex) for numpy/scipy compatibility; handles Integer, Float, Rational, Number, NumberSymbol, and imaginary unit I (→ complex). Raises TypeError for non-numeric expressions.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
+    - `Wavefunction` — continuous-basis representation (Function subclass). Constructor converts Python tuples to Tuple objects before parent call to avoid type-check errors.
+    - `Wavefunction.norm` — L2 norm: integrates |expr|² over each coordinate variable within its bounds, returns sqrt of result. `is_normalized` compares norm to 1.0.
     - `BraBase._represent` — default bra representation: delegates to the dual ket's `_represent` and applies Dagger (conjugate transpose) to the result.
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
@@ -235,6 +238,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
   - Legacy `_old_linearize` (deprecated) — in-place linearization via manual chain-rule Jacobian decomposition. Validates that system matrices (K_kqdot, K_ku, etc.) contain no unexpected dynamic symbols outside the forcing vector; raises ValueError if found. Also rejects derivatives of unrecognized dynamic symbols in forcing terms. Branches into four cases based on holonomic/non-holonomic constraints, computing dqd/dqi and dud/dui via LU-solving constraint Jacobians.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation). Constructor validates frame argument: raises TypeError if a non-null value is not a ReferenceFrame instance.
+  - Constraint unification: holonomic (position-level) constraints are time-differentiated, then stacked with nonholonomic (velocity-level) constraints into a single constraint matrix (`coneqs`).
   - `mass_matrix` — dynamic mass matrix, augmented with Lagrange multiplier coefficients when constraints exist (n×(n+m)).
   - `mass_matrix_full` — full block-structured coefficient matrix: identity block (kinematic qdot relations) on top, mass_matrix row in middle, differentiated constraint rows on bottom when constraints present.
   - `forcing` / `forcing_full` — generalized forcing vector; `forcing_full` augments with qdots and differentiated constraint forcing terms.

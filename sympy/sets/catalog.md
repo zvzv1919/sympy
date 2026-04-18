@@ -20,7 +20,9 @@ Foundation of all set types and operations.
 - `FiniteSet` — finite collection of discrete symbolic elements; supports powerset
   - `_contains` — three-valued membership: iterates elements, evaluates `Eq`, returns true/false/None when equality is indeterminate
   - `as_relational` — converts to `Or(*[Eq(symbol, elem) ...])` disjunction of equality predicates
-- **`imageset(*args)`** — standalone function; computes the image of a set under a transformation (Lambda, function, or lambda)
+- **`imageset(*args)`** — standalone function; computes the image of a set under a transformation (Lambda, FunctionClass, or Python lambda)
+  - Two-argument form `imageset(f, set)`: accepts Lambda, FunctionClass (e.g. `cos`), or Python `<lambda>`; raises `TypeError` for any other callable type (e.g. plain strings or unsupported callables)
+  - Three-argument form `imageset(var, expr, set)`: wraps into a Lambda internally
   - Composes nested univariate transformations: when the result is an ImageSet whose base is also an ImageSet and both lambdas are single-variable, recursively composes them into one transformation over the innermost base set
   - Returns unevaluated `ImageSet` if it cannot simplify
 
