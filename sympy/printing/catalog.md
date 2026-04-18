@@ -142,6 +142,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`latex.py`](latex.py)
 `LatexPrinter` — converts expressions to LaTeX markup strings (e.g., `\frac{x}{y}`). Produces **1D markup text**, not spatial/visual rendering.
+- `latex()` — top-level API function; accepts formatting options including `long_frac_ratio` (default 2) which sets the numerator-to-denominator width ratio threshold before wide fractions are broken apart into separate factors.
 - `__init__` — mode-dependent defaults: `mode='inline'` auto-enables `fold_short_frac` (compact `a/b` instead of `\frac{a}{b}` for simple fractions).
 - Configures `mul_symbol_latex` and `mul_symbol_latex_numbers` (numeric factors default to centered dot even when general symbol is a space).
 - `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`.

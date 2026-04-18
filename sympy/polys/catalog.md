@@ -42,6 +42,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
   - Structural: `exclude` (remove unused generators, returns removed indices + reduced DMP), `inject`, `eject`, `deflate`, `permute`.
+  - `refine_root(s, t, eps, steps)` — refine an isolating interval; **if neither `eps` nor `steps` is given, defaults to `steps=1`** (single bisection step).
   - Root isolation: `intervals(all, eps, sqf)` — isolate roots; **raises `PolynomialError` if multivariate (`lev > 0`)**; dispatches to 4 variants based on `all`/`sqf` flags. `refine_root`, `count_real_roots`, `count_complex_roots` — also univariate-only.
   - `cancel(g, include)` — cancel common factors in f/g; when `include=False`, returns `(cF, cG, F, G)` (content factors + reduced polys); when `include=True`, returns only `(F, G)`.
 - `DMF` — Dense Multivariate Fraction (numerator/denominator pair) over K.
@@ -188,6 +189,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
 - `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
 - `div`, `rem`, `quo`, `exquo` — public free functions for polynomial division; each **catches `PolificationFailed` and re-raises as `ComputationFailed`**; `div`/`rem` accept `auto` flag for automatic ring→field promotion; `rem` over ZZ may return the dividend unchanged (LC not divisible), while over QQ produces a reduced remainder.
+- `gff(f)` — **stub that unconditionally raises `NotImplementedError('symbolic falling factorial')`**; the list-of-factors variant `gff_list` is functional.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**.
@@ -486,6 +488,7 @@ Symbolic root representations and root-sum evaluation.
     - **Refines bounding rectangles until non-imaginary roots have boxes fully to one side of the y-axis**.
   - `_reals_sorted(reals)` — makes real root isolating intervals from different irreducible factors disjoint by pairwise refinement, then sorts by left endpoint; updates `_reals_cache` with the refined intervals.
   - `real_roots(poly)`, `all_roots(poly)` — class methods for root lists.
+- `bisect(f, a, b, tol)` — standalone interval-halving root-finder used by `CRootOf.eval_rational()`; **returns `c` immediately if `f(c) == 0` at the midpoint** (exact root found); raises `ValueError` if `f(a)` and `f(b)` have the same sign.
 - `RootSum` — represents ∑ f(rᵢ) over all roots rᵢ of a polynomial.
   - `_rational_case(poly, func)` — **evaluates sum of a rational function over all roots using Viète's formulas and symmetric function decomposition**.
     Avoids computing roots explicitly by introducing formal root symbols, symmetrizing, then substituting Viète relations.
@@ -578,6 +581,7 @@ Bridge between sparse polynomial ring interface and dense function API.
   - `ground_new`, `domain_new`, `from_dict`, `clone`, `drop` — ring interface methods.
   - Multivariate result methods (`dmp_LC`, `dmp_TC`, `dmp_eval_tail`, `dmp_resultant`, `dmp_discriminant`, `dmp_content`, `dmp_primitive`): **check `isinstance(result, list)` to decide output form**.
     - If list → reconstruct via `self[1:].from_dense()` (ring with one fewer generator); if scalar → return raw value.
+  - Wang factorization bridge methods (`dmp_zz_wang_hensel_lifting`, `dmp_zz_wang_lead_coeffs`, etc.): **slice the ring into univariate `self[:1]` and multivariate `self[1:]` sub-rings** to convert lifted factors (univariate) and leading coefficient expressions (multivariate) separately before delegating to the dense implementation.
   - `dup_sqf_norm`, `dmp_sqf_norm` — bridge methods; the resultant (third return value) is converted via `self.to_ground().from_dense()` (ground domain ring), not `self.from_dense()`.
   - `to_gf_dense(element)` — convert sparse element to dense coefficient list for GF(p) arithmetic; **converts each coefficient through `domain.dom`** (the base integer domain of the finite field).
   - `from_gf_dense(element)` — convert dense GF(p) list back to sparse representation via `dmp_to_dict`.
@@ -727,6 +731,7 @@ Special polynomial constructors for testing and benchmarking.
 Gröbner basis computation algorithms.
 
 - `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm; **if domain is not a field, clones ring with `domain.get_field()`, computes in the field, then clears denominators and resets ring** on each result.
+- `spoly(p1, p2, ring)` — compute S-polynomial (cancellation polynomial): scales each input by LCM(LM(p1),LM(p2))/LM and subtracts; core primitive for critical pair reduction in Buchberger's algorithm.
 - `red_groebner(G, ring)` — compute reduced Gröbner basis; selects a generating subset, then reduces each polynomial by taking its remainder w.r.t. all others — **silently drops any polynomial that reduces to zero**.
 - `groebner_lcm(f, g)` — LCM via ideal intersection: introduces variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
   - **When both inputs are single-term (monomial) polynomials**, bypasses Gröbner computation and directly returns componentwise monomial/coefficient LCM.
@@ -845,6 +850,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - Base arithmetic: `half_gcdex(a, b)` **delegates to `gcdex` and discards second Bézout coefficient**; `gcdex`, `gcd`, `lcm` raise `NotImplementedError` at base level — subclasses must override. `cofactors(a, b)` computes GCD then derives cofactors via `quo`.
   - `unify_with_symbols(K1, symbols)` — unify two domains given explicit generators; **raises `UnificationFailed` if either domain is composite (e.g. polynomial ring) and its generators overlap with the provided symbols**.
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
+    - **Inexact domains (RR, CC)**: uses `max(precision)` and `max(tolerance)` from both operands; CC absorbs RR (complex wins over real).
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
     - When both are `FiniteField` (GF(p)), **selects the one with the larger modulus** (via `default_sort_key`); if no known pairing matches, falls back to the expression domain `EX`.
 - `SimpleDomain` (in `simpledomain.py`) — base class for simple domains (ZZ, QQ); `inject(*gens)` **directly creates a polynomial ring over itself** (`self.poly_ring(*gens)`) without checking for generator overlaps (no existing generators to conflict with).
@@ -860,6 +866,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `RealField` (in `realfield.py`) — real numbers up to given precision (mpmath `mpf`).
   - `from_ComplexField(element, base)` — converts complex domain element to real; **silently returns `None` (no error) if element has nonzero imaginary part**, signaling conversion failure to the domain machinery.
 - `ComplexField` (in `complexfield.py`) — complex numbers up to given precision (mpmath `mpc`).
+  - `from_sympy(expr)` — convert SymPy expression to complex number; evaluates numerically, splits into real/imaginary parts, **raises `CoercionFailed` if either part fails `is_Number` check** (e.g. unevaluated symbols remain).
   - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
 - `ModularInteger` (in `modularinteger.py`) — element class for finite residue rings (GF(p) elements); created by `ModularIntegerFactory` which caches per-modulus classes.
   - `to_int()` — convert back to plain integer; **when symmetric mode (`sym=True`), values exceeding `mod // 2` are mapped to negative by subtracting the modulus**.

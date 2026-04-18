@@ -18,7 +18,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Arithmetic**: `__add__` (concrete element-wise addition; reshapes result to preserve original dimensions when a dimension is zero), `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`.
 - `__mul__`: matrix multiplication — checks `is_Matrix` on RHS; returns `NotImplemented` (defers to Python dispatch) when RHS claims matrix-ness but lacks `.T.tolist()` (e.g. `MatrixSymbol`); scalar RHS broadcasts element-wise.
 - `exp`: matrix exponential — decomposes via `jordan_cells`, splits each Jordan block into diagonal + nilpotent parts, computes factorial power series for the nilpotent component, recombines via P·eJ·P⁻¹.
-- **Dot / element-wise products**: `dot` (relaxed-dimension inner product — auto-transposes when row/column counts match the length of b; returns scalar for vectors, list otherwise), `multiply_elementwise`, `cross`.
+- **Dot / element-wise products**: `dot` (relaxed-dimension concrete inner product — accepts plain Python lists/sequences (wraps to Matrix) or Matrix; auto-transposes both operands when b has cols>1; returns scalar for vectors, list for rectangular), `multiply_elementwise`, `cross`.
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
@@ -68,7 +68,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `equals`: element-wise symbolic equivalence check using three-valued logic — returns True if all pairs proven equal, False if any pair provably unequal, None if indeterminate.
 - `_eval_inverse`: dense matrix inversion dispatching to GE/LU/ADJ methods; supports `try_block_diag` flag to decompose into independent diagonal blocks via `get_diag_blocks()`, invert each block separately, and reassemble.
 - DenseMatrix solver methods (operate on matrix objects, not raw lists): `_cholesky`, `_LDLdecomposition`, `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution), `_diagonal_solve`; each checks for zero diagonal and raises on singular matrices.
-- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_op`, `col_op`, `fill`.
+- `MutableDenseMatrix`: mutable variant with in-place mutation — `row_swap`, `col_swap`, `row_op`, `col_op`, `zip_row_op` (combines two rows element-wise via a binary functor), `fill`.
 - `row_del`, `col_del`: delete a row/column; each validates and converts negative indices internally (no external `a2idx` call), then removes the corresponding slice from the flat `_mat` list.
 - `copyin_matrix(key, value)`: copies a Matrix into the sub-region defined by `key`; raises `ShapeError` if source matrix dimensions don't match target slice dimensions.
 - `copyin_list(key, value)`: copies elements from an iterable into the sub-region defined by `key`; raises `TypeError` if `value` is not an ordered iterable (e.g. a plain scalar).

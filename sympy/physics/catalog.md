@@ -106,6 +106,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `_check_cg()` — validates whether a candidate term matches a structural Wild pattern and expected sign convention (sign tuple comparison after substitution).
   - Simplification rules apply orthogonality-relation identities to reduce CG products summed over j,m to Kronecker deltas.
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary).
+  - `SpinOpBase._apply_op` — general operator-on-ket dispatch: rewrites ket into operator's own basis, then branches: single State → eigenvalue multiply, Sum → delegate to `_apply_operator_Sum`, else → fallback to `qapply`; raises NotImplementedError if qapply cannot simplify.
   - `SpinOpBase._apply_operator_TensorProduct` — distributes operator action across each factor of a tensor-product (multi-particle) state; restricted to coordinate-basis operators (Jx, Jy, Jz) only — raises NotImplementedError for J+, J−, J².
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
@@ -241,6 +242,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
     - Partitions coordinates/speeds into independent vs dependent sets. Validates coefficient matrices contain no unexpected dynamic symbols.
     - Raises ValueError if an external dynamic symbol and its time derivative both appear in the auto-discovered forcing terms.
   - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
+  - `linearize(**kwargs)` — public linearization entry point; dispatches between legacy and new interfaces via `new_method` kwarg: if missing/False, emits SymPyDeprecationWarning and calls `_old_linearize()`; if True, delegates to `to_linearizer().linearize()` and appends the forcing-symbol vector `r` to the result.
   - Legacy `_old_linearize` (deprecated) — in-place linearization via manual chain-rule Jacobian decomposition. Validates that system matrices (K_kqdot, K_ku, etc.) contain no unexpected dynamic symbols outside the forcing vector; raises ValueError if found. Also rejects derivatives of unrecognized dynamic symbols in forcing terms. Branches into four cases based on holonomic/non-holonomic constraints, computing dqd/dqi and dud/dui via LU-solving constraint Jacobians.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation). Constructor validates frame argument: raises TypeError if a non-null value is not a ReferenceFrame instance.
   - Constraint unification: holonomic (position-level) constraints are time-differentiated, then stacked with nonholonomic (velocity-level) constraints into a single constraint matrix (`coneqs`).

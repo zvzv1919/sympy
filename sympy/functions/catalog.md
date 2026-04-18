@@ -59,7 +59,8 @@ Error functions and related integrals (special cases of incomplete gamma).
 - `Li` — offset logarithmic integral Li(z) = li(z) − li(2). NOT the polylogarithm (that is `polylog` in `special/zeta_functions.py`).
 - `Si` (sine integral), `Ci` (cosine integral), `Shi` (hyperbolic sine integral), `Chi` (hyperbolic cosine integral) — trigonometric/hyperbolic integrals (NOT elementary trig/hyperbolic functions from `elementary/`).
   - Each defines argument-transformation rules for negation and imaginary-unit rotation (`_minusfactor`, `_Ifactor`).
-- `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x).
+- `FresnelIntegral` — base class for Fresnel integrals; `eval` extracts factors of −1 and I from the argument using a subclass `_sign` attribute (+1 for cosine, −1 for sine) to differentiate simplification of f(i·z).
+- `fresnels`, `fresnelc` — Fresnel integrals S(x), C(x); subclasses of `FresnelIntegral`.
 
 #### [`special/bessel.py`](special/bessel.py)
 Bessel functions and Airy functions.
@@ -98,7 +99,8 @@ Mathieu functions — solutions to the Mathieu differential equation y'' + (a �
 
 #### [`special/spherical_harmonics.py`](special/spherical_harmonics.py)
 Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).
-- `Ynm` — Y_n^m(θ,φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity.
+- `Ynm` — Y_n^m(θ,φ), 4 args: (n, m, θ, φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity.
+  - `fdiff` supports differentiation w.r.t. angular args θ (argindex 3) and φ (argindex 4); raises `ArgumentIndexError` for discrete parameters n (1) and m (2).
 
 #### [`special/bsplines.py`](special/bsplines.py)
 B-spline basis functions constructed as Piecewise expressions via recursive Cox-de Boor algorithm.

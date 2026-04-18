@@ -60,13 +60,14 @@ Core interval class for bounded floating-point interval computations used by imp
   - Constructor auto-swaps arguments when given in descending order (upper < lower), so `interval(5, 2)` yields `[2, 5]`.
 - Supports arithmetic operators (+, -, *, /, **) and ternary comparison operators.
 - `__rpow__` — handles scalar**interval (reverse power); negative-base logic: invalidates wide exponents, rationalizes point exponents to check denominator parity.
-- `_pow_float` — interval raised to float power; rationalizes exponent to check numerator/denominator parity for domain validity.
+- `_pow_float` — `interval ** float` operator path; rationalizes exponent to rational form and checks numerator/denominator parity for domain validity.
+  - Three-way outcome: fully invalid (entire interval negative + even denom), partially valid (spans negative + even denom), or valid.
 
 ### `lib_interval.py`
 Interval-aware math function library and ternary logic operators for implicit plotting.
 
-- Math functions operating on `interval` objects: `Abs`, `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `acosh`, `asinh`, `atanh`, `ceil`, `floor`.
-- Each function handles domain validation, returning `is_valid=False` outside domain, `is_valid=None` for partial overlap.
+- Standalone named math functions on `interval` objects: `Abs`, `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `acosh`, `asinh`, `atanh`, `ceil`, `floor`.
+- Each is a direct function call (e.g., `sqrt(x)`), not the `**` operator path; handles domain validation returning `is_valid=False` outside domain, `is_valid=None` for partial overlap.
 - `ceil`, `floor` — set `is_valid=None` when the interval spans a discontinuity (i.e., rounded start ≠ rounded end).
 - `And(*args)` — ternary conjunction over 2-tuples of truth values (True/False/None); priority: False > None > True. Used to combine comparison results in range-based curve rendering.
 - `Or(*args)` — ternary disjunction over 2-tuples; priority: True > None > False.

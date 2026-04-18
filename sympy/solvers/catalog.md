@@ -103,8 +103,9 @@ Solves bivariate equations by structural reduction to single-variable problems.
 ### [`diophantine.py`](diophantine.py)
 Solves Diophantine equations (polynomial equations over integers).
 
-- `diophantine(eq, param, syms)` — main entry; factors equation into terms, dispatches each to `diop_solve()`, and merges results.
+- `diophantine(eq, param, syms)` — main entry; factors equation into terms, dispatches each to `diop_solve()`, and merges partial solutions into full-length tuples via `merge_solution`.
   - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
+- `merge_solution(var, var_t, solution)` — constructs full solution tuples from sub-equation solutions that involve only a subset of variables. Fills missing variables with fresh integer parameters (`n1, n2, …`). Returns empty tuple if any value violates its symbol's declared assumptions (e.g. positivity).
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
 - Integer arithmetic helpers: `_nint_or_floor` (nearest-integer rounding with floor as tie-breaker), `_rational_pq`, `_remove_gcd`.
 - Descent solvers for ternary quadratics: `ldescent(A, B)` — finds non-trivial solution to w²=Ax²+By² via Lagrange's method; returns None when no solution exists (e.g. both A and B are -1). `descent(A, B)` — same problem but uses Gaussian lattice reduction for speed.
