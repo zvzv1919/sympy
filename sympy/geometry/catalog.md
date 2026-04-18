@@ -29,7 +29,7 @@ Point representations in n-dimensional Euclidean space.
   - `intersection(o)` — returns `[self]` if `o` is an equal Point, `[]` if different Point; delegates to `o.intersection(self)` when `o` is not a Point.
   - `equals(other)` — component-wise symbolic equality via `.equals()`; distinct from `__eq__` which does structural tuple comparison.
   - `Point.is_collinear(*points)` — static method testing if points are collinear; deduplicates inputs, returns `True` for ≤2 unique points.
-  - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks containment.
+  - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks remaining; if Circle construction fails (first three collinear → `GeometryError`), catches the error and returns False.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
 - `Point2D` — 2D specialization; adds `x`, `y` coordinate properties, `transform(matrix)`, and overrides `rotate(angle, pt)`, `scale(x, y, pt)`, `translate(x, y)`.
   - `transform(matrix)` — applies a 3×3 affine transformation matrix; validates that argument has `.shape` and is 3×3, raises `ValueError` for non-matrix or wrong-shaped input.
@@ -129,7 +129,8 @@ Parabolic entities defined by focus and directrix.
 
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
-- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`, `intersection(o)`.
+- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point(p)`, `arbitrary_point()`, `distance(o)`, `intersection(o)`.
+  - `encloses_point(p)` — strict interior test (boundary → False); uses cross-product orientation consistency for convex polygons, ray-casting edge-crossing parity for non-convex polygons; returns None for symbolic coordinates.
   - `__new__` — construction validates vertices: removes consecutive duplicates and collinear points; degrades to `Triangle`/`Segment`/`Point` for ≤3 vertices.
   - Construction self-intersection check: runs `is_convex()` first; if non-convex, checks all non-adjacent side pairs for crossings.
   - Caveat: if `is_convex()` raises `ValueError` (e.g. symbolic coords → indeterminate orientation in `_isright`), assumes convex and **skips** self-intersection check.

@@ -55,7 +55,7 @@ Large collection of iterable/container utility functions.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
 - `partitions(n, m, k)` — generator of unordered integer partitions of n; yields mutable dicts {part: count}; terminates when decomposition capacity is exhausted.
 - `ordered_partitions(n, m)` — generator of sorted integer compositions of n into m additive parts (lists); reuses the same list object across iterations when m is given; recursive strategy iterates a base value and decomposes the remainder.
-- `_set_partitions(n)` — generator enumerating all ways to assign n elements into non-overlapping groups via a constrained n-digit counter; each digit ≤ 1 + max of all digits to its left; yields (num_groups, mutable assignment vector).
+- `_set_partitions(n)` — generator enumerating all ways to assign n distinct elements into non-overlapping groups (restricted growth strings / Knuth 7.2.1.5H); uses a constrained n-digit counter where each digit ≤ 1 + max of all digits to its left; yields (num_groups, mutable assignment vector).
 - `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
 - `kbins(l, k, ordered)` — partition a list into k bins; `ordered` is a 2-digit flag (00/01/10/11) controlling whether bin order and item order matter; raises `ValueError` for unsupported values.
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
@@ -67,7 +67,7 @@ Large collection of iterable/container utility functions.
 
 ### [`enumerative.py`](enumerative.py)
 Low-level algorithms for enumerative combinatorics (multiset partition traversal/counting); operates on multisets, not plain integer partitions. Called by `iterables.multiset_partitions` for the general multiset case.
-- `multiset_partitions_taocp` — Knuth's algorithm for multiset partitions.
+- `multiset_partitions_taocp` — Knuth's Algorithm M for partitioning a multiset given as a multiplicity vector (not plain sets of n distinct elements).
 - `MultisetPartitionTraverser` — stateful traverser for multiset partition enumeration with size/count constraints.
   - `count_partitions(multiplicities)` — fast partition counting via dynamic programming with a persistent cross-call cache.
   - `enum_all` — enumerate all partitions (no size constraint).

@@ -22,6 +22,7 @@ Core symbolic integration engine and public API.
 - `Integral.as_sum(n, method)` — approximates a definite integral as a finite sum using rectangle-based quadrature (left, right, midpoint, trapezoid); raises NotImplementedError for multidimensional integrals
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration
+  - Documents the full strategy ordering: G-function first for definite integrals with infinite real bounds, then antiderivative methods by speed, then G-function fallback
 - `line_integrate(field, curve, vars)` — line integral of a vector field over a curve
 
 ### [`manualintegrate.py`](manualintegrate.py)
@@ -170,7 +171,10 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `prde_spde` — parametric Special Polynomial Differential Equation; reduces degree bound via Diophantine step
 - `is_deriv_k` — checks if Df/f is the derivative of an element of k(t) using the structure theorem
   - Validates that log + hyperexp monomial count equals transcendence degree
-  - Raises NotImplementedError for tangent-type (hypertangent) or non-elementary extensions
+  - Raises NotImplementedError when tangent cases exist or primitive extensions aren't classified as logarithmic (hypertangent/structure theorem gap)
+  - Raises NotImplementedError for nonelementary extensions not covered by the structure theorems
+  - Solves linear system over constants via `constant_system`; returns None if solution elements are non-constant
+  - Raises NotImplementedError when constant-system solution coefficients are non-rational
 - `is_log_deriv_k_t_radical` — verifies if an expression is the log-derivative of a radical in a tower of transcendental extensions:
   - Checks elementary extension validity; raises NotImplementedError if hypertangent monomials or unaccounted primitive extensions cause monomial count ≠ transcendence degree
   - Builds linear system from monomial derivatives, solves via `constant_system`

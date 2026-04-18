@@ -42,6 +42,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `TensorIndexType` — characterizes a family of indices (name, metric, dimension, delta, epsilon).
   - `.data` setter — assigns numerical component data; accepts rank-1 (auto-expanded to diagonal square matrix) or rank-2 arrays; validates dimension match and square shape.
 - `TensorIndex` — abstract tensor index; carries covariant/contravariant flag (`is_up`). Negation (`-idx`) returns a new index with flipped variance (upper ↔ lower).
+  - `__new__(name, tensortype, is_up)` — accepts string, Symbol, or `True` as `name`; when `True`, auto-generates a unique dummy name (`_i0`, `_i1`, …) tracked per `TensorIndexType`.
 - `TensorHead` — named tensor ("head" of an indexed tensor expression) with index types, rank, symmetry, and commutation properties.
   - `__new__` validates the `name` argument (must be string or Symbol; raises `ValueError` otherwise).
   - `_check_auto_matrix_indices_in_call` — validates and auto-fills missing index slots when called with fewer indices than rank (omitted trailing indices) or with `True` placeholders; allows at most 2 missing slots (raises `ValueError` if more); first auto-slot of a type gets `auto_left`, second gets negated `auto_right`.

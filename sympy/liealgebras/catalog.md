@@ -31,7 +31,8 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 ### [`weyl_group.py`](weyl_group.py)
 `WeylGroup` — represents the Weyl group (finite reflection group) of a Lie algebra. Computes group order, element order, and matrix representations.
 - `generators()` — lists generating reflections (r1, r2, …).
-- `group_order()` — total number of elements in the Weyl group. A: (n+1)!, B/C: n!·2^n, D: n!·2^(n-1), E/F/G: hardcoded constants.
+- `group_order()` — total number of elements in the Weyl group. A: (n+1)!, B/C: n!·2^n, D: n!·2^(n-1), F/G: single hardcoded constant each.
+  - E-series: branches on rank 6/7/8 with per-rank constants; silently returns `None` for any other rank (no error raised).
 - `group_name()` — descriptive name and geometric interpretation.
 - `element_order(weylelt)` — order of a specific element given as a product of generators.
 - `matrix_form(weylelt)` — converts a product-of-reflections string into its reflection matrix representation per series (A, B/C, D, E, F, G).

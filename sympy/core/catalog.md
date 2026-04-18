@@ -186,7 +186,7 @@ Adaptive arbitrary-precision numerical evaluation engine using mpmath.
 
 - `EvalfMixin` — mixin class adding `.evalf()` method to Expr; when n=1 and self is a Number, recurses at n=2 then rounds by magnitude (special case for Sage compatibility); otherwise dispatches to module-level `evalf()`
 - `evalf(x, prec, options)` — main dispatcher; routes to type-specific handlers
-- `evalf_mul(v, prec, options)` — evaluates products; detects NaN/infinite factors by checking real parts before main multiply; separates pure-real, pure-imaginary, and complex factors with direction tracking
+- `evalf_mul(v, prec, options)` — numerically evaluates products via two-phase strategy: phase 1 multiplies pure-real and pure-imaginary factors using integer mantissa arithmetic, tracking accumulated sign flips and I-rotations in a `direction` bitfield (bit 0 = multiply result by I, bit 1 = negate); phase 2 multiplies in mixed complex factors using full complex arithmetic
 - `evalf_add(v, prec, options)` — sums terms with cumulative error tracking and iterative precision increase
 - `evalf_pow(v, prec, options)` — numerical power evaluation with special-case branches:
   - Integer exponent: real base via `mpf_pow_int`; purely-imaginary base uses `p % 4` cycle to classify result as real/imag/negated
@@ -373,8 +373,10 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ## Containers and Utilities
 
 ### [`containers.py`](containers.py)
-`Tuple` — SymPy-aware immutable tuple wrapping `Basic`; `Dict` — SymPy-aware immutable dictionary.
+`Tuple` — SymPy-aware immutable ordered sequence wrapping `Basic`; `Dict` — SymPy-aware immutable dictionary.
 
+- `Tuple.__eq__` — dual-path equality: if other is a `Basic` subclass, delegates to `Basic.__eq__` (structural equality); otherwise compares `self.args` directly against other (allows seamless comparison with plain Python tuples)
+- `Tuple.__ne__` — mirrors `__eq__` dual-path logic for inequality
 - `Tuple.tuple_count(value)` — counts occurrences of value; named `tuple_count` (not `count`) because `Basic.count` already defines expression-tree traversal counting, which would conflict
 - `Tuple.index(value)` — returns first index of value; custom implementation handles None start/stop arguments that Python's built-in tuple.index rejects
 

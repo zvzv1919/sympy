@@ -61,7 +61,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `InnerProduct` — evaluates Fock-state bra-ket overlap ⟨bra|ket⟩ by pairing occupation numbers element-wise into a product of KroneckerDelta symbols (distinct from `quantum/innerproduct.py` which is an unevaluated abstract inner-product node).
 - `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products via Einstein summation index substitution.
 - `contraction(a, b)` — evaluates the contraction of two operators.
-- `matrix_rep(op, basis)` — matrix representation in a Fock basis.
+- `matrix_rep(op, basis)` — builds matrix representation of a second-quantization operator (creation/annihilation) in a Fock basis; computes each element via ⟨basis[i]|op|basis[j]⟩ sandwich product using `Dagger` and `apply_operators`.
 
 ### [`sho.py`](sho.py)
 3-D isotropic quantum harmonic oscillator.
@@ -122,6 +122,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Spin**: `spin.py` — spin operators (Jx, Jy, Jz, J±, J²), coupled/uncoupled states, Wigner-D/d matrices, `Rotation` operator (Euler-angle unitary). JxOp/JyOp/JzOp each define `_eval_commutator_*` methods implementing angular momentum commutation relations ([Jx,Jy]=iℏJz, [Jy,Jz]=iℏJx, [Jz,Jx]=iℏJy).
   - `SpinOpBase._apply_op` — general operator-on-ket dispatch: rewrites ket into operator's own basis, then branches: single State → eigenvalue multiply, Sum → delegate to `_apply_operator_Sum`, else → fallback to `qapply`; raises NotImplementedError if qapply cannot simplify.
   - `SpinOpBase._apply_operator_TensorProduct` — distributes operator action across each factor of a tensor-product (multi-particle) state; restricted to coordinate-basis operators (Jx, Jy, Jz) only — raises NotImplementedError for J+, J−, J².
+  - `JplusOp`/`JminusOp` — angular momentum ladder operators (J±); apply to JzKet via `_apply_operator_JzKet`: J+|j,m⟩ = ℏ√(j(j+1)−m(m+1))|j,m+1⟩; returns zero when m reaches boundary (m≥j for J+, m≤−j for J−). Also applies to `JzKetCoupled` with same boundary logic.
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1). Supports rewrite as Cartesian components (Jx²+Jy²+Jz²) or as ladder operators via symmetrized form: Jz² + ½(J+J− + J−J+).
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
@@ -285,6 +286,7 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `to_linearizer()` — converts to `Linearizer` form; raises ValueError if an external dynamic symbol and its time derivative both appear in forcing terms.
 - `particle.py` — `Particle`: point mass with `linear_momentum`, `angular_momentum(point, frame)`, `kinetic_energy(frame)` (computes ½mv² via velocity dot product) methods.
 - `rigidbody.py` — `RigidBody`: rigid body with `angular_momentum(point, frame)` (H = I·ω + r×mv), `linear_momentum`, `potential_energy`.
+  - Deprecated `set_potential_energy(scalar)` — emits SymPyDeprecationWarning but still delegates to the `potential_energy` property setter (value IS updated).
   - `inertia` setter — accepts (Dyadic, Point) tuple; applies parallel axis theorem in reverse to compute central inertia: subtracts point-mass contribution (`inertia_of_point_mass`) from given inertia.
   - `kinetic_energy(frame)` — individual body KE: ½I·ω² (rotational) + ½mv² (translational).
 - `body.py` — unified `Body` wrapping Particle or RigidBody; constructor dispatches: mass given but no inertia → initializes as Particle; otherwise → RigidBody with symbolic inertia tensor.

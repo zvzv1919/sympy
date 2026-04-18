@@ -70,6 +70,7 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
 - `solveset_real(f, symbol)` / `solveset_complex(f, symbol)` — domain-specific wrappers.
 - `linsolve(system, *symbols)` — primary user-facing linear system solver (Gauss-Jordan elimination) returning FiniteSet of ordered solution tuples. Validates that all `symbols` are actual Symbol instances; raises ValueError if non-symbolic values (e.g. integers, strings) are passed.
+  - Symbol unwrapping: if `symbols[0]` is iterable, unwraps one level — so `linsolve(sys, [x, y, z])` is equivalent to `linsolve(sys, x, y, z)`.
   - Accepts three input forms: (A, b) matrix pair, list of equations, or augmented matrix.
   - Inconsistent systems: catches ValueError raised by the elimination step and returns EmptySet.
   - Underdetermined systems: replaces internally generated placeholder parameters with the caller's original symbols, so the parametric solution tuple is expressed in the user's own unknowns.
