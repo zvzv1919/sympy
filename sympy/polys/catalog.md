@@ -37,7 +37,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
     - `__div__(g)` — if `g` is a DMP, delegates to `exquo`; otherwise tries `mul_ground(g)`; **on `CoercionFailed`/`NotImplementedError`, falls back to `f.ring.convert(g)` then `exquo`** if ring is set; returns `NotImplemented` if all paths fail.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
     - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
-  - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
+  - Univariate-only operations (raise `ValueError` if `lev > 0`): `shift(a)` (Taylor shift `f(x+a)`), `decompose`, `sturm`, `gff_list`, `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
@@ -358,6 +358,7 @@ Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, whi
 Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolation.
 
 - `_primitive(f, p)` — compute content and primitive part of `f ∈ Z_p[x₀,…,x_{k-2}, y]` viewed as polynomial over `Z_p[y]`; groups terms by all variables except the last, iteratively GCDs the univariate coefficient sequences via `gf_gcd`, and returns `(content_in_y, quotient)`.
+- `_deg(f)` — degree of `f ∈ K[x₀,…,x_{k-2}, y]` viewed as polynomial in `K[y][x₀,…,x_{k-2}]`; returns the **lexicographically largest** monomial prefix tuple (not total degree).
 - `_trivial_gcd(f, g)` — handle zero-polynomial GCD cases; **negates the non-zero input if its leading coefficient is negative** to ensure the result has a positive leading coefficient; returns `(ring.zero, ring.zero, ring.zero)` if both are zero.
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `_primitive_in_x0(f)` — content and primitive part of `f ∈ Q(α)[x₀,…,xₙ₋₁]` viewed as univariate in x₀; iteratively GCDs coefficients via `func_field_modgcd`.
@@ -391,6 +392,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions, and GF).
 
 - `dup_zz_zassenhaus`, `dup_zz_factor_sqf`, `dup_zz_factor` — Zassenhaus factorization over Z.
+  - `dup_zz_factor` extracts primitive part; **if primitive part has negative leading coefficient, negates both content and polynomial** before factoring.
 - `dmp_zz_wang` — Wang's Enhanced Extended Zassenhaus multivariate factorization; **selects evaluation-point config with smallest univariate max-norm**; restarts with incremented modulus on `ExtraneousFactors` from Hensel lifting.
 - `dmp_zz_wang_lead_coeffs` — correct leading coefficients during Wang/EEZ; distributes true LC divisors among trial factors, **raises `ExtraneousFactors` if any evaluated divisor is unassigned** (tracked via a J-array flag per evaluation value).
 - `dmp_zz_factor` — top-level multivariate factorization over Z.
@@ -737,7 +739,7 @@ Gröbner basis computation algorithms.
 ### [`fglmtools.py`](fglmtools.py)
 FGLM algorithm for Gröbner basis conversion between monomial orderings.
 
-- `matrix_fglm(F, ring, O_to)` — convert Gröbner basis from one ordering to another.
+- `matrix_fglm(F, ring, O_to)` — convert Gröbner basis from one ordering to another; **silently drops candidate basis polynomials that become zero after conversion to the target ring**.
 - `_basis(G, ring)` — enumerate standard monomials (not divisible by any leading monomial of G); forms the vector-space basis of the quotient ring `K[X]/(G)`.
 - `_update(s, _lambda, P)` — row-reduce projection matrix P so that `P' v = e_s` (s-th unit vector); pivots on the first non-zero entry at index ≥ s in `_lambda`, eliminates other rows, then swaps pivot row into position s.
 
@@ -858,6 +860,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
 - `ComplexField` (in `complexfield.py`) — complex numbers up to given precision (mpmath `mpc`).
   - `from_ComplexField(element, base)` — converts between complex domains; **if source and target are the same domain (same precision/tolerance), returns element unchanged**; otherwise re-constructs via `self.dtype(element)`.
 - `ModularInteger` (in `modularinteger.py`) — element class for finite residue rings (GF(p) elements); created by `ModularIntegerFactory` which caches per-modulus classes.
+  - `to_int()` — convert back to plain integer; **when symmetric mode (`sym=True`), values exceeding `mod // 2` are mapped to negative by subtracting the modulus**.
   - `__pow__(exp)` — exponentiation; **for negative `exp`, computes multiplicative inverse first** (via `invert`), then raises to `|exp|`.
   - `invert()` — compute modular inverse via `dom.invert(val, mod)`.
   - `ModularIntegerFactory(_mod, _dom, _sym, parent)` — creates and caches a `ModularInteger` subclass for a given modulus; **raises `ValueError` if modulus < 1**; names class `SymmetricModularIntegerMod<n>` or `ModularIntegerMod<n>` depending on `_sym` flag.

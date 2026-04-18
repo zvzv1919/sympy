@@ -120,11 +120,11 @@ Base class providing shared infrastructure for all pyglet plot modes, including 
 ### `plot_modes.py`
 Concrete plot mode implementations for various coordinate systems.
 
-- `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; applied to sympy substitution evaluators but not to lambdified evaluators (which already return numeric output).
+- `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; used only by Cartesian and parametric sympy evaluators.
 - `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
 - `ParametricCurve2D`, `ParametricCurve3D`, `ParametricSurface3D` — parametric modes.
-- `Polar`, `Cylindrical`, `Spherical` — curvilinear coordinate modes.
-- Each implements `_get_sympy_evaluator()` (uses chained `.subs()` to substitute variable values into expressions) and `_get_lambda_evaluator()` (uses `lambdify` for fast numeric evaluation).
+- `Polar`, `Cylindrical`, `Spherical` — curvilinear coordinate modes; their sympy evaluators skip `float_vec3` and instead manually call `float()` on the computed radius and use Python `math.cos`/`math.sin` (which natively return floats) for coordinate conversion.
+- Each implements `_get_sympy_evaluator()` and `_get_lambda_evaluator()` (uses `lambdify` for fast numeric evaluation).
 
 ### `plot_interval.py`
 Bounded interval representation for pyglet variable ranges (discretized sample points for rendering, not interval arithmetic).
@@ -150,7 +150,7 @@ Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
 - `PlotSurface` — OpenGL vertex grid for pyglet surface rendering; supports wireframe and solid draw styles (not used by matplotlib-based plotting).
   - `_on_calculate_verts()` — evaluates parametric positions over u×v grid; catches `ZeroDivisionError` and stores `None` for undefined points.
     - Computes per-axis bounding box; zero-span guard sets axis range to 1.0 when surface is flat along that axis to prevent division-by-zero.
-  - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points.
+  - `draw_verts(use_cverts, use_solid_color)` — emits `GL_QUAD_STRIP` segments; ends and restarts the strip at `None` vertices to create visual gaps at undefined points. When per-vertex coloring is active, falls back to black `(0,0,0)` for any vertex whose computed color is `None`.
 
 ### `plot_axes.py`
 Coordinate axes OpenGL rendering (not parsing; axes option string parsing occurs in `plot.py`'s `PygletPlot.__init__`).

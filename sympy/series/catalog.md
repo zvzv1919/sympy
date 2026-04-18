@@ -48,6 +48,8 @@ Thin wrapper delegating to `expr.series()`.
 Formal Power Series (FPS) computation and representation.
 - `fps(f, x, x0, dir, ...)` — main interface; returns `FormalPowerSeries`.
 - `FormalPowerSeries(SeriesBase)` — formal power series object; `.polynomial()`, `.truncate()`, `.infinite`.
+  - Arithmetic (`__add__`, `__sub__`, `__mul__`, `__neg__`): combines two FPS symbolically, reconciling coefficient sequences with different starting indices by folding extra lower-order terms into the independent term.
+  - `.integrate(x)` — symbolic integration of the FPS, adjusting coefficient formula and adding constant of integration.
 - `rational_algorithm(f, x, k, order, full)` — derive closed-form FPS coefficient formulas when f or derivatives are rational functions of x.
 - `hyper_algorithm(f, x, k, order)` — hypergeometric FPS solving.
 - `solve_de()`, `compute_fps()` — internal FPS computation pipeline.
@@ -63,7 +65,7 @@ Fourier series decomposition into sine/cosine components.
 ## Discrete Sequences
 
 ### [`sequences.py`](sequences.py)
-Discrete sequence representations and term-wise arithmetic operations (not limits of sequences).
+Discrete sequence representations and term-wise arithmetic on raw index-based sequences (not formal power series — FPS arithmetic is in `formal.py`).
 - `sequence(seq, limits)` — factory function to create sequence objects.
 - `SeqBase(Basic)` — abstract base for all sequences; `.gen`, `.interval`, `.start`, `.stop`, `.length`, `.coeff(pt)`, `._ith_point(i)`.
 - `_ith_point(i)` — position of i-th element in a sequence; iterates backward from stop when start is negative infinity.

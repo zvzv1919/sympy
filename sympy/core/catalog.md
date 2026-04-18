@@ -128,6 +128,7 @@ All concrete numeric types and their arithmetic operations.
 - `Pow.__new__` — evaluates special cases (x**0, x**1, oo**x, etc.); delegates `0**x` to `Zero._eval_power` in `numbers.py`
 - `Pow._eval_power` — simplifies nested powers like `(x**a)**b`
 - `Pow._eval_evalf(prec)` — numerical evaluation of `base**exp`; when exponent is negative and base is non-real, rewrites as `conjugate(base)/|base|²` with negated exponent to avoid complex-power precision issues
+- `Pow._eval_nseries` — n-series expansion around bounded nonzero base limit; rewrites `b` as `b0*(1+z)` and computes binomial Taylor expansion; falls back to first-order `1+z` when big-O of `z` or scaled order is zero (non-polynomial order like `O(exp(-1/x))`)
 - `Pow.as_content_primitive(radical, clear)` — extracts positive Rational from `base**exp`; when base is rational, decomposes exponent into integer + fractional parts via `divmod` and splits the power accordingly; when base is Mul, recursively extracts content from base
 - `integer_nthroot(y, n)` — exact integer nth root with boolean exactness flag
 
@@ -234,6 +235,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
+- `Term` — efficient representation of `coeff*(numer/denom)` for commutative expressions; init decomposes factors via `decompose_power`, extracts `primitive()` content from Add bases into coeff, partitions into numer/denom by exponent sign
 - `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n` as a dict mapping bases to exponents
   - Init from Number: negative → stores `-1` as separate key; Rational `p/q` → numerator `p` with exponent 1, denominator `q` with exponent -1
   - `as_expr()` — converts dict back to symbolic Mul; dispatches on exponent type: Python int → wraps in Integer, Rational → keeps as-is, symbolic → multiplies into existing base exponent
@@ -270,6 +272,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `UndefinedFunction` — metaclass for user-created callable symbols (e.g., `f = Function('f')`)
 - `AppliedUndef` — result of calling an UndefinedFunction on arguments; `_eval_as_leading_term` returns self unchanged (no series computation possible for unknown functions)
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
+- `Derivative._eval_subs` — substitution on derivatives; if old is a Derivative of the same expr with a subset of differentiation variables (lower-order), returns `Derivative(new, *remaining_vars)`; if variable being replaced is not diff-compatible, wraps in `Subs`
 - `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values

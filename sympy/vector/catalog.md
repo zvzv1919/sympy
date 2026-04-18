@@ -23,7 +23,7 @@ Concrete vector classes built on `BasisDependent`.
 ### [`dyadic.py`](dyadic.py)
 Dyadic tensor classes built on `BasisDependent`.
 - `Dyadic` — superclass for dyadic tensors (tensor/outer products of vectors); `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross` (Dyadic × Vector → Dyadic; crosses each component's second basis vector with the operand), `to_matrix`.
-- `BaseDyadic` — outer product of two base vectors.
+- `BaseDyadic(AtomicExpr)` — atomic outer product of two base vectors; `__new__` validates both args are `BaseVector`/`VectorZero` (`TypeError` otherwise), returns `Dyadic.zero` if either is the zero vector.
 - `DyadicAdd`, `DyadicMul`, `DyadicZero` — sum, scalar product, and zero specializations.
 - `_dyad_div` — division dispatch helper; raises `TypeError` if both operands are dyadics or if dividing by a dyadic, otherwise returns `DyadicMul` with inverse scalar.
 

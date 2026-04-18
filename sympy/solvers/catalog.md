@@ -161,6 +161,7 @@ Solves partial differential equations via method dispatch.
 - `classify_pde(eq, func)` — classifies PDE into applicable hints.
   - Pre-classification normalization: if the unknown function raised to some power multiplies highest-order derivative coefficients, divides the entire equation by the smallest such power to reduce to standard form.
   - First-order two-variable classification: uses two-pass pattern matching — first attempts with wildcards excluding independent variables (constant coefficients); on failure, relaxes wildcards to allow dependence on independent variables (variable coefficients).
+- `_helper_simplify(eq, hint, func, order, match, solvefun)` — internal dispatch that routes to the correct `pde_<hint>` solver function via `globals()` lookup. Strips `_Integral` suffix before lookup so integral-form hints reuse the same solver with unevaluated integrals.
 - `checkpdesol(pde, sol, func)` — validates PDE solution by substitution.
   - If `func` is omitted, auto-detects via `_preprocess`; on failure, falls back to extracting applied undefined functions from the solution's atoms (raises ValueError if not exactly one found).
   - When the candidate is not isolated for the dependent function, attempts `solve` to isolate; if multiple roots, recursively checks each one.

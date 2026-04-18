@@ -102,7 +102,8 @@ Main general-purpose simplification and miscellaneous simplification functions.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
 - `logcombine(expr, force)` — merge additive log terms: log(x)+log(y)→log(x·y) when args positive; a·log(x)→log(x^a) when a is real and x positive.
   - `force=True`: assumes positivity/realness when no conflicting assumption exists; does not override explicit assumptions (e.g. imaginary coefficient).
-  - Coefficient of −1 is explicitly excluded from exponent absorption even though it is real; other negative real coefficients are allowed.
+  - Negative rational coefficients are decomposed into −1 and positive remainder before log merging; the −1 is explicitly excluded from exponent absorption, while the positive part is absorbed normally.
+  - Complex coefficients (e.g. 2+3i) block combination unless first expanded into real and imaginary parts.
 - `nsimplify(expr, constants, tolerance)` — find simple closed-form for numerical expressions.
 - `hypersimp(f, k)` — compute consecutive-term ratio f(k+1)/f(k) for combinatorial/hypergeometric sequences; rewrites via gamma functions, returns simplified rational function or None if not hypergeometric.
 - `besselsimp(expr)` — simplify Bessel function expressions.

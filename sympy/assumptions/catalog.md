@@ -103,11 +103,16 @@ Handlers for **calculus predicates**: finiteness / boundedness.
 - `AskFiniteHandler`: evaluates `Q.finite` with methods for `Symbol`, `Add`, `Mul`, `Pow`, `log`, `exp`, `cos`, `sin`, number constants, `Infinity`, `NegativeInfinity`.
 
 ### [`handlers/matrices.py`](handlers/matrices.py)
-Handlers that **evaluate** matrix *structural* predicates for matrix expression types (e.g., `MatAdd`, `MatMul`, `Transpose`). Does NOT handle `Q.hermitian` or `Q.antihermitian` — those are in `handlers/sets.py`. Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
+Handlers that **evaluate** matrix predicates — both structural properties and element-type membership — for matrix expression types.
+- Does NOT handle `Q.hermitian` or `Q.antihermitian` — those are in `handlers/sets.py`.
+- Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
 - `AskSquareHandler`, `AskSymmetricHandler`, `AskInvertibleHandler`.
 - `AskOrthogonalHandler`, `AskUnitaryHandler`, `AskFullRankHandler`.
 - `AskPositiveDefiniteHandler`, `AskUpperTriangularHandler`, `AskLowerTriangularHandler`, `AskDiagonalHandler`.
-- `AskIntegerElementsHandler`, `AskRealElementsHandler`, `AskComplexElementsHandler`.
+- `AskIntegerElementsHandler`, `AskRealElementsHandler`, `AskComplexElementsHandler`: evaluate `Q.*_elements` for matrix expression types.
+  - `MatMul_elements`: splits `MatMul` args into scalar factors vs matrix factors via `sift`.
+  - Validates scalars with a scalar predicate (e.g., `Q.integer`) and matrices with element-type predicate (e.g., `Q.integer_elements`).
+  - `BM_elements`: checks all blocks of a `BlockMatrix`. `MS_elements`: delegates to parent matrix.
 
 ---
 

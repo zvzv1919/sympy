@@ -82,7 +82,7 @@ Symbolic integral transforms — class-based API and dispatch layer (delegates h
 - `_sine_cosine_transform` — backend for sine/cosine transforms; integrates over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
 - Sine/Cosine: `sine_transform`, `cosine_transform` and inverses — unitary half-range [0,∞) transforms with prefactor sqrt(2/π); odd-parity (sine) and even-parity (cosine)
 - `_hankel_transform` — backend for Hankel transforms; integrates f·Jν(kr)·r over [0,∞), raises IntegralTransformError if result is not Piecewise or if first Piecewise branch still contains unevaluated Integral
-- Hankel: `hankel_transform`, `inverse_hankel_transform` with order parameter ν
+- Hankel: `hankel_transform`, `inverse_hankel_transform` — Bessel-J_ν(kr)-weighted integrals over [0,∞) with order parameter ν; `HankelTransform`/`InverseHankelTransform` are the unevaluated classes
 
 ---
 
@@ -101,6 +101,9 @@ Risch algorithm for integration of transcendental elementary functions.
 - `get_case(d, t)` — classifies derivation type: 'base' (d==1, no t), 'primitive' (d is constant but ≠1), 'exp' (d divisible by t), 'tan' (d divisible by 1+t²), or other_linear/other_nonlinear
 - `derivation(p, DE)` — computes Dp for polynomial p in the differential extension tower; `coefficientD=True` computes the coefficient derivation (treats top-level variable as constant)
 - Polynomial utilities: `gcdex_diophantine` (extended GCD solving s*a + t*b == c with degree bound; reduces s modulo b via degree comparison when s.degree() >= b.degree()), `frac_in`, `as_poly_1t`
+- `splitfactor(p, DE)` — splitting factorization: decomposes polynomial p into (p_n, p_s) where p_s is special and each square factor of p_n is normal
+  - When p does not involve the current extension variable DE.t, re-expresses p and its derivative in the coefficient field variables to compute the GCD
+- `splitfactor_sqf` — square-free version of splitting factorization; returns lists of (factor, multiplicity) pairs for normal and special parts
 - `hermite_reduce` — Mack's linear version of Hermite reduction; decomposes f = Dg + h + r (g rational, h simple, r reduced) by iteratively reducing denominator multiplicity via extended GCD
 - `polynomial_reduce` — writes p = Dq + r with deg(r) < deg(Dt)
 - `laurent_series` — contribution of a factor to the full partial fraction decomposition
