@@ -92,6 +92,7 @@ All concrete numeric types and their arithmetic operations.
 - `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
 - `as_content_primitive(radical, clear)` — recursive content extraction; when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
 - Assumption handlers: `_eval_is_real`, `_eval_is_complex`, `_eval_is_integer`, `_eval_is_rational`, `_eval_is_finite`, etc. — fuzzy-group over all args
+- `_eval_subs(old, new)` — Add-specific substitution; handles replacing sub-sums and negated sub-sums within a larger sum (e.g., `(a+b+c+d).subs(-b-c, x)` → `a-x+d`); uses set-subset matching on term args after coefficient separation
 - `_eval_is_imaginary` — classifies each term as real-nonzero, imaginary, or "becomes real when multiplied by I"; returns True only if all real parts cancel to zero and imaginary parts are nonzero
 - `_eval_is_zero` — separates terms into real/imaginary/unknown; returns True if all args are zero; returns False if real nonzero terms don't cancel or if imaginary terms coexist
 
@@ -149,7 +150,9 @@ Adaptive arbitrary-precision numerical evaluation engine using mpmath.
 - `evalf(x, prec, options)` — main dispatcher; routes to type-specific handlers
 - `evalf_mul(v, prec, options)` — evaluates products; detects NaN/infinite factors by checking real parts before main multiply; separates pure-real, pure-imaginary, and complex factors with direction tracking
 - `evalf_add(v, prec, options)` — sums terms with cumulative error tracking and iterative precision increase
-- `evalf_pow(v, prec, options)` — power evaluation with special-case handling
+- `evalf_pow(v, prec, options)` — numerical power evaluation with special-case branches:
+  - Integer exponent: real base via `mpf_pow_int`; purely-imaginary base uses `p % 4` cycle to classify result as real/imag/negated
+  - Half exponent: square-root fast path; general case: precision-adjusted base/exp with complex-power fallback
 - `evalf_log`, `evalf_atan`, `evalf_trig` — specialized transcendental evaluators
 - `pure_complex(v)` — extracts a + b*I form
 - `fastlog(x)` — bit-level log2 approximation from mpf exponent+mantissa; returns approximate magnitude, not a fallback for overflow

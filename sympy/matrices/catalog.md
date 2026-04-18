@@ -26,6 +26,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot.
 - **Solvers**: `solve`, `LUsolve`, `QRsolve`, `LDLsolve` (symmetric→direct LDL; overdetermined rows≥cols→normal equations A^T·A before decomposing; underdetermined→raises), `cholesky_solve`, `gauss_jordan_solve`, `solve_least_squares`, `pinv`, `pinv_solve`.
+- **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
 - **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis`, `det_LU_decomposition`, `berkowitz_det`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
@@ -81,6 +82,8 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
 - `_eval_inverse`: sparse inversion dispatch (internal to sparse storage layer); symmetrizes via M^T·M when needed.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
+- `solve(rhs, method)`: solves self*soln = rhs for square systems; raises `ValueError` for under-determined (rows < cols) and over-determined (rows > cols) non-square systems.
+- `solve_least_squares(rhs, method)`: least-squares fit via normal equations (A^T·A)⁻¹·A^T·rhs; handles over-determined sparse systems.
 
 ### [`immutable.py`](immutable.py)
 Hashable, immutable matrix types usable as dictionary keys and in SymPy expression trees.

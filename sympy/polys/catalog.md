@@ -93,8 +93,9 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
-  - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
+  - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`, `__divmod__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
     - If `p2.ring.domain` is a `PolynomialRing` whose `.ring` matches `p1.ring`, **delegates to `p2.__radd__`/`__rsub__`/`__rmul__`** (outer ring handles).
+    - `__divmod__`: if `p1.ring.domain` is a `PolynomialRing` whose `.ring` matches `p2.ring`, **falls through to coerce `p2` as a ground element**; if the reverse holds (`p2.ring.domain.ring == p1.ring`), **delegates to `p2.__rdivmod__` which returns `NotImplemented`**.
   - `quo_ground(x)` — divide all coefficients by scalar `x`; **over fields, uses exact division; over non-field domains (e.g. ZZ), silently drops terms whose coefficients are not evenly divisible** rather than raising an error.
 
 ### [`fields.py`](fields.py)
@@ -170,6 +171,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `reduced(f, G)` — divide polynomial `f` modulo a set of polynomials `G`, returning quotients and remainder.
   - **Auto-promotes ring domain to its fraction field** for division, then attempts to retract results back to the ring (keeps field results if retraction fails).
 - `factor(f)` — compute irreducible factorization; **on `PolynomialError` for non-commutative expressions, falls back to `factor_nc` from `exprtools`**; re-raises for commutative expressions.
+- `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **when exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction. For 3+ inputs or mixed Poly/expr inputs, collects all coefficients into one flat list to infer a single unified domain.
@@ -211,7 +213,8 @@ High-level polynomial utility functions (symbolic level).
 ### [`densearith.py`](densearith.py)
 Low-level dense polynomial arithmetic on coefficient lists.
 
-- `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub`, `dup_mul`, `dmp_mul` — basic arithmetic.
+- `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub` — basic arithmetic; `dup_add` **only strips leading zeros when both operands share the same degree** (possible cancellation); skips stripping when one operand has strictly higher degree.
+- `dup_mul`, `dmp_mul` — multiplication; `dup_mul` **switches from naive O(n²) convolution to Karatsuba divide-and-conquer at `max(df,dg)+1 >= 100`**.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
 - `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`.
   - **When exponent `i` exceeds the current degree, prepends the coefficient and zero-pads the gap** to extend the representation.
@@ -428,6 +431,7 @@ Caveat: All operations here are list-based GF(p)-specific. For dense polynomial 
 Symbolic root representations and root-sum evaluation.
 
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
+  - `free_symbols` — **always returns empty set**, even when internal `poly` attribute is a `Poly` (not `PurePoly`), since `CRootOf` only represents univariate roots.
   - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
     - **If coefficient domain is not exact (e.g. RR), converts to exact domain before proceeding**.
     - When second positional arg is an integer and no explicit `index` kwarg, **reinterprets it as root index** (not generator).
@@ -455,7 +459,7 @@ Symbolic root-finding algorithms (closed-form solutions).
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
-- `roots_quintic` — solvable quintic solver using Lagrange resolvents; swaps resolvent parameters when numerical check against discriminant fails.
+- `roots_quintic` — solvable quintic solver using Lagrange resolvents; **returns empty list if leading coefficient ≠ 1 and dividing through produces any irrational coefficient** (requires all normalized coefficients to be rational); swaps resolvent parameters when numerical check against discriminant fails.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
   - **When one exponent in a base/generator pair is zero but the other is not, breaks** (no consistent ratio), preventing elimination of that generator.
@@ -513,7 +517,7 @@ Caveat: These are reference/theoretical implementations operating on symbolic ex
 Automatic domain inference from coefficient lists.
 
 - `construct_domain(coeffs, opt)` — determine minimal domain (ZZ, QQ, RR, algebraic, composite) for a set of coefficients.
-- `_construct_simple` — handle simple numeric domains (ZZ, QQ, RR).
+- `_construct_simple` — handle simple numeric domains (ZZ, QQ, RR, algebraic); **returns `False` (signal to use EX domain) if coefficients mix floats and algebraic numbers**; returns `None` (signal to try composite) for non-numeric coefficients.
 - `_construct_algebraic` — handle algebraic coefficients: decomposes each into (irrational_part, multiplicative_factor, additive_constant).
   - Collects distinct irrational parts, **computes a single primitive element to unify all extensions into one algebraic field**.
   - Reconstructs each coefficient in the unified field using the primitive element representation.
@@ -622,9 +626,9 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `_minpoly_exp(ex, x)` — minimal polynomial of `exp(ex)`; for `e^(i·p·π/q)`, **uses hardcoded results for small primes q; general case generates cyclotomic polynomials for divisors of 2q and picks the correct factor**.
 - `_minpoly_compose`, `_minpoly_add`, `_minpoly_mul`, `_minpoly_sin`, `_minpoly_cos` — compositional minimal polynomial helpers for arithmetic and trigonometric subexpressions.
 - `primitive_element(*extensions)` — compute primitive element of algebraic extension.
-- `field_isomorphism(a, b)` — find isomorphism between algebraic number fields.
+- `field_isomorphism(a, b)` — find isomorphism between algebraic number fields; **returns `None` early if `deg(b.minpoly) % deg(a.minpoly) != 0`** (degree-divisibility check); otherwise tries PSLQ (fast path, default) then factorization.
 - `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
-- `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial.
+- `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial; otherwise computes minimal polynomial, gets candidate intervals, and **doubles mpmath precision repeatedly until interval-arithmetic evaluation fits within one candidate**.
 - `_choose_factor(factors, x, v)` — select factor of a polynomial that has a specific root; **accepts factor-multiplicity tuple pairs (e.g. from `factor_list`), stripping to plain polynomials first**.
 
 ### [`partfrac.py`](partfrac.py)

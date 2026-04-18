@@ -47,6 +47,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `NO` — normal-ordering bracket for `secondquant` operators (CreateBoson/AnnihilateBoson, CreateFermion/AnnihilateFermion); reorders into creation-before-annihilation form.
   - Returns S.Zero if identical fermion operators violate Pauli exclusion. For mode-labeled `BosonOp`/`FermionOp`, see `quantum/operatorordering.py`.
 - `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).
+  - `Commutator.eval` — automatic simplification on construction: distributes over sums ([A+B,C]→[A,C]+[B,C]), extracts scalar prefactors ([xA,yB]→xy[A,B]), directly evaluates bosonic/fermionic single-operator pairs.
 - `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors. `FermionState` subclass adds fermi-level logic: `_only_above_fermi(i)` returns True for symbolic indices without assumptions when no fermi level is set.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
 - `Dagger` — Hermitian conjugate of creation/annihilation operators; `eval()` dispatches: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
@@ -68,7 +69,8 @@ Exact angular-momentum coupling coefficients (returns rationals × √rational).
 - `wigner_3j(j1,j2,j3,m1,m2,m3)` — Wigner 3-j symbol; includes selection-rule short-circuits and a guard that strips imaginary parts if the factorial square-root evaluates to complex.
 - `wigner_6j`, `wigner_9j` — higher-order recoupling coefficients.
 - `clebsch_gordan(j1,j2,j3,m1,m2,m3)` — Clebsch-Gordan coefficient (wrapper around wigner_3j).
-- `racah(aa,bb,cc,dd,ee,ff)` — Racah W-coefficient.
+- `racah(aa,bb,cc,dd,ee,ff)` — Racah W-coefficient; uses `_big_delta_coeff` products internally; returns 0 immediately if any triangle inequality fails.
+- `_big_delta_coeff(aa,bb,cc)` — triangle coefficient for three angular momenta; returns 0 (not error) when triangle inequality is violated (e.g., one j exceeds sum of other two).
 - `gaunt(l1,l2,l3,m1,m2,m3)` — Gaunt coefficient (integral of three spherical harmonics).
 
 ### [`gaussopt.py`](gaussopt.py)
@@ -88,6 +90,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - `enumerate_states(state, ...)` — generates indexed copies of an abstract vector (Ket/Bra) given a list of indices or a start index + count; delegates to `state._enumerate_state()`; returns empty list if the state raises NotImplementedError.
     - `_sympy_to_scalar` — converts SymPy scalar expressions to native Python types (int/float/complex) for numpy/scipy compatibility; handles Integer, Float, Rational, Number, NumberSymbol, and imaginary unit I (→ complex). Raises TypeError for non-numeric expressions.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
+    - `BraBase._represent` — default bra representation: delegates to the dual ket's `_represent` and applies Dagger (conjugate transpose) to the result.
     - `StateBase._represent_default_basis` — determines default representation basis by querying which operators the state is an eigenstate of (lazy-imports `operatorset` to break circular dependency).
 - **Angular momentum / CG**: `cg.py` — Clebsch-Gordan and Wigner coupling coefficient symbolic expressions, evaluation, and simplification (not state construction).
   - `Wigner3j` — symbolic Wigner 3-j coefficient; `is_symbolic` property checks if any parameter is non-numeric. `doit()` raises ValueError for symbolic params.

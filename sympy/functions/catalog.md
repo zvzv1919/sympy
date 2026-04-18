@@ -154,6 +154,8 @@ Combinatorial functions and number sequences.
 #### [`combinatorial/factorials.py`](combinatorial/factorials.py)
 Factorial-family functions: `factorial`, `subfactorial`, `factorial2`, `RisingFactorial`, `FallingFactorial`, `binomial`.
 - `factorial` — n! computation class; `eval` returns ComplexInfinity for negative integers (consistent with gamma function poles), 1 for zero, and uses optimized algorithms for positive integers. Rewrites to `gamma(n+1)`.
+- `RisingFactorial` — rising factorial (Pochhammer symbol) x·(x+1)·…·(x+k−1); rewrites to gamma ratio.
+- `FallingFactorial` — descending product x·(x−1)·…·(x−k+1); `eval` handles ±Infinity with sign/parity logic for positive vs negative k, and polynomial-argument expansion via `poly_from_expr`.
 - `binomial` — binomial coefficient C(n,k); `eval` handles integer, non-integer, and edge cases.
 
 #### [`combinatorial/numbers.py`](combinatorial/numbers.py)

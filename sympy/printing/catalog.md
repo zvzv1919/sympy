@@ -19,7 +19,7 @@ Base `Printer` class with `_print` dispatch mechanism routing expressions to `_p
 - `_print` walks the expression's MRO looking for `_print_<ClassName>` handlers; if none found, falls back to `self.emptyPrinter(expr)` (defaults to `str(expr)`).
 
 ### [`precedence.py`](precedence.py)
-Operator precedence values (`PRECEDENCE` dict) and functions for determining when parentheses are needed.
+Operator precedence values (`PRECEDENCE` dict) and lookup functions that return a numeric precedence level for an expression. Does **not** make rendering-specific bracket decisions — those live in each printer (e.g., `LatexPrinter._needs_mul_brackets`).
 
 ### [`conventions.py`](conventions.py)
 - `split_super_sub()` — parses symbol names into base + superscripts + subscripts.
@@ -43,6 +43,7 @@ Operator precedence values (`PRECEDENCE` dict) and functions for determining whe
 - Special-case `_print_*` overrides for functions whose names collide with Greek/Unicode symbols (e.g., `_print_Chi` keeps Latin "Chi" instead of Greek χ, `_print_gamma`/`_print_lowergamma`/`_print_uppergamma` use explicit Γ/γ glyphs).
 - `_print_Function` — renders applied callables; attaches the formatted name and argument list as attributes on the result form so they can be reassembled when exponentiation is applied.
 - `_print_Subs` — renders evaluation-at-a-point notation: parenthesizes the expression, draws a vertical bar (`|`) to its right, and places variable=value assignment pairs as subscripts below the bar.
+- `_print_DMP` / `_print_DMF` — renders dense multivariate polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to `repr(p)`.
 - Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.
 - `_print_Float` — when `full_prec` setting is `"auto"`, shows full precision only at the top print level (`_print_level == 1`); nested floats use reduced precision.
@@ -139,6 +140,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - Configures `mul_symbol_latex` and `mul_symbol_latex_numbers` (numeric factors default to centered dot even when general symbol is a space).
 - `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`.
 - `_print_Mul` — renders products; uses two distinct separator settings: `mul_symbol_latex` between general factors and `mul_symbol_latex_numbers` between adjacent numeric factors (detected via regex on rendered terms). Renders fractions via `\frac{}{}` when a denominator is present.
+- `_needs_mul_brackets` — decides whether an expression needs parentheses inside a Mul; position-sensitive: container objects (Integral, Sum, Product, Piecewise) need brackets only when **not** the last factor.
 - `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.
 - Polynomial domain printers (`_print_Poly`, `_print_ComplexRootOf`, `_print_RootSum`, `_print_PolynomialRing`, `_print_FractionField`) — renders algebraic objects; `_print_ComplexRootOf` shortens the class name to `CRootOf` for display.
 - Matrix operations (`_print_Adjoint`, `_print_Transpose`, `_print_MatPow`) conditionally wrap inner expressions in `\left(...\right)` based on whether the argument is a plain `MatrixSymbol` or a compound expression.

@@ -24,7 +24,7 @@ Core boolean types, operators, and normal-form conversions.
 Propositional-logic inference: truth evaluation, satisfiability dispatch, entailment, and knowledge bases.
 - `pl_true(expr, model, deep)` — evaluate a propositional expression under a (possibly partial) truth assignment; returns True/False/None (three-valued).
   - With `deep=True`, uses a heuristic probe: sets all unassigned atoms to True, evaluates, then branches — checks tautology (`valid`) if probe is true, checks unsatisfiability (`satisfiable`) if probe is false.
-- `satisfiable(expr, algorithm, all_models)` — check satisfiability; dispatches to `dpll` or `dpll2` algorithm backends.
+- `satisfiable(expr, algorithm, all_models)` — **public entry point** for SAT checking; selects backend (`dpll` or `dpll2`) by `algorithm` param, returns a model dict or, with `all_models=True`, a generator of all satisfying assignments.
 - `valid(expr)` — check if expression is a tautology (true under every assignment).
 - `entails(expr, formula_set)` — check logical entailment of expr from a set of formulas.
 - `literal_symbol(literal)` — extract the underlying symbol from a (possibly negated) literal.
@@ -34,8 +34,8 @@ Propositional-logic inference: truth evaluation, satisfiability dispatch, entail
 ## Algorithms
 
 ### [`algorithms/dpll.py`](algorithms/dpll.py)
-Classic DPLL satisfiability solver with simple recursive backtracking; both symbolic and integer-encoded representations.
-- `dpll_satisfiable(expr)` — top-level SAT solver entry point; converts to CNF then calls `dpll_int_repr`.
+Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple recursive backtracking on symbolic and integer-encoded representations.
+- `dpll_satisfiable(expr)` — backend entry point; converts to CNF then calls `dpll_int_repr`. Does not support `all_models`.
 - `dpll(clauses, symbols, model)` — recursive DPLL on symbolic clause lists.
   - Runs unit-clause and pure-literal elimination loops, evaluates remaining clauses, then branches on an unassigned variable (True first, False on backtrack via short-circuit OR).
 - `dpll_int_repr(clauses, symbols, model)` — recursive DPLL on integer-encoded clause sets; same branch-and-backtrack logic as `dpll`.
@@ -47,8 +47,8 @@ Classic DPLL satisfiability solver with simple recursive backtracking; both symb
 - `find_unit_clause` / `find_unit_clause_int_repr` — find clauses with exactly one unbound literal.
 
 ### [`algorithms/dpll2.py`](algorithms/dpll2.py)
-Modern iterative CDCL SAT solver (not recursive backtracking); uses clause learning, watched-literal scheme, and VSIDS heuristic.
-- `dpll_satisfiable(expr, all_models)` — entry point; converts to CNF, early-exits for trivially false formulas (before solver runs), supports generating all satisfying models via generator.
+Internal CDCL SAT backend (called by `inference.satisfiable`); iterative solver with clause learning, watched literals, and VSIDS heuristic.
+- `dpll_satisfiable(expr, all_models)` — backend entry point; converts to CNF, early-exits for trivially false formulas, yields models to caller.
 - `SATSolver` — stateful SAT solver class operating on integer-encoded clauses.
   - Uses watched-literal data structures for efficient unit propagation.
   - VSIDS (Variable State Independent Decaying Sum) branching heuristic.

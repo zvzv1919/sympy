@@ -21,7 +21,8 @@ Foundation of all set types and operations.
   - `_contains` — three-valued membership: iterates elements, evaluates `Eq`, returns true/false/None when equality is indeterminate
   - `as_relational` — converts to `Or(*[Eq(symbol, elem) ...])` disjunction of equality predicates
 - **`imageset(*args)`** — standalone function; computes the image of a set under a transformation (Lambda, function, or lambda)
-  - Composes nested transformations when the input is already an ImageSet; returns unevaluated `ImageSet` if it cannot simplify
+  - Composes nested univariate transformations: when the result is an ImageSet whose base is also an ImageSet and both lambdas are single-variable, recursively composes them into one transformation over the innermost base set
+  - Returns unevaluated `ImageSet` if it cannot simplify
 
 ## Specialized / "Fancy" Sets
 
