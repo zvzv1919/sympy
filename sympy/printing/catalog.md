@@ -71,6 +71,7 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; parenthesizes nested divisions. For negative numerators (NEG binding), pads the numerator with a trailing space to preserve visual alignment under the fraction bar.
 - `prettyForm.__add__` — binding-aware addition; reuses existing minus signs to simplify `+ -x` forms.
+- `prettyForm.__pow__` — renders exponentiation as 2D layout; when the base is a function (FUNC binding), uses a height heuristic: single-line exponents go inline above the function name, multi-line exponents wrap the base in parentheses.
 - `prettyForm.__mul__` — assembles the inline visual representation of a product sequence: inserts multiplication symbols between factors, applies precedence-based parenthesization.
   - Detects `-1` factors and substitutes `-1 * x` → `-x`; inserts a space when consecutive leading minus signs would create visual ambiguity (dash collision).
 
@@ -110,6 +111,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 
 ### [`jscode.py`](jscode.py)
 `JavascriptCodePrinter` — generates JavaScript (browser-side scripting language) code from expressions, mapping SymPy functions to `Math.*` equivalents.
+- `_print_Pow` — special-cases: exp==-1 → `1/x`, exp==0.5 → `Math.sqrt(x)`, otherwise `Math.pow(x, y)`.
 - `jscode(expr)` — main public entry point; instantiates `JavascriptCodePrinter` and delegates via `doprint`. Accepts `assign_to`, `precision`, `human`, `contract`, and `user_functions`.
 - `human=False` returns a tuple `(symbols_to_declare, not_supported_functions, code_text)` instead of a single string.
 - Piecewise expressions emit if/else blocks when `assign_to` is given, ternary operators otherwise; requires a default `(expr, True)` branch.
@@ -129,6 +131,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `octave_code()` — top-level API; returns Octave/Matlab-syntax string. Accepts `assign_to`, `precision`, `human`, `contract`, `inline`, and `user_functions`.
 - `_print_Mul` — decides between scalar (`*`, `/`) and element-wise (`.*`, `./`) operators based on whether each operand is a pure number; handles imaginary-number shorthand.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and element-wise vs scalar division.
+- `_print_MatrixBase` — renders 2D arrays with shape-dependent formatting: 0×0 → empty literal, zero-row or zero-col → `zeros(r,c)`, 1×1 → scalar, row vectors use space-separated syntax, column vectors use semicolon-separated syntax.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested element-wise multiply `(cond).*(expr) + (~cond).*(...)`; block mode emits `if/elseif/else/end`. Raises `ValueError` if no default `(expr, True)` branch is provided.
 
 ### [`repr.py`](repr.py)

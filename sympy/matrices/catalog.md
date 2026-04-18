@@ -64,7 +64,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `is_hermitian`: three-valued (True/False/None) via `fuzzy_and`; checks diagonal entries are real and off-diagonal pairs satisfy conjugate symmetry. Returns None when assumptions are insufficient (e.g. symbolic diagonal with no real assumption).
 - `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives.
 - `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
-- **Construction**: `_handle_creation_inputs` — normalizes all constructor forms (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
+- **Construction**: `_handle_creation_inputs` — normalizes constructor/factory arguments (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
+  - Used only during matrix instantiation, not for arithmetic operand coercion.
   - Validates uniform row lengths; skips 0×0 sub-matrices when tracking column widths.
 - **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; single-row matrices use inline `Matrix([...])` format; multi-row matrices insert a leading newline `Matrix([\n...])`; zero-dimension matrices embed explicit dimensions).
 - `table`: tabular text formatter with per-column width alignment; returns `'[]'` for zero-row or zero-col matrices; maps alignment strings to Python justification methods.
@@ -87,7 +88,8 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `copyin_matrix(key, value)`: copies a Matrix into the sub-region defined by `key`; raises `ShapeError` if source matrix dimensions don't match target slice dimensions.
 - `copyin_list(key, value)`: copies elements from an iterable into the sub-region defined by `key`; raises `TypeError` if `value` is not an ordered iterable (e.g. a plain scalar).
 - `__setitem__`: delegates to `MatrixBase._setitem` for key parsing and list→Matrix conversion; when a single element is assigned, translates the (row, col) pair to flat-list position via `self._mat[i*self.cols + j]`.
-- `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
+- `_force_mutable(x)`: operand coercion helper called by all `DenseMatrix` arithmetic operators (`__add__`, `__mul__`, `__sub__`, `__div__`, etc.).
+  - Detects `__array__` protocol: 0-d arrays sympified to scalars, higher-d arrays wrapped as `Matrix`; matrices converted to mutable; `Basic` passes through.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
 - **NumPy conversion utilities**: `matrix2numpy(m, dtype)` — converts a SymPy matrix to a NumPy array element-by-element; `list2numpy(l, dtype)` — converts a Python list of expressions to a NumPy array; `symarray(prefix, shape)` — creates a NumPy object array of named symbols.
 - Factory functions: `zeros` (all-zero matrix), `eye` (identity), `ones` (all entries = `S.One`; omitting `c` returns square), `rot_axis1`, `rot_axis2`, `rot_axis3`.

@@ -200,7 +200,10 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `pauli.py` — Pauli spin-½ operators as quantum Operator subclasses: SigmaX/Y/Z (components), SigmaPlus (raising), SigmaMinus (lowering); optional string labels for subsystem identification. Operators with different labels commute (commutator returns zero).
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
-  - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction; only combines adjacent operators sharing the same label/name (different-label pairs are left unsimplified). Splits scalar coefficients from operator parts after each step.
+  - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction via `_qsimplify_pauli_product(a, b)`.
+    - Same-label pairs: applies algebraic identities (e.g. σxσy=iσz, σx²=1, raising/lowering decompositions).
+    - Different-label pairs: operators commute; sorted by label name (canonical ordering), not algebraically simplified.
+    - Splits scalar coefficients from operator parts after each step.
   - `cartesian.py` — 1-D position/momentum operators (XOp, PxOp) and eigenstates (XKet/XBra, PxKet/PxBra), plus 3-D position operators (YOp, ZOp) and eigenstates (PositionKet3D/PositionBra3D). XOp defines `_eval_commutator_PxOp` implementing the canonical commutation relation [X, Px] = iℏ.
     - `PxOp._represent_XKet` — position-basis representation of momentum operator; uses `options.pop("index", 1)` as default start index for basis enumeration.
     - `PxKet._eval_innerproduct_XBra` — computes Fourier-kernel plane-wave overlap exp(i·p·x/ℏ)/√(2πℏ). `XKet._eval_innerproduct_PxBra` — conjugate overlap.
@@ -275,7 +278,12 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - `linear_momentum`, `kinetic_energy`, `potential_energy` — system-level aggregators that sum per-body contributions (delegate to each body's own method).
   - `Lagrangian(frame, *body)` — computes T−V (kinetic minus potential energy) for a collection of Particles/RigidBodies in a given frame; returns a scalar expression.
   - `find_dynamicsymbols(expression, exclude=None)` — finds all time-dependent (`dynamicsymbols`) in an expression; optional `exclude` kwarg must be iterable (raises TypeError if a bare symbol is passed instead of a list).
-- `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds. Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
+- `linearize.py` — `Linearizer`: first-order approximation of constrained multi-body EOM; handles dependent coordinates/speeds.
+  - Constructor detects when time-derivatives of q overlap with u symbols and substitutes Dummy variables to avoid conflicts.
+  - `_form_coefficient_matrices()` — builds projection matrices C_0, C_1, C_2 that account for holonomic/nonholonomic constraints.
+    - Holonomic constraints present (l>0): C_0 is a Jacobian-based projection via LU-solve; absent: C_0 = identity.
+    - Nonholonomic constraints present (m>0): C_1, C_2 computed from velocity-constraint Jacobian via LU-solve; absent: C_1 = zero, C_2 = identity.
+  - `_form_block_matrices()` — conditionally computes Jacobian sub-blocks (M_qq, A_qq, M_uuc, etc.) based on nonzero dimension counts.
 - `models.py` — pre-built example multi-body systems for testing/demos; **not exported by `__init__.py`** — must be imported explicitly (`from sympy.physics.mechanics.models import ...`). `n_link_pendulum_on_cart()` builds a 2-D n-link pendulum on a sliding cart; `specified` inputs list becomes None (not empty list) when both lateral force and joint torques are disabled. `multi_mass_spring_damper()` builds a chain of masses connected by springs and dampers.
 
 ### [`hep/`](hep/catalog.md)

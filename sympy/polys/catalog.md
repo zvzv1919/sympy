@@ -45,6 +45,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - Conversion: `to_dict`, `from_dict`, `from_list`, `to_ring`, `to_field`, `convert`, `slice`.
   - Enumeration: `all_monoms`, `all_coeffs`, `all_terms` — dense enumeration including zeros (univariate only); **for zero polynomial, returns single element `[(0,)]` / `[dom.zero]`** rather than empty list.
   - Content/primitive: `content`, `primitive`, `terms_gcd`.
+  - `homogenize(s)` — make all terms equal total degree by adjusting variable at index `s`; **if `s == number_of_variables` (new variable), appends a dimension and inserts padding exponents; if `s < number_of_variables` (existing variable), adds to that variable's exponent in-place**.
   - Structural: `exclude` (remove unused generators, returns removed indices + reduced DMP), `inject`, `eject`, `deflate`, `permute`.
   - `refine_root(s, t, eps, steps)` — refine an isolating interval; **if neither `eps` nor `steps` is given, defaults to `steps=1`** (single bisection step).
   - `is_cyclotomic` — **univariate only (`lev == 0`): delegates to `dup_cyclotomic_p`; multivariate: silently returns `False`** (no error raised). Contrast `PolyElement.is_cyclotomic` in `rings.py` which raises `MultivariatePolynomialError`.
@@ -60,6 +61,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `pow`, `quo`, `exquo`.
     - `quo(f, g)` — computes fraction quotient; after computing result, **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**. `exquo` is an alias for `quo`.
   - `__rdiv__(g)` — reverse division (`g / self`); computes `invert()*g`, then **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**.
+  - `__eq__(g)` — equality comparison; **if `g` is a DMP (whole polynomial, not fraction), unifies and checks that the denominator is the multiplicative identity (one) AND numerators match**; if `g` is another DMF, unifies fractions and compares directly; returns `False` on `UnificationFailed`.
 - `ANP` — Algebraic Number Polynomial (univariate dense poly modulo a minimal polynomial over an algebraic extension).
   - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
   - `pow(n)` — for negative `n`, **computes modular inverse via `dup_invert` first**, then raises to `|n|`; result is always reduced modulo the defining relation.
@@ -204,6 +206,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - GCD/resultant: `gcd`, `lcm`, `cofactors`, `resultant`, `discriminant`, `subresultants`.
     - `resultant(g, includePRS)` — when `includePRS=True`, returns `(resultant_value, [PRS_polys])` tuple instead of a single scalar.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
+    - `_symbolic_factor_list` — internal helper for factoring symbolic expressions; when a base is raised to a non-integer exponent and its polynomial leading coefficient is negative (not positive), **appends the coefficient as a factor with exponent 1** (avoids computing negative numbers raised to fractional powers); when coefficient is positive, appends it normally with the non-integer exponent.
     - `factor_list` (via `_generic_factor_list`): **when input is a rational expression (nontrivial denominator) and `frac=True`, returns `(coeff, numer_factors, denom_factors)` 3-tuple; when `frac=False` (default), silently drops denominator factors** and returns only `(coeff, numer_factors)`.
     - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
 - `_sorted_factors(factors, method)` — sort `(poly, exp)` factor pairs; **for `method='sqf'` (square-free), primary sort key is the exponent; for other methods (regular factorization), primary key is representation length** (`len(rep)`); secondary keys are rep length, generator count, and raw rep.

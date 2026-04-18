@@ -177,7 +177,7 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
   - Raises `NotImplementedError` ("heuristic failed: z in k") when z is in the constant field (doesn't involve the extension monomial t)
 
 ### [`heurisch.py`](heurisch.py)
-Semi-decision (heuristic) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert, erf/erfi, Ei). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.
+Semi-decision heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert, erf/erfi, Ei). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
   - Adds special-function candidate terms: `erf`/`erfi` for `exp(a*x²)` (uses `erf` when sign of `a` is negative or unknown), `Ei` for `li`-containing integrands
   - Substitutes subexpressions with placeholder symbols; tries all permutations of the substitution ordering until the result is rational in placeholders

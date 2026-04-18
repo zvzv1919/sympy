@@ -195,7 +195,7 @@ OpenGL window management, rendering loop, and title-bar progress display.
 - `PlotWindow` — extends `ManagedWindow`; sets up GL context, coordinates camera and controller.
 - `draw()` — called each frame; acquires `_render_lock` to iterate plot functions and collect vertex/color progress in a single pass.
   - Sets initial viewing orientation from the first rendered object's `default_rot_preset` via a `drawing_first_object` flag; only the first surface influences the default camera angle.
-  - Progress tracking catches `ValueError` silently: if accessing a renderable's vertex/color computation progress raises `ValueError` (e.g., from concurrent modification), the exception is swallowed to avoid crashing the render loop.
+  - Progress tracking catches `ValueError` silently: swallows errors from concurrent modification of vertex/color progress counters. This is narrow tolerance for progress display only — it does not govern loop termination or resource cleanup (those are handled by the parent `ManagedWindow` event loop).
 - `update_caption()` — formats vertex and color calculation percentages into the window title bar.
 
 ### `plot_object.py`
@@ -228,6 +228,7 @@ Pyglet window lifecycle and threaded event loop with thread-safe GL lock managem
 - `__event_loop__()` — the thread function: acquires/releases module-level `gl_lock` via try/finally for both initialization and each per-frame cycle (dispatch, update, draw, flip).
   - On uncaught exception during per-frame rendering: catches exception, sets `has_exit = True` to terminate the loop, and the `finally` block ensures `gl_lock` is released.
   - Initialization errors similarly set `has_exit = True` before the loop starts.
+  - After loop termination, calls parent `close()` to release the window and its resources.
 - `gl_lock` — module-level `threading.Lock` guarding all OpenGL calls; distinct from the plot-level `_render_lock` in `PlotWindow.draw()` (which serializes plot-function iteration, not GL context access).
 
 ### `util.py`

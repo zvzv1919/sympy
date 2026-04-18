@@ -80,7 +80,7 @@ All concrete numeric types and their arithmetic operations.
   - Ordering comparisons (`__gt__`, `__lt__`, `__ge__`, `__le__`) — attempt `_sympify(other)`; raise `TypeError` on `SympifyError` (non-sympifiable operand); Integer-vs-Integer compares raw `.p` values directly
   - `_eval_power` — handles infinite exponents first: positive base >1 with `oo` → `oo`; negative base (not -1,0,1) with `oo` → `oo + I*oo`; `NegativeInfinity` delegates via `Rational(1,self)**oo`
   - Negative-base sign branching differs for integer vs fractional exponents
-  - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
+  - For fractional exponents, factors base into primes (capped at `limit=2**15` for performance) and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
 - `NegativeOne` — singleton `-1`; `_eval_power`: odd exp → -1, even → 1; rational exp with denominator 2 → `I**p` (imaginary unit); general rational exponents decomposed via `divmod` into integer and fractional parts
 - `Zero` — additive identity singleton; `_eval_power`: positive exp → 0, negative exp → ComplexInfinity, non-real (complex) exp → NaN
   - Fallback strips leading numeric coefficient from product exponents (negative coeff → zoo**terms, non-unity coeff → 0**remaining_terms)

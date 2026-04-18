@@ -2,6 +2,13 @@
 
 Category theory foundations: objects, morphisms, diagrams (with premises/conclusions), and diagram visualization via Xy-pic.
 
+## Package Interface
+
+### [`__init__.py`](__init__.py)
+Public API of the categories package. Re-exports all primitives from `baseclasses` and all visualization utilities from `diagram_drawing`.
+- Known gap: functors are **not yet implemented**.
+- Reference work: *Abstract and Concrete Categories — The Joy of Cats* (Adamek, Herrlich, Strecker).
+
 ## Core Data Model
 
 ### [`baseclasses.py`](baseclasses.py)
