@@ -11,6 +11,7 @@ Mathematical function classes (symbolic, unevaluated). Defines function behavior
 - **signum function**: `sign` class in `elementary/complexes.py`; Heaviside-to-sign rewriting is in `special/delta_functions.py`.
 - **trigonometric integral** / **cosine integral** / **sine integral**: `Ci`, `Si` in `special/error_functions.py` — NOT the elementary trig functions in `elementary/trigonometric.py`.
 - **fdiff**: method on Function subclasses returning symbolic partial derivatives; lives alongside the class definition.
+- **discrete delta** / **Kronecker delta**: `KroneckerDelta` in `special/tensor_functions.py` (δ_{i,j} = 1 when i=j, 0 otherwise). NOT `DiracDelta` in `special/delta_functions.py`.
 - **rewrite**: `_eval_rewrite_as_*` methods live on the source class, not the target class.
 
 ## Package Init

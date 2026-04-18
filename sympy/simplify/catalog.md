@@ -75,9 +75,9 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
 - `_dotrig(a, b)` — guard that checks whether expression `a` and pattern `b` share the same function category (both TrigonometricFunction or both HyperbolicFunction) and outer type (`func`); skips pattern matching when categories don't match.
 - `_replace_mul_fpowxgpow` — rewrites products of powers of two different trig/hyper functions f(x)^a·g(x)^b into a single function power h(x)^c.
   - Safety guard: only applies when base is positive or exponent is integer, preventing incorrect rewrites for non-real exponents or bases.
-- `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) for rewriting ratios/products of trig and hyperbolic functions.
+- `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) used by the old/matching trig simplifier.
+  - `matchers_division`: quotient-to-function rewrites for Mul-level powers — sin/cos→tan, tan/cos→1/cos, cot/sin→1/sin, etc., plus hyperbolic analogues (sinh/cosh→tanh, etc.). First 14 entries must stay in fixed order — `_match_div_rewrite` indexes them by position.
   - `artifacts` table: reverses Pythagorean identity substitutions that made an expression more complex (e.g. 1−cos²→sin², 1−1/cos²→−tan²), restoring the simpler original form.
-  - First 14 division patterns must stay in fixed order — `_match_div_rewrite` indexes them by position.
 - `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants); explicitly skips indices 6,7 (sum-and-difference-of-one factors like (cos±1)(cos∓1)) which can't be expressed as f^a·g^b.
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.
   - Multi-symbol handling: uses `separatevars` to factor into per-variable groups (returned as dict); each factor is expanded via `expand_mul` then simplified.

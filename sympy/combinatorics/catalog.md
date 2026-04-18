@@ -25,6 +25,7 @@ Individual permutation representation, construction, and properties.
   - Properties: `is_even`, `is_odd`, `parity`, `inversions`, `support`.
   - `order()` — smallest positive exponent k such that p^k = identity; computed as LCM of disjoint cycle lengths.
   - `cycle_structure` — dict mapping each cycle length to its multiplicity; fixed points (self-mapping elements) counted as length-1 cycles.
+  - `__xor__` (`^` operator) — conjugation: `p^q` computes `~q*p*q`; raises `ValueError` if the two permutations have different sizes. When left operand is an int `i`, returns `q(i)` instead.
   - `commutator(x)` — group commutator of two individual permutations (~x·~self·x·self); raises `ValueError` if sizes differ.
   - `commutes_with` — checks if two individual permutations commute (boolean, no search).
   - Distance metrics: `get_precedence_distance`, `get_adjacency_distance`, `get_positional_distance`.

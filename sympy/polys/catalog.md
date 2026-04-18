@@ -74,6 +74,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - **`ring` returns `(ring,) + gens` (flat tuple); `xring` returns `(ring, gens)` (nested tuple for tuple-unpacking); `vring` injects gens into global namespace**.
 - `sring(exprs, *symbols)` — construct ring from expressions; **auto-infers domain from coefficients via `construct_domain`** when no domain is specified.
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
+  - `__new__` — caches ring objects; **when domain is composite, raises `GeneratorsError` if new ring symbols overlap with the domain's existing generators**.
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
   - `index(gen)` — resolve generator position; accepts `None` (→ 0), integer (**supports Python-style negative indexing**: `-1` → last gen), ring element, or string name; raises `ValueError` if out of bounds.
@@ -222,7 +223,9 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - **When exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction.
   - For 3+ inputs or mixed Poly/expr inputs, **converts any already-constructed Poly objects back to symbolic expressions via `as_expr()`** before uniform dictionary extraction.
   - Then collects all coefficients into one flat list to infer a single unified domain.
-- `degree`, `degree_list`, `LM`, `LT`, `content`, `monic` — query functions.
+- `degree`, `degree_list`, `content`, `monic` — query functions.
+- `LM(f, order)` — leading monomial (dominant power-product **without** scalar coefficient); converts internal rep to symbolic expression via `as_expr()`; respects custom monomial ordering.
+- `LT(f, order)` — leading term (monomial **with** scalar coefficient); same ordering dispatch as `LM`.
 - `LC(f, order)` — leading coefficient; **when `order` is specified, delegates to `coeffs(order)` and returns first element** (re-sorts by custom ordering); when `order` is None, calls internal rep's `LC()` and converts via `dom.to_sympy`.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
@@ -485,7 +488,7 @@ Caveat: For native GF(p) polynomial square-free and factorization, see `galoisto
 Self-contained arithmetic, square-free, irreducibility, and factorization for **univariate polynomials over GF(p)**, represented as coefficient lists.
 
 - `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
-- `gf_strip`, `gf_trunc` — canonical form: strip leading zeros / reduce coefficients mod p.
+- `gf_strip` — strip leading zeros; **short-circuits via `if not f or f[0]`** (returns immediately when list is empty or first element is nonzero, same optimization as `dup_strip`). `gf_trunc` — reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
   - `gf_add`/`gf_sub` — **only strips leading zeros (via `gf_strip`) when both operands share the same degree** (possible cancellation); skips stripping when degrees differ.
   - `gf_sub` degree mismatch: **when the subtrahend has higher degree, negates its excess leading coefficients via `gf_neg`** before combining with element-wise subtraction on the aligned tail (asymmetric with `gf_add` which simply copies excess coefficients).
@@ -569,7 +572,9 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
   - **When one exponent in a base/generator pair is zero but the other is not, breaks** (no consistent ratio), preventing elimination of that generator.
-- `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes; **reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
+- `_integer_basis(poly)` — find integer scaling factor `div` such that substitution `x = div*y` minimizes coefficient magnitudes.
+  - **Returns `None` immediately if `|LC| >= |constant term|`** (only attempts reduction when the constant term dominates).
+  - **Reverses the coefficient list when the leading coefficient is 1** before searching for the scaling constant.
 
 ### [`rootisolation.py`](rootisolation.py)
 Numerical root isolation and refinement for dense univariate polynomials. Also defines `RealInterval` and `ComplexInterval` classes for bounding root locations.
@@ -727,6 +732,7 @@ Exception classes for polynomial operations.
 - `UnificationFailed` — raised when domains/polynomials cannot be unified.
 - `NotInvertible` — raised when polynomial modular inverse does not exist.
 - `GeneratorsNeeded`, `GeneratorsError` — generator-related errors.
+- `PolificationFailed` — raised when expression-to-Poly conversion fails; `__init__` **wraps single expressions in a list** so `.exprs` and `.origs` are always iterables (uniform interface for single and multi-expression cases).
 - `ComputationFailed`, `RefinementFailed` — computation errors.
 
 ---
@@ -872,6 +878,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `Ideal` (in `ideals.py`) — abstract base class for ideals of polynomial rings.
   - `_equals(J)` — equality via **mutual containment**: returns True iff `self` contains `J` and `J` contains `self`.
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
+  - `__mul__(e)` — when `e` is not an `Ideal`, coerces via `self.ring.ideal(e)`; **returns `NotImplemented` (not an error) if coercion raises `CoercionFailed`**.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
   - `subset(other)` — check if `other` is a subset of this ideal; **if `other` is an Ideal, delegates to `_contains_ideal`; if `other` is a plain iterable (e.g. list of ring elements), checks each element individually** via `_contains_elem`.
 - `Module.__div__(e)` (in `modules.py`) — quotient module; **if `e` is not a `Module` instance, unpacks it as generators to `self.submodule(*e)` before calling `quotient_module`**.
@@ -886,6 +893,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `FreeModuleQuotientRing` (in `modules.py`) — free module over a quotient ring `R/I`; internally holds a `.quot` attribute representing the same set as an R-module (modulo `I·R^n`).
   - `lift(elem)` — promote element from `R/I`-module to the `.quot` R-module by **extracting underlying `.data` from each component**; enables computation in the larger ring setting.
   - `unlift(elem)` — reverse of `lift`; push element of `.quot` back down to the quotient module.
+- `SubModule.in_terms_of_generators(e)` (in `modules.py`) — express element as linear combination of generators; **catches `CoercionFailed` and raises `ValueError`** if `e` is not a member of the submodule.
 - `SubModule.convert(elem, M)` (in `modules.py`) — if element is already the correct dtype and belongs to `self`, **returns immediately without membership check**.
   - Otherwise converts via container and checks `_contains`, raising `CoercionFailed` if not a member.
 - `SubModule.is_submodule(other)` (in `modules.py`) — if `other` is a SubModule, checks all generators are contained; **if `other` is a FreeModule, returns True only when `self` is the full module** (via `is_full_module`); otherwise returns False.

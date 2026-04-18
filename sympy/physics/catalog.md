@@ -240,7 +240,10 @@ Geometric and wave optics.
 - `medium.py` — `Medium` class: electromagnetic propagation material with refractive index (n), permittivity (ε), permeability (μ), intrinsic impedance (√(μ/ε)), and wave speed.
   - Constructor derives missing parameter when n plus one of ε/μ are given; raises ValueError on inconsistency when all three are provided. Caveat: consistency-check condition has a typo (`permittivity != None and permittivity != None` instead of checking permeability), causing incorrect branching when n + μ given without ε.
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection). Accepts incident/normal as Matrix, Ray3D, or sequence; when both are Ray3D and no plane is given, validates geometric intersection — raises ValueError if rays are not concurrent. When a Plane is given, computes intersection point and returns a Ray3D result.
-  - `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_formula(n_lens, n_surr, r1, r2)` (thin-lens focal length; accepts Medium objects or numeric indices), `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
+  - `deviation()` (angular deviation; returns None for total internal reflection), `brewster_angle()`, `critical_angle()`, `hyperfocal_distance()`.
+  - `lens_makers_formula(n_lens, n_surr, r1, r2)` — thin-lens focal length; accepts Medium objects or numeric indices.
+  - `lens_formula(f, u, v)` — standard thin-lens equation 1/f=1/v−1/u; solves for whichever of f/u/v is missing. No paraxial ray tracing or infinity handling; for ray-based conjugation see `gaussopt.py`.
+  - `mirror_formula()` — analogous to `lens_formula` for mirrors.
 
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
@@ -301,6 +304,8 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.
 - `simplifiers.py` — `dim_simplify`: recursive simplification of compound `Dimension` expressions (Add, Mul, Pow). Handles the CAS rewriting `Add(L,L)→Mul(2,L)` by stripping non-Dimension numeric factors from Mul before reducing. Also `qsimplify` for Quantity expressions.
 - `systems/` — concrete unit-system definitions:
-  - `mks.py` — meter-kilogram-second; derived units J/N/W/Pa carry factor=10³ because gram is canonical mass unit and kg is the base.
+  - `mks.py` — meter-kilogram-second. Creates a separate prefix-free gram unit alongside the kilogram base unit.
+    - Gram (not kilogram) is fed into the SI-prefix generation loop; applying prefixes to an already-prefixed unit would not produce correct scaled variants.
+    - Derived units J/N/W/Pa carry factor=10³ to convert from gram-based to kilogram-based scaling.
   - `mksa.py` — MKS + ampere; defines electromagnetic Dimension objects (current, voltage, impedance, conductance, capacitance, inductance, charge, magnetic_density, magnetic_flux) and units (A/V/ohm/S/F/H/C/T/Wb).
   - `natural.py` — natural unit system (c=ℏ=1): redefines base dimensions as action, energy, velocity; length, mass, time become derived quantities. Base units: ℏ (action), eV (energy), c (velocity).

@@ -26,7 +26,8 @@ Generates source code files (C, C++, Fortran, Julia, Octave/Matlab) from SymPy e
 - `Routine` — represents a callable routine with inputs/outputs.
 - `CodeGen`, `CCodeGen`, `FCodeGen` — language-specific code generators.
 - `CodeGen.routine()` — builds a `Routine` from an expression; validates and reorders a user-supplied `argument_sequence`, silently adding unused symbols as extra inputs.
-- `codegen(name_expr, language)` — top-level convenience function.
+- `make_routine(name, expr)` — factory that creates a `Routine` from expressions; classifies `Equality` LHS as `OutputArgument` (or `InOutArgument`), non-equality expressions as return values; accepts optional `argument_sequence` and `global_vars`.
+- `codegen(name_expr, language)` — top-level convenience function; delegates to `make_routine` internally.
 
 ### [`lambdify.py`](lambdify.py)
 Transforms SymPy expressions into interpreted Python lambda functions using math/numpy/mpmath backends (no compilation, no argument-count limits).

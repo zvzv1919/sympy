@@ -255,6 +255,7 @@ Low-level arithmetic on raw nested lists (list-of-lists representation, not matr
 
 ### [`densetools.py`](densetools.py)
 Low-level matrix utilities on list-of-lists: `trace`, `transpose`, `conjugate`, `conjugate_row` (element-wise conjugation with AttributeError fallback for entries lacking `.conjugate()`), `conjugate_transpose`, `eye`, `augment`, `rowadd`, `rowmul`.
+- `row(matlist, i)`: returns ith row of a nested list. `col(matlist, i)`: returns ith column — transposes the entire structure via `zip` to extract one column (explicitly documented as expensive).
 
 ### [`sparsetools.py`](sparsetools.py)
 Sparse format conversion utilities: `_doktocsr` (DOK→CSR), `_csrtodok` (CSR→DOK).
