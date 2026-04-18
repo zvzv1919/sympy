@@ -49,7 +49,8 @@ Unevaluated and evaluated finite/infinite summations.
   - `_eval_derivative`, `_eval_difference_delta`, `_eval_simplify`.
 - `summation(f, *symbols)` — convenience wrapper that calls `Sum(...).doit()`.
 - `eval_sum(f, limits)` — main evaluation dispatcher; handles Piecewise summands (folds when conditions are index-independent, bails out for index-dependent conditions with symbolic/large ranges), KroneckerDelta, finite direct, symbolic, and hypergeometric paths.
-- `telescopic(L, R, limits)` / `telescopic_direct` — telescopic summation.
+- `telescopic(L, R, limits)` — detect telescoping (collapsing/canceling) sums via pattern matching; matches `L(i+k)` against `-R` to find shift `k`, validates shift is integer and cancellation holds, falls back to `solve` if match fails.
+- `telescopic_direct(L, R, n, limits)` — directly sum boundary terms of a confirmed telescoping sum.
 - `_eval_sum_hyper` / `eval_sum_hyper` — hypergeometric series evaluation.
 
 ### [`products.py`](products.py)

@@ -69,7 +69,7 @@ All concrete numeric types and their arithmetic operations.
   - `Infinity.__add__`/`__sub__`/`__mul__` — arithmetic operators; when operand is Float, returns `Float('inf')`/`Float('-inf')` (preserving float type) except Float zero × infinity → NaN; when operand is exact zero (S.Zero), also returns NaN; when operand is non-Float Number, returns symbolic `S.Infinity`/`S.NegativeInfinity`
   - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN; complex (non-real) numeric exponent: extracts real part — positive real part → ComplexInfinity, negative → 0, zero → NaN
   - `NegativeInfinity.__add__`/`__sub__`/`__mul__`/`__div__` — same float-vs-symbolic branching as Infinity; Float operands yield Float results, exact operands yield symbolic singletons; zero × -oo → NaN for both exact and Float zero
-  - `NegativeInfinity._eval_power` — checks exponent odd/even parity to decide result sign
+  - `NegativeInfinity._eval_power` — integer exponents: odd → -oo, even → oo; non-integer numeric exponents: decomposes as `(-1)**expt * oo**expt` instead of returning a direct result
   - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
 - `NaN` — indeterminate placeholder; structurally equal to itself (`__eq__`) but mathematically unequal to everything (`_eval_Eq` returns false)
@@ -168,6 +168,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - Distinct from `Add.as_coeff_add(*deps)` which partitions an Add's own args by symbol dependency or extracts leading numeric coefficient
   - `as_Add` hint forces Add or Mul mode; when forced mode mismatches actual type (e.g., Add forced as Mul), returns `(identity, self)` (1 for Mul, 0 for Add)
   - For Mul, non-commutative factors after the first dependent one are all grouped as dependent
+- `equals(other, failing_expression)` — determines symbolic equality when `simplify(self - other)` fails to produce zero; multi-stage: numerical probing, surd self-consistency, then minimal polynomial of the difference (if `mp.is_Symbol`, difference is zero → True; otherwise False)
 - `extract_multiplicatively(c)` / `extract_additively(c)` — returns self/c (or self-c) if operation moves value toward zero, else None
   - Numeric `extract_additively`: requires diff has same sign as self AND smaller magnitude (overshooting zero returns None)
   - Add `extract_multiplicatively`: requires all terms individually divisible
@@ -209,7 +210,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 
 - `_eval_evalf(prec)` — numerical evaluation for Add/Mul; splits into numeric-independent and dependent parts; guards against infinite recursion when the independent part is itself an AssocOp Function
 - `_matches_commutative` — pattern matching for Add/Mul; after removing exact (non-wild) parts, rejects match if inverse-combined expression has more ops than original (count_ops guard)
-  - On first-pass failure, decomposes to retry: Mul rewrites `x**n` as `x * x**(n-1)`; Add rewrites `c*x` as `x + (c-1)*x`; also tries `collect` on non-Wild symbols
+  - On first-pass failure, decomposes to retry: Mul rewrites `x**n` (integer n) as `x * x**(n-1)` for positive n, or `1/x * x**(n+1)` for negative n; Add rewrites `c*x` as `x + (c-1)*x`; also tries `collect` on non-Wild symbols
 
 ---
 
@@ -272,7 +273,10 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ## Containers and Utilities
 
 ### [`containers.py`](containers.py)
-`Tuple` — SymPy-aware immutable tuple; `Dict` — SymPy-aware immutable dictionary.
+`Tuple` — SymPy-aware immutable tuple wrapping `Basic`; `Dict` — SymPy-aware immutable dictionary.
+
+- `Tuple.tuple_count(value)` — counts occurrences of value; named `tuple_count` (not `count`) because `Basic.count` already defines expression-tree traversal counting, which would conflict
+- `Tuple.index(value)` — returns first index of value; custom implementation handles None start/stop arguments that Python's built-in tuple.index rejects
 
 ### [`rules.py`](rules.py)
 `Transform` — immutable callable mapping (key→value with optional filter predicate).

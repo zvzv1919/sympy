@@ -7,6 +7,7 @@ Core symbolic integration engine and public API.
 - `Integral` — unevaluated integral expression with limits; supports `.doit()` evaluation
 - `Integral.doit` — evaluates the integral using a strategy cascade over each limit set:
   - For definite integrals with infinite bounds, tries Meijer G via `meijerint_definite`; handles `conds` parameter for convergence conditions
+  - When `meijerg=True` is explicitly set and the definite G-function attempt fails for infinite-bound integrals, gives up entirely (no fallback to other methods) to avoid nonsensical results from the indefinite Meijer G path
   - Raises `ValueError` when `conds='separate'` is used with multiple integration limits (multi-dimensional integrals)
   - Falls back to `_eval_integral` for antiderivative + interval evaluation
 - `Integral._eval_integral` — strategy cascade for antiderivative computation:
@@ -122,6 +123,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 Heuristic (parallel) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert).
 - `heurisch(f, x)` — main heuristic integrator; builds candidate antiderivative from undetermined coefficients over a monomial basis
   - Substitutes subexpressions with placeholder symbols; tries all permutations of the substitution ordering until the result is rational in placeholders
+  - Two-phase coefficient domain strategy: first solves the undetermined-coefficients system over the rationals ('Q'); if that fails, retries without a field restriction (general domain)
+  - If both domain attempts fail, recursively retries with decremented retry count and different variable permutations
   - If no permutation yields a rational function, falls back to rewriting the integrand in terms of tan/tanh and retries
   - `_exponent` helper computes upper degree bound for the polynomial ansatz; handles fractional rational powers specially (p/q with q≠1 yields p+q−1 or |p+q|)
   - `_splitter` recursively decomposes polynomials via derivation and GCD for denominator factoring

@@ -19,6 +19,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Dot / element-wise products**: `dot` (relaxed-dimension inner product — auto-transposes when row/column counts match the length of b; returns scalar for vectors, list otherwise), `multiply_elementwise`, `cross`.
 - **Row reduction / spaces**: `rref`, `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
+- `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
 - **Diagonalization**: `is_diagonalizable`, `diagonalize`, `jordan_form`, `jordan_cells`.
 - **Decompositions**: `cholesky`, `LDLdecomposition`, `QRdecomposition` (orthogonal-triangular via Gram-Schmidt; validates column rank via rref before factoring), `LUdecomposition`.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot.
@@ -56,7 +57,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 - `_force_mutable(x)`: operand coercion helper used by all mutable arithmetic operators; converts matrices to mutable, sympifies 0-d numpy arrays (scalars), wraps other array-like objects as `Matrix`.
 - `matrix_multiply_elementwise(A, B)`: concrete Hadamard (element-wise) product; raises `ShapeError` on dimension mismatch.
 - **NumPy conversion utilities**: `matrix2numpy(m, dtype)` — converts a SymPy matrix to a NumPy array element-by-element; `list2numpy(l, dtype)` — converts a Python list of expressions to a NumPy array; `symarray(prefix, shape)` — creates a NumPy object array of named symbols.
-- Factory methods: `zeros`, `eye`, `ones`, `rot_axis1`, `rot_axis2`, `rot_axis3`.
+- Factory functions: `zeros` (all-zero matrix), `eye` (identity), `ones` (all entries = `S.One`; omitting `c` returns square), `rot_axis1`, `rot_axis2`, `rot_axis3`.
 - `hessian(f, varlist, constraints=[])`: (bordered) Hessian of `f` wrt `varlist`; optionally bordered by constraint gradients.
   - `varlist` accepts a sequence or row/column matrix (columns transposed; non-vector matrices raise `ShapeError`). Validates differentiability.
 - `diag(*values)`: builds a concrete block-diagonal matrix from a mix of scalars, plain lists, and existing Matrix objects; auto-converts lists to Matrix, accumulates total rows/cols from each block, places blocks along the diagonal of a sparse intermediate, then converts to the target class.

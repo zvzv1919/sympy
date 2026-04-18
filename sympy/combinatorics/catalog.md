@@ -44,7 +44,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - **Centralizer**: `centralizer` — finds the subgroup of elements commuting with a given permutation, list, or subgroup. Type-dispatches: wraps single permutation or list into a group before searching.
   - Stabilizers: `stabilizer`, `pointwise_stabilizer`.
   - Subgroup/normality: `is_subgroup`, `is_normal`, `normal_closure`, `commutator` (group-level: returns subgroup [G,H]), `derived_subgroup`, `derived_series`.
-  - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_alt_sym`, `is_trivial`.
+  - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_trivial`.
+  - `is_alt_sym(eps)` — one-sided Monte Carlo test for symmetric/alternating group; returns False immediately for degree < 8; samples random elements looking for prime-length cycles via `_check_cycles_alt_sym` in `util.py`.
   - `center` — subgroup of permutation group elements commuting with all group elements; computed via subgroup search.
   - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
@@ -148,6 +149,7 @@ Polyhedral symmetry groups (tetrahedron, cube/octahedron, dodecahedron/icosahedr
 ### [`tensor_can.py`](tensor_can.py)
 Tensor canonicalization using double-coset representatives.
 - `canonicalize`, `double_coset_can_rep`, `canonical_free`.
+- `transversal2coset(size, base, transversal)` — converts BSGS transversals to coset representation; fills identity for positions not in base, then trims trailing identity entries so the returned list may be shorter than `size`.
 - `get_symmetric_group_sgs`, `tensor_gens`, `perm_af_direct_product`, `dummy_sgs`.
 - `get_minimal_bsgs(base, gens)` — attempts to compute a lexicographically minimal BSGS via `schreier_sims_incremental`; returns `None` if the result is not minimal.
 - `_is_minimal_bsgs` — verifies a BSGS has the lexicographically smallest base by reconstructing the base from generators and comparing to the given one.

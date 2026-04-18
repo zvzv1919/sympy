@@ -14,6 +14,7 @@ Abstract base for coordinate-frame-dependent quantities (vectors and dyadics).
 Concrete vector classes built on `BasisDependent`.
 - `Vector` — superclass for 3-D vectors; `dot`, `cross`, `outer`, `magnitude`, `normalize`, `to_matrix` (vector → 3×1 column matrix of components), `separate`.
   - `dot` dispatches on operand type: Vector → scalar, Dyadic → Vector (left-multiplies vector into dyadic, contracting the first basis index), Del → returns a **callable** (directional derivative operator).
+  - The Del-dispatch closure converts scalar `0` to `Vector.zero` when the input field is a Vector, preventing type mismatches.
   - `cross` uses a custom inline 3×3 determinant because SymPy's `Matrix` cannot hold basis-dependent vector elements.
 - `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
@@ -24,6 +25,7 @@ Dyadic tensor classes built on `BasisDependent`.
 - `Dyadic` — superclass for dyadic tensors; `dot` (right-multiplies only: Dyadic·Vector→Vector, Dyadic·Dyadic→Dyadic), `cross`, `to_matrix`.
 - `BaseDyadic` — outer product of two base vectors.
 - `DyadicAdd`, `DyadicMul`, `DyadicZero` — sum, scalar product, and zero specializations.
+- `_dyad_div` — division dispatch helper; raises `TypeError` if both operands are dyadics or if dividing by a dyadic, otherwise returns `DyadicMul` with inverse scalar.
 
 ### [`scalar.py`](scalar.py)
 Coordinate variable symbols.

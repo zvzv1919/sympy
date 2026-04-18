@@ -75,7 +75,8 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_Add` — determines sign of each summand by checking if its printed string starts with `'-'`; strips leading `'-'` and rebuilds with `+`/`-` tokens; omits leading `+` for the first term.
 
 ### [`codeprinter.py`](codeprinter.py)
-`CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and formatting hooks.
+`CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and abstract formatting hooks.
+- `_format_code(lines)` and `indent_code(code)` are **abstract stubs** (`NotImplementedError`); actual formatting/indentation logic lives in language-specific subclasses (e.g., `julia.py`, `fcode.py`).
 - `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as flat 1D text `a*b/c` or `a*b/(c*d)` (no 2D fraction bars).
 
 ### [`ccode.py`](ccode.py)

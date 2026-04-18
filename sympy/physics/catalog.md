@@ -155,6 +155,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - Also: `flatten_scalar`, `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
   - `sho1d.py` — 1-D SHO operator algebra: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
+    - Each operator provides `_represent_NumberOp` for matrix representation in the number basis; supports sympy, numpy, and scipy.sparse formats. For scipy.sparse, sqrt entries are cast to float before insertion.
   - `pauli.py` — Pauli spin-½ operators as quantum Operator subclasses: SigmaX/Y/Z (components), SigmaPlus (raising), SigmaMinus (lowering); optional string labels for subsystem identification. Operators with different labels commute (commutator returns zero).
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
@@ -196,7 +197,8 @@ Classical mechanics: particles, rigid bodies, equations of motion.
   - Constraint initialization: partitions velocity-constraint Jacobian into independent/dependent columns; when acceleration constraints are not explicitly provided, auto-derives them by time-differentiating the velocity constraints.
   - Computes generalized active forces (fr) and generalized inertia forces (fr*). When dependent speeds are present, projects the full force vector onto independent speeds using a constraint transformation matrix.
   - `to_linearizer()` — converts Kane's EOM into `Linearizer` form; validates that kinematic/constraint coefficient matrices contain no unexpected dynamic symbols, raises ValueError if time-dependent symbols appear outside the forcing vector.
-  - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise). Legacy `_old_linearize` (deprecated) computes Jacobians in-place.
+  - Body list must contain only `RigidBody` or `Particle` (raises TypeError otherwise).
+  - Legacy `_old_linearize` (deprecated) — in-place linearization via manual chain-rule Jacobian decomposition; branches into four cases based on presence of holonomic (position-level) and non-holonomic (velocity-level) constraints, computing dqd/dqi and dud/dui via LU-solving constraint Jacobians.
 - `lagrange.py` — `LagrangesMethod`: generates equations of motion via Lagrange's method (EOM formulation, not energy computation).
   - `mass_matrix` — dynamic mass matrix, augmented with Lagrange multiplier coefficients when constraints exist (n×(n+m)).
   - `mass_matrix_full` — full block-structured coefficient matrix: identity block (kinematic qdot relations) on top, mass_matrix row in middle, differentiated constraint rows on bottom when constraints present.

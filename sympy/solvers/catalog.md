@@ -61,7 +61,9 @@ Modern set-based solver with explicit domain handling. Returns FiniteSet, Interv
 - `invert_real` / `invert_complex` — domain-specific inversion helpers.
   - `_invert_complex` exp handling: maps each target value to an ImageSet over Integers (adding 2nπi branches); requires `g_ys` to be a FiniteSet.
   - Caveat: silently returns the expression unchanged for infinite target sets (Integers, Union, etc.) — exp inversion only proceeds for finite discrete inputs.
-- `_solve_as_poly`, `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
+- `_solve_as_poly(f, symbol, domain)` — solves via polynomial techniques (roots, Poly.all_roots); falls back to ConditionSet when root count is incomplete.
+  - Post-processing: simplifies complex solutions via `expand_complex` (e.g. `-sqrt(-I)` → `sqrt(2)/2 - sqrt(2)*I/2`) only when all solutions are fully numeric (no free symbols) and none are `RootOf` objects; skips simplification otherwise to avoid complicating parametric/algebraic results.
+- `_solve_as_rational`, `_solve_trig` — type-specific internal solvers.
 - `_solveset(f, symbol, domain, _check=False)` — internal helper that dispatches to type-specific solvers and optionally validates results.
   - Product decomposition: decomposes `f*g == 0` into `Union(f==0, g==0)` only when all factors are verified finite for finite inputs (`_is_finite_with_finite_vars`); prevents spurious solutions where one factor diverges at zeros of another.
   - Post-solve validation (`_check=True`): for FiniteSet results, filters out invalid candidates via `domain_check`, but exempts `RootOf` (implicit algebraic root) objects from validation. ConditionSet results bypass checking entirely.
