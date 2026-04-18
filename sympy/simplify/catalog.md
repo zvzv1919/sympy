@@ -101,7 +101,9 @@ Main general-purpose simplification and miscellaneous simplification functions.
   - For non-arithmetic functions (not Add/Mul/Pow/Exp) with an `inverse` attribute: detects and unwraps inverse-function compositions (e.g. f(f⁻¹(x)) → x) before recursing into args.
 - `signsimp(expr, evaluate)` — canonicalize sign of Add sub-expressions (e.g., y−x → −(x−y)).
   - Uses double-negation on Mul atoms to detect non-canonical signs; `evaluate` controls whether no-op transforms are kept.
-- `separatevars(expr, symbols, dict, force)` — factor expression into product of single-variable terms.
+- `separatevars(expr, symbols, dict, force)` — decompose expression into product of single-variable factors.
+  - For Mul: groups factors by their free symbols; each group becomes one single-variable factor.
+  - For Add (sums): falls back to `factor()` to attempt factoring into separable product; returns expr unchanged if factoring fails.
   - `dict=True` delegates to `_separatevars_dict`: returns a dict mapping each symbol to its factor plus a `'coeff'` key; returns `{'coeff': expr}` if symbols is None, None if unseparable.
 - `posify(eq)` — replace symbols with positive dummies for assumption-sensitive simplification.
 - `logcombine(expr, force)` — merge additive log terms: log(x)+log(y)→log(x·y) when args positive; a·log(x)→log(x^a) when a is real and x positive.

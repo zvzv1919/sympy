@@ -130,7 +130,7 @@ Solves inequality constraints and returns interval-based solutions.
 Solves zero-dimensional (fully determined) systems of polynomial equations via Groebner bases. Does not handle underdetermined subset enumeration — that logic lives in `_solve_system` in `solvers.py`.
 
 - `solve_poly_system(seq, *gens)` — general polynomial system solver; requires #equations ≥ #variables for a finite solution set.
-- `solve_biquadratic(f, g, opt)` — two bivariate quadratic equations via Groebner basis. Raises `SolveFailed` if the basis has more than 2 elements (caller falls back to `solve_generic`).
+- `solve_biquadratic(f, g, opt)` — two bivariate quadratic equations via Groebner basis. Returns None if the basis is a single constant (inconsistent system, no solutions). Raises `SolveFailed` if the basis has more than 2 elements (caller falls back to `solve_generic`).
 - `solve_generic(polys, opt)` — zero-dimensional systems via Groebner basis elimination.
 - `solve_triangulated(polys, *gens)` — Gianni-Kalkbrenner triangulation algorithm.
 

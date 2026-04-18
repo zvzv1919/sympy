@@ -22,7 +22,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `dot`: relaxed-dimension concrete inner product; accepts lists/sequences or Matrix.
   - Dimension fallback cascade: cols==b.rows→standard multiply, cols==b.cols→transposes b, rows==b.rows→transposes self.
   - Returns scalar for vectors, list for rectangular matrices.
-- **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
+- **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches downward for non-zero pivots, swaps rows, scales, and eliminates; skips to next column when all entries below current pivot row are zero; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals` (converts Float entries to Rationals before root-finding for numerical stability; returns empty dict for zero-dimension matrices), `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
 - **Diagonalization**: `is_diagonalizable(reals_only=False)` (checks eigenvector multiplicities match algebraic multiplicities; `reals_only=True` rejects non-real eigenvalues), `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.

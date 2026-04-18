@@ -34,6 +34,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
     - `__add__(g)` / `__sub__(g)` — when `g` is not a DMP, first tries `dom.convert(g)` to create a ground polynomial; **if that fails (`CoercionFailed`/`NotImplementedError`) and `f.ring` is set, retries via `f.ring.convert(g)`**; returns `NotImplemented` if both paths fail.
+    - `__mul__(g)` — if `g` is a DMP, delegates to `mul(g)`; **otherwise tries `mul_ground(g)` first (not ground conversion like add/sub)**; on `CoercionFailed`/`NotImplementedError`, falls back to `f.ring.convert(g)` then full `mul`; returns `NotImplemented` if all paths fail.
     - `__div__(g)` — if `g` is a DMP, delegates to `exquo`; otherwise tries `mul_ground(g)`; **on `CoercionFailed`/`NotImplementedError`, falls back to `f.ring.convert(g)` then `exquo`** if ring is set; returns `NotImplemented` if all paths fail.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
     - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
@@ -170,6 +171,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `_eval_subs(old, new)` — internal substitution: if `old` is a generator, evaluates at `new` when numeric.
     - **For non-numeric `new`, tries `replace(old, new)`; silently falls back to `as_expr().subs(old, new)` on `PolynomialError`**.
     - Also falls back to expression-level subs when `old` is not a generator.
+  - `_gen_to_level(gen)` — resolve generator to internal nesting level; accepts integer index (supports **Python-style negative indexing**, e.g. -1 for last generator) or symbolic variable; **raises `PolynomialError` if integer index is out of range**.
   - `homogenize(s)` — make polynomial homogeneous using symbol `s`; **if `s` is already a generator, reuses its index; if new, appends it to generators**. Raises `TypeError` if `s` is not a `Symbol`.
   - `is_univariate`, `is_multivariate` — determined purely by **number of declared generators** (`len(gens)`), not by which symbols actually appear in the expression; e.g. `Poly(x**2, x, y).is_multivariate` returns `True`.
   - `homogeneous_order()` — return the total degree if all terms share the same degree; `is_homogeneous` for a boolean check.
@@ -194,7 +196,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - Factorization: `factor_list`, `sqf_list`, `sqf_list_include`, `sqf_part`.
     - `factor_list` (via `_generic_factor_list`): **when input is a rational expression (nontrivial denominator) and `frac=True`, returns `(coeff, numer_factors, denom_factors)` 3-tuple; when `frac=False` (default), silently drops denominator factors** and returns only `(coeff, numer_factors)`.
     - `sqf_list` returns `(coeff, [(factor, mult), ...])` with leading coefficient separated; **`coeff` is converted from internal domain to SymPy via `dom.to_sympy`**, unlike similar list methods (e.g. `gff_list`) which return raw `Poly` wrappers only. `sqf_list_include` folds the coefficient into the factor tuples.
-- `to_rational_coeffs(f)` — transform polynomial with irrational (square-root) coefficients to rational coefficients.
+- `to_rational_coeffs(f)` — transform polynomial with irrational coefficients to rational coefficients; **only applies to polynomials whose irrational coefficients involve exclusively square roots; returns `None` immediately if any coefficient contains a root of order > 2** (e.g. cube roots).
   - **Tries rescaling `x → α·x` first, then translation `x → x + β`**; returns `(lc, alpha, None, g)` or `(None, None, beta, g)`.
 - `terms_gcd(f)` (free function) — extract monomial GCD from expression.
   - **If coefficient domain lacks a Ring (`not domain.has_Ring`), skips coefficient extraction and defaults coefficient to `S.One`**.
@@ -502,6 +504,7 @@ Symbolic root representations and root-sum evaluation.
 - `CRootOf` (alias `ComplexRootOf`) — indexed algebraic root of an irreducible polynomial.
   - `free_symbols` — **always returns empty set**, even when internal `poly` attribute is a `Poly` (not `PurePoly`), since `CRootOf` only represents univariate roots.
   - `__new__(f, x, index)` — constructor; **negative index is normalized by adding the polynomial degree**; raises `IndexError` if out of range.
+  - `_new(poly, index)` — raw classmethod constructor; converts poly to `PurePoly` and **attempts to copy real/complex root isolation caches from original poly key to PurePoly key; silently catches `KeyError` if caches are missing**, returning the object without cached intervals.
     - **If coefficient domain is not exact (e.g. RR), converts to exact domain before proceeding**; after preprocessing, **raises `NotImplementedError` if domain is not ZZ** (sorted roots only supported over integers).
     - When second positional arg is an integer and no explicit `index` kwarg, **reinterprets it as root index** (not generator).
   - `_real_roots`, `_all_roots`, `_roots_radical` — root enumeration.
@@ -517,6 +520,9 @@ Symbolic root representations and root-sum evaluation.
   - `real_roots(poly)`, `all_roots(poly)` — class methods for root lists.
 - `bisect(f, a, b, tol)` — standalone interval-halving root-finder used by `CRootOf.eval_rational()`; **returns `c` immediately if `f(c) == 0` at the midpoint** (exact root found); raises `ValueError` if `f(a)` and `f(b)` have the same sign.
 - `RootSum` — represents ∑ f(rᵢ) over all roots rᵢ of a polynomial.
+  - `__new__(expr, func, x)` — constructor; separates additive and multiplicative constants from the mapping that are independent of the summation variable before dispatching.
+    - **If mapping expression has no dependence on the variable, returns `degree * expression`** without constructing a RootSum.
+    - Factors the polynomial; dispatches linear factors to direct evaluation, optional quadratic to `roots_quadratic`, and higher-degree to `_rational_case` (if rational) or raw `_new`.
   - `_rational_case(poly, func)` — **evaluates sum of a rational function over all roots using Viète's formulas and symmetric function decomposition**.
     Avoids computing roots explicitly by introducing formal root symbols, symmetrizing, then substituting Viète relations.
   - `_is_func_rational` — checks if the lambda is a rational function.

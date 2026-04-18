@@ -107,6 +107,7 @@ All concrete numeric types and their arithmetic operations.
 - `as_numer_denom()` — converts sum to (numerator, denominator) form; collects per-term numerators/denominators; special-cases zero-denominator terms (infinity) by moving them into the numerator under denominator 1
 - `primitive()` — extracts rational GCD of leading coefficients; returns `(R, self/R)`; special-cases `ComplexInfinity` terms by skipping zero-denominator entries in GCD/LCM computation
 - `as_content_primitive(radical, clear)` — recursive content extraction; when `radical=True`, factors out common nth-root-of-integer components shared across all terms (finds GCD of integer bases per shared exponent denominator); when `clear=False`, avoids distributing denominators unless doing so yields integer coefficients in the result
+- `_eval_as_leading_term(x)` — computes dominant term of a sum; when individual leading terms combine to NaN, recovers by reconstructing from infinite terms; when result is zero but unsimplified form is non-zero, recurses on the remainder after subtracting leading-order terms
 - Assumption handlers: `_eval_is_real`, `_eval_is_complex`, `_eval_is_integer`, `_eval_is_rational`, `_eval_is_finite`, etc. — fuzzy-group over all args
 - `_eval_subs(old, new)` — Add-specific substitution; handles replacing sub-sums and negated sub-sums within a larger sum (e.g., `(a+b+c+d).subs(-b-c, x)` → `a-x+d`); uses set-subset matching on term args after coefficient separation
 - `_eval_is_imaginary` — classifies each term as real-nonzero, imaginary, or "becomes real when multiplied by I"; returns True only if all real parts cancel to zero and imaginary parts are nonzero
@@ -115,7 +116,8 @@ All concrete numeric types and their arithmetic operations.
 ### [`mul.py`](mul.py)
 `Mul` class — commutative n-ary product. `flatten()` collects powers, coefficients, and separates commutative/non-commutative factors.
 - `flatten()` canonicalizes negative numeric bases with non-integer rational exponents by extracting the sign into a running `(-1)**e` accumulator and storing the positive base separately for later combination
-- `flatten()` merges adjacent non-commutative powers with same base (a^e1 * a^e2 → a^(e1+e2)) only when the combined exponent is not an Add; this allows integer merging (a^2*a^3→a^5) but prohibits symbolic (a^x*a^y stays separate)
+- `flatten()` merges adjacent non-commutative powers with same base (a^e1 * a^e2 → a^(e1+e2)) only when the combined exponent is not an Add; if the combined power turns out commutative, it is moved back to the commutative processing sequence
+- `flatten()` handles accumulated `(-1)**e` exponent: integer part toggles coefficient sign, denominator-2 remainder extracts `I`; other fractional remainders are absorbed into an existing rational-exponent term with matching denominator by negating its base, or left as unevaluated `(-1)**(p/q)`
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
@@ -284,7 +286,7 @@ Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lamb
 - `Derivative.__new__` — when no differentiation variables supplied, auto-detects from `expr.free_symbols`; raises `ValueError` if expression has zero or more than one free variable; returns `S.Zero` for numeric expressions
 - `Derivative._sort_variables` — sorts differentiation variables into canonical order; sorts symbols among themselves and non-symbols among themselves, but preserves boundaries between groups (symbol/non-symbol derivatives don't commute)
 - `Derivative._eval_subs` — substitution on derivatives; if old is a Derivative of the same expr with a subset of differentiation variables (lower-order), returns `Derivative(new, *remaining_vars)`; if variable being replaced is not diff-compatible, wraps in `Subs`
-- `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; disallows diff w.r.t. products like `x*y`
+- `Derivative` uses structural-substitution semantics for diff w.r.t. composed expressions (e.g., `f(x)`): replaces expression with placeholder, differentiates, substitutes back; if the intermediate result is itself an unevaluated derivative (not fully resolved), wraps in `Subs` instead of plain substitution; disallows diff w.r.t. products like `x*y`
 - `Subs.__new__` — validates substitution variables are distinct (raises ValueError for duplicates); checks variable/point list length match
   - Generates underscore-prefixed placeholder symbols for variable-independent form; loops to add more underscores when placeholders clash with free symbols mapped to different point values
 - `Subs._eval_subs` — guards bound variables: if the substitution target is one of the Subs' bound placeholder variables, returns self unchanged
@@ -321,6 +323,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`sympify.py`](sympify.py)
 `sympify()` — converts Python objects to SymPy types. `converter` dict maps types to handlers. `SympifyError` for failures.
 
+- `_sympify(a)` — strict internal conversion used by arithmetic dunder methods (`__add__`, `__eq__`, etc.); calls `sympify(a, strict=True)`, which rejects strings and other non-numeric Python types with `SympifyError` (surfaced as `TypeError` by operator wrappers)
 - `CantSympify` — mixin trait; classes inheriting this are blocked from sympification even if their base type (e.g., `dict`) would normally be convertible
 
 ---
@@ -331,6 +334,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic relational expression nodes (unevaluated comparison objects). `Relational` base dispatches by operator string.
 
 - `_Inequality` — internal base class for all `*Than` inequalities; `__new__` calls `_eval_relation(lhs, rhs)` — if result is not None, returns it; if None, falls through to create a non-evaluated `Relational` node
+  - Recursion prevention: `Expr.__ge__`/`__lt__`/etc. may delegate back to `_Inequality.__new__`; callers must pass `evaluate=False` to break the cycle
 - `_Greater` / `_Less` — internal base classes providing `.gts` (greater-than side) and `.lts` (less-than side) properties; `_Greater` maps gts→arg[0], lts→arg[1]; `_Less` swaps them (gts→arg[1], lts→arg[0])
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 - `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis

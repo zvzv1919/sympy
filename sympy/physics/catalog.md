@@ -94,9 +94,11 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `DifferentialOperator` (d/dx applied to wavefunctions): applies to Wavefunction by substituting the placeholder function with the wavefunction's expression, then preserving the original coordinate bounds (args[1:]) in the resulting Wavefunction.
   - `qexpr.py` — `QExpr._eval_adjoint`: if parent Expr adjoint returns None, wraps in Dagger; then propagates `hilbert_space` onto the result if it is a QExpr instance. `_qsympify_sequence` normalizes constructor args: strings → Symbol (prevents 'pi' becoming a numeric constant), sequences → recursive Tuple, Matrix passthrough, else sympify.
   - `represent.py` — `represent(expr, basis)`: converts quantum expressions to matrix form. Fallback chain: if `_represent()` raises NotImplementedError, tries `rep_innerproduct` for Ket/Bra or `rep_expectation` for Operator; re-raises if fallback also fails.
+    - `get_basis(expr, **options)` — resolves representation basis: if basis option is a StateBase instance, returns it directly; if an Operator (instance or class), maps via `operators_to_state` and instantiates via `_make_default` if result is a class rather than instance. When no basis given: Ket → default of own class, Bra → default of `dual_class()`, Operator → operator-to-state mapping.
     - `enumerate_states(state, ...)` — generates indexed copies of an abstract vector (Ket/Bra) given a list of indices or a start index + count; delegates to `state._enumerate_state()`; returns empty list if the state raises NotImplementedError.
     - `_sympy_to_scalar` — converts SymPy scalar expressions to native Python types (int/float/complex) for numpy/scipy compatibility; handles Integer, Float, Rational, Number, NumberSymbol, and imaginary unit I (→ complex). Raises TypeError for non-numeric expressions.
   - `state.py` — Ket/Bra/Wavefunction with multiplication dispatch on both sides: `KetBase.__mul__` (Ket*Bra → OuterProduct, else Expr.__mul__), `BraBase.__mul__` (Bra*Ket → InnerProduct, else Expr.__mul__), `BraBase.__rmul__` (Ket*Bra → OuterProduct, non-ket*Bra falls back to Expr.__rmul__).
+    - `StateBase` — abstract base for all quantum states; `dual` property constructs the conjugate-class counterpart (via `dual_class()`) with same Hilbert space and args. `_eval_adjoint` delegates to `dual`, so the Hermitian conjugate of a ket is its bra and vice versa.
     - `Wavefunction` — continuous-basis representation (Function subclass). Constructor converts Python tuples to Tuple objects before parent call to avoid type-check errors.
     - `Wavefunction.norm` — L2 norm: integrates |expr|² over each coordinate variable within its bounds, returns sqrt of result. `is_normalized` compares norm to 1.0.
     - `Wavefunction.normalize()` — returns a rescaled Wavefunction with unit norm; raises NotImplementedError if norm is infinite (non-normalizable function).
@@ -279,6 +281,7 @@ High-energy physics.
   - `_trace_single_line` — evaluates fermion-line traces; returns hardcoded 4 (D=4 only) when the line contains only a spinor identity (delta) and no gamma matrices.
   - `_gamma_trace1` — computes trace of gamma-matrix products; returns 4 for empty trace (identity).
   - `_kahane_simplify` — cancels contracted (dummy-index) gamma matrices using Kahane's algorithm; inserts virtual indices to handle consecutive dummy indices with no free indices between them.
+    - Validates component ordering: raises ValueError if contracted gamma matrices are not adjacent (component position distance must be 1 or n−1). Also validates spinor-index free pairs (must be exactly 0 or 2 with correct slot positions).
 
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).

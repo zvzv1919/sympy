@@ -31,7 +31,9 @@ Step-by-step integration emulating by-hand techniques (substitution, parts, trig
 - `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
 - Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); pattern-matching dispatchers that classify the integrand and select a handler — substitution strategies and piecewise edge cases for sin^n·cos^m live in `trigonometry.py`
 - `eval_trigsubstitution` — back-converts trig substitution results from angle parameter to original variable using triangle-side geometry (opposite/adjacent/hypotenuse ratios derived from the substitution relation)
-- Rule infrastructure: `Rule()` factory, `@evaluates` decorator, `trig_rewriter`, substitution/parts strategies
+- `alternatives(*rules)` — strategy combinator: collects results from multiple rules, filters out `DontKnowRule`; prefers "doable" results (no unsolvable sub-steps), but if all contain `DontKnowRule`, falls back to returning all of them bundled as `AlternativeRule` rather than discarding
+- `multiplexer(conditions)` — dispatches to the first rule whose condition matches
+- Rule infrastructure: `Rule()` factory, `@evaluates` decorator, `trig_rewriter`, `DontKnowRule`, `contains_dont_know`, substitution/parts strategies
 
 ### [`trigonometry.py`](trigonometry.py)
 Integration of pure sin^n(x)·cos^m(x) products only (no tan/sec/cot/csc).
@@ -214,6 +216,7 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - Pre-processes product-form integrands by filtering out `exp(a*x)` and `base^(a*x)` factors, accumulating their exponents into a cumulative shift applied to the final result
   - When coefficient extraction from a power exponent fails (`_CoeffExpValueError`), treats the factor as non-exponential (keeps it in the integrand unchanged)
 - `_rewrite_saxena(fac, po, g1, g2, x)` — normalizes a product of two G-functions with different rational powers of x in their arguments so both become linear in x; harmonizes exponents via LCM-based inflation, flips negative exponents, applies principal branch, and absorbs the polynomial factor into one G-function
+- `_find_splitting_points(expr, x)` — recursively walks the expression tree, pattern-matches affine sub-expressions of the form p*x+q, and collects candidate constant shifts −q/p for linear variable substitution x→x+a
 - `_split_mul(f, x)` — decomposes multiplicative integrand into (constant_factor, x_power, remainder); retries with `expand_mul` if base doesn't initially split as coeff*x
 - `_condsimp` — simplifies boolean convergence conditions from G-function integration; applies pattern-based rewrite rules (e.g. Or(p<q, Eq(p,q))→p≤q); rewrites equalities involving `periodic_argument` with infinite period on non-polar args as positivity conditions (arg > 0)
 - `_has(res, *f)` — checks if a result contains unresolved target expressions; for Piecewise results, requires ALL branches to contain the target (not just any)

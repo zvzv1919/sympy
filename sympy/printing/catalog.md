@@ -151,7 +151,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `latex()` — top-level API function; accepts formatting options including `long_frac_ratio` (default 2) which sets the numerator-to-denominator width ratio threshold before wide fractions are broken apart into separate factors.
 - `__init__` — mode-dependent defaults: `mode='inline'` auto-enables `fold_short_frac` (compact `a/b` instead of `\frac{a}{b}` for simple fractions).
 - Configures `mul_symbol_latex` and `mul_symbol_latex_numbers` (numeric factors default to centered dot even when general symbol is a space).
-- `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`.
+- `_print_Add` — iterates ordered terms; when a term has a negative leading coefficient, emits ` - ` and negates the term to produce clean `a - b` instead of `a + -b`. Wraps terms in `\left(...\right)` when they are relational expressions (via `_needs_add_brackets`).
 - `_print_Mul` — renders products; uses two distinct separator settings: `mul_symbol_latex` between general factors and `mul_symbol_latex_numbers` between adjacent numeric factors (detected via regex on rendered terms). Renders fractions via `\frac{}{}` when a denominator is present.
 - `_needs_mul_brackets` — decides whether an expression needs parentheses inside a Mul; position-sensitive: container objects (Integral, Sum, Product, Piecewise) need brackets only when **not** the last factor.
 - `_print_Integral` — renders integration signs; uses compact `\iint`/`\iiint`/`\iiiint` for ≤4 bound-free variables, otherwise emits separate `\int` per limit with optional `\limits` in equation mode.

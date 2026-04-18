@@ -113,7 +113,7 @@ Parabolic entities defined by focus and directrix.
   - `intersection(o)` — type-dispatched: handles `Point`/`Point3D`, `LinearEntity`/`LinearEntity3D` (Line, Ray, Segment — both 2D and 3D), and `Plane`. For linear entities, solves parametrically then validates the solution point lies on the bounded entity; returns `[]` if a segment or ray doesn't extend far enough to reach the plane.
   - `projection_line(line)` — projects a 2D or 3D linear entity onto the plane; returns a `Point3D` (not a line) when the line is parallel to the plane's normal (both endpoints map to the same location).
   - `are_concurrent(*planes)` — static; tests whether multiple planes all share a single common line of intersection; deduplicates inputs, returns False for <2 planes.
-  - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) is coplanar with this plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test.
+  - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) lies in/is coplanar with this plane. Use this to check if a 3D line/ray/segment lies within a specific plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test that constructs its own plane.
   - `arbitrary_point(t)` — returns a parametric `Point3D` that traces a unit circle on the plane around `p1` as `t` varies from 0 to 2π; handles axis-aligned normals directly, general normals via projection and symbolic solve.
   - `random_point(seed)` — evaluates `arbitrary_point` at a random parameter value.
 
@@ -148,7 +148,7 @@ Standalone geometric utility functions.
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
-- `are_coplanar(*entities)` — standalone coplanarity test for mixed entity types (Points, Lines, Planes); uses set-based removal of collinear points.
+- `are_coplanar(*entities)` — standalone coplanarity test checking whether multiple independent entities all share a common plane; extracts defining points, constructs a plane, and verifies all points lie on it. Not for checking if an entity lies in a given `Plane` — use `Plane.is_coplanar(o)` for that.
   - Returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
 - `are_similar(e1, e2)` — convenience dispatcher for geometric similarity: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check. Contains no similarity logic itself; all algorithms live in each entity's `is_similar` method (e.g., `Triangle.is_similar`).
 - `centroid(*args)` — weighted center of mass for a homogeneous collection of Points (equal weight), Segments (weighted by length), or Polygons (weighted by area). Returns None for mixed types.
