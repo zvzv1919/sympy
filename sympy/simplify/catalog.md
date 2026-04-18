@@ -165,6 +165,8 @@ Simplifies combinatorial function expressions (factorials, binomials, gamma, Poc
 - `combsimp(expr)` — minimize number of combinatorial functions (factorials, binomials, gamma, Pochhammer).
   - For multiplicative expressions: splits non-commutative factors out, simplifies only the commutative part; returns expr unchanged if no commutative args.
   - Gamma simplification: applies reflection formula, recursive absorption of rational offsets, duplication theorem, and Gauss multiplication theorem.
+  - Factor absorption (level ≥ 2): absorbs prefactors into gamma arguments (e.g. x·gamma(x) → gamma(x+1), gamma(x)/(x−1) → gamma(x−1)).
+  - `find_fuzzy` heuristic: pre-filters candidate pairs by free-symbol sets (S) and functional-component sets (T); only attempts expensive `cancel(x/y)` when T matches and S sets intersect (or both are empty for purely numeric expressions).
   - Duplication theorem: cancels gamma(2s)/gamma(s) pairs, replacing with half-integer-shifted gamma plus power-of-two and √π factors.
   - Multiplication theorem: detects n gamma args forming an arithmetic progression with common difference 1/n, collapses the product into a single gamma with scaled argument (n·x).
 

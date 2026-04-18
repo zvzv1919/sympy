@@ -37,7 +37,7 @@ Orthogonal polynomial families. Base class `OrthogonalPolynomial`; each subclass
 - `jacobi` — Jacobi polynomials P_n^(a,b)(x).
 - `gegenbauer` — Gegenbauer (ultraspherical) polynomials C_n^a(x); `eval` handles special reductions (a=1/2→Legendre, a=1→Chebyshev U) and x=−1 branching.
 - `chebyshevt`, `chebyshevu` — Chebyshev polynomials of first and second kind; `chebyshevt_root`, `chebyshevu_root` for roots.
-- `legendre`, `assoc_legendre` — Legendre and associated Legendre polynomials P_n^m(x); `eval` converts negative order m to positive via factorial-ratio identity.
+- `legendre`, `assoc_legendre` — Legendre and associated Legendre polynomials P_n^m(x) (the polynomial component of spherical harmonics); `eval` converts negative order m to positive via (-1)^m · factorial(m+n)/factorial(n-m) identity.
 - `hermite` — Hermite polynomials H_n(x).
 - `laguerre`, `assoc_laguerre` — Laguerre and generalized Laguerre polynomials.
 
@@ -105,7 +105,7 @@ Mathieu functions — solutions to the Mathieu differential equation y'' + (a �
 
 #### [`special/spherical_harmonics.py`](special/spherical_harmonics.py)
 Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).
-- `Ynm` — Y_n^m(θ,φ), 4 args: (n, m, θ, φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity.
+- `Ynm` — Y_n^m(θ,φ), 4 args: (n, m, θ, φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity (phase factor, no factorials). Polynomial component P_n^m delegated to `assoc_legendre` in `special/polynomials.py`.
   - `fdiff` supports differentiation w.r.t. angular args θ (argindex 3) and φ (argindex 4); raises `ArgumentIndexError` for discrete parameters n (1) and m (2).
 
 #### [`special/bsplines.py`](special/bsplines.py)

@@ -37,7 +37,10 @@ Point representations in n-dimensional Euclidean space.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`, `scale(x, y, z, pt)`, `translate(x, y, z)`, `transform(matrix)`.
   - `scale(x, y, z, pt)` — multiplies each coordinate by the respective factor; when a reference point `pt` is given, translates to origin first, scales, then translates back.
   - `direction_cosine(point)` — divides displacement components by magnitude; no guard against zero magnitude (identical points → division by zero).
-  - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types); deduplicates inputs, raises `ValueError` if <3 distinct points or all are collinear. For mixed-entity coplanarity, use `util.are_coplanar`.
+  - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types).
+    - Deduplicates via `set()`, constructs a `Plane` from three non-collinear points, removes used points by `list.pop(index)`, checks remaining.
+    - Caveat: pops by index in a loop over `(0, 1, i)` without adjusting for index shifts after each pop.
+    - Raises `ValueError` if <3 distinct points or all are collinear.
   - `are_collinear(*points)` — static; delegates to `Point.is_collinear`.
 
 ## Lines & Segments
@@ -145,7 +148,8 @@ Standalone geometric utility functions.
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
-- `are_coplanar(*entities)` — standalone coplanarity test for 3D points/lines; returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
+- `are_coplanar(*entities)` — standalone coplanarity test for mixed entity types (Points, Lines, Planes); uses set-based removal of collinear points.
+  - Returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
 - `are_similar(e1, e2)` — convenience dispatcher for geometric similarity: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check. Contains no similarity logic itself; all algorithms live in each entity's `is_similar` method (e.g., `Triangle.is_similar`).
 - `centroid(*args)` — weighted center of mass for a homogeneous collection of Points (equal weight), Segments (weighted by length), or Polygons (weighted by area). Returns None for mixed types.
 - `idiff(eq, y, x, n=1)` — implicit differentiation: computes dy/dx (up to order `n`) assuming `eq == 0`.

@@ -26,7 +26,8 @@ Main plotting API and data series definitions for matplotlib-based 2D/3D plots.
 - `SurfaceBaseSeries` — base class for 3D surfaces; `get_color_array()` dispatches callable coloring by arity and `is_parametric` flag (uses parameter meshes vs coordinate meshes).
 - `SurfaceOver2DRangeSeries` — 3D surface from one expression over two variables; `get_meshes()` builds x/y meshgrid and lambdifies the expression.
 - `ParametricSurfaceSeries` — 3D parametric surface from three coordinate expressions (x, y, z) over two parameters (u, v); `get_meshes()` lambdifies each expression separately and evaluates on parameter meshgrid to produce numerical coordinate grids.
-- `Line2DBaseSeries`, `Line3DBaseSeries` — base classes for line series with common range/label logic.
+- `Line2DBaseSeries` — base class for 2D line series; defines `get_segments()` which converts raw point arrays into pairwise consecutive coordinate segments (shape [N-1, 2, dim]) for renderer consumption. Supports `steps=True` staircase mode: interleaves/offsets x and y arrays to produce step-function segments before pairing.
+- `Line3DBaseSeries` — base class for 3D line series; inherits `get_segments()` from `Line2DBaseSeries` with `_dim=3`.
 - `_matplotlib_list(interval_list)` — converts bounding rectangular intervals to x/y coordinate lists for matplotlib `fill()`; returns lists of four `None`s when input is empty (workaround because matplotlib rejects empty lists for `fill`).
 - `MatplotlibBackend` — renders all series types via `process_series()`: dispatches 2D/3D lines, surfaces, contours, and implicit plots.
   - `__init__` — enforces dimensional consistency: raises `ValueError` if series mix 2D and 3D data (all series must be uniformly 2D or 3D).
@@ -145,7 +146,8 @@ Bounded interval representation for pyglet variable ranges (discretized sample p
 Curve rendering for 1D pyglet plots.
 
 - `PlotCurve` — OpenGL vertex computation and caching for pyglet wireframe curve drawing (no argument parsing or series construction).
-  - `_on_calculate_verts()` / `_on_calculate_cverts()` — concrete callbacks invoked by `PlotModeBase._calculate_verts`/`_calculate_cverts` (thread coordination lives in base class, not here).
+  - `_on_calculate_verts()` — evaluates parametric positions along the curve parameter range; catches `ZeroDivisionError`/`NameError` during evaluation and stores `None` for undefined points. Thread coordination lives in base class.
+  - `_on_calculate_cverts()` — computes per-vertex colors via `ColorScheme.apply_to_curve`.
   - `draw_verts(use_cverts)` — emits OpenGL `GL_LINE_STRIP` segments; breaks the strip at `None` vertices to create visual discontinuities at undefined points.
 
 ### `plot_surface.py`

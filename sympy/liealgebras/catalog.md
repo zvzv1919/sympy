@@ -35,6 +35,7 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 - `group_name()` — descriptive name and geometric interpretation.
 - `element_order(weylelt)` — order of a specific element given as a product of generators.
 - `matrix_form(weylelt)` — converts a product-of-reflections string into its reflection matrix representation per series (A, B/C, D, E, F, G).
+  - D-series: lower-index generators are row/column swaps; the highest-index generator uses a distinct matrix with −1 entries (reflects the branching node).
   - Exceptional types (G, F, E) use hardcoded per-generator matrices with Rational entries (e.g. G2 in 3D, F4 in 4D, E in 8D).
 - `coxeter_diagram()` — undirected Coxeter diagram.
 

@@ -69,7 +69,7 @@ All concrete numeric types and their arithmetic operations.
   - `as_content_primitive()` — returns `(|self|, sign)` for nonzero; returns `(1, self)` when self is zero
 - `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
-- `int_trace` — profiling decorator for `Integer.__new__`; optimistically increments hit counter before cache lookup, then on KeyError decrements hit and increments miss; registered via `atexit` to print stats
+- `int_trace` — profiling decorator for `Integer.__new__`; activated by environment variable `SYMPY_TRACE_INT=yes`; when inactive, returns the original function unwrapped; when active, wraps constructor to track `_intcache` hits/misses and registers `atexit` handler to print cache statistics
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
   - Overloaded arithmetic (`__add__`, `__mul__`, etc.) for efficiency; `__mul__` with Rational uses `igcd(self.p, other.q)` for GCD-based simplification; `__add__`/`__sub__` with Rational pass 1 (no GCD reduction) to Rational constructor
   - `_eval_power` — handles infinite exponents first: positive base >1 with `oo` → `oo`; negative base (not -1,0,1) with `oo` → `oo + I*oo`; `NegativeInfinity` delegates via `Rational(1,self)**oo`

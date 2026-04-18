@@ -85,6 +85,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_Mul` — splits factors into numerator/denominator lists; formats as `a*b/c` (single denominator, no parens) or `a*b/(c*d)` (multiple denominators wrapped in parentheses).
   - Uses `evaluate=False` for non-`-1` negative exponents when negating for the denominator; allows evaluation when exponent is exactly `-1` (negation yields 1, collapsing to base).
 - `_print_MatrixSlice` — renders matrix sub-range access as flat 1D `A[start:stop:step, ...]` text; simplifies by omitting unit step, collapsing single-element ranges, and dropping zero start index.
+- `_print_DMP` / `_print_DMF` — renders dense polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to raw `ClassName(rep, dom, ring)` format.
 
 ### [`codeprinter.py`](codeprinter.py)
 `CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and abstract formatting hooks.

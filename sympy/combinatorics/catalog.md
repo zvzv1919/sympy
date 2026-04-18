@@ -3,7 +3,7 @@
 ## Glossary
 
 - **BSGS**: Base and Strong Generating Set — a compact representation of a permutation group as a stabilizer chain, enabling efficient membership testing (sifting/stripping) and enumeration.
-- **Coset decomposition**: Factoring a group element via Schreier-Sims transversals; used for group-level ranking/unranking (`coset_rank`/`coset_unrank` in `perm_groups.py`).
+- **Coset decomposition**: Factoring a single group element via Schreier-Sims transversals; `coset_rank`/`coset_unrank`/`coset_factor` in `perm_groups.py` operate on individual elements. Bulk computation of all orbit/transversal data from a BSGS lives in `util.py`.
 - **Lexicographic rank/unrank**: Converting between a single permutation and its position in lex order; lives in `permutations.py` (`rank`, `unrank_lex`).
 - **Non-lex rank/unrank**: Linear-time ranking that does not enforce lexicographic order; also in `permutations.py` (`rank_nonlex`, `unrank_nonlex`).
 
@@ -40,7 +40,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - `schreier_sims_incremental` — deterministic BSGS construction: computes Schreier generators, sifts each through the chain via `_strip`/`_strip_af`, and handles failures — extends the base when a non-identity residual survives all levels, or adds a new strong generator at the level where sifting failed.
   - `schreier_sims_random` — randomized BSGS computation: orchestrates a sifting loop that samples random elements, decides when to extend the base sequence (new anchor points), and amends stabilizer chains/orbits when sifting fails. Uses `_strip` from `util.py` as a subroutine.
   - Properties: `base`, `strong_gens`, `basic_orbits`, `basic_transversals`, `basic_stabilizers`.
-  - **Coset-based ranking/unranking** (group-level, via Schreier-Sims): `coset_rank`, `coset_unrank`, `coset_factor`.
+  - **Coset-based ranking/unranking** (group-level, via Schreier-Sims): `coset_rank`, `coset_unrank`, `coset_factor` — these decompose/rank a single permutation element against the stabilizer chain; they do not compute bulk orbit or transversal data (see `util.py`).
     - `coset_unrank` returns `None` when rank is negative or ≥ group order.
   - **Subgroup search**: `subgroup_search` — depth-first search for all elements satisfying a boolean predicate, with tree-pruning tests and base-change strategy.
   - **Centralizer**: `centralizer` — finds the subgroup of elements commuting with a given permutation, list, or subgroup. Type-dispatches: wraps single permutation or list into a group before searching.
