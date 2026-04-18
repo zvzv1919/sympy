@@ -29,6 +29,7 @@ Step-by-step integration emulating by-hand techniques (substitution, parts, trig
 - `integral_steps(integrand, symbol)` — returns the rule tree describing the integration steps
 - `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
 - Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); pattern-matching dispatchers that classify the integrand and select a handler — substitution strategies and piecewise edge cases for sin^n·cos^m live in `trigonometry.py`
+- `eval_trigsubstitution` — back-converts trig substitution results from angle parameter to original variable using triangle-side geometry (opposite/adjacent/hypotenuse ratios derived from the substitution relation)
 - Rule infrastructure: `Rule()` factory, `@evaluates` decorator, `trig_rewriter`, substitution/parts strategies
 
 ### [`trigonometry.py`](trigonometry.py)
@@ -105,6 +106,7 @@ Risch algorithm for integration of transcendental elementary functions.
   - Peels off leading coefficient each iteration, calls `limited_integrate` to solve for it, subtracts partial antiderivative's derivative from remainder
   - Raises `NonElementaryIntegralException` when the leading coefficient has no elementary antiderivative
 - `integrate_primitive(a, d, DE)` — integrates primitive (logarithmic) functions; uses Hermite reduction + residue reduction + `integrate_primitive_polynomial` pipeline
+- `integrate_hyperexponential_polynomial(p, DE, z)` — integrates Laurent polynomials in k[t, 1/t] for hyperexponential extensions; iterates over degrees (skips zero), calls `rischDE` per coefficient; on `NonElementaryIntegralException` sets b=False but continues processing remaining terms (does not bail out)
 - `integrate_hyperexponential(a, d, DE)` — integrates hyperexponential functions (exponential monomials); uses Hermite reduction + residue reduction + polynomial integration pipeline
   - In piecewise mode, emits a Piecewise to handle the case where the exponential monomial equals 1 (zero exponent), avoiding division by zero by substituting t=1 and integrating separately
 

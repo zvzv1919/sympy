@@ -39,6 +39,7 @@ Individual trig transformation rules and the Fu simplification algorithm. Each T
 - `TR12` / `TR12i` — expand/contract angle sums in tan arguments.
 - `TR13(rv)` — simplify products of tan/cot via addition formulas.
 - `TR14(rv, first)` — simplify factored sin/cos difference-of-squares like (cos x−1)·(cos x+1) → −sin²x.
+  - Exponent/base guard: skips Pow factors where exponent is non-integer and base is not positive (avoids invalid transforms on e.g. (cos x−1)^(1/2)).
   - Handles unequal exponents by taking the minimum and reinserting the remainder.
   - Splits numer/denom and recurses with `first=False` to prevent infinite re-splitting on fractional expressions.
 - `TR15` / `TR16` — convert negative sin/cos powers to cot²/tan² forms.
@@ -124,6 +125,7 @@ Radical simplification, term collection, and rationalization.
   - Recursively reduces `1/d` forms: splits Mul denominators, denests sqrt powers via `sqrtdenest`, decomposes `1/d**i → (1/d)**i` for integer/positive-base powers before recursing on the base.
   - For Add denominators with up to 4 radical terms, multiplies by algebraic conjugate to eliminate radicals.
 - `collect(expr, syms)` — collect terms by powers of specified symbols; also collects by derivative orders, traversing nested derivative towers.
+  - Mixed partial derivatives (differentiation w.r.t. multiple different variables) raise `NotImplementedError`; only single-variable derivative chains are supported.
 - `rcollect(expr, *vars)` — recursive collect.
 - `collect_sqrt(expr)` — collect terms sharing square-root factors.
 - `fraction(expr, exact)` — decompose expression into (numerator, denominator) pair by splitting powers with negative exponents.

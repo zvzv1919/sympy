@@ -157,6 +157,8 @@ Coordinate axes OpenGL rendering (not parsing; axes option string parsing occurs
 User input handling with 2D/3D mode awareness.
 
 - `PlotController` — maps keyboard/mouse events to camera actions (rotate, zoom, reset).
+  - Class-level sensitivity constants: `normal_mouse_sensitivity` / `modified_mouse_sensitivity` and `normal_key_sensitivity` / `modified_key_sensitivity`; shift key toggles from normal to modified (slower) sensitivity for both pointer and keyboard input.
+  - `__init__(window, **kwargs)` — initializes boolean `action` state dictionary tracking all user interactions (rotate, zoom, spin, reset, presets, axis toggles, `modify_sensitivity`); accepts `invert_mouse_zoom` option.
   - `update(dt)` — applies accumulated input each frame; branches on `is_2D()`: in 2D mode, arrow keys become translations instead of rotations, and model-Z-axis rotation keys are suppressed entirely.
 
 ### `plot_window.py`

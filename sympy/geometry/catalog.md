@@ -27,7 +27,7 @@ Point representations in n-dimensional Euclidean space.
   - `intersection(o)` — returns `[self]` if `o` is an equal Point, `[]` if different Point; delegates to `o.intersection(self)` when `o` is not a Point.
   - `equals(other)` — component-wise symbolic equality via `.equals()`; distinct from `__eq__` which does structural tuple comparison.
   - `Point.is_collinear(*points)` — static method testing if points are collinear; deduplicates inputs, returns `True` for ≤2 unique points.
-  - `Point.is_concyclic(*points)` — static method testing if points are concyclic.
+  - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks containment.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
 - `Point2D` — 2D specialization; adds `x`, `y` coordinate properties and `transform(Matrix)`.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`.
@@ -47,7 +47,8 @@ Point representations in n-dimensional Euclidean space.
   - `projection(o)` — projects a `Point` or `LinearEntity` onto this line; raises `GeometryError` for any other geometry type (e.g., `Circle`).
   - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
   - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.
-  - `random_point()`, `contains()`.
+  - `random_point()` — generates a random point on the entity; switches from x-based to y-based randomization when slope is infinite (vertical line); adjusts bounds for `Ray` (half-open) and `Segment` (closed).
+  - `contains()`.
 - `Line` — infinite 2D line through two points.
 - `Ray` — 2D ray (half-line) from a source point in a direction.
   - `distance(o)` — shortest distance to a point; falls back to distance from the ray's source when the perpendicular foot lies outside the ray.
@@ -93,7 +94,8 @@ Parabolic entities defined by focus and directrix.
 
 ### [`plane.py`](plane.py)
 3D planar surfaces.
-- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `is_coplanar()`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`.
+- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`.
+  - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) is coplanar with this plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test.
   - `arbitrary_point(t)` — returns a parametric `Point3D` that traces a unit circle on the plane around `p1` as `t` varies from 0 to 2π; handles axis-aligned normals directly, general normals via projection and symbolic solve.
   - `random_point(seed)` — evaluates `arbitrary_point` at a random parameter value.
 

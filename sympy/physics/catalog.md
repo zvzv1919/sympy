@@ -109,7 +109,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
 - **Gates**: `gate.py` — quantum gate classes (H, X, Y, Z, S/Phase, T, CNOT, SWAP, CGate, UGate); each gate stores target matrices and decomposition methods.
   - `OneQubitGate._eval_commutator` — short-circuits to zero when two single-qubit gates act on different targets OR are the same gate class; otherwise falls back to generic Operator commutator.
   - `Gate._apply_operator_Qubit` — applies a gate to a qubit state: selects a target-matrix column via bit-shifted index from target qubits, then flips bits to construct the output state superposition.
-  - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
+  - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self, **except** exp=−1 delegates to parent `Gate._eval_power` instead of returning self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
   - `gate_simp(circuit)` — recursive symbolic simplification of gate sequences: self-inverse gates (H, X, Y, Z) reduce exponent mod 2; PhaseGate²→ZGate, TGate²→PhaseGate (power-promotion chain). Calls gate_sort first, then iterates.
@@ -133,7 +133,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Recurses after each swap+expand; `recursive_limit` depth guard warns and aborts on excess.
 - **Commutator algebra**: `commutator.py`, `anticommutator.py` — abstract quantum `Commutator`/`AntiCommutator` with `doit()` evaluation.
   - Delegates to operator `_eval_commutator_*`/`_eval_anticommutator_*` methods; falls back through NotImplementedError chain.
-- **Algorithms**: `grover.py` (Grover's search), `qft.py` (quantum Fourier transform gates and matrix representations).
+- **Algorithms**: `grover.py` (Grover's search: `OracleGate`, `WGate`, `grover_iteration`, `apply_grover`; default iteration count = floor(√2ⁿ·π/4) when not specified), `qft.py` (quantum Fourier transform gates and matrix representations).
   - `RkGate` — parametric phase-rotation gate R_k; constructor simplifies small k values: k=1→ZGate, k=2→PhaseGate, k=3→TGate (returns different gate type, not RkGate).
   - `Fourier` (QFT/IQFT) — `_represent_ZGate` builds Fourier matrix and embeds into full Hilbert space via tensor products with identity matrices on both sides when gate doesn't start at qubit 0 or total qubits exceed gate range.
   - `shor.py` — Shor's factoring. `CMod`: controlled modular-exponentiation gate; reads integer from upper register half, computes a^k mod N, writes into lower half.
@@ -165,7 +165,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `matrixutils.py` — matrix format conversion: `to_sympy`/`to_numpy`/`to_scipy_sparse` dispatch on input type (Matrix, ndarray, sparse, Expr); Expr inputs pass through unchanged.
   - `flatten_scalar` — extracts the element from a 1×1 matrix (returns larger matrices unchanged); does NOT check whether a circuit is a scalar matrix (see `identitysearch.py` for that).
   - Also: `matrix_dagger`, `matrix_tensor_product`, `matrix_zeros`.
-  - `sho1d.py` — 1-D SHO operator algebra and states: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1). `LoweringOp` applied to ground state returns zero.
+  - `sho1d.py` — 1-D SHO operator algebra and states: `RaisingOp`/`LoweringOp` (ladder operators), `NumberOp`, `Hamiltonian`; base class enforces single-argument restriction (ValueError on multiple args). Ladder operators define `_eval_commutator_*` methods implementing canonical commutation relations ([a, a†] = 1).
+    - State application: `RaisingOp` on |n⟩ → √(n+1)|n+1⟩; `LoweringOp` on |n⟩ → √n|n−1⟩; `LoweringOp` on ground state → 0.
     - `SHOKet`/`SHOBra` — ket/bra states for 1-D SHO; each provides `_represent_NumberOp` to produce column/row vectors in the number basis.
     - Caveat: error conditions (n ≥ ndim, non-integer n) use `return ValueError(...)` instead of `raise`, silently returning the error object as a value.
     - Each operator provides `_represent_NumberOp` for matrix representation in the number basis; supports sympy, numpy, and scipy.sparse formats. For scipy.sparse, sqrt entries are cast to float before insertion.

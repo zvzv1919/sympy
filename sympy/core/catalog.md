@@ -49,6 +49,7 @@ All concrete numeric types and their arithmetic operations.
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
   - `as_coeff_Mul(rational)` — coefficient extraction; returns `(self, S.One)` for nonzero values but `(S.One, self)` when self is zero (zero goes into the "rest" term, not the coefficient)
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats; normalizes string inputs before parsing (prepends '0' to '.5', converts '-.5' to '-0.5'); auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
+  - `_new(cls, _mpf_, _prec)` — internal classmethod constructing Float from raw mpf tuple; returns `S.Zero` (exact integer) for zero input instead of `Float(0.0)` — differs from `__new__` which preserves floating-point zero
   - `_eval_power` — negative Float base with rational exponent p/q where p=1 and q is odd: factors out `(-1)**(1/q)` and recurses on positive base, avoiding spurious complex result
   - `__eq__` — equality comparison; short-circuits to False when other is an irrational `NumberSymbol` (e.g., pi, E) without numerical comparison
   - `__gt__`/`__ge__` — ordering comparisons; checks `other.is_comparable` to decide whether to numerically evaluate the other operand before mpf comparison

@@ -14,7 +14,8 @@ Core boolean types, operators, and normal-form conversions.
 - `SOPform`, `POSform` — build canonical sum-of-products / product-of-sums from truth tables.
 - `simplify_logic(expr, form, deep)` — simplify boolean expressions; accepts `form='cnf'`, `'dnf'`, or `None`.
   - When `form=None`, auto-selects DNF (via `SOPform`) if truth table covers ≥ half of all rows, else CNF (via `POSform`).
-- `bool_map` — check equivalence of two boolean expressions by truth-table comparison.
+- `_finger(eq)` — compute a 5-element structural fingerprint tuple per variable in a boolean expression (occurrence counts as bare symbol, negated, in compounds, etc.); groups variables with identical signatures as interchangeable.
+- `bool_map` — check equivalence of two boolean expressions under variable renaming; uses `_finger` to match variables by structural signature.
 - `_find_predicates` — extract atomic predicates from an expression.
 
 ## Inference and Evaluation

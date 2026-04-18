@@ -227,6 +227,8 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_pdiv`, `dmp_pdiv`, `dup_prem`, `dmp_prem` — pseudo-division; **same `PolynomialDivisionFailed` stall detection as regular division**.
 - `dup_pquo`, `dmp_pquo` — pseudo-quotient (discards remainder).
 - `dup_pexquo`, `dmp_pexquo` — exact pseudo-quotient; **raises `ExactQuotientFailed` if pseudo-remainder is nonzero**.
+- `dup_lshift(f, n, K)` — multiply by `x**n` (append n zeros); **returns empty list unchanged for zero polynomial** (no spurious zero-padding).
+- `dup_rshift(f, n, K)` — divide by `x**n` (truncate trailing n coefficients).
 - `dup_abs` — absolute values of coefficients.
 - `dup_max_norm`, `dmp_max_norm` — maximum coefficient norm; **returns `K.zero` for zero polynomial (empty list)**.
 - `dup_l1_norm`, `dmp_l1_norm` — L1 norm (sum of absolute coefficient values); **returns `K.zero` for zero polynomial (empty list)**.
@@ -350,6 +352,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 
 - `dup_zz_zassenhaus`, `dup_zz_factor_sqf`, `dup_zz_factor` — Zassenhaus factorization over Z.
 - `dmp_zz_wang` — Wang's Enhanced Extended Zassenhaus multivariate factorization; **selects evaluation-point config with smallest univariate max-norm**; restarts with incremented modulus on `ExtraneousFactors` from Hensel lifting.
+- `dmp_zz_wang_lead_coeffs` — correct leading coefficients during Wang/EEZ; distributes true LC divisors among trial factors, **raises `ExtraneousFactors` if any evaluated divisor is unassigned** (tracked via a J-array flag per evaluation value).
 - `dmp_zz_factor` — top-level multivariate factorization over Z.
 - `dup_zz_hensel_step`, `dup_zz_hensel_lift` — univariate Hensel lifting.
 - `dmp_zz_wang_hensel_lifting` — **parallel Hensel lifting for multivariate factorization**; iteratively lifts univariate factor approximations to full multivariate factors; verifies final product matches original, raises `ExtraneousFactors` on mismatch.
@@ -739,6 +742,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
   - `__add__(e)` — when `e` is another Ideal, computes the union (join); **when `e` is a plain ring element, constructs the quotient ring `R/self` and coerces `e` into it** instead.
   - `__pow__(exp)` — exponentiation; **zeroth power returns unit ideal `ring.ideal(1)`** via `reduce` with empty list.
   - `subset(other)` — check if `other` is a subset of this ideal; **if `other` is an Ideal, delegates to `_contains_ideal`; if `other` is a plain iterable (e.g. list of ring elements), checks each element individually** via `_contains_elem`.
+- `Module.__div__(e)` (in `modules.py`) — quotient module; **if `e` is not a `Module` instance, unpacks it as generators to `self.submodule(*e)` before calling `quotient_module`**.
 - `Module.__eq__(other)` (in `modules.py`) — equality via **mutual submodule inclusion**: returns True iff `self.is_submodule(other)` and `other.is_submodule(self)`.
 - `Module.__mul__(e)` (in `modules.py`) — if `e` is not an `Ideal`, **coerces it to an ideal via `self.ring.ideal(e)` before delegating to `multiply_ideal`**; returns `NotImplemented` if coercion fails.
 - `ModuleElement` (in `modules.py`) — base class for module element wrappers; stores reference to containing module.
@@ -778,6 +782,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
     - **For unknown non-Basic, non-sequence types, attempts `sympify(element)` then retries via `from_sympy`**; raises `CoercionFailed` if all strategies fail.
   - `convert_from(element, base)` — dispatch conversion by looking up `from_<alias>` if the source domain has an alias, else `from_<ClassName>`.
   - Base arithmetic: `half_gcdex(a, b)` **delegates to `gcdex` and discards second Bézout coefficient**; `gcdex`, `gcd`, `lcm` raise `NotImplementedError` at base level — subclasses must override. `cofactors(a, b)` computes GCD then derives cofactors via `quo`.
+  - `unify_with_symbols(K1, symbols)` — unify two domains given explicit generators; **raises `UnificationFailed` if either domain is composite (e.g. polynomial ring) and its generators overlap with the provided symbols**.
   - `unify(K0, K1)` — construct minimal domain containing both K0 and K1.
     - When one is a FractionField and the other a PolynomialRing, **demotes merged ground back to ring** if neither original ground was a field but the unified ground is.
     - When both are `FiniteField` (GF(p)), **selects the one with the larger modulus** (via `default_sort_key`); if no known pairing matches, falls back to the expression domain `EX`.

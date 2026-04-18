@@ -3,7 +3,7 @@
 ## [printing.py](printing.py)
 Core print-system initialization for interactive sessions (both plain Python and IPython).
 - `init_printing` — main entry point for configuring display of SymPy objects in any interactive session.
-  - Auto-detects environment type (terminal vs rich GUI like notebook/QtConsole) and enables unicode and LaTeX accordingly.
+  - Given an already-running session, selects output format (unicode/LaTeX/PNG) based on frontend type (terminal vs notebook/QtConsole).
   - Delegates to `_init_ipython_printing` or `_init_python_printing` based on detected environment.
   - Configures pretty-printer settings: order, unicode, wrap, column width.
 - `_init_ipython_printing` — registers IPython display formatters (PNG/LaTeX/SVG/pretty-text) for SymPy types.
@@ -17,7 +17,8 @@ Core print-system initialization for interactive sessions (both plain Python and
 ## [session.py](session.py)
 Interactive session bootstrapping and configuration.
 - `init_session` — top-level entry to start an interactive SymPy session (IPython or plain Python).
-  - Detects IPython availability and version; falls back to plain Python console.
+  - Probes whether code is running inside IPython (imports IPython, calls `get_ipython()`); handles version branching (≥0.11 vs older API).
+  - Raises `RuntimeError` if IPython is explicitly requested (`ipython=True`) but not installed; auto-detects when `ipython=None`.
   - Enables IPython pylab/matplotlib integration; silently catches errors when matplotlib is missing or no display is available.
 - `init_ipython_session` — creates and configures an IPython app instance.
 - `init_python_session` — creates a plain Python `code.InteractiveConsole`.

@@ -87,6 +87,7 @@ Solves bivariate equations by structural reduction to single-variable problems.
 - `_lambert(eq, x)` — low-level Lambert W solver for equations in the form `a*log(b*X+c) + d*X + f = 0`. Evaluates both real branches of LambertW (k=0 and k=-1), discarding k=-1 when the result is not real. Handles nested-log edge case: if the non-log remainder is itself a negated log, unwraps one layer and rewrites the equation before solving.
 - `_solve_lambert(f, symbol, gens)` — reduces transcendental equations mixing exp/log/symbolic-exponent powers to Lambert W form. Cascades through log-dominant, exp-dominant, and power-with-symbolic-exponent cases, branching on additive vs multiplicative structure.
   - Log-dominant + additive lhs: computes log-difference differently when rhs==0 (`log(other) - log(other - lhs)`) vs nonzero (`log(lhs - other) - log(rhs - other)`).
+  - Exp-dominant + additive lhs: isolates exp-containing term; if both sides are negatable (`could_extract_minus_sign`), negates both before taking log. This negation check is absent in the analogous power-with-symbolic-exponent additive case.
   - Calls `_lambert` for final resolution.
 - `bivariate_type(f, x, y)` — classifies bivariate equation structure.
 
@@ -97,6 +98,7 @@ Solves Diophantine equations (polynomial equations over integers).
   - When the expression has unknowns in the denominator, solves numerator and denominator independently and filters out solutions that make the denominator vanish.
 - `classify_diop(eq)` — classifies equation type (linear, quadratic, ternary, Pell, etc.).
 - Integer arithmetic helpers: `_nint_or_floor` (nearest-integer rounding with floor as tie-breaker), `_rational_pq`, `_remove_gcd`.
+- Descent solvers for ternary quadratics: `ldescent(A, B)` — finds non-trivial solution to w²=Ax²+By² via Lagrange's method; returns None when no solution exists (e.g. both A and B are -1). `descent(A, B)` — same problem but uses Gaussian lattice reduction for speed.
 - Type solvers: `diop_linear`, `diop_quadratic`, `diop_ternary_quadratic` / `_diop_ternary_quadratic`, `diop_DN`, `cornacchia`.
   - `_diop_ternary_quadratic`: cross-product-only case (no squared terms): if xz coefficient is nonzero, reduces to binary quadratic and picks solution minimizing |x|+|z|; if xz coefficient is zero, swaps variables and recurses.
   - `diop_linear` / `_diop_linear` — solves linear Diophantine equations (a₁x₁+…+aₙxₙ=c) by recursively reducing n-variable problems to two-variable GCD sub-problems; returns parametric solutions with integer parameters.
