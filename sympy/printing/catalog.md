@@ -89,7 +89,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_DMP` / `_print_DMF` — renders dense polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to raw `ClassName(rep, dom, ring)` format.
 
 ### [`codeprinter.py`](codeprinter.py)
-`CodePrinter` base class for code-generating printers. Extends `StrPrinter` with `doprint(assign_to)` for assignment statements and abstract formatting hooks.
+`CodePrinter` base class for code-generating printers. Extends `StrPrinter` with internal `doprint(assign_to)` for assignment-statement rendering; not called directly — language-specific convenience functions (e.g., `jscode()`, `fcode()`, `julia_code()`) are the public entry points.
 - `_format_code(lines)` and `indent_code(code)` are **abstract stubs** (`NotImplementedError`); actual formatting/indentation logic lives in language-specific subclasses (e.g., `julia.py`, `fcode.py`).
 - `_print_Mul` — splits factors into numerator/denominator lists based on negative rational exponents; renders as flat 1D text `a*b/c` or `a*b/(c*d)` (no 2D fraction bars).
 
@@ -107,8 +107,10 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - Loop syntax: `do VAR = start, stop` / `end do`.
 
 ### [`jscode.py`](jscode.py)
-`JavascriptCodePrinter` — generates JavaScript code from expressions.
-- `jscode()` — top-level API; `human=False` returns a tuple `(symbols_to_declare, not_supported_functions, code_text)` instead of a single string.
+`JavascriptCodePrinter` — generates JavaScript (browser-side scripting language) code from expressions, mapping SymPy functions to `Math.*` equivalents.
+- `jscode(expr)` — main public entry point; instantiates `JavascriptCodePrinter` and delegates via `doprint`. Accepts `assign_to`, `precision`, `human`, `contract`, and `user_functions`.
+- `human=False` returns a tuple `(symbols_to_declare, not_supported_functions, code_text)` instead of a single string.
+- Piecewise expressions emit if/else blocks when `assign_to` is given, ternary operators otherwise; requires a default `(expr, True)` branch.
 
 ### [`julia.py`](julia.py)
 `JuliaCodePrinter` — generates Julia code from expressions for a scientific computing language.

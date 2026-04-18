@@ -122,7 +122,8 @@ Parabolic entities defined by focus and directrix.
 
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
-- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`.
+- `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`, `intersection(o)`.
+  - `distance(o)` — minimum separation to another entity; dispatches by type: `Point` → iterates all sides (works for non-convex polygons); `Polygon` → delegates to `_do_poly_distance` (requires both polygons convex); raises `NotImplementedError` for non-convex polygon-to-polygon.
   - `arbitrary_point(parameter='t')` — returns a `Piecewise` expression mapping parameter 0→1 along the perimeter, each edge weighted by its fraction of total perimeter length; raises `ValueError` if parameter name collides with a free symbol.
   - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.

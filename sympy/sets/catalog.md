@@ -39,6 +39,7 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 - `Naturals` / `Naturals0` — positive integers / non-negative integers (singletons)
   - `_contains` — three-valued membership: returns true if integer+positive/nonnegative, false if not integer or not positive/nonnegative, `None` when sign is indeterminate
 - `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
+  - `_intersect` — intersection with an `Interval`: builds a `Range` from `ceiling(left)` to `floor(right)+1`, then re-intersects with the original interval to exclude open-boundary endpoints
 - `Reals` — all reals; subclass of `Interval(−∞, ∞)` singleton; inherits `_contains` and all interval behavior from `Interval` in `sets.py`
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases
   - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation

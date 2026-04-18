@@ -368,6 +368,8 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`compatibility.py`](compatibility.py)
 Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, `with_metaclass()`, `iterable()`, `ordered()`, `as_int()`.
 
+- `with_metaclass(meta, *bases)` — cross-version metaclass declaration helper (from `six` library pattern); creates a temporary one-shot metaclass that replaces itself on first subclass creation, avoiding a spurious intermediate parent in the resulting MRO
+
 - `default_sort_key(item, order)` — canonical ordering key for arbitrary objects (not just SymPy types); more robust than `sort_key()` method
   - Handles plain ints/floats by attempting sympification, strings by wrapping in a tuple key, dicts/sets by recursively sorting keys
   - When sympification fails (e.g., lambda functions), catches `SympifyError` and falls through to string-based key with class index 0

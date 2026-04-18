@@ -110,6 +110,8 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `cancel(g)` — simplify fraction `f/g` by removing shared factors; **over non-field domains, divides by GCD and negates if denominator is negative; over field domains, clears denominators to ring, computes cofactors, then converts back with sign normalization** — if both numerator and denominator are negative, negates both; if only one is negative, shifts the sign to the content multiplier.
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
   - `drop(gen)` — remove a generator from the polynomial; **univariate case: returns ground domain scalar if polynomial is constant, raises `ValueError` if polynomial depends on the generator**; multivariate case: drops the variable position from each monomial, raising `ValueError` if any term has nonzero exponent in that generator.
+  - `deflate(*G)` — compute GCD of all exponents per variable across `f` and `G`, divide all exponents by those GCDs; returns `(stride_tuple, [compressed_polys])`; used as preprocessing before GCD computation in `cofactors`.
+  - `inflate(J)` — inverse of `deflate`; multiplies each exponent by the corresponding stride.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
   - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`, `__divmod__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
@@ -356,6 +358,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dmp_euclidean_prs` — multivariate wrapper; **raises `MultivariatePolynomialError` for `u > 0`** (univariate only).
 - `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
   - `dmp_primitive_prs` — **raises `MultivariatePolynomialError` for `u > 0`** (same pattern as `dmp_euclidean_prs`; delegates to `dup_primitive_prs` when univariate).
+  - `dup_inner_subresultants` — computes subresultant PRS and scalar subresultants; **abnormal case (degree drop `d > 1`)**: updates scalar subdeterminant via `c = (-lc)^d / c^(d-1)` (quotient formula); **normal case (`d == 1`)**: simply `c = -lc`.
   - `dmp_inner_subresultants` — swaps inputs if `deg(f) < deg(g)`; **returns `([], [])` if both are zero; returns `([f], [K.one ground])` if only `g` is zero** (single-element PRS with unit cofactor).
 - `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
@@ -425,6 +428,8 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions, and GF).
 
 - `dup_zz_zassenhaus`, `dup_zz_factor_sqf`, `dup_zz_factor` — Zassenhaus factorization over Z.
+  - `dup_zz_zassenhaus` — factors primitive square-free polynomials in Z[x]; **prime selection heuristic**: iterates candidate primes, skipping those dividing LC; checks square-freeness mod each prime; collects up to 5 candidates and **selects the prime yielding the fewest irreducible factors**; early-exits if factor count < 15.
+  - `_test_pl(fc, q, pl)` — helper for trial division phase; converts `q` to symmetric representation mod `pl`; **returns `True` unconditionally if `q` reduces to zero** (candidate passes); otherwise checks `fc % q == 0`.
   - `dup_zz_factor` extracts primitive part; **if primitive part has negative leading coefficient, negates both content and polynomial** before factoring.
 - `dmp_zz_wang` — Wang's Enhanced Extended Zassenhaus multivariate factorization; **selects evaluation-point config with smallest univariate max-norm**; restarts with incremented modulus on `ExtraneousFactors` from Hensel lifting.
 - `dmp_zz_wang_lead_coeffs` — correct leading coefficients during Wang/EEZ; distributes true LC divisors among trial factors, **raises `ExtraneousFactors` if any evaluated divisor is unassigned** (tracked via a J-array flag per evaluation value).
@@ -495,6 +500,8 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_random`, `gf_irreducible`, `gf_value` — random/irreducible polynomial generation and evaluation.
 - `gf_crt`, `gf_crt1`, `gf_crt2` — Chinese Remainder Theorem. Also `linear_congruence`, `csolve_prime`, `gf_csolve`.
 - Conversion: `gf_from_dict`, `gf_to_dict`, `gf_from_int_poly`, `gf_to_int_poly`.
+  - `gf_to_int_poly(f, p, symmetric)` — convert GF(p) coefficient list to integer list; **when `symmetric=True` (default), centers each coefficient via `gf_int` into `[-p/2, p/2]`; when `False`, returns the non-negative residues unchanged**.
+  - `gf_to_dict` — same `symmetric` flag behavior as `gf_to_int_poly` but returns a sparse `{degree: coeff}` dict.
   - `gf_from_dict` — **accepts both plain integer keys and single-element tuple keys** (e.g. `{10: c}` or `{(10,): c}`), dispatching by `isinstance(max_key, int)`.
 
 Caveat: All operations here are list-based GF(p)-specific. For dense polynomial operations over general domains, see `densearith.py`/`densetools.py`. For square-free decomposition over Z/Q, see `sqfreetools.py`.
@@ -934,6 +941,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `invert()` — compute modular inverse via `dom.invert(val, mod)`.
   - `ModularIntegerFactory(_mod, _dom, _sym, parent)` — creates and caches a `ModularInteger` subclass for a given modulus; **raises `ValueError` if modulus < 1**; names class `SymmetricModularIntegerMod<n>` or `ModularIntegerMod<n>` depending on `_sym` flag.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
+  - `from_QQ_python` / `from_QQ_gmpy` — convert rational (Fraction/mpq) to GF(p); **returns `None` (silent failure) if denominator ≠ 1**; only whole-number rationals are accepted.
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).

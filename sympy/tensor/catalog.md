@@ -52,6 +52,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
   - `TIDS.get_indices` — reconstructs full index list from internal free/dum representation, generating fresh `TensorIndex` objects for contracted pairs; bumps the auto-name counter past any free indices already using the `dummy_fmt` pattern to avoid naming collisions.
   - `TIDS.get_tensors` — decomposes the stored product back into individual `Tensor` objects by slicing the full index list per component rank; preserves both contracted and uncontracted indices.
   - `TIDS.get_components_with_free_indices` — returns list of (component, free-indices) pairs; maps each factor to its uncontracted indices; returns all-empty lists when every index is contracted.
+  - `TIDS.sorted_components` — reorders components via bubble sort respecting commutation groups; returns sorted `TIDS` and a sign (±1) that flips each time two anticommuting components swap.
   - `TIDS._check_matrix_indices` — handles matrix-style auto-indices during multiplication.
 - `Tensor` — single tensor (head + indices).
   - `__call__(*indices)` — substitutes ordered free indices; if new indices form contraction pairs (same label, opposite variance), rebuilds so those pairs become dummy/summation indices.

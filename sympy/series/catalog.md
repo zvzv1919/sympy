@@ -92,7 +92,8 @@ Residue computation via Laurent series coefficient extraction.
 
 ### [`approximants.py`](approximants.py)
 Generator for consecutive Padé approximants from a raw coefficient list (not from recurrence relations or sequence objects).
-- `approximants(l, X, simplify)` — generator taking a coefficient list `l`; yields successive rational approximants via Padé method.
+- `approximants(l, X, simplify)` — generator taking a coefficient list `l`; yields successive rational approximants via continued-fraction recurrence.
+- Before yielding each result, normalizes by computing LCM of all coefficient denominators and scaling numerator/denominator polynomials to clear fractions.
 - Terminates early when the internal coefficient list becomes all zeros (no further approximants producible).
 
 ### [`acceleration.py`](acceleration.py)

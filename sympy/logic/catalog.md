@@ -10,7 +10,9 @@ Core boolean types, operators, and normal-form conversions.
 - `And`, `Or`, `Not` — fundamental boolean connectives.
 - `Xor`, `Nand`, `Nor`, `Implies`, `Equivalent`, `ITE` — derived connectives.
 - `to_cnf`, `to_dnf`, `to_nnf` — convert expressions to conjunctive/disjunctive/negation normal form.
-- `is_cnf`, `is_dnf` — test whether an expression is already in CNF/DNF; both delegate to `_is_form`, a shared two-level nesting validator parameterised by the outer and inner connective.
+- `is_cnf`, `is_dnf` — validate whether a formula is in conjunctive (product-of-sums) or disjunctive (sum-of-products) normal form.
+  - Both delegate to `_is_form`, a shared two-level structural validator parameterised by outer/inner connective.
+  - Handles edge cases: bare atoms, single negated atoms, and single-clause expressions all return True.
 - `to_int_repr` — convert CNF clauses to integer-set representation (used by DPLL solvers).
 - `SOPform`, `POSform` — build canonical sum-of-products / product-of-sums from truth tables.
 - `simplify_logic(expr, form, deep)` — simplify boolean expressions; accepts `form='cnf'`, `'dnf'`, or `None`.

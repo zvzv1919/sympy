@@ -39,7 +39,10 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `cholesky_solve`: symmetric→direct Cholesky; overdetermined rows≥cols→normal equations; underdetermined→raises `NotImplementedError` suggesting `gauss_jordan_solve`.
 - **Triangular solvers** (public precondition-checking wrappers): `lower_triangular_solve(rhs)` validates squareness, row-count match, and `is_lower` before delegating; `upper_triangular_solve(rhs)` validates squareness, row-count match, and `is_upper` before delegating. Both delegate to `_lower/_upper_triangular_solve` in dense/sparse layers.
 - **Calculus**: `jacobian(X)` — Jacobian matrix (derivative of vector function w.r.t. variables); requires self and X each be a row or column vector (raises `TypeError` if either has both dimensions > 1).
-- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_bareis` (fraction-free Gaussian elimination — searches below diagonal for non-zero pivot, swaps rows tracking sign; returns zero immediately when no pivot found in a column), `det_LU_decomposition`, `berkowitz_det` (division-free determinant via Berkowitz algorithm; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction), `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+- **Determinant/inverse**: `det` (returns `S.One` for empty 0×0 matrix), `det_LU_decomposition`, `inv`, `adjugate`, `cofactor`, `cofactorMatrix`.
+  - `det_bareis`: fraction-free Gaussian elimination determinant; n≤3 uses direct closed-form formulas, n>3 uses Bareiss elimination with pivot search/row-swap/sign-tracking.
+  - `det_bareis` selectively simplifies intermediates via `cancel()` only when `is_Atom` is False; skips simplification for atomic expressions. Returns zero when no pivot found.
+  - `berkowitz_det`: division-free determinant via Berkowitz algorithm; extracts last coefficient of characteristic polynomial and applies `(-1)^(n-1)` sign correction.
 - **Inversion strategies**:
   - `inverse_ADJ`: cofactor/adjugate — computes `berkowitz_det`, checks `d.equals(0)`; if indeterminate (None), falls back to `rref` diagonal-pivot check for singularity.
   - `inverse_LU`: LU decomposition via `LUsolve`; checks rref diagonal for singularity.
