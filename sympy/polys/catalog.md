@@ -30,6 +30,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `__init__(rep, dom, lev, ring)` — three-way input dispatch when `lev` is provided: **dict → `dmp_from_dict`; non-list scalar → `dmp_ground` (constant poly); list → used directly**. When `lev` is omitted, validates the nested list via `dmp_validate` and infers the nesting depth.
   - `per(rep, dom, kill, ring)` — construct new DMP from internal rep; **if `kill=True` and `lev==0`, returns the raw coefficient instead of a DMP**.
   - `unify(g)` — reconcile two DMPs to a common domain; builds a local `per` closure with the same kill-at-zero-level behavior.
+    - **Ring merging: if `f.ring` is None but `g.ring` is not, adopts `g.ring` directly; if both have rings, unifies them; if only `f` has a ring, keeps it**.
   - `__eq__` — catches `UnificationFailed` and returns `False` silently (never raises on incompatible domains).
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
@@ -60,6 +61,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `poly_unify(g)` — unify DMF with a DMP; same local `per` closure pattern.
   - `half_per(rep, kill)` — create DMP from rep; if `kill=True` and `lev==0`, returns the raw rep.
   - `numer`, `denom`, `cancel`, `neg`, `add`, `sub`, `mul`, `pow`, `quo`, `exquo`.
+    - `add(g)` — **if `g` is a DMP (whole polynomial), uses `poly_unify` and computes `F_num + F_den*G` (simple additive multiply); if `g` is a DMF (fraction), uses `frac_unify` and cross-multiplies numerators/denominators**.
     - `quo(f, g)` — computes fraction quotient; after computing result, **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**. `exquo` is an alias for `quo`.
   - `__rdiv__(g)` — reverse division (`g / self`); computes `invert()*g`, then **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**.
   - `__eq__(g)` — equality comparison; **if `g` is a DMP (whole polynomial, not fraction), unifies and checks that the denominator is the multiplicative identity (one) AND numerators match**; if `g` is another DMF, unifies fractions and compares directly; returns `False` on `UnificationFailed`.

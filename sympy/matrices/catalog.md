@@ -17,7 +17,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `MatrixBase`: base for all concrete matrix types; not instantiated directly.
 - **Arithmetic**: `__add__` (concrete element-wise addition; reshapes result to preserve original dimensions when a dimension is zero), `__pow__` (integer: square-and-multiply; symbolic/float: Jordan), `multiply`, `add`.
 - `__mul__`: matrix multiplication — checks `is_Matrix` on RHS; returns `NotImplemented` (defers to Python dispatch) when RHS claims matrix-ness but lacks `.T.tolist()` (e.g. `MatrixSymbol`); scalar RHS broadcasts element-wise.
-- `exp`: matrix exponential — decomposes via `jordan_cells`, splits each Jordan block into diagonal + nilpotent parts, computes factorial power series for the nilpotent component, recombines via P·eJ·P⁻¹.
+- `exp`: matrix exponential — decomposes via `jordan_cells`, splits each Jordan block into diagonal + nilpotent parts, computes factorial power series for the nilpotent component, recombines via P·eJ·P⁻¹. Raises `NotImplementedError` when `jordan_cells` fails (`MatrixError`).
 - **Dot / element-wise products**: `multiply_elementwise`, `cross`.
   - `dot`: relaxed-dimension concrete inner product; accepts lists/sequences or Matrix.
   - Dimension fallback cascade: cols==b.rows→standard multiply, cols==b.cols→transposes b, rows==b.rows→transposes self.
@@ -66,6 +66,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives.
 - `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
 - **Construction**: `_handle_creation_inputs` — normalizes constructor/factory arguments (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
+  - `__array__` protocol: 2D arrays use array shape directly; 1D arrays are treated as column vectors (n×1); ≥3D raises `NotImplementedError`.
   - Used only during matrix instantiation, not for arithmetic operand coercion.
   - Validates uniform row lengths; skips 0×0 sub-matrices when tracking column widths.
 - **Display**: `print_nonzero` (marks non-zero entries), `_format_str` (str representation; single-row matrices use inline `Matrix([...])` format; multi-row matrices insert a leading newline `Matrix([\n...])`; zero-dimension matrices embed explicit dimensions).
@@ -114,7 +115,7 @@ Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`
 - `row_structure_symbolic_cholesky`: pre-computes non-zero row structure via elimination trees (calls `liupc`); used by sparse decompositions to skip zero entries.
 - Sparse decompositions exploiting pre-computed non-zero pattern: `_cholesky_sparse`, `_LDL_sparse` (unit lower-triangular + diagonal factorization).
 - Sparse triangular solvers exploiting sparsity: `_lower_triangular_solve` (forward substitution), `_upper_triangular_solve` (backward substitution; reverses each row's entries to process columns right-to-left), `_diagonal_solve`.
-- `_eval_inverse`: sparse inversion dispatch (internal to sparse storage layer); symmetrizes via M^T·M when needed.
+- `_eval_inverse`: sparse inversion dispatch (CH or LDL); for non-symmetric matrices, symmetrizes via M^T·M, solves, then divides result by a scale factor derived from the first row of the original matrix times the first column of the solution.
 - Sparse composite solvers: `_cholesky_solve` (Cholesky factorization + triangular solves), `_LDL_solve` (L·D·L^T factorization then forward substitution → diagonal solve → backward substitution).
 - `solve(rhs, method)`: solves self*soln = rhs for square systems; raises `ValueError` for under-determined (rows < cols) and over-determined (rows > cols) non-square systems.
 - `solve_least_squares(rhs, method)`: least-squares fit via normal equations (A^T·A)⁻¹·A^T·rhs; handles over-determined sparse systems.

@@ -113,7 +113,8 @@ Base class for all N-dim arrays.
 Dense storage N-dim arrays backed by a flat internal list (`_array`).
 
 - `DenseNDimArray` — constructor alias, returns `ImmutableDenseNDimArray`.
-- `ImmutableDenseNDimArray` / `MutableDenseNDimArray` — immutable and mutable dense variants.
+- `ImmutableDenseNDimArray` — immutable dense variant; constructed via `Basic.__new__`, so instances are part of the SymPy expression tree. Shape and flat data are stored as sympified `Tuple`s. `__setitem__` raises `TypeError`.
+- `MutableDenseNDimArray` — mutable dense variant; constructed via `object.__new__`, so instances are **not** part of the expression tree. Stores raw Python lists. `__setitem__` allows in-place element assignment.
 - `__getitem__` — tuple-of-slices indexes shape-aware; a plain (non-tuple) slice operates directly on the flat `_array`.
 - `tomatrix()` — converts a concrete rank-2 `NDimArray` to `Matrix`; raises `ValueError` for other ranks. Not for abstract tensor expressions.
 - `zeros`, `reshape`.
