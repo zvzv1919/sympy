@@ -214,8 +214,9 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 - `decompose_power(expr)` — splits exponentiation into symbolic base and integer exponent; absorbs rational denominator into base; returns `(expr, 1)` for irrational exponents
 - `decompose_power_rat(expr)` — variant preserving rational exponents
 - `Factors` — efficient multiplicative representation `f_1*f_2*...*f_n` as a dict mapping bases to exponents
+  - Init from Number: negative → stores `-1` as separate key; Rational `p/q` → numerator `p` with exponent 1, denominator `q` with exponent -1
   - `as_expr()` — converts dict back to symbolic Mul; dispatches on exponent type: Python int → wraps in Integer, Rational → keeps as-is, symbolic → multiplies into existing base exponent
-  - `normal()` — cancels shared base-power pairs; optimized for few overlaps; handles symbolic exponent differences via additive extraction
+  - `normal()` — cancels shared base-power pairs; optimized for few overlaps; for symbolic exponent diffs, tries `extract_additively` first, then falls back to `as_coeff_Add` to partially cancel numeric coefficient parts
   - `div()` — cancels shared base-power pairs optimized for many common factors; for non-numeric exponents, tries `extract_additively` first, then decomposes exponents via `as_coeff_Add` to partially cancel symbolic exponent remainders
 
 ### [`operations.py`](operations.py)
@@ -291,6 +292,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`relational.py`](relational.py)
 `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic relational expression nodes (unevaluated comparison objects). `Relational` base dispatches by operator string.
 
+- `_Greater` / `_Less` — internal base classes providing `.gts` (greater-than side) and `.lts` (less-than side) properties; `_Greater` maps gts→arg[0], lts→arg[1]; `_Less` swaps them (gts→arg[1], lts→arg[0])
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 - `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
 - `Unequality.__new__` — negation of Equality; delegates to `Equality` then negates

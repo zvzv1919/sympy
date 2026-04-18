@@ -30,7 +30,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
-- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract`, `reshape`, `key2bounds`, `_setitem`.
+- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `key2bounds`, `_setitem`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
@@ -129,6 +129,7 @@ Block-structured symbolic matrices.
 
 ### [`expressions/adjoint.py`](expressions/adjoint.py)
 - `Adjoint`: unevaluated symbolic expression node for conjugate transpose M*; represents the operation lazily, does not verify self-adjoint properties.
+- `_eval_trace`: returns `conjugate(Trace(arg))` — computes trace of the adjoint as the conjugate of the trace of the original argument, without iterating entries.
 
 ### [`expressions/matmul.py`](expressions/matmul.py)
 - `MatMul`: unevaluated symbolic matrix product A·B·C…; `doit()` evaluates via `canonicalize`.

@@ -87,6 +87,7 @@ Sparse polynomial rings and their elements (dict-based representation).
     - Single-term (monomial) fast path handles arbitrary exponents.
     - **≤5 terms → `_pow_multinomial` (multinomial coefficient expansion); >5 terms → `_pow_generic` (repeated squaring)**.
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
+    - `_gcd_zero(g)` — **if `g` is nonnegative, returns `g` as GCD; otherwise negates `g` (and cofactor sign) to ensure GCD is always nonnegative**.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
   - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
@@ -212,7 +213,9 @@ Low-level dense polynomial arithmetic on coefficient lists.
 
 - `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub`, `dup_mul`, `dmp_mul` — basic arithmetic.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
-- `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`; **`dmp_sub_term` delegates to `dup_add_term` with negated coefficient** (not `dup_sub_term`) when reducing to univariate.
+- `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`.
+  - **When exponent `i` exceeds the current degree, prepends the coefficient and zero-pads the gap** to extend the representation.
+  - **`dmp_sub_term` delegates to `dup_add_term` with negated coefficient** (not `dup_sub_term`) when reducing to univariate.
 - `dup_add_mul`, `dmp_add_mul`, `dup_sub_mul`, `dmp_sub_mul` — fused multiply-add/sub.
 - `dup_mul_term`, `dmp_mul_term` — multiply polynomial by `c*x^i` (univariate) or `c(x₂..xₙ)*x₀^i` (multivariate); **`dmp_mul_term` returns `f` unchanged if `f` is zero, but returns a fresh canonical zero if `c` is zero**.
 - `dup_mul_ground`, `dmp_mul_ground` — multiply polynomial by ground constant.
@@ -241,7 +244,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_reverse(f)` — compute `x^n * f(1/x)` (reciprocal transformation) by reversing the coefficient list and stripping leading zeros.
 - `dup_deflate`, `dmp_deflate` — map `x^m → y` by computing the GCD of all nonzero-coefficient exponents and slicing; **returns stride 1 unchanged for degree ≤ 0**.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
-- `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`.
+- `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`; **raises `IndexError` if `m` ≤ 0; returns `f` unchanged if `m == 1` or `f` is empty**.
 - `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
 - `dmp_strip`, `dmp_inject`, `dmp_eject`, `dmp_terms_gcd` — structural manipulation.
 - `dmp_list_terms(f, u, K, order)` — list all non-zero terms as `(monom_tuple, coeff)` pairs; **for zero polynomial returns `[((0,)*(u+1), K.zero)]`** (single zero-monomial entry, not empty list).
@@ -353,6 +356,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_ext_factor`, `dmp_ext_factor` — factorization over algebraic extensions.
 - `dup_gf_factor`, `dmp_gf_factor` — factorization in finite fields (wraps galoistools).
 - `dup_factor_list`, `dmp_factor_list` — complete factorization with multiplicities; **if domain is not exact (e.g. RR), converts to exact domain, factors there, then converts results back**.
+  - For exact fields, the cleared denominator is folded into the leading coefficient (`coeff/denom`); **for inexact fields, the denominator is instead divided out of each factor individually** via `dmp_quo_ground` before converting back to the inexact domain.
   - `dmp_factor_list` first extracts common variable powers via `dmp_terms_gcd`; **after core factorization, reinserts each extracted power as a separate monomial factor** (constructed as a single-term dict entry at the appropriate nesting level).
 - `dup_zz_irreducible_p` — integer polynomial irreducibility test via **Eisenstein's criterion** (checks if a prime divides all non-leading coefficients but its square does not divide the constant term).
 - `dup_irreducible_p`, `dmp_irreducible_p` — irreducibility testing (general).
@@ -485,7 +489,9 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
-- `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`); **returns empty `Matrix([])` when both polys are zero or both are constants; handles degenerate cases where one poly is zero while the other has positive degree**.
+- `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`).
+  - **Returns empty `Matrix([])` when both polys are zero, both are constants, or one is constant and the other is zero**.
+  - **Returns `Matrix([0])` when one poly has degree ≥ 1 and the other is zero** (not an empty matrix).
 - `bezout(p, q, x, method)` — Bézout matrix construction; `method='prs'` reverses index ordering; `method='bz'` uses natural ordering.
   - **Identity: `bezout(..., 'prs') = backward_eye(n) * bezout(..., 'bz') * backward_eye(n)`**, connecting to Sylvester's 1853 matrix.
 - `rem_z(p, q, x)` — integer polynomial remainder using **absolute value** of LC(q) for premultiplication (unlike `prem` which uses LC directly), ensuring correct signs in Euclidean/Sturmian PRS.
@@ -682,7 +688,7 @@ FGLM algorithm for Gröbner basis conversion between monomial orderings.
 ### [`distributedmodules.py`](distributedmodules.py)
 Sparse distributed module representations for submodule/syzygy computation.
 
-- Basic element operations: `sdm_add` (add two module elements with cancellation), `sdm_LC`, `sdm_from_dict`, `sdm_sort`, `sdm_strip` — element arithmetic and construction.
+- Basic element operations: `sdm_add` (add two module elements with cancellation), `sdm_LC` (**returns `K.zero` for empty/zero module elements**), `sdm_from_dict`, `sdm_sort`, `sdm_strip` — element arithmetic and construction.
 - Module monomial operations: `sdm_monomial_mul`, `sdm_monomial_deg`, `sdm_monomial_lcm`, `sdm_monomial_divides`.
   - `sdm_monomial_lcm(A, B)` — computes LCM by **preserving the generator index (first tuple element) and delegating `monomial_lcm` on the remaining exponent entries**; result is undefined if A and B belong to different generators.
   - `sdm_monomial_divides(A, B)` — checks if polynomial monomial X exists such that XA = B; **returns False if A and B belong to different free module generators** (different first tuple element), even if polynomial exponents satisfy divisibility.

@@ -32,7 +32,7 @@ Point representations in n-dimensional Euclidean space.
 - `Point2D` — 2D specialization; adds `x`, `y` coordinate properties and `transform(Matrix)`.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`.
   - `direction_cosine(point)` — divides displacement components by magnitude; no guard against zero magnitude (identical points → division by zero).
-  - `are_coplanar(*points)` — static; tests coplanarity by trying to construct a `Plane` from triples; raises `ValueError` if all points are collinear.
+  - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types); raises `ValueError` if all points are collinear. For general coplanarity checks including lines and 2D entities, use `util.are_coplanar`.
   - `are_collinear(*points)` — static; delegates to `Point.is_collinear`.
 
 ## Lines & Segments
@@ -71,7 +71,8 @@ Explicit parametric curves in the 2D plane (not 3D surfaces).
 
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
-- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`.
+- `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`, `intersection()`.
+  - `intersection(o)` — type-dispatched: handles `Point`, `LinearEntity`, `Circle`, `Ellipse`; for unrecognized types, falls back to `o.intersection(self)` (reverse dispatch).
   - `is_tangent(o)` — type-dispatched tangency test: for `Ellipse` checks single intersection point (coincident ellipses → False); for `LinearEntity` checks single intersection in segment; for `Polygon` iterates over all sides counting edge–ellipse intersection points and returns `True` iff total count is 1.
   - `reflect(line)` — overrides `GeometryEntity.reflect`; handles axis-aligned lines only; raises `NotImplementedError` (with reflected equation) for diagonal lines.
   - `rotate(angle, pt)` — overrides `GeometryEntity.rotate`; only supports multiples of π/2; raises `NotImplementedError` otherwise.
@@ -122,7 +123,7 @@ Standalone geometric utility functions.
 - `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
-- `are_coplanar(*entities)` — tests coplanarity of points/lines in 3D.
+- `are_coplanar(*entities)` — standalone coplanarity test for 3D points/lines; returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
 - `are_similar(e1, e2)` — tests geometric similarity via double dispatch: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check.
 - `centroid(*args)` — weighted centroid of geometric entities.
 - `idiff(eq, y, x, n=1)` — implicit differentiation: computes dy/dx (up to order `n`) assuming `eq == 0`.

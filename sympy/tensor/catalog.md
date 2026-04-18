@@ -72,6 +72,7 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - `__getitem__` — retrieves component data; unwraps zero-dimensional arrays to scalar (`dat[()]`) and single-element 1-d arrays to their sole element (`dat[0]`).
   - Retrieves data per-factor for `TensMul` products; raises `ValueError` if some factors have data and others do not.
+  - `_correct_signature_from_indices` — adjusts ndarray values for covariant/contravariant index positions: lowers covariant indices via metric matrix, then contracts dummy (paired) index axes via numpy `trace`.
   - `data_product_tensors` — iteratively multiplies a list of ndarray factors via `reduce`; at each step pairs arrays with `TensMul` metadata, contracts matching indices, and accumulates the result.
   - For `TensAdd` sums, transposes each summand's ndarray so free-index axes align before element-wise addition.
   - Handles metric tensors specially via covariant/contravariant signature lookup.

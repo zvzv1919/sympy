@@ -47,7 +47,7 @@ Second quantization framework for many-body quantum mechanics — integer-occupa
 - `NO` — normal-ordering bracket for `secondquant` operators (CreateBoson/AnnihilateBoson, CreateFermion/AnnihilateFermion); reorders into creation-before-annihilation form.
   - Returns S.Zero if identical fermion operators violate Pauli exclusion. For mode-labeled `BosonOp`/`FermionOp`, see `quantum/operatorordering.py`.
 - `Commutator`, `AntiCommutator` — many-body (anti)commutator wrappers (for the abstract quantum operator versions, see `quantum/commutator.py` and `quantum/anticommutator.py`).
-- `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors.
+- `FockState`, `FockStateKet`, `FockStateBra` — Fock-space state vectors. `FermionState` subclass adds fermi-level logic: `_only_above_fermi(i)` returns True for symbolic indices without assumptions when no fermi level is set.
 - `wicks(expr)` — applies Wick's theorem to expand operator products into normal-ordered contractions.
 - `Dagger` — Hermitian conjugate of creation/annihilation operators; `eval()` dispatches: reverses factor order for products (Mul), distributes over sums, conjugates base of powers, negates I.
 - `apply_operators()` — applies operators to states. `evaluate_deltas()` — simplifies Kronecker delta products.
@@ -112,6 +112,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `CGate` — controlled gate; wraps an inner gate with control qubits. When inner gate is Hermitian: dagger/inverse return self; power with even exponent → identity, odd → self.
   - `Gate._eval_hilbert_space` — determines smallest Hilbert space from target qubit indices: ComplexSpace(2)^(max_target+1).
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
+  - `gate_simp(circuit)` — recursive symbolic simplification of gate sequences: self-inverse gates (H, X, Y, Z) reduce exponent mod 2; PhaseGate²→ZGate, TGate²→PhaseGate (power-promotion chain). Calls gate_sort first, then iterates.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
 - **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids(gate_seq)` finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
   - `GateIdentity` — represents a gate sequence that multiplies to a scalar; stores equivalent permutations. `is_degenerate` checks if a candidate is a permutation of an existing identity.
@@ -173,7 +174,8 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
-  - `cartesian.py` — 1-D position/momentum eigenstates (XKet/XBra, PxKet/PxBra) and 3-D position eigenstates (PositionKet3D/PositionBra3D).
+  - `cartesian.py` — 1-D position/momentum operators (XOp, PxOp) and eigenstates (XKet/XBra, PxKet/PxBra), plus 3-D position operators (YOp, ZOp) and eigenstates (PositionKet3D/PositionBra3D).
+    - `PxOp._represent_XKet` — position-basis representation of momentum operator; uses `options.pop("index", 1)` as default start index for basis enumeration.
     - `PxKet._eval_innerproduct_XBra` — computes Fourier-kernel plane-wave overlap exp(i·p·x/ℏ)/√(2πℏ). `XKet._eval_innerproduct_PxBra` — conjugate overlap.
     - Same-basis inner products return DiracDelta; 3-D position states return product of three DiracDeltas.
 
@@ -202,7 +204,7 @@ Geometric and wave optics.
 - `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index). Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
 - `medium.py` — `Medium` class: electromagnetic propagation material with refractive index, permittivity, permeability, intrinsic impedance (wave impedance = √(μ/ε)), and wave speed.
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection). Accepts incident/normal as Matrix, Ray3D, or sequence; when both are Ray3D and no plane is given, validates geometric intersection — raises ValueError if rays are not concurrent. When a Plane is given, computes intersection point and returns a Ray3D result.
-  - `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_equation()`, `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
+  - `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_formula(n_lens, n_surr, r1, r2)` (thin-lens focal length; accepts Medium objects or numeric indices), `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.
 
 ### [`mechanics/`](mechanics/catalog.md)
 Classical mechanics: particles, rigid bodies, equations of motion.
@@ -243,6 +245,7 @@ High-energy physics.
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
+  - `DimensionSystem.print_dim_base(dim)` — formats a dimension as a human-readable string in terms of basis dimensions, sorted by decreasing power; skips zero-power, omits exponent for power=1.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit. Arithmetic: `add`/`sub` (same-unit only, auto-converts), `mul`/`div`/`rdiv`, `pow`. `pow(other)` calls `evalf()` on the computed factor because symbolic Pow instances are incompatible with the Quantity constructor.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.

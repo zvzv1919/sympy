@@ -1,7 +1,7 @@
 # Solvers Module Catalog
 
 ## Glossary
-- **Legacy solver** (`solvers.py`): returns lists/dicts; heuristic dispatch; handles Piecewise branch logic directly.
+- **Legacy solver** (`solvers.py`): returns lists/dicts (or `set=True` for `(keys, {tuples})` format); heuristic dispatch; handles Piecewise branch logic directly.
 - **Set-based solver** (`solveset.py`): returns Set objects (FiniteSet, ConditionSet, ImageSet); explicit domain; systematic inversion strategy.
 
 ## Notes
@@ -16,6 +16,7 @@
 Legacy general-purpose algebraic equation solver. Returns solutions as lists or dicts.
 
 - `solve(f, *symbols, **flags)` — primary entry point for equations and systems; dispatches to `_solve`, `_solve_system`, or linear helpers. Can target non-symbol objects (numeric literals, compound expressions) via implicit substitution.
+  - Output format flags: `dict=True` returns list of {symbol: value} dicts; `set=True` returns `(sorted_keys, {value_tuples})` tuple built from those dicts. Default returns plain list.
   - Preprocessing: rewrites hyperbolics as exp; splits real/imag parts; rewrites Abs as Piecewise (raises NotImplementedError if argument's real/imaginary status is unknown); rewrites `arg` as `atan(im/re)`.
   - Solution validation: automatically excludes candidates that make any denominator zero (via `denoms`); `check=False` flag bypasses both denominator filtering and assumption checks, recovering all raw candidates.
 - `_solve_system(exprs, symbols)` — internal system solver (used by `solve` for multi-equation inputs); handles:
@@ -132,6 +133,7 @@ Solves ordinary differential equations via classification and hint-based dispatc
 - `checkodesol(ode, sol)` — validates ODE solution by substitution.
 - `homogeneous_order(expr, *symbols)` — computes homogeneity order.
 - Methods: separable, exact, linear (1st/nth), Bernoulli, Lie group, variation of parameters, undetermined coefficients, power series.
+- `_solve_variation_of_parameters(eq, func, order, match)` — builds particular solution for nonhomogeneous linear ODEs via parameter variation. Computes Wronskian of homogeneous solutions (with trig simplification); raises NotImplementedError if Wronskian is zero (linearly dependent solutions) or solution count is insufficient.
 - System-of-ODE solvers: `sysode_nonlinear_2eq_order1`, `sysode_nonlinear_3eq_order1` — dispatch to type-specific solvers for coupled nonlinear first-order systems (2-eq and 3-eq).
   - Includes Clairaut system solver (type5 for 2-eq): pattern-matches `x = t*x' + F(x',y')` in multiple algebraic forms; swaps dependent variables if initial match fails.
 - `_undetermined_coefficients_match(expr, x)` — tests applicability and builds trial solution terms for the undetermined coefficients method.

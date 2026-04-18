@@ -67,7 +67,8 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - For `Mul`: splits non-commutative products into commutative and non-commutative parts; simplifies only the commutative portion.
   - For commutative products: dispatches through division-pattern matchers to rewrite trig-power products (e.g. sin^a·cos^b → tan^c).
 - `_replace_mul_fpowxgpow` — rewrites f(x)^a·g(x)^b into h(x)^c for matched trig pairs; only applies when base is positive or exponent is integer.
-- `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`) for rewriting ratios/products of trig and hyperbolic functions.
+- `_trigpats()` — initializes global wildcard-based pattern tables (`matchers_division`, `matchers_add`, `matchers_identity`, `artifacts`) for rewriting ratios/products of trig and hyperbolic functions.
+  - `artifacts` table: reverses Pythagorean identity substitutions that made an expression more complex (e.g. 1−cos²→sin², 1−1/cos²→−tan²), restoring the simpler original form.
   - First 14 division patterns must stay in fixed order — `_match_div_rewrite` indexes them by position.
 - `_match_div_rewrite` — dispatcher mapping pattern index to specific trig-pair rewrite (sin/cos→tan, tan/cos→sin, etc., plus hyperbolic variants); explicitly skips indices 6,7 (sum-and-difference-of-one factors like (cos±1)(cos∓1)) which can't be expressed as f^a·g^b.
 - `trigsimp_old(expr)` — legacy pattern-matching trig simplifier.

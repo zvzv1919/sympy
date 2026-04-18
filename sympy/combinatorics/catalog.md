@@ -66,7 +66,7 @@ Factory functions returning `PermutationGroup` objects for standard finite group
 - `SymmetricGroup(n)` — constructs Sn (full bijection group on n elements); pre-sets `_is_solvable = True` iff n < 5 (reflecting that An is simple for n ≥ 5).
 - `CyclicGroup`, `AbelianGroup`, `RubikGroup`.
 - `DihedralGroup(n)` — constructs Dn with rotation + reflection generators; special-case construction for n=1 (single transposition in S2) and n=2 (three generators on 4 elements, Klein 4-group embedding in S4). Pre-sets `_is_nilpotent = True` iff n is a power of 2.
-- `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0).
+- `AlternatingGroup(n)` — constructs An with explicit generators: uses different generators for odd n vs even n (full n-cycle vs (n−1)-cycle fixing 0). Deduplicates generators when both coincide (e.g. n=3), keeping only one.
 
 ### [`group_constructs.py`](group_constructs.py)
 Composite group construction.
@@ -119,7 +119,8 @@ Free groups with symbolic generators.
 
 ### [`partitions.py`](partitions.py)
 Set and integer partitions.
-- `Partition` — set partition with RGS (restricted growth string) representation.
+- `Partition` — set partition (disjoint-set decomposition) with RGS (restricted growth string) representation.
+  - `__new__` validates inputs: raises `ValueError` if any element appears in more than one subset (checks after flattening all subsets).
   - `from_rgs(rgs, elements)` — reconstructs a set partition from a sequence of block indices paired with items; validates that no block is left empty.
   - `RGS` — property returning the restricted growth string encoding which block each element belongs to.
 - `IntegerPartition` — partition of an integer.

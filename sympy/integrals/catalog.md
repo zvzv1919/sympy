@@ -28,7 +28,7 @@ Step-by-step integration emulating by-hand techniques (substitution, parts, trig
 - `manualintegrate(f, var)` — integrate using manual rule-based strategies
 - `integral_steps(integrand, symbol)` — returns the rule tree describing the integration steps
 - `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
-- Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); each normalizes reciprocal forms (e.g. 1/sin→csc, cos/tan→cot) before pattern matching
+- Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); pattern-matching dispatchers that classify the integrand and select a handler — substitution strategies and piecewise edge cases for sin^n·cos^m live in `trigonometry.py`
 - Rule infrastructure: `Rule()` factory, `@evaluates` decorator, `trig_rewriter`, substitution/parts strategies
 
 ### [`trigonometry.py`](trigonometry.py)
