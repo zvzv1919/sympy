@@ -33,6 +33,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `__eq__` — catches `UnificationFailed` and returns `False` silently (never raises on incompatible domains).
   - `_strict_eq` — alternative that also checks domain and rep identity.
   - Arithmetic: `add`, `sub`, `mul`, `pow`, `div`, `quo`, `rem`, `exquo`.
+    - `__add__(g)` / `__sub__(g)` — when `g` is not a DMP, first tries `dom.convert(g)` to create a ground polynomial; **if that fails (`CoercionFailed`/`NotImplementedError`) and `f.ring` is set, retries via `f.ring.convert(g)`**; returns `NotImplemented` if both paths fail.
     - `pow(n)` — **raises `TypeError` if `n` is not an `int`** (rejects float, Rational, etc.).
     - `exquo(g)` — exact quotient; after computing via `dmp_exquo`, **validates ring membership if `f.ring` is set; raises `ExactQuotientFailed` if result is not in the ring** (secondary check beyond basic divisibility).
   - Univariate-only operations (raise `ValueError` if `lev > 0`): `invert(g)` (modular inverse), `half_gcdex(g)`, `gcdex(g)`, `revert(n)`.
@@ -91,6 +92,7 @@ Sparse polynomial rings and their elements (dict-based representation).
     - `_gcd_zero(g)` — **if `g` is nonnegative, returns `g` as GCD; otherwise negates `g` (and cofactor sign) to ensure GCD is always nonnegative**.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
   - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
+  - `cancel(g)` — simplify fraction `f/g` by removing shared factors; **over non-field domains, divides by GCD and negates if denominator is negative; over field domains, clears denominators to ring, computes cofactors, then converts back with sign normalization** — if both numerator and denominator are negative, negates both; if only one is negative, shifts the sign to the content multiplier.
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
@@ -332,6 +334,7 @@ Caveat: Distinct from `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` in `euclidtools.py`, whi
 ### [`modulargcd.py`](modulargcd.py)
 Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolation.
 
+- `_primitive(f, p)` — compute content and primitive part of `f ∈ Z_p[x₀,…,x_{k-2}, y]` viewed as polynomial over `Z_p[y]`; groups terms by all variables except the last, iteratively GCDs the univariate coefficient sequences via `gf_gcd`, and returns `(content_in_y, quotient)`.
 - `_trivial_gcd(f, g)` — handle zero-polynomial GCD cases; **negates the non-zero input if its leading coefficient is negative** to ensure the result has a positive leading coefficient; returns `(ring.zero, ring.zero, ring.zero)` if both are zero.
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `_primitive_in_x0(f)` — content and primitive part of `f ∈ Q(α)[x₀,…,xₙ₋₁]` viewed as univariate in x₀; iteratively GCDs coefficients via `func_field_modgcd`.
@@ -657,7 +660,9 @@ Partial fraction decomposition.
 ### [`orthopolys.py`](orthopolys.py)
 Classical orthogonal polynomial generation.
 
-- `jacobi_poly`, `gegenbauer_poly`, `chebyshevt_poly`, `chebyshevu_poly`, `hermite_poly`, `legendre_poly`, `laguerre_poly` — generate orthogonal polynomials.
+- `jacobi_poly`, `gegenbauer_poly`, `chebyshevt_poly`, `chebyshevu_poly`, `hermite_poly`, `legendre_poly`, `laguerre_poly` — generate orthogonal polynomials of given degree.
+  - When `x` is provided, returns a `Poly` in that variable; **when `x` is omitted, returns a `PurePoly` with a `Dummy('x')` symbol** (generator-name-independent).
+  - When `polys=True`, returns the polynomial object; otherwise (default) converts to a symbolic expression via `as_expr()`.
 
 ### [`polyquinticconst.py`](polyquinticconst.py)
 Precomputed coefficient arrays and resolvent parameters for solving solvable quintic equations (Dummit's algorithm).

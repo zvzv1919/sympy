@@ -29,6 +29,7 @@ Root of the SymPy class hierarchy; every SymPy object inherits from `Basic`.
   - `dummy_eq(other, symbol)` — structural comparison tolerant of anonymous placeholder variables; raises ValueError if left side has more than one Dummy; also raises ValueError if `symbol` is None and right side has multiple free symbols
 - `is_comparable` — property; True if expression evaluates to a real number with meaningful precision; decomposes into real/imag parts via `as_real_imag()`, evaluates numerically, returns False if imaginary part is nonzero or real part has precision=1 (indeterminate/no significant digits)
 - `Atom` — parent for indivisible expressions (Symbol, Number); has no `.args`
+- `rcall(*args)` / `_recursive_call(expr, on_args)` — applies args through compound expression trees; calls `__call__` on callable sub-expressions but explicitly skips bare Symbols to prevent conversion into UndefinedFunction objects
 - `_aresame(a, b)` — structural identity check (not mathematical equality); traverses both trees in preorder comparing type and value at each node; special-cases `UndefinedFunction`/`AppliedUndef` using `class_key()`
 - `_atomic(e)` — returns atom-like quantities (Derivatives, Functions, Symbols) for substitution purposes
 - `preorder_traversal(node, keys)` — generator yielding nodes in preorder; when `keys` is None and a node stores children as a set (e.g., lattice-style ops), uses the internal set directly to avoid unnecessary sorting; when `keys` is provided, delegates to `ordered()` for deterministic traversal
@@ -47,6 +48,8 @@ Internal infrastructure: `ordering_of_classes` for canonical sort order, `BasicM
 All concrete numeric types and their arithmetic operations.
 
 - `Number` — abstract base for numerics; defines `__divmod__`, `__rdivmod__`, coercion logic; `__mul__`/`__add__`/`__sub__` handle Infinity/NegativeInfinity directly (e.g., zero × infinity → NaN, positive × infinity → Infinity)
+  - `__mul__` returns `NotImplemented` (not parent delegation) when other is a `Tuple`, deferring to the container's own multiplication
+  - `_eval_subs(old, new)` — if `old` equals the negation of self, returns `-new`; otherwise returns self unchanged (handles e.g., substituting `-3` when atom is `3`)
   - `as_coeff_Mul(rational)` — coefficient extraction; returns `(self, S.One)` for nonzero values but `(S.One, self)` when self is zero (zero goes into the "rest" term, not the coefficient)
 - `Float` — arbitrary-precision real via mpmath; `__new__` parses strings/ints/floats; normalizes string inputs before parsing (prepends '0' to '.5', converts '-.5' to '-0.5'); auto-counts significant figures when precision is empty string (`''`), handles scientific notation significance rules (decimal point presence affects digit counting)
   - `_new(cls, _mpf_, _prec)` — internal classmethod constructing Float from raw mpf tuple; returns `S.Zero` (exact integer) for zero input instead of `Float(0.0)` — differs from `__new__` which preserves floating-point zero

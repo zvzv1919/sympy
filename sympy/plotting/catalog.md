@@ -147,7 +147,9 @@ Surface rendering for two-parameter (u, v) pyglet 3D surface plots.
 ### `plot_axes.py`
 Coordinate axes OpenGL rendering (not parsing; axes option string parsing occurs in `plot.py`'s `PygletPlot.__init__`).
 
-- `PlotAxes` — draws axes with configurable styles (ordinate, frame, box, none); manages labels and ticks.
+- `PlotAxes` — draws axes with configurable styles (ordinate, frame, box, none); manages labels, ticks, and per-axis bounding boxes.
+  - `adjust_bounds(child_bounds)` — merges child plot bounds into the cumulative bounding box; silently skips any axis whose child bounds contain infinity (`S.Infinity`), leaving that axis unchanged.
+  - `reset_bounding_box()` — resets all three axes to `[None, None]` bounds and clears tick arrays.
 
 ### `plot_camera.py`
 3D camera control.

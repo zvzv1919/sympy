@@ -9,7 +9,7 @@ Foundation of all set types and operations.
 
 - `Set` — abstract base class for all sets; defines `union`, `intersect`, `contains`, `complement`, `is_subset`, `is_superset`, `is_disjoint`
   - `contains` — returns True/False for definite membership; falls back to an unevaluated `Contains` expression when membership is indeterminate
-- `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes images via calculus; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
+- `Interval` — continuous real interval with open/closed endpoint flags; `_eval_imageset` computes forward image of a function over the interval (domain → range) via calculus extrema; `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
 - `Union` — union of sets; `reduce()` simplifies by merging overlapping intervals and finite sets
 - `Intersection` — intersection of sets; `reduce()` with `_handle_finite_sets` logic that classifies each element via fuzzy three-valued containment (definitely in / unknown / dropped)
@@ -35,7 +35,7 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 - `Reals` — all reals as Interval(−∞, ∞) singleton
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases
   - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation
-  - `_intersect` with `Interval`: inverts boundary values, restricts base set; converts finite `Range` to `FiniteSet` before remapping through the lambda
+  - `_intersect` with `Interval`: inverts the lambda at interval endpoints to find new domain boundaries; falls back to `solveset` over reals when inverted boundaries are non-real; converts finite `Range` to `FiniteSet` before remapping through the lambda
 - `Range` — discrete integer range (start, stop, step); supports slicing, iteration, and Diophantine-based intersection
   - `__new__` — constructor normalizes bounds; handles infinite bounds (collapses equal-infinite start/stop to null range); requires finite integer step
   - `_contains` — returns `S.false` for non-integers; returns `None` (propagates uncertainty) when the value's integer nature is unknown

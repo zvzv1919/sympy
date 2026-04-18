@@ -50,14 +50,14 @@ Modular roots, residues, and multiplicative-order computations.
 - `n_order(a, n)` — multiplicative order of a modulo n; raises ValueError if a and n are not coprime
 - `primitive_root(p)`, `is_primitive_root(a, p)` — primitive root lookup/test
 - `sqrt_mod(a, p)`, `sqrt_mod_iter(a, p)` — modular square root (single / iterator)
-- `nthroot_mod(a, n, p)` — modular nth root
+- `nthroot_mod(a, n, p)` — modular nth root; raises `NotImplementedError` when p has no primitive root (e.g. most composite moduli)
 - `is_quad_residue(a, p)`, `quadratic_residues(p)` — quadratic residue test / enumeration
 - `is_nthpow_residue(a, n, m)` — nth-power residue test
 - `legendre_symbol(a, p)`, `jacobi_symbol(m, n)` — Legendre and Jacobi symbols
 - `mobius` — Möbius function: maps n → {-1, 0, 1}; returns 0 if n has squared prime factors, (-1)^k if square-free with k primes, 1 if n=1 (symbolic Function class)
 
 ### [`modular.py`](modular.py)
-Chinese Remainder Theorem and congruence solving.
+Chinese Remainder Theorem and systems of linear congruences (not power-residue/nth-root equations).
 - `crt(m, v)` — Chinese Remainder Theorem solver
 - `crt1`, `crt2` — two-phase CRT for repeated use with same moduli
 - `symmetric_residue(a, m)` — symmetric residue with |r| ≤ m/2

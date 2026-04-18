@@ -38,7 +38,7 @@ Quantum particle on a ring.
 One-dimensional quantum harmonic oscillator: closed-form analytical wavefunctions and energy formulas (no operator algebra).
 - `psi_n(n, x, m, omega)` — spatial wavefunction ψ_n using Hermite polynomials.
 - `E_n(n, omega)` — energy eigenvalue ℏω(n+½).
-- `coherent_state(n, alpha)` — Fock-basis expansion coefficient ⟨n|α⟩ for a coherent state; computes exp(−|α|²/2)·α^n/√(n!).
+- `coherent_state(n, alpha)` — Fock-basis overlap ⟨n|α⟩ between number state and coherent state (eigenstate of annihilation/lowering operator); computes exp(−|α|²/2)·α^n/√(n!).
 
 ### [`secondquant.py`](secondquant.py)
 Second quantization framework for many-body quantum mechanics — integer-occupation-number bosonic/fermionic operators (distinct from abstract quantum operators in `quantum/`).
@@ -118,15 +118,19 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `gate_sort(circuit)` — bubble-sorts gates respecting commutation; swaps commuting gates freely, applies (−1)^(exp1·exp2) sign correction when anticommutator vanishes.
   - `gate_simp(circuit)` — recursive symbolic simplification of gate sequences: self-inverse gates (H, X, Y, Z) reduce exponent mod 2; PhaseGate²→ZGate, TGate²→PhaseGate (power-promotion chain). Calls gate_sort first, then iterates.
 - **Circuit plotting**: `circuitplot.py` — `CircuitPlot` for rendering circuits; `CreateCGate(name, latexname=None)` factory for dynamically creating controlled gates (defaults latexname to name if omitted); mock measurement gates `Mz`, `Mx`.
-- **Circuit identity search**: `identitysearch.py` — `generate_gate_rules(gate_seq)` finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar. `generate_equivalent_ids(gate_seq)` finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
+- **Circuit identity search**: `identitysearch.py` — gate identity discovery and equivalent rewriting rules via BFS exploration.
+  - `generate_gate_rules(gate_seq)` — finds equivalent gate rewriting rules via BFS; returns trivial rule set when input is a plain numeric scalar.
+  - `generate_equivalent_ids(gate_seq)` — finds equivalent gate identities; returns `{Integer(1)}` immediately when input is a plain Number.
+  - `bfs_identity_search(gate_list, nqubits, max_depth)` — BFS over operator product sequences to find those equivalent to a scalar; prunes trivially decomposable sequences via `is_reducible`.
   - `GateIdentity` — represents a gate sequence that multiplies to a scalar; stores equivalent permutations. `is_degenerate` checks if a candidate is a permutation of an existing identity.
   - `is_scalar_sparse_matrix(circuit, nqubits, identity_only)` — checks if a gate sequence's scipy.sparse matrix form is a scalar matrix (bI); handles edge case where `represent()` returns a plain int instead of a matrix (short-circuits to identity check or True).
   - `is_scalar_nonsparse_matrix` — dense-matrix variant (fallback when scipy unavailable); same edge case handling for scalar `represent()` returns. Checks diagonal + uniform trace.
   - `is_reducible(circuit, nqubits, begin, end)` — checks if a circuit interval contains a scalar subcircuit; only tests right-anchored subcircuits (grows leftward from `end`), so left-anchored-only reductions within the range may be missed.
   - `ll_op`, `lr_op`, `rl_op`, `rr_op` — elementary rule-rewriting operations: each removes a gate from one end of one side of an equation and left/right-multiplies both sides by its dagger.
 - **Second-quantized QM operators**: `boson.py` — bosonic creation/annihilation operator algebra and quantum states for bosonic modes.
-  - `BosonOp` — bosonic ladder operator; custom `__mul__` separates commutative from non-commutative factors when multiplying into product expressions.
-  - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; operator application computes ladder action: annihilation → √n|n−1⟩, creation → √(n+1)|n+1⟩. `BosonCoherentKet/Bra` — coherent states with Gaussian overlap inner product.
+  - `BosonOp` — mode-labeled bosonic ladder operator; `_eval_commutator_BosonOp` returns −1 for [a†,a] same-name, 0 with `independent` hint, None otherwise (e.g. [a,a] returns unevaluated).
+  - `BosonFockKet/Bra` — Fock number states with KroneckerDelta inner product; ladder action: a|n⟩→√n|n−1⟩, a†|n⟩→√(n+1)|n+1⟩.
+  - `BosonCoherentKet/Bra` — coherent states (eigenstates of annihilation operator); ⟨α|β⟩ inner product returns 1 when α=β, else Gaussian overlap exp(−(|α|²+|β|²−2·conj(β)·α)/2).
   - `fermion.py` — `FermionOp`: mode-labeled fermionic ladder operator. `FermionFockKet`/`FermionFockBra`: single-mode Fock states restricted to n∈{0,1}; applying creation to occupied state → 0 (Pauli exclusion enforcement).
     - `_eval_anticommutator_FermionOp`: returns 1 for {a†,a} same-name; None for same-name same-type; `independent` hint checked only for different names.
 - **Operator ordering**: `operatorordering.py` — two reordering modes for `BosonOp`/`FermionOp` (mode-labeled quantum/ operators):
@@ -208,7 +212,9 @@ Geometric and wave optics.
   - `BeamParameter`: complex beam parameter — waist (w_0), Rayleigh range, divergence, Gouy phase, `waist_approximation_limit` (minimum waist for paraxial validity).
   - `geometric_conj_ab(a, b)` — computes focal distance from two conjugation distances (object/image); returns the finite distance when either input is infinity.
   - `geometric_conj_af`, `geometric_conj_bf` — conjugation relations given one distance and focal length.
-- `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index). Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
+- `waves.py` — `TWave`: transverse sinusoidal wave in 1-D (amplitude, frequency/time_period, phase, refractive index n).
+  - Properties: `speed` (propagation velocity = c/n, medium-dependent), `wavelength` (= c/(f·n)), `angular_velocity`, `wavenumber`.
+  - Constructor requires at least one of frequency or time_period (raises ValueError); validates mutual consistency when both given.
 - `medium.py` — `Medium` class: electromagnetic propagation material with refractive index, permittivity, permeability, intrinsic impedance (wave impedance = √(μ/ε)), and wave speed.
 - `utils.py` — `refraction_angle()` (Snell's law vector form; returns 0 for total internal reflection). Accepts incident/normal as Matrix, Ray3D, or sequence; when both are Ray3D and no plane is given, validates geometric intersection — raises ValueError if rays are not concurrent. When a Plane is given, computes intersection point and returns a Ray3D result.
   - `deviation()` (angular deviation through a planar interface; returns None when total internal reflection occurs), `lens_makers_formula(n_lens, n_surr, r1, r2)` (thin-lens focal length; accepts Medium objects or numeric indices), `brewster_angle()`, `critical_angle()`, `lens_formula()`, `mirror_formula()`, `hyperfocal_distance()`.

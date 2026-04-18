@@ -30,7 +30,8 @@ Point representations in n-dimensional Euclidean space.
   - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks containment.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
 - `Point2D` — 2D specialization; adds `x`, `y` coordinate properties and `transform(Matrix)`.
-- `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`.
+- `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`, `scale(x, y, z, pt)`, `translate(x, y, z)`, `transform(matrix)`.
+  - `scale(x, y, z, pt)` — multiplies each coordinate by the respective factor; when a reference point `pt` is given, translates to origin first, scales, then translates back.
   - `direction_cosine(point)` — divides displacement components by magnitude; no guard against zero magnitude (identical points → division by zero).
   - `are_coplanar(*points)` — static; tests coplanarity of `Point3D` only (not mixed entity types); raises `ValueError` if all points are collinear. For general coplanarity checks including lines and 2D entities, use `util.are_coplanar`.
   - `are_collinear(*points)` — static; delegates to `Point.is_collinear`.
@@ -118,7 +119,7 @@ Polygonal entities in 2D.
   - `encloses_point(p)` — optimized containment: rejects if distance ≥ circumradius, accepts if distance < inradius, falls back to general `Polygon.encloses_point` only for the annular region between.
   - `__eq__(o)` — cross-type equality: if compared to a plain `Polygon`, delegates to `Polygon.__eq__` to resolve center/radius vs explicit-vertices mismatch.
 - `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incircle`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
-  - `is_similar(t2)` — triangle similarity test; checks all 6 side-length-ratio permutations for uniform scaling match.
+  - `is_similar(t2)` — triangle similarity test; returns `False` immediately if `t2` is not a `Polygon`; otherwise checks all 6 side-length-ratio permutations for uniform scaling match.
   - `is_equilateral()`, `is_isosceles()`, `is_right()`, `is_scalene()` — triangle classification predicates.
 
 ## Utilities

@@ -173,7 +173,8 @@ Integration of rational functions p(x)/q(x) via partial fractions and logarithmi
 - `ratint_ratpart(f, g, x)` — Horowitz-Ostrogradsky algorithm: decomposes f/g into A' + B where B has square-free denominator
   - Computes GCD of denominator g with its derivative to split g into repeated-factor part u and square-free part v
   - Sets up undetermined polynomial coefficients for numerators A and B, solves the resulting linear system
-- `ratint_logpart(f, g, x)` — logarithmic part of rational integration; computes resultant-based decomposition into RootSum-log terms
+- `ratint_logpart(f, g, x)` — Lazard-Rioboo-Trager algorithm for the logarithmic part of rational integration; computes resultant-based decomposition into RootSum-log terms
+  - Shortcuts when denominator degree equals the multiplicity from the resultant's square-free decomposition (appends (g, q) directly); otherwise normalizes via leading-coefficient inversion
 - `log_to_real`, `log_to_atan` — convert complex logarithmic terms to real arctangent/logarithm forms
 
 ---

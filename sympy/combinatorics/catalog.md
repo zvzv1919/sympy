@@ -122,6 +122,7 @@ Free groups with symbolic generators.
 Set and integer partitions.
 - `Partition` — set partition (disjoint-set decomposition) with RGS (restricted growth string) representation.
   - `__new__` validates inputs: raises `ValueError` if any element appears in more than one subset (checks after flattening all subsets).
+  - `rank` — property; lazily computes and caches the ordinal position of the partition by converting to RGS and calling `RGS_rank`.
   - `__add__`/`__sub__` — integer arithmetic on partitions: advances/retreats rank modularly (rank % total RGS count), wrapping cyclically past boundaries.
   - `from_rgs(rgs, elements)` — reconstructs a set partition from a sequence of block indices paired with items; validates that no block is left empty.
   - `RGS` — property returning the restricted growth string encoding which block each element belongs to.
