@@ -119,6 +119,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - Column-major matrix traversal and 1-based loop index adjustment (adds 1 to both lower and upper bounds). Loop syntax: `for VAR = start:stop` / `end`.
 - Emits element-wise dot operators (`.^`, `./`, `.*`) **by default** for regular `Symbol` operands to support vectorized code; uses standard operators (`^`, `/`, `*`) only for pure numbers or `MatrixSymbol` operands.
 - `julia_code()` — top-level API; returns Julia-syntax string with dot-operator rules, assignment support, and custom function dispatch.
+- `_print_Assignment` — overrides base: when inline=False and RHS is Piecewise, decomposes into per-branch assignments and re-wraps as a new Piecewise for multi-line `if/elseif` output.
 - `_print_Pow` — special-cases exponents ½, −½, −1 with `sqrt` and appropriate division operators.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested ternary `(cond) ? (expr) :` chains; block mode emits `if/elseif/else/end`. Requires last branch to have a True guard.
 - `indent_code` — auto-indents generated code using regex-matched block keywords; lines that both close and open blocks (e.g., `elseif`, `else`) decrease indent before the line and increase after.
@@ -131,7 +132,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 - `_print_Piecewise` — dual-mode conditional output: inline emits nested element-wise multiply `(cond).*(expr) + (~cond).*(...)`; block mode emits `if/elseif/else/end`. Raises `ValueError` if no default `(expr, True)` branch is provided.
 
 ### [`repr.py`](repr.py)
-`ReprPrinter` — generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`.
+`ReprPrinter` — the executable-code output formatter; generates eval-able `repr()` strings (`srepr`) for round-trip fidelity: `eval(srepr(expr)) == expr`. Not a language code-generator — produces Python constructor calls.
 - `_print_Symbol` — includes declared assumption properties (e.g., `positive=True`, `commutative=False`) in output so symbols round-trip with their metadata.
 - `_print_MatrixBase` — emits constructor-call strings for matrices; special-cases matrices with zero rows XOR zero cols (emits explicit dimension args with empty list).
 

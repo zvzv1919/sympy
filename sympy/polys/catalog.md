@@ -339,7 +339,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dmp_eval_tail(f, A, u, K)` — evaluate at trailing variables `x_{n-len(A)+1}, …, x_n`.
 - `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation.
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
-- `dup_compose`, `dmp_compose` — polynomial composition.
+- `dup_compose`, `dmp_compose` — polynomial composition; `dup_compose` **short-circuits when inner polynomial has length ≤ 1** (constant or zero): evaluates `f` at the leading coefficient of `g` and returns the scalar result wrapped as a single-element list.
 - `dup_clear_denoms(f, K0, K1)` — clear fractional coefficients from univariate polynomial; computes LCM of denominators. **If `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**.
 - `dmp_clear_denoms(f, u, K0, K1)` — clear fractional coefficients from multivariate polynomial; **if `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**; uses `_rec_clear_denoms` to recursively traverse nested coefficient lists computing LCM of all denominators.
 - `dup_trunc(f, p, K)` — reduce coefficients modulo constant `p`; **over ZZ, uses symmetric representation** (if remainder > p//2, subtracts p to center around zero); over other domains, uses plain modular remainder.
@@ -790,6 +790,7 @@ Classical orthogonal polynomial generation.
 - `jacobi_poly`, `gegenbauer_poly`, `chebyshevt_poly`, `chebyshevu_poly`, `hermite_poly`, `legendre_poly`, `laguerre_poly` — generate orthogonal polynomials of given degree.
   - When `x` is provided, returns a `Poly` in that variable; **when `x` is omitted, returns a `PurePoly` with a `Dummy('x')` symbol** (generator-name-independent).
   - When `polys=True`, returns the polynomial object; otherwise (default) converts to a symbolic expression via `as_expr()`.
+  - `laguerre_poly(n, x, alpha)` — generalized Laguerre polynomials; **when `alpha` is provided, infers coefficient domain via `construct_domain(alpha, field=True)`; when omitted, defaults to `QQ` with `alpha=0`**. Other families (Hermite, Legendre, etc.) use fixed domains (ZZ or QQ).
 
 ### [`polyquinticconst.py`](polyquinticconst.py)
 Precomputed coefficient arrays and resolvent parameters for solving solvable quintic equations (Dummit's algorithm).

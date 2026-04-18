@@ -176,7 +176,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - Dagger fallback: if `qapply_Mul` fails to simplify a Mul and `dagger=True`, takes Hermitian conjugate of the expression, re-applies, then conjugates back.
 - **Density matrices**: `density.py` — `Density` class for mixed-state statistical ensembles (weighted collections of pure states).
   - `apply_op(op)` — applies an operator to each pure-state component while preserving weights; returns a new Density.
-  - `doit()` — expands into outer-product form (Σ pᵢ|ψᵢ⟩⟨ψᵢ|). `states()`, `probs()` — extract components.
+  - `doit()` — expands into outer-product form (Σ pᵢ|ψᵢ⟩⟨ψᵢ|); when a pure state is a superposition (Add), expands and enumerates all pairwise cross-terms via cartesian product. `states()`, `probs()` — extract components.
   - Module-level `entropy()` — von Neumann entropy; `fidelity()` — quantum state fidelity.
 - **Operator–state mapping**: `operatorset.py` — bidirectional mapping between operator classes and their eigenstate classes.
   - `state_to_operators(state)` — maps a state (class or instance) to its observable operator(s); for Bra states not directly in the registry, resolves via `dual_class()` to look up the corresponding Ket entry.

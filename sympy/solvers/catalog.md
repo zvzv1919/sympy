@@ -46,7 +46,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Drops solutions that definitively violate assumptions (test=False); keeps solutions where verification is inconclusive (test=None) with optional warning.
   - Relational/inequality solutions (Relational, And, Or): assumptions on the variable are **not** verified — only a warning is emitted. Raises ValueError if more than one symbol is involved.
 - `checksol(f, symbol, sol)` — validates a candidate algebraic-equation solution by substitution; does not handle ODE verification (see `checkodesol`) or domain/singularity checks (see `domain_check`).
-- `nsolve(*args, **kwargs)` — numerical root-finding via mpmath.
+- `nsolve(*args, **kwargs)` — numerical root-finding via `mpmath.findroot`. Accepts `f`, optional variable args, initial guess `x0`, and `modules` kwarg. Supports overdetermined systems. One-dimensional case solves only the numerator (may fail verification for steep functions near root; use `verify=False` to bypass). Caveat: rejects `method` keyword with ValueError — use `solver` keyword instead (e.g. `solver='bisect'`).
 - `_invert(eq, *symbols)` — algebraic inversion loop returning `(independent, dependent)` scalar tuple by recursively peeling additive/multiplicative layers, function inverses (single-arg via `.inverse()`), and special-case atan2 rewriting. Handles Pow with principal roots.
 - `_tsolve(eq, sym)` — transcendental equation solver (exp, log, trig inversions, Pow); delegates exp/log-to-Lambert-W reduction to `bivariate._solve_lambert`.
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).

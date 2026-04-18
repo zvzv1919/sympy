@@ -155,7 +155,7 @@ Block-structured symbolic matrices.
 - `BlockMatrix`: matrix composed of a 2D grid of sub-matrices; `blocks`, `blockshape`, `rowblocksizes`, `colblocksizes`.
 - `BlockMatrix._eval_determinant`: determinant of 2×2 block partitions via Schur complement — tries upper-left invertibility first, falls back to lower-right; returns unevaluated `Determinant` otherwise.
 - `BlockMatrix._entry`: resolves element access by locating the correct sub-block; uses `!= False` comparisons to handle symbolic (non-concrete) row/column indices.
-- `BlockDiagMatrix`: unevaluated symbolic block-diagonal expression (does NOT detect/extract blocks from concrete matrices — see `get_diag_blocks` in `matrices.py`); `_eval_inverse` inverts each pre-declared diagonal block independently.
+- `BlockDiagMatrix`: unevaluated symbolic block-diagonal expression; accepts only `MatrixExpr`/`MatrixSymbol` blocks (not scalars or plain lists — for concrete block-diagonal construction from scalars/lists/matrices, see `diag` in `dense.py`). `_eval_inverse` inverts each pre-declared diagonal block independently.
 - Block arithmetic rules: `bc_matmul`, `bc_block_plus_ident`, `bc_dist`, `bc_transpose`.
 
 ### [`expressions/inverse.py`](expressions/inverse.py)
