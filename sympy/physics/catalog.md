@@ -70,7 +70,7 @@ Legacy physical-units module with ~200 predefined units, physical constants, and
 
 ### [`wigner.py`](wigner.py)
 Exact angular-momentum coupling coefficients (returns rationals × √rational).
-- `wigner_3j(j1,j2,j3,m1,m2,m3)` — Wigner 3-j symbol; includes selection-rule short-circuits and a guard that strips imaginary parts if the factorial square-root evaluates to complex.
+- `wigner_3j(j1,j2,j3,m1,m2,m3)` — Wigner 3-j symbol; validates integer/half-integer inputs (doubles values and checks integrality, raises ValueError otherwise); returns 0 early for selection-rule violations (triangle inequality, m1+m2+m3≠0, |m|>j); guards against imaginary parts from factorial square-roots.
 - `wigner_6j`, `wigner_9j` — higher-order recoupling coefficients.
 - `clebsch_gordan(j1,j2,j3,m1,m2,m3)` — Clebsch-Gordan coefficient (wrapper around wigner_3j).
 - `racah(aa,bb,cc,dd,ee,ff)` — Racah W-coefficient; uses `_big_delta_coeff` products internally; returns 0 immediately if any triangle inequality fails.
@@ -88,7 +88,7 @@ Deprecated — redirects to `sympy.physics.optics.gaussopt`.
 Abstract quantum mechanics framework: states, operators, Hilbert spaces, representations, and quantum-information primitives.
 - **Core**: `qexpr.py` (base quantum expression `QExpr`), `operator.py` (non-commuting Operator base class, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator), `hilbert.py` (Hilbert spaces).
   - `hilbert.py` — `HilbertSpace.__contains__` checks membership by comparing space *classes* (not instances) to support symbolic dimensions.
-    - `TensorProductHilbertSpace.eval` — merges adjacent like Hilbert spaces into `TensorPowerHilbertSpace`: two powers with same base → combined exponent; plain space adjacent to its power → exponent+1; two identical plain spaces → power of 2.
+    - `TensorProductHilbertSpace.eval` — validates all arguments are HilbertSpace or TensorPowerHilbertSpace (raises TypeError otherwise); merges adjacent like spaces into `TensorPowerHilbertSpace`: two powers with same base → combined exponent; plain space adjacent to its power → exponent+1; two identical plain spaces → power of 2.
     - `TensorPowerHilbertSpace.eval` — validates exponent when raising a Hilbert space to a power: single-atom exponent must be a non-negative Integer or Symbol (raises ValueError otherwise); multi-term exponent (e.g. n+42) only checks each atom is Integer or Symbol but does NOT enforce non-negativity of integer components.
   - `operator.py` also defines `OuterProduct` (|ket⟩⟨bra| dyadic); `_eval_adjoint` returns OuterProduct(Dagger(bra), Dagger(ket)) — swaps and daggers both components.
   - `DifferentialOperator` (d/dx applied to wavefunctions): applies to Wavefunction by substituting the placeholder function with the wavefunction's expression, then preserving the original coordinate bounds (args[1:]) in the resulting Wavefunction.
@@ -294,6 +294,7 @@ Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set).
   - `Unit` — measurement standard with dimension and scaling factor; arithmetic: `add`/`sub` (same-dimension only), `mul`/`div` (compose dimensions), `pow(other)` — numeric exponent → new Unit with raised dimension; symbolic (non-numeric) exponent → returns unevaluated `Pow(self, other)`.
   - `UnitSystem.__init__` — validates base-unit consistency via the underlying `DimensionSystem`, then reorders base units to match the dimension system's base-dimension ordering for deterministic storage.
+  - `UnitSystem.get_unit(unit)` — looks up a unit in the system; string input matches only against `abbrev` (not full name — noted as TODO limitation); Unit input matches by identity; returns None if not found. `__getitem__` shortcut raises KeyError on miss.
   - `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit. Arithmetic: `add`/`sub` (same-unit only, auto-converts), `mul`/`div`/`rdiv`, `pow`. `pow(other)` calls `evalf()` on the computed factor because symbolic Pow instances are incompatible with the Quantity constructor.
 - `prefixes.py` — `Prefix` class for SI/binary scale multipliers; arithmetic (`__mul__`, `__div__`, `__rdiv__`) between two Prefixes looks up the combined factor in the global PREFIXES dict, returning the raw numeric factor if no predefined prefix matches. `__rdiv__` handles `1/prefix` by searching PREFIXES for the inverse factor.

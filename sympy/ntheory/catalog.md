@@ -10,7 +10,8 @@ Generating, counting, and enumerating primes and composites.
 - `primerange(a, b)` — generate primes in half-open range
 - `randprime(a, b)` — random prime in range
 - `primorial(n)` — product of first n primes
-- `composite(nth)`, `compositepi(n)` — nth composite / count composites ≤ n
+- `composite(nth)` — nth composite (non-unit, non-prime) integer; uses cached table for small n, binary search with logarithmic-integral bound for large n
+- `compositepi(n)` — count of composite integers ≤ n
 - `cycle_length(f, x0)` — detect cycle length in iterated integer sequence
 
 ### [`primetest.py`](primetest.py)

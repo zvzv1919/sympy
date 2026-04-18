@@ -146,7 +146,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
 - `prde_special_denom` — parametric variant of special denominator (operates on vector of RHS polynomials G=[g1,...,gm] instead of scalar c)
   - For primitive/base: short-circuits with `(a, ba.quo(bd), G, 1)` — no order computation needed since k<t>==k[t]
   - For exp: when order nb==0 (possible cancellation), checks `parametric_log_deriv` to tighten bound n
-  - For tan: when nb==0, separates real/imaginary parts via `real_imag`, gates on `recognize_log_derivative(2*beta_imag)` before attempting `parametric_log_deriv` on both parts; adjusts n to s/2 only when both succeed
+  - For tan (hypertangent): when nb==0 (possible cancellation), separates real/imaginary parts via `real_imag`
+  - Gates on `recognize_log_derivative(2*beta)`, then attempts `parametric_log_deriv` on both real and imaginary parts independently; adjusts n to s/2 only when both succeed
 - `real_imag` — separates a rational function into real and imaginary parts evaluated at a complex root of t²+1
 - `prde_no_cancel_b_large` — parametric no-cancellation case when deg(b) ≥ deg(D); iterates degree-by-degree to build solution basis
 - `prde_no_cancel_b_small` — parametric no-cancellation case when deg(b) < deg(D)−1; branches on deg(b)>0 vs ≤0 (latter raises NotImplementedError, needs recursive param_rischDE)
@@ -164,6 +165,8 @@ Parametric Risch Differential Equation solver (extension of RDE with undetermine
   - Base case: immediately returns None if fd is not square-free or deg(fa) >= deg(fd); otherwise computes n and u from residue terms
   - Uses `splitfactor` for denominator simplicity check, then `residue_reduce`; returns None if not all resultant roots are rational
 - `parametric_log_deriv_heu` — heuristic for n·f = Dv/v + m·Dθ/θ (n,m∈ℤ, v∈k(t)*); branches on whether deg(q) exceeds a derivation-degree bound B, solving coefficient equations in each branch
+  - When deg(q) ≤ B: computes LCM of denominators, splits via `splitfactor` into normal/special factors, constructs polynomial z from those factors
+  - Raises `NotImplementedError` ("heuristic failed: z in k") when z is in the constant field (doesn't involve the extension monomial t)
 
 ### [`heurisch.py`](heurisch.py)
 Semi-decision (heuristic) Risch integration using Bernstein/Bronstein "Poor Man's Integrator" approach. Supports transcendental elementary and special functions (Airy, Bessel, Whittaker, Lambert, erf/erfi, Ei). Unlike the full Risch decision procedure in `risch.py`, cannot prove non-existence of antiderivatives.

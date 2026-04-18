@@ -208,7 +208,8 @@ Low-level algorithms for computational group theory.
 - `_strip` — decomposes (sifts) one permutation element through the stabilizer chain of an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
 - `_strip_af` — array-form optimized variant of `_strip`; skips levels already known to be fixed (parameter `j`), and detects identity early when the residual equals a coset representative mid-chain, returning `(False, base_len + 1)` instead of computing further products.
 - `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.
-- `_strong_gens_from_distr`, `_check_cycles_alt_sym`.
+- `_strong_gens_from_distr` — reconstructs strong generating set from distributed generators.
+- `_check_cycles_alt_sym(perm)` — checks if a permutation contains a cycle of prime length p with n/2 < p < n-2; early-terminates when remaining unvisited elements can't form a long enough cycle. Helper for `is_alt_sym` in `perm_groups.py`.
 
 ### [`testutil.py`](testutil.py)
 Testing/verification helpers for permutation groups, plus brute-force tensor canonicalization.

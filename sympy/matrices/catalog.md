@@ -234,7 +234,7 @@ Symbolic matrix factorization component nodes — each wraps a parent matrix exp
 Low-level solvers operating on raw list-of-lists (not matrix objects).
 
 - `row_echelon`: forward elimination on raw nested lists; **no row-swapping/pivoting** — zero diagonal elements are left in place (skips normalization but still eliminates below), so rank-deficient matrices may produce incorrect results.
-- `rref`: reduced row echelon form on raw nested lists; back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows.
+- `rref`: reduced row echelon form on raw nested lists; no pivot search or row swapping — back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows. For pivot-searching rref on matrix objects, see `rref` in `matrices.py`.
 - `LU`: raw list-of-lists LU decomposition without pivoting. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
 - `LDL`: square-root-free L·D·Lᵀ factorization for hermitian/self-adjoint matrices on raw nested lists.
   - Returns unit lower-triangular L, diagonal D, and conjugate transpose of L — avoids square roots by separating the diagonal (unlike `cholesky`).

@@ -123,6 +123,10 @@ Parabolic entities defined by focus and directrix.
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
 - `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`, `intersection(o)`.
+  - `__new__` — construction validates vertices: removes consecutive duplicates and collinear points; degrades to `Triangle`/`Segment`/`Point` for ≤3 vertices.
+  - Construction self-intersection check: runs `is_convex()` first; if non-convex, checks all non-adjacent side pairs for crossings.
+  - Caveat: if `is_convex()` raises `ValueError` (e.g. symbolic coords → indeterminate orientation in `_isright`), assumes convex and **skips** self-intersection check.
+  - `_isright(a, b, c)` — static; determines turn direction via cross-product sign; raises `ValueError("Can't determine orientation")` when symbolic coordinates yield indeterminate sign.
   - `distance(o)` — minimum separation to another entity; dispatches by type: `Point` → iterates all sides (works for non-convex polygons); `Polygon` → delegates to `_do_poly_distance` (requires both polygons convex); raises `NotImplementedError` for non-convex polygon-to-polygon.
   - `arbitrary_point(parameter='t')` — returns a `Piecewise` expression mapping parameter 0→1 along the perimeter, each edge weighted by its fraction of total perimeter length; raises `ValueError` if parameter name collides with a free symbol.
   - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.

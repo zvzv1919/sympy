@@ -76,6 +76,7 @@ Sparse polynomial rings and their elements (dict-based representation).
 - `PolyRing` — polynomial ring `K[x_1, ..., x_n]`.
   - `_gens_set` — cached set of canonical generator elements.
   - `free_module(rank)` — create free module over this ring.
+  - `index(gen)` — resolve generator position; accepts `None` (→ 0), integer (**supports Python-style negative indexing**: `-1` → last gen), ring element, or string name; raises `ValueError` if out of bounds.
   - `add(*objs)` / `mul(*objs)` — aggregate a sequence of polynomials or nested containers (including generators) by sum/product; **recursively flattens nested lists and generator objects** via `is_sequence`; starts from `self.zero` / `self.one` respectively.
   - `to_ground()` — strip coefficient domain to its base; checks `is_Composite` **or** `hasattr(domain, 'domain')` to also handle algebraic fields not formally marked as composite.
   - `drop_to_ground(*gens)` — remove generators and inject them into the domain; **if no generators remain after removal, returns `self` unchanged** (does not reduce to the domain).
@@ -188,6 +189,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `nth(*N)` — return coefficient by generator exponents (e.g. `nth(1, 2)` for `x^1·y^2`); more efficient than `coeff_monomial` when exponents are already known.
   - Ground arithmetic: `add_ground`, `sub_ground`, `mul_ground`, `quo_ground` (truncating scalar division), `exquo_ground` (exact scalar division; **raises `ExactQuotientFailed` if any coefficient is not evenly divisible**).
   - Arithmetic: `add`, `sub`, `mul`, `sqr`, `pow`, `div`, `rem`, `quo`, `exquo`, `pdiv`, `prem`, `pquo`, `pexquo`.
+    - `prem(g)` — pseudo-remainder; **caveat: safe only for computing subresultant PRS in Z[x]**; for Euclidean/Sturmian PRS in Z[x], use functions in `subresultants_qq_zz` module instead (`rem_z` premultiplies by absolute value of LC, unlike `prem`).
     - `div(f, g, auto=True)` — when `auto=True` and domain is a ring (not a field), **promotes both operands to the fraction field before dividing**.
       Attempts to retract quotient/remainder back to the ring; keeps field-domain results silently if retraction fails.
     - `mul(g)` — if `g` is not a Poly, falls back to `mul_ground` (scalar multiplication); same pattern for `add`/`sub`.
@@ -263,6 +265,7 @@ High-level polynomial utility functions (symbolic level).
 Low-level dense polynomial arithmetic on coefficient lists.
 
 - `dup_add`, `dmp_add`, `dup_sub`, `dmp_sub` — basic arithmetic; `dup_add` **only strips leading zeros when both operands share the same degree** (possible cancellation); skips stripping when one operand has strictly higher degree.
+  - `dmp_sub` degree mismatch: **when the subtrahend has higher degree, negates the excess higher-order prefix via `dmp_neg`** before element-wise recursive subtraction on the aligned tail.
 - `dup_mul`, `dmp_mul` — multiplication; `dup_mul` **switches from naive O(n²) convolution to Karatsuba divide-and-conquer at `max(df,dg)+1 >= 100`**.
 - `dup_sqr`, `dmp_sqr`, `dup_pow`, `dmp_pow` — squaring and exponentiation.
 - `dup_add_term`, `dmp_add_term`, `dup_sub_term`, `dmp_sub_term` — add/subtract a monomial `c*x^i`.
@@ -294,6 +297,7 @@ Low-level dense polynomial basics: construction, conversion, queries.
 
 - `dmp_validate`, `dmp_normal`, `dmp_convert` — validation and domain conversion.
 - `dup_from_dict`, `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy` — format conversions; `dup_from_dict` **accepts both integer keys and single-element tuple keys** `{(k,): c}`, dispatching by `type(max_key) is int`.
+  - `dmp_to_dict` — **when the computed degree is negative infinity (zero polynomial not caught by earlier zero check), sets degree to −1** so the iteration loop produces an empty result.
 - `dup_to_tuple`, `dmp_to_tuple` — convert coefficient lists to (nested) tuples for hashing; `dmp_to_tuple` **recursively converts each nesting level**, producing an immutable hashable form suitable for dict keys.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC`, `dmp_ground_TC` — degree/coefficient queries; `dmp_ground_LC`/`dmp_ground_TC` drill through each nesting level to extract the innermost leading/trailing coefficient.
 - `dmp_true_LT(f, u, K)` — leading term as `(monom_tuple, coeff)`; **if innermost univariate list is empty (zero poly), appends exponent 0** instead of computing `len-1` (which would give −1).
@@ -451,7 +455,8 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
   - `dmp_zz_diophantine` recursively peels evaluation points from the list, reducing dimension by one each step; **uses Taylor-like expansion with successive differentiation at evaluation points** to lift solutions back to full dimension.
 - `dup_zz_mignotte_bound`, `dmp_zz_mignotte_bound` — coefficient bounds for factors.
 - `dup_cyclotomic_p` — cyclotomic polynomial predicate.
-- `dup_zz_cyclotomic_factor` — efficient factorization of `x^n ± 1` in Z[x]; **validates input form: leading coeff must be 1, trailing coeff must be ±1, all interior coefficients must be zero**; returns `None` if input doesn't match either binomial form; uses cyclotomic decomposition based on prime factorization of `n`.
+- `dup_zz_cyclotomic_factor` — efficient factorization of `x^n ± 1` in Z[x]; **validates input form: leading coeff must be 1, trailing coeff must be ±1, all interior coefficients must be zero**; returns `None` if input doesn't match either binomial form.
+  - **`x^n - 1`**: returns cyclotomic decomposition of `n` directly; **`x^n + 1`**: computes decomposition of `2n` and **filters out factors present in the decomposition of `n`**, yielding only the cyclotomic polynomials unique to `2n`.
 
 ### [`sqfreetools.py`](sqfreetools.py)
 Square-free decomposition for **characteristic-zero domains** (Z, Q, algebraic extensions).
@@ -523,6 +528,7 @@ Symbolic root representations and root-sum evaluation.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_reals_index`, `_complexes_index` — map global root index to per-factor local index; `_complexes_index` **offsets the local index by the number of real roots** of the same factor (via `_reals_cache`).
   - `_get_interval`, `_refine_interval`, `_eval_evalf` — numerical evaluation; `_eval_evalf` **creates a Dummy variable and substitutes when the polynomial generator is a compound expression** (not a plain Symbol).
+    - **For complex roots, pre-refines the isolation interval until both imaginary bounds have changed** from their initial values (ensures disjointness with neighboring roots before numerical root-finding).
     - When the complex isolation interval converges to a single point (`ax==bx` and `ay==by`), **assigns the sign of the imaginary part using the polynomial degree and root index parity** (roots sorted with negative-imaginary before positive-imaginary), rather than trusting the interval's sign directly.
   - `_eval_Eq(other)` — symbolic equality check; **returns `S.false` if `other` has no imaginary part but the root is non-real (complex), or vice versa**; refines bounding interval and checks containment for compatible real/imaginary types.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
@@ -589,7 +595,7 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
   - `euclid_amv` — Euclidean PRS using **Collins-Brown-Traub coefficient reduction**: initializes reduction variable `c = -1`, iteratively updates via `c = (-LC)^(δ-1) / c^(δ-2)`, and normalizes each remainder by dividing by `|c^(δ-1) · σ|`; produces subresultant coefficients without determinant evaluation.
   - `euclid_q` — Euclidean sequence in Q[x]; **normalizes LC(p) to positive before computing remainders (negating both inputs); after completion, negates entire output sequence if original LC was negative**; removes trailing zero/NaN entry.
-- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv`, `subresultants_vv_2` — subresultant PRS (multiple methods); `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`); `subresultants_vv_2` is the **implicit-matrix variant** (Sylvester matrix not stored explicitly) for large-dimension cases; **returns `[f, g]` early if `deg(f) > 0` and `deg(g) == 0`** (constant second input).
+- `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv`, `subresultants_vv_2` — subresultant PRS (multiple methods); `subresultants_pg` **converts modified subresultant PRS to standard PRS** by dividing each remainder (after the first two) by `LC(p)^(deg(p)-deg(q))` and applying sign corrections `(-1)^(j(j-1)/2)` based on degree gaps; `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`); `subresultants_vv_2` is the **implicit-matrix variant** (Sylvester matrix not stored explicitly) for large-dimension cases; **returns `[f, g]` early if `deg(f) > 0` and `deg(g) == 0`** (constant second input).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
 - `sylvester(p, q, x, method)` — Sylvester matrix construction (1840 variant `(m+n)×(m+n)` or 1853 variant `(2·max(m,n))×(2·max(m,n))`).
   - **Returns empty `Matrix([])` when both polys are zero, both are constants, or one is constant and the other is zero**.
@@ -817,7 +823,7 @@ Sparse distributed module representations for submodule/syzygy computation.
   - **If all input generators are zero, returns `[]` (no basis); when `extended=True`, returns `([], [])` (empty basis + empty transition matrix)**.
   - Sugar priority: `max(degree_i − deg(LM_i), degree_j − deg(LM_j)) + deg(lcm(LM_i, LM_j))`, combining element degrees and leading monomial LCM degree.
   - Inner `update` applies **chain criterion to prune critical pairs** whose LCM is divisible by the new element's LCM with both pair members.
-- `sdm_spoly` — S-polynomial of two module elements; returns zero if leading terms involve different basis generators.
+- `sdm_spoly(f, g, O, K, phantom)` — S-polynomial of two module elements; returns zero if leading terms involve different basis generators; **optional `phantom` pair tracks auxiliary coefficient vectors through the same linear combination operations** (used for extended standard basis computation).
 
 ### [`ring_series.py`](ring_series.py)
 Power series arithmetic in sparse polynomial rings.
