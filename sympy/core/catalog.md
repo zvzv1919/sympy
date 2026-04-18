@@ -90,6 +90,7 @@ All concrete numeric types and their arithmetic operations.
   - `Infinity.__add__`/`__sub__`/`__mul__` — arithmetic operators; when operand is Float, returns `Float('inf')`/`Float('-inf')` (preserving float type) except Float zero × infinity → NaN; when operand is exact zero (S.Zero), also returns NaN; when operand is non-Float Number, returns symbolic `S.Infinity`/`S.NegativeInfinity`
   - `Infinity._eval_power` — positive exp → oo, negative → 0, NaN/zoo exp → NaN; complex (non-real) numeric exponent: extracts real part — positive real part → ComplexInfinity, negative → 0, zero → NaN
   - `NegativeInfinity.__add__`/`__sub__`/`__mul__`/`__div__` — same float-vs-symbolic branching as Infinity; Float operands yield Float results, exact operands yield symbolic singletons; zero × -oo → NaN for both exact and Float zero
+  - `NegativeInfinity.__sub__` — indeterminate self-subtraction: `-oo - (-oo)` → NaN; `-oo - Float('-inf')` → Float('nan'); subtracting any other Number returns -oo
   - `NegativeInfinity._eval_power` — integer exponents: odd → -oo, even → oo; non-integer numeric exponents: decomposes as `(-1)**expt * oo**expt` instead of returning a direct result
   - Own `__lt__`, `__le__`, `__gt__`, `__ge__` with special-case branches for finite, nonnegative, and infinite-negative operands
 - `ImaginaryUnit` — the imaginary unit `I = sqrt(-1)`; `_eval_power`: integer exponents use mod-4 cycle; non-integer numeric exponents delegate to `(-1)**(expt/2)`; symbolic exponents return None
@@ -122,6 +123,7 @@ All concrete numeric types and their arithmetic operations.
 - `flatten()` canonicalizes negative numeric bases with non-integer rational exponents by extracting the sign into a running `(-1)**e` accumulator and storing the positive base separately for later combination
 - `flatten()` merges adjacent non-commutative powers with same base (a^e1 * a^e2 → a^(e1+e2)) only when the combined exponent is not an Add; if the combined power turns out commutative, it is moved back to the commutative processing sequence
 - `flatten()` handles accumulated `(-1)**e` exponent: integer part toggles coefficient sign, denominator-2 remainder extracts `I`; other fractional remainders are absorbed into an existing rational-exponent term with matching denominator by negating its base, or left as unevaluated `(-1)**(p/q)`
+- `flatten()` extracts GCD of integer bases with fractional exponents to produce canonical form (e.g., `2**(1/3)*6**(1/4)` → `2**(1/3+1/4)*3**(1/4)`); iteratively factors shared prime components, accumulates integer-exponent parts into coefficient
 
 - `_eval_is_zero` — determines if product vanishes; returns None (indeterminate) when a zero factor coexists with a non-finite factor (0×∞ scenario)
 - `_eval_is_real` / `_eval_real_imag` — real/imaginary inference for products; tracks sign flips from imaginary factors
@@ -261,6 +263,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
   - `as_expr()` — converts dict back to symbolic Mul; dispatches on exponent type: Python int → wraps in Integer, Rational → keeps as-is, symbolic → multiplies into existing base exponent
   - `normal()` — cancels shared base-power pairs; optimized for few overlaps; for symbolic exponent diffs, tries `extract_additively` first, then falls back to `as_coeff_Add` to partially cancel numeric coefficient parts
   - `div()` — cancels shared base-power pairs optimized for many common factors; for non-numeric exponents, tries `extract_additively` first, then decomposes exponents via `as_coeff_Add` to partially cancel symbolic exponent remainders
+  - `pow(other)` — raises factored representation to non-negative integer power; multiplies all exponents by `other`; zeroth power returns empty factors dict (representing unity); raises ValueError for negative or non-integer exponents
 
 ### [`operations.py`](operations.py)
 `AssocOp` — base for associative operations (Add, Mul). `_from_args()`, `flatten()`.

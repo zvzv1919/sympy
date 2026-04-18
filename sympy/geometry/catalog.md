@@ -86,7 +86,7 @@ Explicit parametric curves in the 2D plane (not 3D surfaces).
 Elliptical entities in 2D.
 - `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`, `intersection()`, `arbitrary_point()`, `plot_interval()`, `random_point()`.
   - `arbitrary_point(parameter='t')` — returns trigonometric parameterization `(center.x + hradius*cos(t), center.y + vradius*sin(t))`; raises `ValueError` if parameter name collides with a free symbol in the ellipse's definition.
-  - `intersection(o)` — type-dispatched: handles `Point`, `LinearEntity`, `Circle`, `Ellipse`; for unrecognized types, falls back to `o.intersection(self)` (reverse dispatch).
+  - `intersection(o)` — type-dispatched: handles `Point`, `LinearEntity`, `Circle`, `Ellipse`; for unrecognized types, falls back to `o.intersection(self)` (reverse dispatch). Caveat: when `o == self` (identical ellipse), returns `self` directly instead of a list, inconsistent with documented return type `list of GeometryEntity`.
   - `is_tangent(o)` — type-dispatched tangency test: for `Ellipse` checks single intersection point (coincident ellipses → False); for `LinearEntity` checks single intersection in segment; for `Polygon` iterates over all sides counting edge–ellipse intersection points and returns `True` iff total count is 1.
   - `reflect(line)` — overrides `GeometryEntity.reflect`; handles axis-aligned lines only; raises `NotImplementedError` (with reflected equation) for diagonal lines.
   - `rotate(angle, pt)` — overrides `GeometryEntity.rotate`; only supports multiples of π/2; raises `NotImplementedError` otherwise.

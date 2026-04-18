@@ -112,6 +112,7 @@ Mathieu functions — solutions to the Mathieu differential equation y'' + (a �
 Spherical harmonics (angular basis functions on the unit sphere): `Ynm` (complex), `Znm` (real).
 - `Ynm` — Y_n^m(θ,φ), 4 args: (n, m, θ, φ); `eval` auto-simplifies angular symmetry relations (negated θ/φ) and negative order via conjugate identity (phase factor, no factorials). Polynomial component P_n^m delegated to `assoc_legendre` in `special/polynomials.py`.
   - `fdiff` supports differentiation w.r.t. angular args θ (argindex 3) and φ (argindex 4); raises `ArgumentIndexError` for discrete parameters n (1) and m (2).
+  - `_eval_rewrite_as_cos` — rewrites in terms of cosine; strips `Abs(sin(θ))` → `sin(θ)` assuming polar angle θ∈[0,π], then applies trigsimp.
 
 #### [`special/bsplines.py`](special/bsplines.py)
 B-spline basis functions constructed as Piecewise expressions via recursive Cox-de Boor algorithm.
@@ -194,8 +195,9 @@ Combinatorial number sequences: `fibonacci`, `lucas`, `bernoulli`, `bell`, `harm
 - `fibonacci` — Fibonacci numbers F(n) (0,1,1,2,3,5,8,...); also generates Fibonacci polynomials when called with two args. `eval` returns ∞ for n=∞.
 - `lucas` — Lucas numbers L(n) (2,1,3,4,7,11,...); companion sequence to Fibonacci with initial values L₀=2, L₁=1. `eval` returns ∞ for n=∞; integer n delegates to `fibonacci(n+1)+fibonacci(n-1)`.
 - `catalan` — Catalan number C_n = binomial(2n,n)/(n+1); `eval` returns gamma-based closed form for nonneg integers and negative non-integers; for negative integers returns 0 (n≤−2) or −1/2 (n=−1).
-- `harmonic` — generalized harmonic number H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
-  - `_eval_expand_func` — decomposes integer-shifted arguments: H(n+k) adds positive reciprocal terms, H(n−k) adds negative reciprocal terms; rational arguments expand via trigonometric digit-extraction sums.
+- `harmonic` — generalized harmonic number (sum of reciprocal powers) H(n,m) = Σ 1/k^m for k=1..n; `eval` handles n=∞ by returning NaN (m<0), ∞ (m≤1), or `zeta(m)` (m>1). Rewrites to `polygamma`.
+  - `_eval_expand_func` — decomposes integer-shifted arguments: H(n+k) adds positive reciprocal terms, H(n−k) adds negative reciprocal terms.
+  - For rational n (m=1): splits n=u+p/q into integer u and fractional p/q, expands via Gauss digamma formula using cosine-log-sine series and cot term.
 - `genocchi` — Genocchi numbers G_n, the integer sequence with generating function 2t/(eᵗ+1); related to Bernoulli numbers via G_n = 2(1−2ⁿ)B_n.
   - Assumption predicates (`_eval_is_negative`, `_eval_is_positive`) determine sign of even-indexed terms by parity of n/2; odd-indexed G_n (n>1) are zero.
   - `_eval_is_prime` — only n=8 yields a prime (G_8=17); negatives are not considered prime (so G_6=−3 is excluded).

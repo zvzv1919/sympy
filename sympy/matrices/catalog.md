@@ -34,7 +34,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
   - `LUdecomposition`.
 - `LUdecomposition_Simple`: in-place LU factorization on a mutable copy; partial pivoting selects first non-zero candidate via `iszerofunc`; raises `ValueError` when all column pivots evaluate to zero. Returns combined L/U matrix + row-swap list.
 - `LUdecompositionFF`: fraction-free LU returning PA=LD⁻¹U; keeps all entries in the original integral domain by dividing each update by the previous pivot; raises `ValueError("Matrix is not full rank")` when no nonzero pivot is found below a zero diagonal entry.
-- **Solvers**: `solve`, `LUsolve`, `gauss_jordan_solve`, `solve_least_squares`.
+- **Solvers**: `solve`, `LUsolve`, `gauss_jordan_solve` (augmented-matrix rref approach; filters out pivots in the RHS column to detect inconsistency; parametric solutions for underdetermined systems), `solve_least_squares`.
   - `pinv`: Moore-Penrose pseudoinverse (generalized inverse); full-rank→uses (AᴴA)⁻¹Aᴴ or Aᴴ(AAᴴ)⁻¹; rank-deficient→raises `NotImplementedError('Rank-deficient matrices are not yet supported.')`.
   - `pinv_solve`: solves Ax=B via pseudoinverse; for underdetermined systems auto-generates a dummy-symbol placeholder matrix with dimensions (cols, rows) then transposes to (rows, cols).
   - `QRsolve`: solves Ax=b via QR decomposition then performs its own back-substitution on R (builds solution vector backwards and reverses); does not delegate to `_upper_triangular_solve`.
@@ -241,7 +241,7 @@ Low-level solvers operating on raw list-of-lists (not matrix objects).
 - `row_echelon`: forward elimination on raw nested lists; **no row-swapping/pivoting** — zero diagonal elements are left in place (skips normalization but still eliminates below), so rank-deficient matrices may produce incorrect results.
 - `rref`: reduced row echelon form on raw nested lists; no pivot search or row swapping — back-substitution phase only eliminates upward from rows whose diagonal is 1, skipping rank-deficient rows. For pivot-searching rref on matrix objects, see `rref` in `matrices.py`.
 - `LU`: raw list-of-lists LU decomposition without pivoting. For pivoted LU on matrix objects, see `LUdecomposition_Simple` in `matrices.py`.
-- `LDL`: square-root-free L·D·Lᵀ factorization for hermitian/self-adjoint matrices on raw nested lists.
+- `LDL`: square-root-free L·D·Lᵀ factorization for hermitian/self-adjoint matrices on raw nested lists; only applicable to rational entries.
   - Returns unit lower-triangular L, diagonal D, and conjugate transpose of L — avoids square roots by separating the diagonal (unlike `cholesky`).
 - `cholesky`: Hermitian decomposition on raw nested lists returning L and conjugate transpose; diagonal entries use `isqrt` (integer square root), restricting input to matrices where diagonal minus accumulated sum is a perfect square; off-diagonal entries use division by L[j][j].
 - `rref_solve`, `cholesky_solve`, `LU_solve`: solver routines on raw nested-list data. Each deep-copies the coefficient matrix, decomposes it, allocates a fresh symbolic `y` vector for intermediate results, then performs forward substitution (mutating `y` in-place) followed by backward substitution (mutating the caller's `variable` list in-place).

@@ -89,6 +89,9 @@ High-level trigonometric simplification entry points and Gröbner-basis trig sol
   - Post-processing: if result differs from input and is a Mul whose first arg is Rational, redistributes the leading coefficient via `as_coeff_Mul()`.
   - Hyperbolic handling: when `hyper=True` (default), converts hyperbolic sub-expressions to trig via `hyper_as_trig`, simplifies, then converts back.
   - `_futrig` builds a nested rule tree of TR transforms and applies them via `greedy` search strategy; defines its own composite objective function `Lops` ranking candidates by tuple (trig count via L, op count, node count, arg count, is_Add) to determine simplest form.
+- `_eapply(func, e, cond)` — selectively apply `func` to an expression's arguments based on Expr-type and an optional filter `cond`.
+  - If all args are Expr (checked via `_is_Expr`), applies `func` to the whole expression; otherwise recurses into individual args that are Expr.
+  - When `cond` is given, args not satisfying `cond` are left unchanged without recursion, even if they are valid Expr instances.
 
 ---
 

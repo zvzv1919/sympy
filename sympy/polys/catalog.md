@@ -340,7 +340,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dmp_eval(f, a, u, K)` — evaluate multivariate polynomial at `x_0 = a` using Horner scheme; **if `a` is zero (falsy), returns the trailing coefficient `dmp_TC(f, K)` directly** (same shortcut as `dup_eval`).
 - `dmp_eval_in(f, a, j, u, K)` — evaluate multivariate polynomial at `x_j = a` by index `j`; uses recursive descent through nesting levels to the target variable, then applies Horner evaluation; **raises `IndexError` if `j` is out of bounds**.
 - `dmp_eval_tail(f, A, u, K)` — evaluate at trailing variables `x_{n-len(A)+1}, …, x_n`.
-- `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation.
+- `dup_diff`, `dmp_diff`, `dmp_diff_in` — differentiation; **when derivative order exceeds polynomial degree, univariate `dup_diff` returns `[]` (empty list) while multivariate `dmp_diff` returns `dmp_zero(u)`** (nested zero matching the variable depth).
 - `dup_integrate`, `dmp_integrate`, `dmp_integrate_in` — integration.
 - `dup_compose`, `dmp_compose` — polynomial composition; `dup_compose` **short-circuits when inner polynomial has length ≤ 1** (constant or zero): evaluates `f` at the leading coefficient of `g` and returns the scalar result wrapped as a single-element list.
 - `dup_clear_denoms(f, K0, K1)` — clear fractional coefficients from univariate polynomial; computes LCM of denominators. **If `K1` is None and `K0` has no associated ring, falls back to using `K0` itself as the target domain**.
@@ -573,6 +573,7 @@ Symbolic root-finding algorithms (closed-form solutions).
 - `roots(f, filter, predicate)` — compute symbolic roots using radical formulas (linear through quartic), plus special cases; **also accepts a plain list of numerical coefficients** (builds a dummy variable internally).
   - `filter` parameter restricts root domain: `'Z'` (integer), `'Q'` (rational), `'R'` (real), `'I'` (imaginary), `'C'` (no-op); **raises `ValueError("Invalid filter: ...")` for unrecognized strings** (catches `KeyError` from handler lookup).
   - **Two-term (binomial) optimization**: for polynomials with exactly 2 terms and degree > 1, extracts nth-power factors from the constant term, substitutes a dummy base, solves the simpler form, then back-substitutes.
+  - **Expression domain (EX) branch**: when polynomial has a single irreducible factor with irrational/symbolic coefficients, attempts `to_rational_coeffs` to transform via rescaling (`x→αx`) or translation (`x→x+β`) to rational coefficients, recursively solves the transformed polynomial, then adjusts solutions back.
   - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
