@@ -265,6 +265,7 @@ High-energy physics.
 ### [`unitsystems/`](unitsystems/catalog.md)
 Dimensional analysis and unit systems (SI, CGS, natural, etc.).
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
+  - `DimensionSystem.get_dim(dim)` — looks up a dimension in the system; accepts string (matches against name or symbol) or Dimension object (matches by identity in list); returns None if not found. `__getitem__` shortcut raises KeyError on miss.
   - `DimensionSystem.print_dim_base(dim)` — formats a dimension as a human-readable string in terms of basis dimensions, sorted by decreasing power; skips zero-power, omits exponent for power=1.
 - `units.py` — `Unit` class and `UnitSystem` (coherent unit set); `UnitSystem.__call__` dispatches on argument type: Dimension → base-dimension string, Unit → base-unit string, Quantity → formatted "factor unit" string.
 - `quantities.py` — `Quantity`: physical quantity with numeric factor and unit. Arithmetic: `add`/`sub` (same-unit only, auto-converts), `mul`/`div`/`rdiv`, `pow`. `pow(other)` calls `evalf()` on the computed factor because symbolic Pow instances are incompatible with the Quantity constructor.

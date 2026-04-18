@@ -24,13 +24,14 @@ Main inference engine for the assumptions system.
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive`, `Q.negative`, `Q.nonnegative`, `Q.nonpositive` each document the asymmetry between negation and "non" counterparts: e.g., `~Q.negative(I)` is `True` but `Q.nonnegative(I)` is `False`, because "non" predicates require realness.
-  - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
+  - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
+    - `Q.triangular`: general predicate true iff matrix is upper_triangular OR lower_triangular; subsumes both specific variants.
     - `Q.positive_definite`: true iff square symmetric real matrix has Z^T M Z > 0 for every nonzero column vector Z.
     - `Q.orthogonal`/`Q.unitary`: true iff M^T M = I (real/complex analogue). Non-square → False.
     - Docstrings define cross-predicate inference rules (e.g., `Q.diagonal` iff both `Q.upper_triangular` and `Q.lower_triangular`; `Q.invertible` iff `Q.fullrank` ∧ `Q.square`).
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `_extract_facts(expr, symbol)`: extracts assumption predicates relevant to a given symbol from a compound Boolean expression; applies De Morgan's law to push negations inward (converting negated And/Or).
-- `ask(proposition, assumptions)`: top-level query function; dispatches to registered handlers, then falls back in two tiers.
+- `ask(proposition, assumptions)`: top-level query function; validates assumption consistency (raises `ValueError("inconsistent assumptions")` if local facts contradict known mathematical facts via SAT check), then dispatches to registered handlers, then falls back in two tiers.
 - `ask_full_inference(proposition, assumptions, known_facts_cnf)`: first-tier SAT fallback inside `ask.py`; checks satisfiability of proposition (and its negation) against known predicate relationships to return True/False/None.
   - If indeterminate, `ask()` escalates to `satask()` (in `satask.py`) which gathers expression-specific facts.
 - `register_handler(key, handler)`: registers a handler class for a predicate; if the property name doesn't exist on `Q`, dynamically creates a new `Predicate` and attaches it.

@@ -367,7 +367,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 - `_integer_rational_reconstruction(c, m, domain)` — reconstruct rational `a/b` from `c ≡ a/b mod m` via Euclidean algorithm; **returns `None` if denominator coefficient is zero (`s1 == 0`) or `|s1| ≥ bound`** (non-invertible); negates both `a, b` when `s1 < 0` to ensure positive denominator.
 - `_rational_reconstruction_int_coeffs(hm, m, ring)` — reconstruct rational coefficients from integer image. Returns `None` if any coefficient fails.
   - **If `ring.domain` is a `PolynomialRing` (nested coefficients), recurses on itself; otherwise delegates to `_integer_rational_reconstruction`**.
-- `_trial_division` — verify candidate GCD by trial division.
+- `_trial_division` — verify candidate GCD by **fraction-free pseudo-division in a quotient ring** `K[t₁,…,tₖ][z]/(m(z))`; two-level reduction: outer loop reduces by the candidate divisor in `x`, inner loop reduces modulo the minimal polynomial in `z`; optionally truncates coefficients mod a prime.
 
 ---
 

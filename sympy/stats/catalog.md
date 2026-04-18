@@ -54,7 +54,8 @@ Infrastructure for finite random variables (discrete, finite support).
 
 ### [`crv_types.py`](crv_types.py)
 All built-in continuous probability distributions (~28) plus a factory for user-defined ones.
-- `ContinuousRV(symbol, density, set)`: user-facing factory for custom continuous random variables from an arbitrary density; defaults support to `(-oo, oo)` (entire real line) when `set` is omitted.
+- `ContinuousRV(symbol, density, set)`: user-facing factory for custom continuous random variables from an arbitrary density; defaults support to `(-oo, oo)` (entire real line) when `set` is omitted. Does **not** invoke `check()` for parameter validation.
+- `rv(symbol, cls, args)`: internal factory used by all named distribution constructors; calls `dist.check(*args)` for parameter validation before creating the pspace.
 - Named distributions: `Normal`, `Exponential`, `Beta`, `Gamma`, `Uniform`, `StudentT`, `Weibull`, `Cauchy`, `Chi`, `LogNormal`, `Pareto`, `Rayleigh`, and more.
 - Each distribution class has a `pdf(x)` method returning the probability density function expression.
 - Some distributions override `expectation`, `cdf`, or `_cdf` with distribution-specific simplifications (e.g., `UniformDistribution` substitutes `Max`/`Min` to resolve symbolic boundary ordering).
@@ -89,7 +90,7 @@ Higher-level statistical convenience functions built on top of `rv.py`; re-expor
 ### [`symbolic_probability.py`](symbolic_probability.py)
 Symbolic (unevaluated) representations of probabilistic expressions — for algebraic manipulation and rewriting, not direct numeric evaluation.
 - `Probability`, `Expectation`, `Variance`, `Covariance`: subclasses of `Expr`; remain unevaluated until `.doit()` or `.rewrite()` is called.
-- `Expectation._eval_rewrite_as_Probability`: converts expectation to Integral/Sum weighted by `Probability(Eq(rv, x))`; generates a fresh dummy symbol (lowercased or `_1`-suffixed) and dispatches by pspace type (continuous → Integral, finite, discrete → Sum).
+- `Expectation._eval_rewrite_as_Probability`: converts expectation to Integral/Sum weighted by `Probability(Eq(rv, x))`; generates a fresh dummy symbol (lowercased or `_1`-suffixed) and dispatches by pspace type (continuous → Integral, discrete-infinite → Sum, finite → raises error).
 - `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients.
 - `Covariance.doit()`: expands covariance of sums/products using linearity; detects identical args and delegates to `Variance`.
 

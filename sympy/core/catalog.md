@@ -212,7 +212,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
 - `_expand_hint(expr, hint, deep, **hints)` — static recursive helper for `expand()`; walks expression tree applying named `_eval_expand_<hint>()` methods to each subnode; returns `(new_expr, hit)` where `hit` indicates whether any subnode was actually modified
 - `_eval_expand_complex` — expansion hint for complex decomposition via `as_real_imag()`
 - `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure
-- `Expr.round(p)` — rounds numeric expression to `p` decimal places; for negative values, detects when adding the rounding half-unit flips sign of the scaled intermediate and reverses direction; uses `_mag` for digit counting
+- `Expr.round(p)` — rounds numeric expression to `p` decimal places; complex inputs are split into real and imaginary parts, each rounded independently; for negative values, detects when adding the rounding half-unit flips sign of the scaled intermediate and reverses direction; uses `_mag` for digit counting
 - `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for complex non-real operands, operands containing ComplexInfinity (via `.has()`), or NaN; otherwise computes difference and checks sign or returns unevaluated relational
 - `invert(g)` — multiplicative inverse of self mod g; dispatches to numeric `mod_inverse` if both are numbers, otherwise to polynomial `invert`
 - `_eval_is_positive` / `_eval_is_negative` — sign determination; uses low-precision evalf, falls back to minimal polynomial when no significant digits

@@ -16,7 +16,7 @@ Concrete vector classes built on `BasisDependent`.
   - `dot` dispatches on operand type: Vector → scalar, Dyadic → Vector (left-multiplies vector into dyadic, contracting the first basis index), Del → returns a **callable** (directional derivative operator).
   - The Del-dispatch closure converts scalar `0` to `Vector.zero` when the input field is a Vector, preventing type mismatches.
   - `cross` dispatches on operand type: Vector → Vector (via custom inline 3×3 determinant), Dyadic → Dyadic (distributes cross over each dyadic component's first basis vector, then re-forms outer products).
-- `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system.
+- `BaseVector` — unit basis vector (i, j, or k) tied to a coordinate system; `__new__` validates index ∈ {0,1,2} (`ValueError`) and system type (`TypeError`).
 - `VectorAdd`, `VectorMul`, `VectorZero` — sum, scalar product, and zero specializations.
 - `_vect_div` — division dispatch helper; raises `TypeError` if both operands are vectors, `ValueError` on divide-by-zero, otherwise returns `VectorMul` with inverse scalar.
 
@@ -29,7 +29,7 @@ Dyadic tensor classes built on `BasisDependent`.
 
 ### [`scalar.py`](scalar.py)
 Coordinate variable symbols.
-- `BaseScalar` — a symbolic coordinate variable (x, y, or z) bound to a specific coordinate system; marked `_diff_wrt = True` so it can appear as a differentiation variable.
+- `BaseScalar` — a symbolic coordinate variable (x, y, or z) bound to a specific coordinate system; `__new__` validates index ∈ {0,1,2} and system type. Marked `_diff_wrt = True` so it can appear as a differentiation variable.
 - `_eval_derivative(s)` — returns `S.One` if differentiating w.r.t. itself, `S.Zero` otherwise (identity/zero derivative rule for coordinate components).
 
 ## Coordinate Systems & Orientation
