@@ -37,13 +37,19 @@ Main inference engine for the assumptions system.
   - Matrix element-type predicates: `Q.integer_elements`, `Q.real_elements`, `Q.complex_elements` — docstrings document subset implications (e.g., integer_elements → complex_elements).
 - `_extract_facts(expr, symbol)`: extracts assumption predicates relevant to a given symbol from a compound Boolean expression; applies De Morgan's law to push negations inward (converting negated And/Or).
   - **Asymmetric And/Or handling**: for `And`, filters out irrelevant (None) sub-expressions and returns partial results; for `Or` and other connectives, requires **all** sub-expressions to be relevant (non-None) or returns None.
-- `ask(proposition, assumptions)`: top-level query function; pre-validates assumption consistency (raises `ValueError("inconsistent assumptions")` if local facts alone contradict known facts), then delegates handler dispatch to `Predicate.eval()` (in `assume.py`), then falls back in two tiers. Does **not** itself walk the type hierarchy or check for conflicting handler results — that logic lives in `Predicate.eval`.
+- `ask(proposition, assumptions)`: top-level query function. Pre-validates assumption consistency, then delegates handler dispatch to `Predicate.eval()` (in `assume.py`).
+  - Does **not** itself walk the type hierarchy or check for conflicting handler results — that logic lives in `Predicate.eval`.
+  - Between handler dispatch and SAT fallback, performs **quick-lookup resolution** using `known_facts_dict` for three local_facts shapes: single atom, conjunction, single negated atom.
+  - The single-negated-atom branch is asymmetric: can only conclude `False`, never `True`, before falling back to full inference.
+  - If quick-lookup is inconclusive, falls back to `ask_full_inference`, then to `satask()`.
 - `ask_full_inference(proposition, assumptions, known_facts_cnf)`: first-tier SAT fallback inside `ask.py`; checks satisfiability of proposition (and its negation) against known predicate relationships to return True/False/None.
   - If indeterminate, `ask()` escalates to `satask()` (in `satask.py`) which gathers expression-specific facts.
 - `register_handler(key, handler)`: registers a handler class for a predicate; if the property name doesn't exist on `Q`, dynamically creates a new `Predicate` and attaches it.
 - `remove_handler(key, handler)`: removes a handler from a predicate.
 - `get_known_facts()`: **authoritative source** of the predicate implication lattice; returns a conjunction of `Implies`/`Equivalent` rules (e.g., `Implies(Q.integer, Q.rational)`, `Implies(Q.zero, Q.even)`, `Implies(Q.real, Q.complex)`). Covers number-type hierarchy, sign/ordering, and matrix property chains.
-- `compute_known_facts()`: generates compiled forms of `get_known_facts()` for `ask_generated.py`.
+- `single_fact_lookup(known_facts_keys, known_facts_cnf)`: builds a dict mapping each predicate key to the set of all keys it singly implies.
+  - Tests all key pairs via `ask_full_inference`; called by `compute_known_facts` to produce the precomputed mapping stored in `ask_generated.py`.
+- `compute_known_facts()`: generates compiled forms of `get_known_facts()` for `ask_generated.py`; calls `single_fact_lookup` to build the implication dict, then serializes both CNF and dict forms into source code.
 
 ### [`assume.py`](assume.py)
 Predicate definitions and global assumptions context.
@@ -143,7 +149,8 @@ Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (i
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
   - Only handles a **fixed set** of predicates: sign (`Q.positive`, `Q.negative`, `Q.zero`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`), number type (`Q.rational`, `Q.irrational`, `Q.even`, `Q.odd`, `Q.integer`, `Q.imaginary`, `Q.commutative`).
   - **Fallback**: predicates not in this set (e.g., `Q.real`, `Q.finite`, `Q.prime`) are returned unchanged as the original `AppliedPredicate` object.
-  - Handles semantic mismatches between new and old assumptions for each sign predicate.
+  - **Sign predicates** (`Q.positive`, `Q.negative`, `Q.zero`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`) are wrapped with `fuzzy_and([e.is_finite, ...])` boundedness guards because old-assumption `is_real` includes infinity.
+  - **Number-type predicates** (`Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.irrational`, `Q.imaginary`, `Q.commutative`) map directly to `.is_*` attributes without finiteness guards.
   - `Q.nonnegative` is handled asymmetrically: uses `fuzzy_or([e.is_zero, e.is_finite])` instead of just `e.is_finite` like other sign predicates (`Q.positive`, `Q.negative`, `Q.nonpositive`, `Q.nonzero`).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
 - `UnevaluatedOnFree`: base for deferred Boolean wrappers over predicates; `__new__` validates that input is either entirely free (unapplied) or singly applied to one expression.

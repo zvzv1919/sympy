@@ -67,7 +67,7 @@ Permutation group (set of permutations) with group-theoretic algorithms.
     - Not used by `get_minimal_bsgs` in `tensor_can.py`.
 - Standalone orbit functions (module-level, not `PermutationGroup` methods):
   - `_orbit(degree, generators, alpha)` — computes the set of elements reachable from a starting point under group generators.
-  - `_orbits(degree, generators)` — partitions all domain elements into disjoint equivalence classes by iterating single-point orbits.
+  - `_orbits(degree, generators)` — partitions all domain elements `{0..degree-1}` into disjoint equivalence classes by iterating single-point orbits; removes classified elements from the remaining index set after each orbit to avoid redundant computation.
   - `_orbit_transversal(degree, generators, alpha, pairs, af)` — finds representative group elements mapping a point to each member of its orbit.
     - `pairs=True` returns list of `(point, element)` tuples; `af=True` keeps elements in raw array form (skips `Permutation` wrapping). When both are True, returns raw array-form tuples without conversion.
 
@@ -221,7 +221,7 @@ Low-level algorithms for computational group theory.
 - `_handle_precomputed_bsgs` — lazily fills missing BSGS structures (transversals, basic orbits, distributed strong gens) from whichever are already available; derives orbits from transversal keys when transversals are known but orbits are not.
 - `_distribute_gens_by_base(base, gens)` — partitions generators into basic stabilizer levels; each level i collects gens fixing the first i base points; empty levels receive the identity element.
 - `_base_ordering` — reorders `{0..n-1}` so that base points appear first; produces an index mapping, does not verify or compute minimal bases.
-- `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from distributed strong generators; `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
+- `_orbits_transversals_from_bsgs` — computes basic orbits and transversal dicts from an already-computed BSGS (distributed strong generators); does not partition indices from scratch. `transversals_only=True` skips orbit lists and returns only the coset-representative mappings.
 - `_strip` — decomposes (sifts) one permutation element through the stabilizer chain of an existing BSGS; returns residual and level. Does not modify the BSGS (caller decides how to react to failure).
 - `_strip_af` — array-form optimized variant of `_strip`; skips levels already known to be fixed (parameter `j`), and detects identity early when the residual equals a coset representative mid-chain, returning `(False, base_len + 1)` instead of computing further products.
 - `_remove_gens(base, strong_gens)` — prunes redundant generators from a strong generating set; iterates stabilizer levels in reverse, skipping removal when it would leave zero generators at a level.

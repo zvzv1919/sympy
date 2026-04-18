@@ -28,7 +28,7 @@ Core symbolic integration engine and public API.
 Step-by-step integration emulating by-hand techniques (substitution, parts, trig rules, etc.). May return results containing unevaluated `Integral` sub-expressions when it can only partially evaluate; the caller in `integrals.py` handles those remainders.
 - `manualintegrate(f, var)` — integrate using manual rule-based strategies
 - `integral_steps(integrand, symbol)` — returns the rule tree describing the integration steps
-- `power_rule` — handles base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
+- `power_rule` — computes antiderivative of base^exp and base^symbol (exponential) forms; returns piecewise when base==1 is indeterminate
 - Trig sub-rules: `trig_sincos_rule` (sin·cos), `trig_tansec_rule` (tan·sec), `trig_cotcsc_rule` (cot·csc); pattern-matching dispatchers that classify the integrand and select a handler — substitution strategies and piecewise edge cases for sin^n·cos^m live in `trigonometry.py`
 - `eval_trigsubstitution` — back-converts trig substitution results from angle parameter to original variable using triangle-side geometry (opposite/adjacent/hypotenuse ratios derived from the substitution relation)
 - `alternatives(*rules)` — strategy combinator: collects results from multiple rules, filters out `DontKnowRule`; prefers "doable" results (no unsolvable sub-steps), but if all contain `DontKnowRule`, falls back to returning all of them bundled as `AlternativeRule` rather than discarding
@@ -195,7 +195,8 @@ Semi-decision heuristic (parallel) Risch integration using Bernstein/Bronstein "
   - `_splitter` recursively decomposes polynomials via derivation and GCD for denominator factoring
 - `heurisch_wrapper(f, x)` — wraps `heurisch`; detects new symbolic poles in the antiderivative's denominators (not present in original integrand), re-evaluates under each special-case substitution, and returns a Piecewise over those parameter conditions
 - `DiffCache` — caches derivatives during integration; for cylindrical (Bessel-type) functions, simultaneously stores derivatives for orders n and n−1 to avoid introducing a third algebraically dependent transcendental
-- `components(f, x)` — collects the functional building blocks (atoms) of an expression that depend on x; for power expressions: integer exponents yield only base components, rational non-integer exponents add base^(1/denominator), symbolic/irrational exponents add both full power and exponent components
+- `components(f, x)` — expression decomposition: recursively extracts the set of functional building blocks (atoms) of an expression that depend on x
+  - Three-way dispatch for power expressions: integer exponents → only base components; rational non-integer → adds base^(1/denominator); symbolic/irrational → adds both full power and exponent components
 
 ### [`rationaltools.py`](rationaltools.py)
 Integration of rational functions p(x)/q(x) via partial fractions and logarithmic parts.

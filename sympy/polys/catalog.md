@@ -176,6 +176,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - `half_gcdex(g, auto)`, `gcdex(g, auto)`, `invert(g, auto)` — extended Euclidean algorithm and modular inverse; **if `auto=True` and domain is a ring, auto-promotes to fraction field** (e.g. ZZ→QQ) before computing.
   - `sturm(auto=True)` — Sturm sequence; **if `auto=True` and domain is a ring, auto-converts to field** (e.g. ZZ→QQ) before computing.
   - `to_ring`, `to_field`, `set_domain` — domain conversion.
+  - `get_modulus()` — return the characteristic of the coefficient domain; **raises `PolynomialError("not a polynomial over a Galois field")` if domain is not `FiniteField`**.
   - Content/primitive: `content`, `primitive`, `monic`.
     - `content()` — GCD of all coefficients; **only allows `polys` flag (not `auto`)**, unlike `monic` which accepts both.
     - `monic(auto=True)` — divides all coefficients by leading coefficient; **if `auto=True` and domain is a ring (e.g. ZZ), auto-converts to fraction field (e.g. QQ) before dividing**.
@@ -227,7 +228,8 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
 - `div`, `rem`, `quo`, `exquo` — public free functions for polynomial division; each **catches `PolificationFailed` and re-raises as `ComputationFailed`**; `div`/`rem` accept `auto` flag for automatic ring→field promotion; `rem` over ZZ may return the dividend unchanged (LC not divisible), while over QQ produces a reduced remainder.
 - `gff(f)` — **stub that unconditionally raises `NotImplementedError('symbolic falling factorial')`**; the list-of-factors variant `gff_list` is functional.
-- `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
+- `groebner(F, *gens, **args)` — **public entry point** for computing a reduced Gröbner basis from symbolic expressions; supports `method='buchberger'` (default) or `method='f5b'`; thin wrapper that delegates to `GroebnerBasis` constructor.
+- `cancel(f, g)`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
 - `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**.
   - **When exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction.
@@ -479,7 +481,7 @@ Polynomial factorization in characteristic zero (over Z, Q, algebraic extensions
 - `dup_zz_diophantine`, `dmp_zz_diophantine` — Wang/EEZ Diophantine equation solvers; `dup_zz_diophantine` for >2 inputs **builds cumulative products and recursively reduces to the 2-input base case** (extended GCD).
   - `dmp_zz_diophantine` recursively peels evaluation points from the list, reducing dimension by one each step; **uses Taylor-like expansion with successive differentiation at evaluation points** to lift solutions back to full dimension.
 - `dup_zz_mignotte_bound`, `dmp_zz_mignotte_bound` — coefficient bounds for factors.
-- `dup_cyclotomic_p` — cyclotomic polynomial predicate.
+- `dup_cyclotomic_p` — cyclotomic polynomial predicate; **over QQ, attempts conversion to ZZ first and returns `False` on `CoercionFailed`** (non-integer coefficients); over non-ZZ/non-QQ domains, returns `False` immediately.
 - `dup_zz_cyclotomic_factor` — efficient factorization of `x^n ± 1` in Z[x]; **validates input form: leading coeff must be 1, trailing coeff must be ±1, all interior coefficients must be zero**; returns `None` if input doesn't match either binomial form.
   - **`x^n - 1`**: returns cyclotomic decomposition of `n` directly; **`x^n + 1`**: computes decomposition of `2n` and **filters out factors present in the decomposition of `n`**, yielding only the cyclotomic polynomials unique to `2n`.
 
@@ -587,9 +589,11 @@ Symbolic root-finding algorithms (closed-form solutions).
   - Internal `_try_heuristics`: **tests -1 then 1 as roots and divides out only one trivial linear factor** (breaks after first success) before dispatching to degree-specific solvers (linear, quadratic, cubic, quartic, quintic, cyclotomic).
 - `roots_cubic`, `roots_quartic`, `roots_binomial`, `roots_cyclotomic` — specialized solvers.
   - `roots_quartic` handles a **quasisymmetric case** when `(C/A)^2 == D`: factors the quartic into two quadratics via an intermediate quadratic `g`, then solves each factor with `roots_quadratic`.
+- `roots_quadratic` — closed-form roots of degree-2 polynomials; handles three branches: zero constant, zero linear coefficient, and general discriminant.
+  - **Internal `_sqrt` helper extracts perfect-square factors from under the radical** before computing `sqrt(discriminant)`, avoiding redundant nested radicals.
 - `roots_quintic` — solvable quintic solver using Lagrange resolvents; determines solvability before attempting radical computation.
   - **Returns empty list early if**: (1) x⁴ term is present, (2) leading coefficient ≠ 1 and dividing through produces any irrational coefficient, (3) polynomial is reducible, or (4) the associated degree-20 resolvent `f20` (from `PolyQuintic`) is irreducible over Z (no linear factor).
-  - Swaps resolvent parameters when numerical check against discriminant fails.
+  - **Ordering of resolvent values**: computes numerical test against discriminant and **swaps two of the four Lagrange resolvent values (`l2`, `l3`) if the test fails**; the swap determines correct linear combinations with fifth roots of unity.
 - `root_factors(f)` — decompose univariate polynomial into linear factors from discovered roots; **if fewer roots are found than the degree, appends the quotient remainder as a non-linear factor**.
 - `preprocess_roots(poly)` — simplify symbolic coefficients before root-finding; injects generators and checks for consistent exponent ratios.
   - **When one exponent in a base/generator pair is zero but the other is not, breaks** (no consistent ratio), preventing elimination of that generator.
@@ -626,7 +630,8 @@ Polynomial remainder sequences (Euclidean, Sturmian, subresultant) with **theore
   - `sturm_pg` **negates both inputs when LC(p) < 0** and flips the output sequence.
   - `method=0` scales remainders by `LC(p)^(deg_diff)` for modified subresultant coefficients; `method=1` produces plain (unscaled) coefficients.
 - `euclid_pg`, `euclid_q`, `euclid_amv` — Euclidean PRS via sign-flipping of Sturm sequences.
-  - `euclid_amv` — Euclidean PRS using **Collins-Brown-Traub coefficient reduction**: initializes reduction variable `c = -1`, iteratively updates via `c = (-LC)^(δ-1) / c^(δ-2)`, and normalizes each remainder by dividing by `|c^(δ-1) · σ|`; produces subresultant coefficients without determinant evaluation.
+  - `euclid_amv` — Euclidean PRS using **Collins-Brown-Traub coefficient reduction**: initializes `c = -1`, updates via `c = (-LC)^(δ-1) / c^(δ-2)`, normalizes each remainder by `|c^(δ-1) · σ|`.
+    - Produces subresultant coefficients without determinant evaluation; **removes trailing NaN or zero entry** if last computed remainder is degenerate.
   - `euclid_q` — Euclidean sequence in Q[x]; **normalizes LC(p) to positive before computing remainders (negating both inputs); after completion, negates entire output sequence if original LC was negative**; removes trailing zero/NaN entry.
 - `subresultants_pg`, `subresultants_amv`, `subresultants_rem`, `subresultants_vv`, `subresultants_vv_2` — subresultant PRS (multiple methods); `subresultants_pg` **converts modified subresultant PRS to standard PRS** by dividing each remainder (after the first two) by `LC(p)^(deg(p)-deg(q))` and applying sign corrections `(-1)^(j(j-1)/2)` based on degree gaps; `subresultants_rem` swaps inputs if deg(p) < deg(q); `subresultants_vv` uses **Van Vleck's triangularization of Sylvester's 1853 matrix**, explicitly maintaining and optionally printing the triangularized matrix (`method=1`); `subresultants_vv_2` is the **implicit-matrix variant** (Sylvester matrix not stored explicitly) for large-dimension cases; **returns `[f, g]` early if `deg(f) > 0` and `deg(g) == 0`** (constant second input).
 - `modified_subresultants_pg`, `modified_subresultants_amv`, `modified_subresultants_bezout` — modified subresultant PRS; `modified_subresultants_pg` uses Pell-Gordon 1917 theorem with degree-gap-aware denominator calculation.
@@ -816,7 +821,7 @@ Precomputed coefficient arrays and resolvent parameters for solving solvable qui
   - `F` — discriminant-related invariant (sextic resolvent discriminant factor).
   - `T(theta, d)` — compute resolvent T-values by evaluating `b` arrays at a root `theta` and dividing by `F`.
   - `l0(theta)` — evaluate the `a` array at `theta` divided by `F`.
-  - `order(theta, d)` — determine ordering of Lagrange resolvents using `o` array.
+  - `order(theta, d)` — evaluate the `o` array at `theta` to produce a scalar used by `roots_quintic` for resolvent ordering comparison.
   - `uv(theta, d)` — compute u, v parameters for the radical solution.
 
 ### [`specialpolys.py`](specialpolys.py)
@@ -833,7 +838,8 @@ Special polynomial constructors for testing and benchmarking.
 ### [`groebnertools.py`](groebnertools.py)
 Gröbner basis computation algorithms.
 
-- `groebner(seq, ring)` — compute Gröbner basis using Buchberger or F5B algorithm; **if domain is not a field, clones ring with `domain.get_field()`, computes in the field, then clears denominators and resets ring** on each result.
+- `groebner(seq, ring)` — **internal** Gröbner basis computation on `PolyRing` elements (not symbolic expressions); uses Buchberger or F5B algorithm.
+  - **If domain is not a field, clones ring with `domain.get_field()`, computes in the field, then clears denominators and resets ring**. Called by `GroebnerBasis` in `polytools.py`.
 - `spoly(p1, p2, ring)` — compute S-polynomial (cancellation polynomial): scales each input by LCM(LM(p1),LM(p2))/LM and subtracts; core primitive for critical pair reduction in Buchberger's algorithm.
 - `red_groebner(G, ring)` — compute reduced Gröbner basis; selects a generating subset, then reduces each polynomial by taking its remainder w.r.t. all others — **silently drops any polynomial that reduces to zero**.
 - `groebner_lcm(f, g)` — LCM via ideal intersection: introduces variable `t`, computes basis of `(t*f, (1-t)*g)` in lex order, filters out elements free of `t`.
@@ -935,6 +941,8 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `SubModulePolyRing` (in `modules.py`) — submodule of a free module over a polynomial ring with Gröbner basis support.
   - Uses `ModuleOrder` for monomial comparison — extends `ProductOrder` (from `orderings.py`) with a zeroth component for the module generator index.
   - **`TOP=True` (default): term ordering takes priority over component index; `TOP=False`: component index takes priority**.
+  - `_groebner(extended)` — computes standard basis via `sdm_groebner`; **caches `_gb` and `_gbe` separately**.
+    - **If `_gb` is cached from a non-extended call and `extended=True` is later requested, recomputes both** (overwrites `_gb`) to obtain generator relations.
 - `SubModulePolyRing._module_quotient(other)` (in `modules.py`) — compute the ideal quotient (colon ideal) `(self : other)`; **returns unit ideal `ring.ideal(1)` if `other` has no generators** (zero submodule); raises `NotImplementedError` if `relations=True` and `other` has more than one generator.
   - **Single generator**: embeds into a higher-rank free module with an elimination ordering (`ilex`) and extracts quotient from Gröbner basis elements whose non-last components are all zero.
   - **Multiple generators**: reduces to intersection of pairwise single-generator colon ideals.
@@ -950,6 +958,7 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `MatrixHomomorphism` (in `homomorphisms.py`) — base for homomorphisms expressed as generator-image lists; constructor uses codomain's **container** converter when codomain is a SubModule or SubQuotientModule.
   - `_quotient_codomain(sm)` — quotient the codomain by `sm`; uses `Q.container.convert` for matrix entries **when codomain is a SubModule**, else uses `Q.convert`.
 - `FreeModuleHomomorphism._kernel` — kernel via syzygy module of image generators.
+- `SubModuleHomomorphism._apply` — applies the map; **if domain is a `SubQuotientModule`, unwraps element via `.data` before computing** the linear combination with matrix entries.
 - `SubModuleHomomorphism._kernel` — kernel via syzygy, **translates relations back through domain generators** by forming linear combinations.
 - `ModuleHomomorphism.restrict_codomain(sm)` — narrow target module to submodule `sm`; **raises `ValueError` if `sm` does not contain the image**; returns `self` if `sm` equals the full codomain.
 - `ModuleHomomorphism.quotient_domain(sm)` — replace domain with `domain/sm`; **raises `ValueError` if `sm` is not contained in the kernel**; returns `self` unchanged if `sm` is zero.

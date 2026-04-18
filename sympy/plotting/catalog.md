@@ -210,7 +210,7 @@ Base renderable object.
 ### `plot_rotation.py`
 Vector math and rotation utilities.
 
-- `get_sphere_mapping(x, y, width, height)` — maps screen coordinates to unit sphere; clamps to viewport, normalizes, and projects onto sphere surface (or equator if outside radius).
+- `get_sphere_mapping(x, y, width, height)` — maps screen pixel positions to unit sphere for trackball rotation (not coordinate unprojection); clamps to viewport, normalizes, and projects onto sphere surface (or equator if outside radius).
 - `cross()`, `dot()`, `mag()`, `norm()` — basic vector operations.
 - `get_spherical_rotatation()` — trackball-style rotation matrix from two screen positions via sphere mapping.
   - Returns `None` when both positions map to nearly the same sphere point (dot product ≈ 1.0), guarding against degenerate zero-angle rotations.
@@ -238,8 +238,10 @@ Pyglet window lifecycle and threaded event loop with thread-safe GL lock managem
 ### `util.py`
 OpenGL state queries, 3D math utilities, numeric range/interpolation helpers, and option parsing.
 
-- `get_model_matrix()`, `get_projection_matrix()`, `get_viewport()` — GL state queries.
-- `screen_to_model()`, `model_to_screen()` — coordinate transformations.
+- `get_model_matrix()`, `get_projection_matrix()` — GL state queries; default to single-precision (`c_float`/`glGetFloatv`).
+- `get_viewport()` — returns current GL viewport as integer array.
+- `screen_to_model()` — unprojects pixel (screen) coordinates to 3D world coordinates via `gluUnProject`; overrides default single-precision with `c_double`/`glGetDoublev` for matrix retrieval.
+- `model_to_screen()` — projects 3D world coordinates to screen coordinates via `gluProject`; also uses double-precision override.
 - `billboard_matrix()` — resets the upper-left 3×3 rotation submatrix of the current modelview matrix to identity while preserving translation (row 4) and projection (column 4), so drawn primitives always face the viewer.
 - `strided_range(r_min, r_max, stride, max_steps=50)` — generates evenly-spaced tick values between endpoints aligned to stride boundaries; recursively doubles stride when step count exceeds `max_steps` to prevent excessive output.
 - `interpolate()`, `rinterpolate()`, `interpolate_color()` — linear interpolation helpers; `rinterpolate` computes inverse ratio.

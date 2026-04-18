@@ -189,7 +189,9 @@ Simplifies combinatorial function expressions (factorials, binomials, gamma, Poc
 Simplifies rational expressions by computing common denominators.
 
 - `ratsimp(expr)` — put expression over common denominator and cancel.
-- `ratsimpmodprime(expr, G, gens)` — simplify rational expression modulo a prime ideal.
+- `ratsimpmodprime(expr, G, gens)` — simplify rational expression modulo a prime ideal (Gröbner basis over polynomial generators, not trig generators).
+  - Inner `_ratsimpmodprime`: recursively searches for lower-degree numerator/denominator pairs by solving linear systems from polynomial reduction; raises `ValueError('Ideal not prime?')` when the candidate denominator polynomial becomes zero after substitution.
+  - `quick=False` mode: retains all minimal-degree solutions and picks the one with fewest terms at the end.
 
 ---
 
