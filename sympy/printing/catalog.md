@@ -34,7 +34,9 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 
 ### [`pretty/pretty.py`](pretty/pretty.py)
 `PrettyPrinter` — renders expressions as 2D human-readable text art. Contains all expression-specific `_print_*` handlers that **orchestrate layout** by composing `stringPict` objects with symbols from `pretty_symbology`.
-- `_print_Mul` — renders products as 2D stacked fractions with a horizontal bar; splits factors into numerator vs denominator lists, inserts `1` when numerator is empty. Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
+- `_print_Mul` — decomposes a product into numerator/denominator factor lists and renders as a 2D stacked fraction with a horizontal bar; inserts `1` when numerator is empty.
+  - Scope limited to fraction decomposition and layout — does **not** handle inline multiplication signs, negative-one substitution, or sign-collision avoidance.
+  - Uses `evaluate=False` for non-`-1` negative exponents to suppress auto-simplification when negating the exponent for the denominator.
 - `_print_MatrixElement` — renders matrix element access; when parent is a `MatrixSymbol` with numeric indices, produces a subscripted symbol (e.g., `A₁₂`); otherwise uses function-like bracket notation `A[i, j]`.
 - `_print_MatrixSlice` — renders sub-range access as 2D pretty-printed layout with slice simplification (same rules as `StrPrinter`).
 - `_print_Product` — builds the iterated product (∏) sign as 2D box art; computes sign width from function height.
@@ -65,7 +67,8 @@ Symbol/character primitives and Unicode↔ASCII abstraction layer. This is **not
 - `terminal_width()` — detects console column count; uses `curses.tigetnum` on Unix, falls back to Windows `kernel32.GetConsoleScreenBufferInfo` via ctypes on Windows.
 - `prettyForm.__div__` — constructs stacked fractions via `stack(num, LINE, den)`; handles negative-numerator and nested-division parenthesization.
 - `prettyForm.__add__` — binding-aware addition; reuses existing minus signs to simplify `+ -x` forms.
-- `prettyForm.__mul__` — binding-aware multiplication; detects `-1` factors and substitutes `-1 * x` → `-x`; inserts a space when consecutive leading minus signs would collide.
+- `prettyForm.__mul__` — assembles the inline visual representation of a product sequence: inserts multiplication symbols between factors, applies precedence-based parenthesization.
+  - Detects `-1` factors and substitutes `-1 * x` → `-x`; inserts a space when consecutive leading minus signs would create visual ambiguity (dash collision).
 
 ### [`pretty/__init__.py`](pretty/__init__.py)
 Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.

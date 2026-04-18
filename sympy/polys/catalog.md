@@ -55,6 +55,7 @@ OO wrappers for dense polynomial representations used internally by `Poly`.
   - `__rdiv__(g)` — reverse division (`g / self`); computes `invert()*g`, then **checks ring membership if a ring is set; raises `ExactQuotientFailed` if result is not in the ring**.
 - `ANP` — Algebraic Number Polynomial (univariate dense poly modulo a minimal polynomial over an algebraic extension).
   - Arithmetic: `neg`, `add`, `sub`, `mul`, `pow`, `div`, `rem`, `quo`, `exquo`.
+  - `pow(n)` — for negative `n`, **computes modular inverse via `dup_invert` first**, then raises to `|n|`; result is always reduced modulo the defining relation.
   - `div(f, g)` — returns `(quotient, zero)`; `rem` always returns zero (field-like semantics via modular inverse).
   - `unify(g)` — reconcile two ANPs to a common domain/modulus; builds a local `per` closure.
   - `LC`, `TC` — leading/trailing coefficient.
@@ -82,6 +83,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `_iadd_poly_monom(p2, mc)` — in-place add product; same generator-copy safeguard.
   - `coeff(element)` — return scalar multiplier for a given monomial; accepts integer `1` for constant term or a monomial element; **raises `ValueError` for non-monomial arguments**.
   - `_term_div()` — returns a closure for term divisibility; **over non-field domains (e.g. ZZ), also checks that the coefficient divides evenly** before returning a quotient.
+  - `__truediv__(p2)` — division operator; **if `p2` is a monomial (single-term), uses `p2**(-1) * p1` (inverse multiplication) instead of general `quo`** as a fast path; otherwise delegates to `quo(p2)`.
   - `div(fv)`, `rem(G)`, `quo(G)`, `exquo(G)` — multivariate polynomial division; `rem` manipulates the internal dict directly for efficiency, skipping quotient tracking; **`exquo` raises `ExactQuotientFailed` if remainder is nonzero**.
   - `degree`, `degrees`, `tail_degree`, `leading_monom`, `leading_term`.
   - Arithmetic (`__add__`, `__sub__`, etc.): when subtracting/adding a scalar, **deletes the constant-term dict entry entirely if the result is zero** rather than storing a zero coefficient.
@@ -180,7 +182,10 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
 - `sqf_norm(f)` — compute square-free norm over algebraic extensions; returns `(Integer(s), shifted_poly, norm_poly)` where shift `s` is **always wrapped as `Integer` regardless of `polys` flag**.
 - `cancel(f, g)`, `groebner`, `sqf`, `decompose`, `sturm` — public free functions.
 - `poly_from_expr` — expression-to-Poly conversion.
-- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**; **when exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction. For 3+ inputs or mixed Poly/expr inputs, collects all coefficients into one flat list to infer a single unified domain.
+- `parallel_poly_from_expr(exprs)` — convert multiple expressions to Polys simultaneously; **raises `PolynomialError` if any auto-detected generator is a `Piecewise` expression**.
+  - **When exactly 2 inputs are both already `Poly` objects, takes a fast path: unifies them directly and returns early** without dict-based construction.
+  - For 3+ inputs or mixed Poly/expr inputs, **converts any already-constructed Poly objects back to symbolic expressions via `as_expr()`** before uniform dictionary extraction.
+  - Then collects all coefficients into one flat list to infer a single unified domain.
 - `degree`, `degree_list`, `LC`, `LM`, `LT`, `content`, `monic` — query functions.
 - `primitive(f)` — compute content and primitive form; **if `polys` option is set, returns primitive part as a `Poly`; otherwise converts to symbolic expression via `as_expr()`**.
 - `gcd`, `lcm`, `gcd_list`, `lcm_list`, `resultant`, `discriminant` — algebraic operations.
@@ -232,6 +237,7 @@ Low-level dense polynomial arithmetic on coefficient lists.
 - `dup_quo_ground`, `dmp_quo_ground` — divide all coefficients by a constant; **over fields (`K.has_Field`), uses `K.quo` (exact field division); over rings (e.g. ZZ), uses `//` (floor division)**.
 - `dup_div`, `dmp_div` — polynomial division; **dispatches to `dup_ff_div`/`dup_rr_div` based on `K.has_Field`** (field domains get exact division, ring domains get truncated division).
   - `dup_ff_div`, `dup_rr_div`, `dmp_ff_div`, `dmp_rr_div` — **raise `PolynomialDivisionFailed` if remainder degree fails to strictly decrease** between loop iterations (stall detection to prevent infinite loops).
+  - `dmp_ff_div`/`dmp_rr_div` (multivariate): **recursively divide leading coefficients** (which are polynomials in fewer variables); `dmp_ff_div` breaks the loop when the recursive leading coefficient division yields a nonzero remainder.
   - `dup_rr_div`/`dmp_rr_div` (ring division): **breaks the division loop early when the remainder's leading coefficient is not evenly divisible by the divisor's leading coefficient**, returning partial quotient and current remainder.
 - `dup_rem`, `dmp_rem`, `dup_quo`, `dmp_quo` — remainder, quotient.
 - `dup_exquo`, `dmp_exquo` — exact quotient; **raises `ExactQuotientFailed` if remainder is nonzero**.
@@ -314,6 +320,7 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
     - **Negates result if leading ground coefficient is negative** to ensure positive leading coefficient.
 - `dup_qq_heu_gcd`/`dmp_qq_heu_gcd` — heuristic GCD over Q; **clears denominators first, then delegates to the Z version**.
 - `_dmp_simplify_gcd` — **eliminates outermost variable** from multivariate GCD when one input has degree 0 in it.
+- `_dup_rr_trivial_gcd`, `_dmp_rr_trivial_gcd` (ring), `_dup_ff_trivial_gcd`, `_dmp_ff_trivial_gcd` (field) — short-circuit trivial GCD cases: both zero → zero; one zero → normalized non-zero; **`_dmp_rr_trivial_gcd` returns `(1, f, g)` immediately when either input is the constant 1** (unit polynomial).
 - `dup_inner_gcd`, `dmp_inner_gcd`, `dup_gcd`, `dmp_gcd` — main GCD entry points; `dmp_inner_gcd` **deflates exponents via `dmp_multi_deflate` before computing, then inflates results back**; for inexact domains (e.g. floats), **converts to exact domain first; if no exact domain exists, returns `[K.one]` (trivial GCD) as fallback**.
 - `dup_lcm`, `dmp_lcm` — LCM; `dmp_lcm` **dispatches to `dup_lcm` when `u==0`**; internally dispatches to `_rr_lcm` (ring: primitive-part based) vs `_ff_lcm` (field: normalizes to monic).
 - `dmp_content`, `dmp_primitive` — multivariate content/primitive; content **negates if leading ground coeff is negative**.

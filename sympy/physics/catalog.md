@@ -251,6 +251,8 @@ Classical mechanics: particles, rigid bodies, equations of motion.
 ### [`hep/`](hep/catalog.md)
 High-energy physics.
 - `gamma_matrices.py` — `GammaMatrixHead`: Dirac gamma-matrix algebra using tensor infrastructure.
+  - `simplify_lines(ex)` — top-level simplifier: decomposes a product into independent open spinor chains, closed loops (traces), and non-gamma rest; simplifies each part separately and recombines.
+  - `simplify_gpgp(ex)` — reduces contracted slash-notation pairs (G·p·G·p → p·p) by detecting adjacent gamma-momentum contractions sharing the same vector.
   - `extract_type_tens(expression)` — separates gamma-matrix tensors from non-gamma tensors in an expression; accepts single `Tensor` or `TensMul` only, raises `ValueError('wrong type')` for other expression types (e.g. `TensAdd` sums).
   - `_trace_single_line` — evaluates fermion-line traces; returns hardcoded 4 (D=4 only) when the line contains only a spinor identity (delta) and no gamma matrices.
   - `_gamma_trace1` — computes trace of gamma-matrix products; returns 4 for empty trace (identity).

@@ -33,7 +33,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Inversion strategies**: `inverse_ADJ`, `inverse_LU`, `inverse_GE`.
 - **Norms**: `norm` — vectors: p-norms (default 2-norm); non-vector matrices with default/Frobenius ord: reshapes to vector via `vec()` then computes 2-norm; ord=2/−2: max/min singular value.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
-- **Structure / indexing**: `row_join`, `col_join`, `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `key2bounds`, `_setitem`.
+- **Stacking**: `hstack(*args)` / `vstack(*args)` — class methods that horizontally/vertically concatenate matrices via `reduce` over `row_join`/`col_join`.
+- **Structure / indexing**: `row_join` (horizontal concat; returns `type(self)(rhs)` when self is null/empty, enabling `reduce`-based stacking from an empty accumulator), `col_join` (vertical concat; same null-matrix guard), `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `key2bounds`, `_setitem`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry. `_eval_simplify` is aliased to `simplify`, so the core simplification framework's internal hook dispatches here.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.

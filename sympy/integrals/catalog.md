@@ -18,6 +18,7 @@ Core symbolic integration engine and public API.
   - Falls back to heuristic Risch, then Meijer G, then manual integration in order
   - When `manual=True` is explicitly set and `manualintegrate` returns a fully unevaluated `Integral`, that result is discarded and other strategies are tried
   - When `manualintegrate` partially succeeds (result still contains unevaluated `Integral` sub-expressions), recursively evaluates those remaining pieces with all other methods (manual disabled)
+  - Last-resort fallback: when all strategies fail on a single-term integrand, expands the product (`mul=True, deep=False`) and retries recursively if the result becomes a sum; deferred because some expressions (e.g. x**x*(1+log(x))) are only solvable in unexpanded form
 - `Integral.as_sum(n, method)` — approximates a definite integral as a finite sum using rectangle-based quadrature (left, right, midpoint, trapezoid); raises NotImplementedError for multidimensional integrals
 - `Integral.transform(x, u)` — change of variable (u-substitution) on definite integrals; recomputes bounds, reverses limits if needed
 - `integrate(*args, **kwargs)` — main entry point for symbolic definite and indefinite integration

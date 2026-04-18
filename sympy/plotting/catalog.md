@@ -55,6 +55,7 @@ Custom expression-to-function converter for internal plotting use.
 Core interval class for bounded floating-point interval computations.
 
 - `interval` — represents [start, end] with `is_valid` ternary flag (True/False/None for partial validity).
+  - Constructor auto-swaps arguments when given in descending order (upper < lower), so `interval(5, 2)` yields `[2, 5]`.
 - Supports arithmetic operators (+, -, *, /, **) and ternary comparison operators.
 - `__rpow__` — handles scalar**interval (reverse power); negative-base logic: invalidates wide exponents, rationalizes point exponents to check denominator parity.
 - `_pow_float` — interval raised to float power; rationalizes exponent to check numerator/denominator parity for domain validity.
@@ -181,8 +182,10 @@ Base renderable object.
 ### `plot_rotation.py`
 Vector math and rotation utilities.
 
+- `get_sphere_mapping(x, y, width, height)` — maps screen coordinates to unit sphere; clamps to viewport, normalizes, and projects onto sphere surface (or equator if outside radius).
 - `cross()`, `dot()`, `mag()`, `norm()` — basic vector operations.
-- `get_spherical_rotatation()` — trackball-style quaternion rotation from mouse input.
+- `get_spherical_rotatation()` — trackball-style rotation matrix from two screen positions via sphere mapping.
+  - Returns `None` when both positions map to nearly the same sphere point (dot product ≈ 1.0), guarding against degenerate zero-angle rotations.
 
 ### `color_scheme.py`
 Color mapping for curves and surfaces.

@@ -135,7 +135,7 @@ Elementary hyperbolic functions and inverses (NOT hyperbolic integrals — those
 Complex number component functions.
 - `re`, `im` — real/imaginary parts.
 - `sign` — signum function; `Abs` — absolute value.
-- `arg`, `conjugate`, `transpose`, `adjoint`.
+- `arg`, `conjugate`, `transpose`, `adjoint` — generic operator classes; function-specific conjugate/adjoint logic (`_eval_conjugate`) lives in each function's own file.
 - `polar_lift`, `periodic_argument`, `principal_branch` — branch-cut handling.
 
 #### [`elementary/piecewise.py`](elementary/piecewise.py)

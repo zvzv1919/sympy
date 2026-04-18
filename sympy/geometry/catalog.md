@@ -61,7 +61,7 @@ Point representations in n-dimensional Euclidean space.
 - `LinearEntity3D` — abstract base for 3D linear entities.
   - `are_concurrent(*lines)`, `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
-  - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line; for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
+  - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.
   - `direction_ratio`, `direction_cosine`, `angle_between(l1, l2)`.
 - `Line3D`, `Ray3D`, `Segment3D` — 3D counterparts of the 2D entities.
 
@@ -99,7 +99,8 @@ Parabolic entities defined by focus and directrix.
 
 ### [`plane.py`](plane.py)
 3D planar surfaces.
-- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `intersection()`.
+- `Plane` — defined by point + normal or three points. Methods: `equation()`, `normal_vector`, `parallel_plane()`, `perpendicular_plane()`, `distance()`, `angle_between()`, `projection()`, `projection_line()`, `intersection()`.
+  - `projection_line(line)` — projects a 2D or 3D linear entity onto the plane; returns a `Point3D` (not a line) when the line is parallel to the plane's normal (both endpoints map to the same location).
   - `are_concurrent(*planes)` — static; tests whether multiple planes all share a single common line of intersection; deduplicates inputs, returns False for <2 planes.
   - `is_coplanar(o)` — instance method; tests whether a single entity (`Plane`, `Point3D`, `LinearEntity3D`, or 2D `GeometryEntity`) is coplanar with this plane. Distinct from `util.are_coplanar` which is a standalone multi-entity test.
   - `arbitrary_point(t)` — returns a parametric `Point3D` that traces a unit circle on the plane around `p1` as `t` varies from 0 to 2π; handles axis-aligned normals directly, general normals via projection and symbolic solve.
@@ -131,6 +132,7 @@ Standalone geometric utility functions.
 - `closest_points(*points)` — sweep-line nearest-pair search for 2D points; computes distances internally (not via `Point.distance`).
   - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `farthest_points(*points)` — farthest pair(s) among 2D points via convex-hull rotating calipers.
+  - Adapts distance calculation per coordinate type: uses `math.sqrt` for rational coordinates, switches to SymPy `sqrt` for symbolic/irrational values.
 - `are_coplanar(*entities)` — standalone coplanarity test for 3D points/lines; returns `False` when all points are collinear (no unique plane). Converts 2D geometry objects to 3D (z=0) before checking.
 - `are_similar(e1, e2)` — tests geometric similarity via double dispatch: tries `e1.is_similar(e2)`, falls back to `e2.is_similar(e1)`, raises `GeometryError` if neither supports the check.
 - `centroid(*args)` — weighted center of mass for a homogeneous collection of Points (equal weight), Segments (weighted by length), or Polygons (weighted by area). Returns None for mixed types.

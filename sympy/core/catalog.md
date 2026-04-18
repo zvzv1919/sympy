@@ -64,6 +64,7 @@ All concrete numeric types and their arithmetic operations.
   - `as_content_primitive()` — returns `(|self|, sign)` for nonzero; returns `(1, self)` when self is zero
 - `Rational` comparison operators (`__gt__`, `__ge__`, `__lt__`, `__le__`) — cross-multiplies `self.p*other.q` vs `self.q*other.p` for Rational-vs-Rational
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
+- `int_trace` — profiling decorator for `Integer.__new__`; optimistically increments hit counter before cache lookup, then on KeyError decrements hit and increments miss; registered via `atexit` to print stats
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
   - `_eval_power` — negative-base sign branching differs for integer vs fractional exponents
   - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
@@ -251,6 +252,7 @@ Expression manipulation utilities: `gcd_terms()`, `factor_terms()`, `collect_con
 Function class hierarchy: `Function`, `AppliedUndef`, `UndefinedFunction`, `Lambda`, `Derivative`, `Subs`.
 
 - `Function.__new__` — after evaluation, checks `_should_evalf` on all args; auto-calls `evalf` only if **every** arg is floating-point (min precision > 0); mixed float/symbolic args remain unevaluated
+- `Function._eval_evalf(prec)` — numerical evaluation of symbolic functions; looks up matching mpmath function by name, falling back to `MPMATH_TRANSLATIONS` table; if no mpmath match, tries user-provided `_imp_` numerical implementation; returns None if all fallbacks fail
 - `Function.fdiff(argindex)` — first derivative w.r.t. the given argument position; if target arg is a plain Symbol that also appears free in another argument, falls through to Dummy-substitution path (returns `Subs(Derivative(...))`) to avoid incorrect results
 - `Function._eval_nseries` — series expansion for symbolic functions; handles infinite-argument cases via leading-term substitution; general algorithm uses repeated differentiation at zero with NaN→limit fallback and PoleError on infinite results
 - `Function._should_evalf(arg)` — returns precision (or -1) for auto-evalf decision; detects Float args directly; for Add args, pattern-matches `a + b*I` form to detect complex floats and returns max component precision
@@ -343,6 +345,7 @@ Python 2/3 polyfills and backported utilities: `string_types`, `integer_types`, 
 - `iterable(i, exclude=(str, dict, NotIterable))` — checks if object is iterable in the SymPy sense; if object has `_iterable` boolean attribute, returns it directly (bypasses both `iter()` check and type exclusion); otherwise calls `iter()` then applies `exclude` filter
 
 - `lru_cache` — backported LRU memoization decorator (used when `functools.lru_cache` unavailable); three branches by maxsize: 0 (no cache), None (unbounded), else size-limited with doubly-linked-list eviction
+  - Size-limited branch uses thread lock; releases lock during user_function call, then re-acquires; if another thread inserted same key during release, skips link update and only increments miss counter
   - Size-limited branch catches `TypeError` on unhashable args (e.g., lists) and falls through to uncached call
 - `_make_key` — builds hashable cache key from args/kwds; fast-path: single positional arg of primitive type (int, str, frozenset, NoneType) with no kwds returns the raw arg directly, avoiding wrapper allocation
 
