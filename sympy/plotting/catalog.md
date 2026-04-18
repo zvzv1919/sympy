@@ -98,7 +98,7 @@ Public entry point for pyglet plotting; defines the `PygletPlot` factory functio
   - Passes `PlotObject` instances through directly without parsing.
 
 ### `plot_mode.py`
-Coordinate-system mode registry (Cartesian, Polar, etc.) and argument interpretation; does NOT handle rendering display style.
+Coordinate-system mode registry and argument interpretation only — no coordinate math or coordinate-to-Cartesian conversion (those live in `plot_modes.py`).
 
 - `PlotMode` — registry class mapping (d_var count, i_var count) to concrete mode classes; implements mode resolution after `PygletPlot` parses inputs.
 - `_interpret_args()` — classifies raw arguments into expressions, intervals, and options.
@@ -123,13 +123,15 @@ Base class providing shared infrastructure for all pyglet plot modes, including 
 - Class-level attributes: `styles` (render style bitmask dict), `style_override` (forces rendering style when non-empty), `i_vars`, `d_vars`, `intervals`, `aliases`, `is_default`.
 
 ### `plot_modes.py`
-Concrete plot mode implementations for various coordinate systems.
+Concrete plot mode classes with coordinate-to-Cartesian conversion logic for all supported coordinate systems.
 
 - `float_vec3(f)` — decorator that coerces all three components of a returned 3-vector to native Python `float`; used only by Cartesian and parametric sympy evaluators.
 - `Cartesian2D`, `Cartesian3D` — Cartesian curve/surface modes.
 - `ParametricCurve2D`, `ParametricCurve3D`, `ParametricSurface3D` — parametric modes.
-- `Polar`, `Cylindrical`, `Spherical` — curvilinear coordinate modes; their sympy evaluators skip `float_vec3` and instead manually call `float()` on the computed radius and use Python `math.cos`/`math.sin` (which natively return floats) for coordinate conversion.
-- Each implements `_get_sympy_evaluator()` and `_get_lambda_evaluator()` (uses `lambdify` for fast numeric evaluation).
+- `Polar` — polar-to-Cartesian (r,θ → x,y) curve mode.
+- `Cylindrical` — cylindrical-to-Cartesian (r,θ,h → x,y,z) surface mode.
+- `Spherical` — spherical-to-Cartesian (r,θ,φ → x,y,z) surface mode; physics convention (azimuth 0–2π, polar 0–π).
+- Each implements `_get_sympy_evaluator()` (symbolic substitution + `float()`) and `_get_lambda_evaluator()` (`lambdify` for fast numeric evaluation).
 
 ### `plot_interval.py`
 Bounded interval representation for pyglet variable ranges (discretized sample points for rendering, not interval arithmetic).

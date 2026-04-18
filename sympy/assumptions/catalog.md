@@ -24,7 +24,9 @@ Main inference engine for the assumptions system.
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive`, `Q.negative`, `Q.nonnegative`, `Q.nonpositive` each document the asymmetry between negation and "non" counterparts: e.g., `~Q.negative(I)` is `True` but `Q.nonnegative(I)` is `False`, because "non" predicates require realness.
+  - `Q.nonzero` ≡ `Q.positive | Q.negative` (requires realness); `Q.nonzero(I)` is `False` but `~Q.zero(I)` is `True`. Docstring is the authoritative source for this distinction.
   - Matrix predicates: `Q.symmetric`, `Q.invertible`, `Q.orthogonal`, `Q.unitary`, `Q.positive_definite`, `Q.upper_triangular`, `Q.lower_triangular`, `Q.triangular`, `Q.diagonal`, `Q.fullrank`, `Q.square`.
+    - Docstrings in `ask.py` contain the authoritative mathematical condition definitions (e.g., index inequalities for triangularity, definiteness conditions).
     - `Q.triangular`: general predicate true iff matrix is upper_triangular OR lower_triangular; subsumes both specific variants.
     - `Q.positive_definite`: true iff square symmetric real matrix has Z^T M Z > 0 for every nonzero column vector Z. Non-square → False.
     - `Q.orthogonal`/`Q.unitary`: true iff M^T M = I (real/complex analogue). Non-square → False. Orthogonal/unitary → necessarily invertible.
@@ -72,7 +74,7 @@ Base classes and utilities shared by all handlers.
 - `test_closed_group()`: tests membership in a group under an operation.
 
 ### [`handlers/order.py`](handlers/order.py)
-Handlers that **evaluate** ordering / sign predicates for specific expression types. Predicate semantics (e.g., why "non" facts require realness) are defined in `ask.py`.
+Handlers that **evaluate** ordering / sign predicates for specific expression types. Predicate semantics, definitions, and distinctions (e.g., why `Q.nonzero` ≠ `~Q.zero`) are defined in `ask.py`, not here.
 - `AskNegativeHandler`: evaluates `Q.negative` for `Basic`, `Add`, `Mul`, `Pow`, `ImaginaryUnit`, etc.
 - `AskNonNegativeHandler`, `AskNonZeroHandler`, `AskZeroHandler`, `AskNonPositiveHandler`: sign-boundary predicates.
 - `AskPositiveHandler`: evaluates `Q.positive` with expression-type dispatch:
@@ -110,7 +112,7 @@ Handlers for **calculus predicates**: finiteness / boundedness.
 ### [`handlers/matrices.py`](handlers/matrices.py)
 Handlers that **evaluate** matrix predicates — both structural properties and element-type membership — for matrix expression types.
 - Does NOT handle `Q.hermitian` or `Q.antihermitian` — those are in `handlers/sets.py`.
-- Cross-predicate inference rules (e.g., diagonal ↔ triangular) are defined in `ask.py`, not here.
+- Mathematical definitions of matrix predicates (conditions, index inequalities, docstrings) and cross-predicate inference rules are defined in `ask.py`, not here.
 - `AskSquareHandler`, `AskSymmetricHandler`, `AskInvertibleHandler`.
 - `AskOrthogonalHandler`, `AskUnitaryHandler`, `AskFullRankHandler`.
 - `AskPositiveDefiniteHandler`, `AskUpperTriangularHandler`, `AskLowerTriangularHandler`, `AskDiagonalHandler`.

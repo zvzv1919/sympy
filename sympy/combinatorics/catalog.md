@@ -49,7 +49,8 @@ Permutation group (set of permutations) with group-theoretic algorithms.
   - Classification: `is_abelian`, `is_transitive`, `is_primitive`, `is_solvable`, `is_nilpotent`, `is_trivial`.
   - `is_alt_sym(eps)` — one-sided Monte Carlo test for symmetric/alternating group; returns False immediately for degree < 8; samples random elements looking for prime-length cycles via `_check_cycles_alt_sym` in `util.py`.
   - `center` — subgroup of permutation group elements commuting with all group elements; computed via subgroup search.
-  - Orbits: `orbit`, `orbits`, `orbit_rep`, `orbit_transversal`, `transitivity_degree`.
+  - Orbits: `orbit`, `orbits`, `orbit_transversal`, `transitivity_degree`.
+  - `orbit_rep(alpha, beta)` — finds a single group element mapping point `alpha` to point `beta` via the Schreier vector; returns `False` if `beta` is not in the orbit of `alpha`.
   - Membership: `contains(g, strict=True)` — tests if permutation belongs to the group; when `strict=False`, resizes `g` to match group degree before testing.
   - Element generation: `generate`, `generate_dimino`, `generate_schreier_sims`, `elements`, `order` (group cardinality), `random`, `random_pr`.
   - `__mul__` — pairwise direct product of exactly two groups; shifts generators to act on disjoint point sets. For N-ary products, use `DirectProduct` in `group_constructs.py`.
@@ -117,7 +118,8 @@ Free groups with symbolic generators.
   - `is_cyclic_conjugate` — checks if two words are cyclic conjugates (rotational rearrangements) after cyclic reduction; uses string-doubling rotation detection.
   - `identity_cyclic_reduction` — returns the unique cyclically reduced form of a word: combines exponents of first and last syllables, stripping them if they cancel completely.
   - `is_dependent(word)` / `is_independent(word)` — checks whether one word appears as a substring of another (or its inverse) in letter form; `is_independent` is the boolean negation.
-  - Word operations: `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `letter_form`.
+  - Word operations: `cyclic_reduction`, `number_syllables`, `sub_syllables`, `substituted_word`, `eliminate_word`, `letter_form`.
+  - `eliminate_word(gen, by)` — replaces every occurrence of a generator in a word with another associative word; expands powers by repeated concatenation.
 
 ---
 

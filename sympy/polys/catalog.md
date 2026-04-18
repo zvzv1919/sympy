@@ -105,6 +105,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `cofactors(g)` — GCD with quotient factors; dispatches: both zero → triple zero; one zero → `_gcd_zero`.
     - `_gcd_zero(g)` — **if `g` is nonnegative, returns `g` as GCD; otherwise negates `g` (and cofactor sign) to ensure GCD is always nonnegative**.
     - **One is a single-term (monomial) → `_gcd_monom`** (componentwise monomial/coefficient GCD); general → deflates exponents, computes `_gcd`, inflates back.
+  - `__eq__(p2)` — equality test; for non-ring-element `p2`: **if polynomial has >1 term, returns `False` immediately; if 0 or 1 term, compares the constant coefficient against `p2`** (single-term check via zero-monomial lookup).
   - `almosteq(p2, tolerance)` — approximate equality; for non-polynomial `p2`, **catches `CoercionFailed` and returns `False`** instead of raising.
   - `cancel(g)` — simplify fraction `f/g` by removing shared factors; **over non-field domains, divides by GCD and negates if denominator is negative; over field domains, clears denominators to ring, computes cofactors, then converts back with sign normalization** — if both numerator and denominator are negative, negates both; if only one is negative, shifts the sign to the content multiplier.
   - `clear_denoms()` — compute LCM of all coefficient denominators and multiply through; returns `(common_factor, integral_poly)`. **If domain is not a field or has no associated ring, returns `(domain.one, self)` unchanged**.
@@ -289,7 +290,8 @@ Low-level dense polynomial arithmetic on coefficient lists.
 Low-level dense polynomial basics: construction, conversion, queries.
 
 - `dmp_validate`, `dmp_normal`, `dmp_convert` — validation and domain conversion.
-- `dup_from_dict`, `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy`, `dmp_to_tuple` — format conversions; `dup_from_dict` **accepts both integer keys and single-element tuple keys** `{(k,): c}`, dispatching by `type(max_key) is int`.
+- `dup_from_dict`, `dmp_from_dict`, `dmp_to_dict`, `dmp_from_sympy` — format conversions; `dup_from_dict` **accepts both integer keys and single-element tuple keys** `{(k,): c}`, dispatching by `type(max_key) is int`.
+- `dup_to_tuple`, `dmp_to_tuple` — convert coefficient lists to (nested) tuples for hashing; `dmp_to_tuple` **recursively converts each nesting level**, producing an immutable hashable form suitable for dict keys.
 - `dmp_degree`, `dmp_LC`, `dmp_TC`, `dmp_ground_LC`, `dmp_ground_TC` — degree/coefficient queries; `dmp_ground_LC`/`dmp_ground_TC` drill through each nesting level to extract the innermost leading/trailing coefficient.
 - `dmp_true_LT(f, u, K)` — leading term as `(monom_tuple, coeff)`; **if innermost univariate list is empty (zero poly), appends exponent 0** instead of computing `len-1` (which would give −1).
 - `dmp_zero`, `dmp_one`, `dmp_zero_p`, `dmp_one_p`, `dmp_ground` — constants and predicates.
@@ -470,8 +472,10 @@ Self-contained arithmetic, square-free, irreducibility, and factorization for **
 - `gf_int(a, p)` — coerce `a mod p` to symmetric range `[-p/2, p/2]`; values above `p//2` become negative.
 - `gf_strip`, `gf_trunc` — canonical form: strip leading zeros / reduce coefficients mod p.
 - Arithmetic: `gf_add`, `gf_sub`, `gf_mul`, `gf_sqr`, `gf_div`, `gf_rem`, `gf_quo`, `gf_exquo`, `gf_pow`, `gf_pow_mod`.
+  - `gf_exquo` — exact quotient; **raises `ExactQuotientFailed` if the divisor does not evenly divide the dividend** (nonzero remainder).
 - Ground ops: `gf_add_ground(f, a, p, K)` — add scalar to GF(p) poly; **if f is zero poly and `a % p == 0`, returns `[]`**. Also `gf_sub_ground`, `gf_mul_ground`, `gf_quo_ground`, `gf_neg`.
 - `gf_monic`, `gf_diff`, `gf_eval`, `gf_multi_eval`, `gf_gcd`, `gf_lcm`, `gf_cofactors`, `gf_gcdex` — standard operations and GCD/LCM.
+  - `gf_lcm` — **returns empty list `[]` if either input is the zero polynomial**; otherwise computes via `f*g / gcd(f,g)` and makes result monic.
 - `gf_sqf_p`, `gf_sqf_part`, `gf_sqf_list` — square-free testing and decomposition in GF(p).
 - `gf_irreducible_p` — irreducibility dispatch; queries `GF_IRRED_METHOD` config and **defaults to `gf_irred_p_rabin` when no preference is set**. `gf_irred_p_ben_or`, `gf_irred_p_rabin` — the two concrete algorithms.
 - `gf_ddf_zassenhaus` — distinct degree factorization (DDF); **appends non-trivial remainder as a factor of its own degree**.
@@ -516,6 +520,7 @@ Symbolic root representations and root-sum evaluation.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
     - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
     - **Refines bounding rectangles until non-imaginary roots have boxes fully to one side of the y-axis**.
+  - `_complexes_sorted(complexes)` — make complex isolating intervals disjoint and sort roots; **separates purely imaginary roots first** (whose x-intervals can never become disjoint from each other through refinement), sorts them by `±root(|TC/LC|, degree)` keyed by imaginary-part sign, then merges with the refined/sorted non-imaginary complex roots at the correct insertion point.
   - `_reals_sorted(reals)` — makes real root isolating intervals from different irreducible factors disjoint by pairwise refinement, then sorts by left endpoint; updates `_reals_cache` with the refined intervals.
   - `real_roots(poly)`, `all_roots(poly)` — class methods for root lists.
 - `bisect(f, a, b, tol)` — standalone interval-halving root-finder used by `CRootOf.eval_rational()`; **returns `c` immediately if `f(c) == 0` at the midpoint** (exact root found); raises `ValueError` if `f(a)` and `f(b)` have the same sign.
@@ -722,7 +727,7 @@ Computational algebraic number theory: minimal polynomials, field isomorphisms, 
 - `field_isomorphism(a, b)` — find isomorphism between algebraic number fields; **returns `None` early if `deg(b.minpoly) % deg(a.minpoly) != 0`** (degree-divisibility check); otherwise tries PSLQ (fast path, default) then factorization.
 - `to_number_field(extension, theta)` — express algebraic extensions in a generated field; if `theta` is given, uses `field_isomorphism` to map into theta's field, **raises `IsomorphismFailed` if the extension is not in a subfield of theta**.
 - `isolate(expr)` — give a rational isolating interval for an algebraic number (accepts symbolic expressions); **if input is rational, returns degenerate interval `(alg, alg)` immediately** without computing minimal polynomial; otherwise computes minimal polynomial, gets candidate intervals, and **doubles mpmath precision repeatedly until interval-arithmetic evaluation fits within one candidate**.
-- `_choose_factor(factors, x, v)` — select factor of a polynomial that has a specific root; **accepts factor-multiplicity tuple pairs (e.g. from `factor_list`), stripping to plain polynomials first**.
+- `_choose_factor(factors, x, v, prec, bound)` — select factor of a polynomial that has a specific root via increasing-precision numerical evaluation; **accepts factor-multiplicity tuple pairs (e.g. from `factor_list`), stripping to plain polynomials first**; **raises `NotImplementedError` if the precision loop exhausts `prec` without narrowing to a single candidate**.
 
 ### [`partfrac.py`](partfrac.py)
 Partial fraction decomposition.
@@ -878,6 +883,10 @@ Algebraic geometry and commutative algebra: ideals, modules, homomorphisms over 
 - `ModuleHomomorphism.quotient_codomain(sm)` — replace codomain with `codomain/sm`; **raises `ValueError` if `sm` is not a submodule of codomain**; returns `self` unchanged if `sm` is zero.
 - `ModuleHomomorphism.restrict_domain(sm)` — restrict source to submodule `sm`.
 - `homomorphism(domain, codomain, matrix)` — public constructor for module homomorphisms.
+  - Internally decomposes domain/codomain into free presentations `(free_module, submodule, killed_module, convert_fn)` via type dispatch:
+    - **FreeModule** → `(self, self, empty_submodule, convert)`; **QuotientModule** → `(base, base, killed_module, extract_data)`.
+    - **SubQuotientModule** → `(container_of_base, base, killed_module, extract_data)`; **plain SubModule** → `(container, self, empty_submodule, convert_via_container)`.
+  - Builds a `FreeModuleHomomorphism`, then restricts/quotients domain and codomain to match the original module types.
 
 ### [`domains/`](domains/catalog.md)
 Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial rings, fraction fields, expression domain.

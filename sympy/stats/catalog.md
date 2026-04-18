@@ -87,7 +87,7 @@ Built-in finite random variable distributions (discrete, finite support). Each h
 ### [`rv_interface.py`](rv_interface.py)
 Higher-level statistical convenience functions built on top of `rv.py`; re-exports `E`/`P`/`density`/`cdf`/`where`/`given`/`sample`/`pspace` as thin aliases (implementation lives in `rv.py`).
 - `moment()`, `variance()`, `std()`, `covariance()`, `correlation()`, `cmoment()`, `smoment()`, `skewness()`.
-- `covariance(X, Y)`: computes `E((X-E(X))*(Y-E(Y)))` by calling `expectation()` for each argument independently, then for the product.
+- `covariance(X, Y)`: numerically computes `E((X-E(X))*(Y-E(Y)))` via integration; no algebraic decomposition of arguments (contrast `Covariance.doit()` in `symbolic_probability.py`).
 - `variance(X)`: delegates to `cmoment(X, 2)` (second central moment).
 
 ### [`symbolic_probability.py`](symbolic_probability.py)
@@ -96,7 +96,8 @@ Symbolic (unevaluated) representations of probabilistic expressions — for alge
 - `Expectation.__new__`: short-circuits when `condition is None` and expr contains no `RandomSymbol` — returns expr unwrapped. `Probability.__new__` always wraps.
 - `Expectation._eval_rewrite_as_Probability`: converts expectation to Integral/Sum weighted by `Probability(Eq(rv, x))`; generates a fresh dummy symbol (lowercased or `_1`-suffixed) and dispatches by pspace type (continuous → Integral, discrete-infinite → Sum, finite → raises `NotImplemented` singleton instead of `NotImplementedError`, producing a confusing `TypeError` at runtime).
 - `Variance.doit()`: algebraically expands variance — splits sums into individual variances + pairwise covariances; factors products by squaring deterministic coefficients.
-- `Covariance.doit()`: expands covariance of sums/products using linearity; detects identical args and delegates to `Variance`.
+- `Covariance.doit()`: algebraic bilinear expansion — decomposes each argument into (scalar, RandomSymbol) pairs via `_expand_single_argument`, then Cartesian-products them; identical args delegate to `Variance`.
+- `Covariance._expand_single_argument(expr)`: splits a linear combination of stochastic variables into a list of `(coefficient, RandomSymbol)` tuples; handles `Add`, `Mul`, bare `RandomSymbol`, and general stochastic expressions.
 
 ---
 

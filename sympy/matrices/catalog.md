@@ -96,6 +96,7 @@ Dense matrix implementation — stores elements in a flat Python list (`_mat`).
 Sparse matrix implementation — stores entries in a dictionary-of-keys (`_smat`) mapping `(row, col)` to value.
 
 - `SparseMatrix`: DOK-based sparse storage; `row_list`, `col_list`, `nnz`.
+- **Arithmetic type dispatch**: `__mul__`/`__rmul__` — sparse×sparse stays sparse (delegates to `multiply`); sparse×dense or dense×sparse converts to the dense type (result loses sparse representation); scalar→`scalar_multiply`. `__add__` — sparse+sparse stays sparse; sparse+dense converts to dense type.
 - `__eq__`: equality comparison — checks shape, then compares `_smat` dicts directly for sparse-vs-sparse; converts dense `MatrixBase` to sparse (via `MutableSparseMatrix`) before dict comparison; returns False on `AttributeError` for non-matrix operands.
 - `row_join`: horizontal concatenation (`[A B]`); handles both sparse (dict iteration) and dense (flat-list `_mat` iteration) operands.
 - `col_join`: vertical concatenation (`[A; B]`); similarly handles mixed sparse/dense operands.

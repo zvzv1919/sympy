@@ -31,7 +31,8 @@ Point representations in n-dimensional Euclidean space.
   - `Point.is_collinear(*points)` — static method testing if points are collinear; deduplicates inputs, returns `True` for ≤2 unique points.
   - `Point.is_concyclic(*points)` — static method testing if points are concyclic; 0 points → False, ≤2 points → True, 3 points checks non-collinearity, 4+ constructs a Circle from first three and checks containment.
   - `is_scalar_multiple(p1, p2)` — checks linear dependence via matrix rank.
-- `Point2D` — 2D specialization; adds `x`, `y` coordinate properties, `transform(Matrix)`, and overrides `rotate(angle, pt)`, `scale(x, y, pt)`, `translate(x, y)`.
+- `Point2D` — 2D specialization; adds `x`, `y` coordinate properties, `transform(matrix)`, and overrides `rotate(angle, pt)`, `scale(x, y, pt)`, `translate(x, y)`.
+  - `transform(matrix)` — applies a 3×3 affine transformation matrix; validates that argument has `.shape` and is 3×3, raises `ValueError` for non-matrix or wrong-shaped input.
   - `scale(x, y, pt)` — scales coordinates by `x`, `y` relative to reference point `pt`; uses `if pt:` (falsy check) instead of `if pt is not None:`, so passing the origin as `pt` is silently ignored.
   - `rotate(angle, pt)` — rotates counterclockwise about `pt`; uses `if pt is not None:` to guard the reference-point shift.
 - `Point3D` — 3D specialization; adds `x`, `y`, `z` coordinate properties, `direction_ratio()`, `direction_cosine()`, `scale(x, y, z, pt)`, `translate(x, y, z)`, `transform(matrix)`.
@@ -77,7 +78,7 @@ Point representations in n-dimensional Euclidean space.
 
 ### [`curve.py`](curve.py)
 Explicit parametric curves in the 2D plane (not 3D surfaces).
-- `Curve` — defined by `(f(t), g(t))` over a parameter interval; supports `arbitrary_point()`, `plot_interval()`, `rotate()`, `scale()`, `translate()`.
+- `Curve` — defined by `(f(t), g(t))` over a parameter interval for smooth continuous curves (not polygons); supports `arbitrary_point()`, `plot_interval()`, `rotate()`, `scale()`, `translate()`.
 
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
@@ -122,7 +123,7 @@ Parabolic entities defined by focus and directrix.
 ### [`polygon.py`](polygon.py)
 Polygonal entities in 2D.
 - `Polygon` — defined by ordered vertices. Properties: `area`, `perimeter`, `centroid`, `sides`, `vertices`, `angles`, `bounds`. Methods: `is_convex()`, `encloses_point()`, `arbitrary_point()`, `distance(o)`.
-  - `arbitrary_point(parameter='t')` — parameterized perimeter point (0→1); raises `ValueError` if parameter name collides with a free symbol in the polygon's vertex coordinates.
+  - `arbitrary_point(parameter='t')` — returns a `Piecewise` expression mapping parameter 0→1 along the perimeter, each edge weighted by its fraction of total perimeter length; raises `ValueError` if parameter name collides with a free symbol.
   - `__contains__(o)` — Python `in` operator: for `Polygon` checks equality only (not geometric containment); for `Segment` checks if it matches a side; for `Point` checks boundary membership.
   - `intersection(o)` — iterates over each side, collects per-edge intersections with the other entity, and deduplicates results via `uniq`.
   - `_do_poly_distance(e2)` — minimum boundary separation between two convex polygons via rotating calipers. Pre-checks bounding circles around centroids; if they overlap, emits a warning (does not abort or raise) and continues computation, potentially returning erroneous results for intersecting polygons.

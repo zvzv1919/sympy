@@ -228,6 +228,7 @@ Global evaluation toggle — context manager `evaluate(False)` suppresses automa
   - Uses Dummy-substitution `evalf(2, subs={x: i})` (not direct `(self - i).evalf(2)`, which doesn't always work) to determine difference sign
 - `_expand_hint(expr, hint, deep, **hints)` — static recursive helper for `expand()`; walks expression tree applying named `_eval_expand_<hint>()` methods to each subnode; returns `(new_expr, hit)` where `hit` indicates whether any subnode was actually modified
 - `_eval_expand_complex` — expansion hint for complex decomposition via `as_real_imag()`
+- `series(x, x0, n, dir, logx)` — main series expansion entry point; handles expansion at infinity/negative infinity by substituting x→1/x, recursing, then back-substituting; shifts non-zero expansion points and negative direction via variable replacement; returns generator when n=None (lazy mode) or collected terms otherwise
 - `_eval_lseries` / `taylor_term` / `lseries()` / `nseries()` — series expansion infrastructure
 - `Expr.round(p)` — rounds numeric expression to `p` decimal places; complex inputs are split into real and imaginary parts, each rounded independently; for negative values, detects when adding the rounding half-unit flips sign of the scaled intermediate and reverses direction; uses `_mag` for digit counting
 - `__ge__` / `__le__` / `__gt__` / `__lt__` — raises TypeError for complex non-real operands, operands containing ComplexInfinity (via `.has()`), or NaN; otherwise computes difference and checks sign or returns unevaluated relational

@@ -73,7 +73,9 @@ Abstract index notation tensors (Penrose-style) with Einstein summation, canonic
 - `tensorhead(name, typ, sym)` — shorthand to create a `TensorHead`.
 - `contract_metric(t, g)` — contract a tensor with a metric tensor.
 - `riemann_cyclic(t)` — apply cyclic identity to Riemann tensor expressions.
-- `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components. Raises `NotImplementedError` when contraction pattern requires transposition.
+- `get_lines(ex, index_type)` — analyzes contracted dummy indices in a product of matrix-valued tensors (e.g., spinor/gamma-matrix contractions); returns open multiplication chains, closed loops (traces), and remaining unmatched components.
+  - Raises `ValueError` if any single component carries more than two indices of the given family.
+  - Raises `NotImplementedError` when contraction pattern requires transposition.
 - `_TensorDataLazyEvaluator` — maps tensor expressions to numerical (ndarray) component data; computes lazily on `.data` access.
   - `__getitem__` — retrieves component data; unwraps zero-dimensional arrays to scalar (`dat[()]`) and single-element 1-d arrays to their sole element (`dat[0]`).
   - `_get(key)` — central dispatch that retrieves numerical data for any tensor expression type: `TensorHead`, `Tensor`, `TensMul`, or `TensAdd`.

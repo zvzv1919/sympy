@@ -52,6 +52,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Pow handling: integer exponents, symbol-free exponents, and `f(x)**g(x)=0` (solves base, excludes solutions where exponent is also zero to avoid 0^0).
   - Lambert W fallback orchestration: classifies generators into exp/log vs algebraic, factors polynomial part, attempts `_solve_lambert`.
   - On Lambert W failure with exactly 2 generators, falls back to `bivariate_type` reduction within `_tsolve` itself (not in bivariate.py).
+  - Last-resort `force` fallback: calls `posify` to re-express the equation with all symbols assumed positive, then re-solves. If the target variable is absent from the positified expression, returns None (no solution).
 - `unrad(eq, *syms)` — removes radicals from equations.
 - `denoms(eq, symbols)` — extracts denominators; used by `solve` post-validation to auto-discard solutions causing zero denominators.
 
