@@ -88,6 +88,7 @@ Explicit parametric curves in the 2D plane (not 3D surfaces).
 ### [`ellipse.py`](ellipse.py)
 Elliptical entities in 2D.
 - `Ellipse` — defined by center, horizontal radius, vertical radius (or eccentricity). Properties: `foci`, `eccentricity`, `area`, `circumference`, `apoapsis`, `periapsis`. Methods: `tangent_lines()`, `normal_lines()`, `equation()`, `intersection()`, `arbitrary_point()`, `plot_interval()`, `random_point()`.
+  - `normal_lines(p, prec)` — computes 1, 2, or 4 lines from external point `p` perpendicular to the ellipse; axis-aligned special cases return immediately; general case solves a quartic via implicit differentiation; optional `prec` for numerical approximation.
   - `arbitrary_point(parameter='t')` — returns trigonometric parameterization `(center.x + hradius*cos(t), center.y + vradius*sin(t))`; raises `ValueError` if parameter name collides with a free symbol in the ellipse's definition.
   - `intersection(o)` — type-dispatched: handles `Point`, `LinearEntity`, `Circle`, `Ellipse`; for unrecognized types, falls back to `o.intersection(self)` (reverse dispatch). Caveat: when `o == self` (identical ellipse), returns `self` directly instead of a list, inconsistent with documented return type `list of GeometryEntity`.
   - `is_tangent(o)` — type-dispatched tangency test: for `Ellipse` checks single intersection point (coincident ellipses → False); for `LinearEntity` checks single intersection in segment; for `Polygon` iterates over all sides counting edge–ellipse intersection points and returns `True` iff total count is 1.
@@ -145,7 +146,8 @@ Polygonal entities in 2D.
   - `scale(x, y, pt)` — overrides base; uniform scaling (x == y) preserves `RegularPolygon` type by scaling the radius; non-uniform scaling degrades to a plain `Polygon` with explicit vertices.
   - `encloses_point(p)` — optimized containment: rejects if distance ≥ circumradius, accepts if distance < inradius, falls back to general `Polygon.encloses_point` only for the annular region between.
   - `__eq__(o)` — cross-type equality: if compared to a plain `Polygon`, delegates to `Polygon.__eq__` to resolve center/radius vs explicit-vertices mismatch.
-- `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incircle`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
+- `Triangle` — `Polygon` subclass; rich set of triangle-specific properties: `altitudes`, `orthocenter`, `circumcenter`, `circumcircle`, `incenter`, `incircle`, `inradius`, `medians`, `medial`, `nine_point_circle`, `bisectors`. Helper constructors: `_sss()`, `_sas()`, `_asa()`.
+  - `incenter` — center of the inscribed circle; computed as a weighted average of vertex coordinates, each weighted by the length of the opposite side.
   - `medial` — returns the medial triangle (the triangle formed by connecting the midpoints of the three sides).
   - `medians` — returns dict mapping each vertex to the median segment (line from vertex to midpoint of opposite side).
   - `is_similar(t2)` — triangle similarity test; returns `False` immediately if `t2` is not a `Polygon`; otherwise checks all 6 side-length-ratio permutations for uniform scaling match.

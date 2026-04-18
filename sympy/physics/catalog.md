@@ -315,7 +315,7 @@ High-energy physics.
     - Validates component ordering: raises ValueError if contracted gamma matrices are not adjacent (component position distance must be 1 or n−1). Also validates spinor-index free pairs (must be exactly 0 or 2 with correct slot positions).
 
 ### [`unitsystems/`](unitsystems/catalog.md)
-Dimensional analysis and unit systems (SI, CGS, natural, etc.).
+Dimensional analysis and unit systems (SI, CGS, natural, etc.); group-theoretical construction where dimensions are vectors (exponent coefficients) and units add a scale factor to a dimension. Package `__init__.py` exports core abstractions: Dimension, DimensionSystem, Unit, Constant, UnitSystem, Quantity.
 - `dimensions.py` — `Dimension` class: represents dimensional exponents (mass, length, time, …) as a filtered dict; constructor strips zero-valued exponents so `Dimension(length=1, mass=0) == Dimension(length=1)`. Supports mul/div/pow composition and dimensional equality checks.
   - `add(other)` — dimensional addition; raises TypeError for non-Dimension operand, raises ValueError when dimensions differ (e.g., length + time).
   - `sub(other)` — subtraction delegates to `add`; dimensions have no notion of ordering/magnitude, so subtraction is equivalent to addition when operands match.

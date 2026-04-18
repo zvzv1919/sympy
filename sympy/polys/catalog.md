@@ -1022,6 +1022,11 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `IntegerRing` (in `integerring.py`) — abstract ZZ domain; `from_AlgebraicField(a, K0)` — **succeeds only if element is ground (constant)**, converting its leading coefficient; **implicitly returns `None` for non-ground elements** (same pattern as `RationalField.from_AlgebraicField`).
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
+- `PythonRational` (in `pythonrational.py`) — pure-Python rational number type (numerator `p`, denominator `q`); used as the element type for `PythonRationalField`.
+  - `__init__(p, q)` — auto-reduces via GCD; **negates both if `q < 0`** to enforce positive denominator.
+  - Arithmetic: `__add__`, `__sub__`, `__mul__`, `__div__`, `__pow__`; each returns `NotImplemented` for non-`PythonRational`/non-integer operands.
+  - `_cmp(other, op)` — ordering comparisons (`__lt__`, `__le__`, `__gt__`, `__ge__`) all delegate here; **computes `self - other` and checks sign of the numerator**; returns `NotImplemented` on `TypeError` (incompatible type).
+  - `__eq__` — compares `p` and `q` directly; for integer other, checks `q == 1 and p == other`.
 - `PythonRationalField` (in `pythonrationalfield.py`) — QQ domain backed by Python `PythonRational` (fraction type); `from_sympy` accepts Rational directly; **for Float inputs, routes through `RR.to_rational(a)` to obtain an exact rational approximation**, then wraps the integer numerator/denominator as a `PythonRational`; raises `CoercionFailed` for other types.
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain wrapper.
   - `__init__(domain_or_ring, symbols, order)` — **dual-path initialization**: if first arg is already a `PolyRing` and no other args given, reuses it directly; otherwise constructs a new `PolyRing` from the provided symbols, domain, and ordering.

@@ -79,7 +79,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
 - **Predicates**: `is_square`, `is_diagonal`, `is_upper`, `is_lower` (both triangularity checks support non-square/rectangular matrices), `is_zero` (three-valued), `is_nilpotent` (characteristic polynomial = x^n via `charpoly`).
 - `is_hermitian`: three-valued (True/False/None) via `fuzzy_and`; checks diagonal entries are real and off-diagonal pairs satisfy conjugate symmetry. Returns None when assumptions are insufficient (e.g. symbolic diagonal with no real assumption).
-- `is_symmetric`: computes self−transpose, simplifies, checks zero; `simplify=False` skips reduction → may yield false negatives.
+- `is_symmetric(simplify=True)`: checks if matrix equals its own transpose; computes self−transpose difference, simplifies each entry, then checks all zero. Simplification resolves algebraically equivalent entries (e.g. `(x+1)²` vs `x²+2x+1`); `simplify=False` skips this → may yield false negatives on equivalent expressions.
 - `is_anti_symmetric`: when `simplify` enabled, checks diagonal entries are zero then off-diagonal paired sums `M[i,j]+M[j,i]` are zero (separately); accepts custom simplify callable. `simplify=False` uses direct equality.
 - **Construction**: `_handle_creation_inputs` — normalizes constructor/factory arguments (nested list, flat list+dims, callable, NumPy array, MatrixBase) into (rows, cols, flat_list).
   - `__array__` protocol: 2D arrays use array shape directly; 1D arrays are treated as column vectors (n×1); ≥3D raises `NotImplementedError`.

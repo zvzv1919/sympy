@@ -48,7 +48,7 @@ Operator precedence values (`PRECEDENCE` dict) and lookup functions that return 
 - `_print_DMP` / `_print_DMF` — renders dense multivariate polynomials; if `ring` is set, attempts `ring.to_sympy(p)` conversion — on `SympifyError`, falls back to `repr(p)`.
 - Algebraic domain printers (`_print_RealField`, `_print_ComplexField`, `_print_FiniteField`, `_print_IntegerRing`, `_print_RationalField`) — render number domains as Unicode double-struck letters (ℤ, ℚ, ℝ, ℂ) or ASCII fallbacks (ZZ, QQ, RR, CC); non-default precision is appended as a subscript.
 - `_print_Range` — renders discrete integer ranges; abbreviates with ellipsis (`…`) when the range has more than 4 elements or is infinite, showing only endpoints and step; shows all elements otherwise.
-- `_print_matrix_contents` — generic grid layout: computes per-column max width, horizontally centers each cell with right-bias on odd padding (`wleft = delta//2`, `wright = delta - wleft`), vertical alignment is implicit via baselines.
+- `_print_matrix_contents` — grid layout for `MatrixBase` rendering: computes per-column max width, horizontally centers each cell with right-bias on odd padding (`wleft = delta//2`, `wright = delta - wleft`), vertical alignment is implicit via baselines; returns empty `prettyForm('')` for 0×0 matrices. Used by `_print_MatrixBase` which wraps result in brackets.
 - Handles matrices, piecewise, sequences, sets, relational operators, containers (tuple, list, dict, set), and all standard math expressions. Sign insertion (`+`/`-`) between addition terms is delegated to `prettyForm.__add__` in `stringpict.py`.
 - `_print_tuple` — single-element tuples append a trailing comma before parenthesizing, to distinguish from a mere parenthesized expression.
 - `_print_Float` — when `full_prec` setting is `"auto"`, shows full precision only at the top print level (`_print_level == 1`); nested floats use reduced precision.
@@ -194,7 +194,7 @@ Public API: `pretty`, `pretty_print`/`pprint`, `pretty_use_unicode`.
 `dotprint()` — generates Graphviz DOT notation for expression tree visualization.
 
 ### [`tableform.py`](tableform.py)
-`TableForm` — renders 2D data as aligned tables (ASCII, LaTeX, HTML).
+`TableForm` — renders user-supplied 2D data (lists of lists) as aligned tables (ASCII, LaTeX, HTML); not used for `Matrix`/`MatrixBase` pretty-printing (that is `PrettyPrinter._print_matrix_contents`).
 - `TableForm.__init__` — normalizes ragged 2D data; `pad` kwarg controls fill for short rows and None entries. When `pad=None` (default), short rows are space-filled but explicit None entries are preserved as-is; when `pad` is given, both None and short-row gaps use that character.
 - Supports column alignments (left/center/right via string aliases `'l'`/`'r'`/`'c'`/`'<'`/`'>'`/`'^'`), row/column headings ("automatic" or custom labels), per-column format strings or callables, and `wipe_zeros`.
 - Has its own `_latex` method that renders the table as a LaTeX `tabular` environment; when a per-column callable returns `None`, falls back to `printer._print(x)` for that cell.

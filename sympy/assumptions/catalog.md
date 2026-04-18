@@ -149,7 +149,8 @@ Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (i
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
   - Only handles a **fixed set** of predicates: sign (`Q.positive`, `Q.negative`, `Q.zero`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`), number type (`Q.rational`, `Q.irrational`, `Q.even`, `Q.odd`, `Q.integer`, `Q.imaginary`, `Q.commutative`).
   - **Fallback**: predicates not in this set (e.g., `Q.real`, `Q.finite`, `Q.prime`) are returned unchanged as the original `AppliedPredicate` object.
-  - **Sign predicates** (`Q.positive`, `Q.negative`, `Q.zero`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`) are wrapped with `fuzzy_and([e.is_finite, ...])` boundedness guards because old-assumption `is_real` includes infinity.
+  - **Sign predicates** (`Q.positive`, `Q.negative`, `Q.nonpositive`, `Q.nonzero`, `Q.nonnegative`) are wrapped with `fuzzy_and([e.is_finite, ...])` boundedness guards because old-assumption `is_real` includes infinity.
+  - **Exception**: `Q.zero` maps directly to `e.is_zero` **without** a finiteness guard, because zero is inherently finite — no ambiguity between old and new systems.
   - **Number-type predicates** (`Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.irrational`, `Q.imaginary`, `Q.commutative`) map directly to `.is_*` attributes without finiteness guards.
   - `Q.nonnegative` is handled asymmetrically: uses `fuzzy_or([e.is_zero, e.is_finite])` instead of just `e.is_finite` like other sign predicates (`Q.positive`, `Q.negative`, `Q.nonpositive`, `Q.nonzero`).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.

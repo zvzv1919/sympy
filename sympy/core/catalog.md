@@ -350,6 +350,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`sympify.py`](sympify.py)
 `sympify()` — converts Python objects to SymPy types. `converter` dict maps types to handlers. `SympifyError` for failures.
 
+- `sympify()` fallback chain for unknown types: (1) `converter` dict lookup by class and MRO; (2) `CantSympify` check; (3) `_sympy_()` protocol method; (4) for non-string objects, attempts numeric coercion via `float(a)` then `int(a)` before text-based parsing; (5) converts to unicode string and parses via `sympy_parser`
 - `_sympify(a)` — strict internal conversion used by arithmetic dunder methods (`__add__`, `__eq__`, etc.); calls `sympify(a, strict=True)`, which rejects strings and other non-numeric Python types with `SympifyError` (surfaced as `TypeError` by operator wrappers)
 - `CantSympify` — mixin trait; classes inheriting this are blocked from sympification even if their base type (e.g., `dict`) would normally be convertible
 
