@@ -19,7 +19,9 @@ Base classes and core query functions for all random variable types.
 - `SinglePSpace.__new__`: constructs a probability space for a single variable; coerces string to `Symbol`, raises `TypeError` for non-string/non-Symbol input.
 - `rv()` factory: creates a `RandomSymbol` from a name and distribution class.
 - `Density` class + `density()`: compute probability density of a random expression. `Density.doit()` returns a DiracDelta-based Lambda for deterministic (non-stochastic) expressions.
-- `cdf(expr, condition)`: computes cumulative distribution function. When a condition is supplied, reduces to the unconditional case by rewriting expr via `given()` and recursing. Otherwise delegates to `pspace().compute_cdf()`.
+- `cdf(expr, condition, evaluate=True)`: computes cumulative distribution function; delegates to `pspace().compute_cdf()`.
+  - When a condition is supplied, rewrites expr via `given()` and recurses to reduce to the unconditional case.
+  - When `evaluate` is true and the result has a `doit` method, calls `doit()`; otherwise returns the raw result unchanged.
 - `where()`, `sample()`, `sample_iter()`: query domain of conditions and draw realizations.
 - `given(expr, condition)`: conditions a random expression on an event; for single-variable equality conditions, solves the equation via `solveset` and substitutes solutions (unwraps `Intersection` with `S.Reals` to extract finite solution sets); otherwise builds a full conditional probability space.
 - `expectation(expr, condition)`: computes expected value of a random expression; exploits linearity (decomposes `Add` into per-term expectations) for efficiency; delegates final integration to `pspace().integrate()`.

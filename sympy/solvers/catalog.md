@@ -60,6 +60,8 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
 Modern set-based solver with explicit domain handling. Returns FiniteSet, Interval, ConditionSet, or ImageSet.
 
 - `solveset(f, symbol, domain=S.Complexes)` — core solver; dispatches by domain.
+  - Boolean vs numeric edge case: boolean `True` (from a relational always satisfied) returns full domain; `False` returns EmptySet.
+  - Numeric `0` also returns domain (Eq(0,0) is true), but `1` returns EmptySet. Boolean/numeric dispatch occurs before expression analysis.
   - Constant (variable-free) expressions: returns domain if equal to 0, EmptySet if nonzero; raises NotImplementedError if equality to zero is undetermined.
   - Relational/inequality inputs (real domain only): delegates to `solve_univariate_inequality`, then subtracts denominator-zero points (via `_invalid_solutions`) from the result; falls back to ConditionSet on NotImplementedError.
 - `_invalid_solutions(f, symbol, domain)` — collects zeros of all denominators in `f` to exclude undefined points from solution sets.
@@ -100,7 +102,9 @@ Solves bivariate equations by structural reduction to single-variable problems.
   - Log-dominant + additive lhs: computes log-difference differently when rhs==0 (`log(other) - log(other - lhs)`) vs nonzero (`log(lhs - other) - log(rhs - other)`).
   - Exp-dominant + additive lhs: isolates exp-containing term; if both sides are negatable (`could_extract_minus_sign`), negates both before taking log. This negation check is absent in the analogous power-with-symbolic-exponent additive case.
   - Calls `_lambert` for final resolution.
-- `bivariate_type(f, x, y)` — classifies bivariate equation structure.
+- `bivariate_type(f, x, y)` — classifies a two-variable expression into composite substitution forms: product (`x*y`), linear sum (`a*x+b*y`), or mixed (`a*x*y+b*y`/`a*x*y+b*x`).
+  - Returns `(u(x,y), P(u), u)` so solving `P(u)=0` then equating `u(x,y)=solution` recovers solutions for x or y.
+  - On first call, replaces original symbols with temporary placeholders (Dummy) before recursing, preventing symbol-name collisions during classification.
 
 ### [`diophantine.py`](diophantine.py)
 Solves Diophantine equations (polynomial equations over integers).
@@ -190,7 +194,7 @@ Solves recurrence (difference) equations with polynomial/rational coefficients.
 ### [`decompogen.py`](decompogen.py)
 Functional decomposition for solving via composition chain reduction.
 
-- `decompogen(f, symbol)` — decomposes f into a composition chain f = f₁∘f₂∘…∘fₙ. Pure decomposition utility; does not solve equations or perform change-of-variables substitution.
+- `decompogen(f, symbol)` — decomposes a single-variable expression f into a composition chain f = f₁∘f₂∘…∘fₙ. Pure decomposition utility; does not classify multivariate substitution forms (see `bivariate_type`) or solve equations.
 
 ### [`deutils.py`](deutils.py)
 Utilities for classifying and manipulating differential equations.

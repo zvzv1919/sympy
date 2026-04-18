@@ -67,7 +67,9 @@ Error functions and related integrals (special cases of incomplete gamma).
 Bessel functions and Airy functions.
 - `besselj`, `bessely`, `besseli`, `besselk` — Bessel functions of first/second kind, modified.
 - `hankel1`, `hankel2` — Hankel functions.
-- `jn`, `yn` — spherical Bessel functions; `hn1`, `hn2` — spherical Hankel.
+- `jn`, `yn` — spherical Bessel functions.
+- `SphericalHankelBase` — shared base for spherical Hankel functions (spherical wave propagation); uses `_hankel_kind_sign` (+1/−1) to unify rewrite/expand logic for both kinds into standard cylindrical Bessel forms.
+- `hn1`, `hn2` — spherical Hankel functions of first/second kind (outgoing/incoming waves); subclasses of `SphericalHankelBase` differing only in sign.
 - `AiryBase` — abstract base for Airy functions (solutions of w''(z) − z·w(z) = 0); `as_real_imag` decomposes complex-argument evaluation into real/imaginary parts.
 - `airyai`, `airybi`, `airyaiprime`, `airybiprime` — Airy functions and derivatives (subclasses of `AiryBase`).
 

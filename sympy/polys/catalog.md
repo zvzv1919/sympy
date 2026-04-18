@@ -113,6 +113,7 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `drop(gen)` — remove a generator from the polynomial; **univariate case: returns ground domain scalar if polynomial is constant, raises `ValueError` if polynomial depends on the generator**; multivariate case: drops the variable position from each monomial, raising `ValueError` if any term has nonzero exponent in that generator.
   - `deflate(*G)` — compute GCD of all exponents per variable across `f` and `G`, divide all exponents by those GCDs; returns `(stride_tuple, [compressed_polys])`; used as preprocessing before GCD computation in `cofactors`.
   - `inflate(J)` — inverse of `deflate`; multiplies each exponent by the corresponding stride.
+  - `trunc_ground(p)` / `rem_ground(p)` — reduce all coefficients modulo `p`; **over ZZ, uses symmetric representation** (if remainder > p//2, subtracts p to center around zero); over other domains, uses plain modular remainder. Strips zero-coefficient terms afterward.
   - `diff`, `integrate`, `eval`, `content`, `primitive`, `strip_zero`.
   - `_gcd(g)` — GCD dispatch: **QQ → `_gcd_QQ` (clears denoms, delegates to ZZ), ZZ → `_gcd_ZZ` (heuristic GCD via `heugcd`), other domains → fallback to `ring.dmp_inner_gcd`** (dense representation).
   - Cross-ring dispatch (`__add__`, `__sub__`, `__mul__`, `__divmod__`): when `p2` is a `PolyElement` from a different ring, checks nested domain relationships.
@@ -674,7 +675,9 @@ Expression-to-polynomial conversion utilities and generator management.
 - `_parallel_dict_from_expr_if_gens`, `_parallel_dict_from_expr_no_gens` — convert expressions to monomial dictionaries.
 - `dict_from_expr`, `parallel_dict_from_expr` — high-level conversion entry points.
 - `expr_from_dict` — convert monomial dictionary back to expression.
-- `_sort_gens`, `_unify_gens`, `_analyze_gens` — generator ordering and unification.
+- `_sort_gens` — sort generators by configurable priority (algebraic ordering, then user-defined `_gens_order`, then fallback).
+- `_unify_gens(f_gens, g_gens)` — merge two ordered generator sequences into one, preserving relative ordering from both; common elements anchor the merge, non-common elements are interleaved around them.
+- `_analyze_gens` — normalize `*gens` / `[gens]` calling conventions to a flat tuple.
 - `_sort_factors` — sort polynomial factors.
 - `_dict_reorder(rep, gens, new_gens)` — reorder monomial exponent tuples to match a new generator ordering; appends zero for new generators not in the original set.
   - **Raises `GeneratorsError` if an original generator with non-zero exponent is absent from the new ordering**.

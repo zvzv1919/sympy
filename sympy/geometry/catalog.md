@@ -53,7 +53,7 @@ Point representations in n-dimensional Euclidean space.
   - `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)` — compare via `coefficients`; return `False` (no error) if either entity lacks `coefficients`.
   - `angle_between(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
-  - `projection(o)` — projects a `Point` or `LinearEntity` onto this line; raises `GeometryError` for any other geometry type (e.g., `Circle`).
+  - `projection(o)` — projects a `Point` or `LinearEntity` onto this line; for linear entities, if both endpoints project to the same point, returns that single point instead of the entity type; raises `GeometryError` for any other geometry type.
   - `intersection(o)` — full intersection logic for line/ray/segment pairs; uses Cramer's rule for crossing point, then validates via coordinate-betweenness (segments) and direction-consistency (rays) instead of fragile containment tests.
   - `arbitrary_point(parameter='t')` — raises `ValueError` if parameter name collides with a free symbol already in the line's definition.
   - `random_point()` — generates a random point on the entity; switches from x-based to y-based randomization when slope is infinite (vertical line); adjusts bounds for `Ray` (half-open) and `Segment` (closed).
@@ -66,7 +66,7 @@ Point representations in n-dimensional Euclidean space.
 
 ### [`line3d.py`](line3d.py)
 3D linear entities: lines, rays, and segments.
-- `LinearEntity3D` — abstract base for 3D linear entities.
+- `LinearEntity3D` — abstract base for 3D linear entities; constructed from two distinct `Point3D`s (raises `ValueError` on coincident points).
   - `are_concurrent(*lines)`, `is_parallel(l1, l2)`, `is_perpendicular(l1, l2)`.
   - `parallel_line(p)`, `perpendicular_line(p)`, `perpendicular_segment(p)`.
   - `projection(o)` — projects a `Point3D` or `LinearEntity3D` onto this line (not onto a plane); for linear entities, if both endpoints project to the same point, returns that single point instead of preserving the entity type.

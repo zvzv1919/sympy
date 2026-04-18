@@ -20,7 +20,8 @@ Main inference engine for the assumptions system.
   - Each predicate property's docstring documents **semantic rules and cross-predicate implications** (the authoritative source for predicate meaning).
   - Deprecated alias properties: `Q.infinitesimal` → `Predicate('zero')`, `Q.bounded` → `Predicate('finite')`, `Q.infinity` → `Predicate('infinite')`. Decorated with `@deprecated`.
   - `deprecated_predicates` list: names excluded from the set of active assumption keys used for fact derivation (e.g., `compute_known_facts`).
-  - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.composite`, `Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.finite`, …
+  - Scalar predicates: `Q.positive`, `Q.negative`, `Q.real`, `Q.imaginary`, `Q.complex`, `Q.prime`, `Q.composite`, `Q.even`, `Q.odd`, `Q.integer`, `Q.rational`, `Q.irrational`, `Q.finite`, …
+  - `Q.irrational`: true iff `x` is a **real** number not expressible as an integer ratio; purely imaginary inputs (e.g., `I`) return `False`. Contrast with `Q.transcendental` which includes complex numbers.
   - `Q.imaginary`: true iff expressible as a nonzero real times `I`; zero is explicitly excluded from imaginary numbers.
   - `Q.real` documents that "non" facts (`Q.nonnegative`, `Q.nonpositive`, `Q.nonzero`, `Q.noninteger`) imply realness, not just negation.
   - `Q.positive`, `Q.negative`, `Q.nonnegative`, `Q.nonpositive` each document the asymmetry between negation and "non" counterparts: e.g., `~Q.negative(I)` is `True` but `Q.nonnegative(I)` is `False`, because "non" predicates require realness.
@@ -135,7 +136,8 @@ Second-tier SAT fallback, invoked when both handlers and `ask_full_inference` (i
 ### [`sathandlers.py`](sathandlers.py)
 **Defines and registers** logical inference rules (implications, equivalences) keyed by expression type; consumed by `satask.py`'s iterative fact collector. Also provides old-to-new assumption bridging utilities.
 - `_old_assump_replacer` / `evaluate_old_assump`: translates new-style predicates (`Q.positive`, `Q.negative`, …) to legacy `.is_*` attribute lookups.
-  - Handles semantic mismatches: e.g., `Q.positive` requires both `is_finite` and `is_positive` (legacy "positive" doesn't exclude unbounded).
+  - Handles semantic mismatches between new and old assumptions for each sign predicate.
+  - `Q.nonnegative` is handled asymmetrically: uses `fuzzy_or([e.is_zero, e.is_finite])` instead of just `e.is_finite` like other sign predicates (`Q.positive`, `Q.negative`, `Q.nonpositive`, `Q.nonzero`).
   - `CheckOldAssump`: wrapper asserting equivalence between a predicate and its old-assumption evaluation.
 - `UnevaluatedOnFree`: base for deferred Boolean wrappers over predicates; `__new__` validates that input is either entirely free (unapplied) or singly applied to one expression.
   - Raises `ValueError` if bare predicates are mixed with expression-bound `AppliedPredicate`s, or if applied predicates target multiple distinct expressions.

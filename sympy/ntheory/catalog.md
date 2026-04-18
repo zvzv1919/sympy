@@ -60,7 +60,7 @@ Modular roots, residues, and multiplicative-order computations.
 
 ### [`modular.py`](modular.py)
 Chinese Remainder Theorem and systems of linear congruences (not power-residue/nth-root equations).
-- `crt(m, v)` — Chinese Remainder Theorem solver
+- `crt(m, v)` — Chinese Remainder Theorem solver; assumes pairwise coprime moduli but by default (`check=True`) verifies residuals and falls back to `solve_congruence` if the fast algorithm produces incorrect results; returns None when no solution exists
 - `crt1`, `crt2` — two-phase CRT for repeated use with same moduli
 - `symmetric_residue(a, m)` — symmetric residue with |r| ≤ m/2
 - `solve_congruence(*remainder_modulus_pairs)` — solve systems of linear congruences
