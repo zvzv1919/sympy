@@ -22,7 +22,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - **Row reduction / spaces**: `rref` (reduced row-echelon form on `MatrixBase` objects — searches for non-zero pivots, swaps rows, scales, and eliminates; returns transformed matrix + pivot indices), `rank`, `nullspace`, `columnspace`.
 - **Eigenvalue analysis**: `eigenvals`, `eigenvects`, `left_eigenvects`, `berkowitz_eigenvals`, `berkowitz`.
 - `singular_values`: computes via eigenvalues of A^H·A, takes sqrt of each, returns list sorted descending. `condition_number`: ratio of max to min singular value.
-- **Diagonalization**: `is_diagonalizable`, `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
+- **Diagonalization**: `is_diagonalizable(reals_only=False)` (checks eigenvector multiplicities match algebraic multiplicities; `reals_only=True` rejects non-real eigenvalues), `jordan_form` (canonical Jordan/block-diagonal decomposition), `jordan_cells`.
 - `diagonalize(reals_only, sort, normalize)`: returns (P, D) where D is diagonal and D = P⁻¹·M·P; optionally sorts eigenvalues (reverse `default_sort_key` order) and normalizes eigenvector columns to unit length.
 - `_jordan_block_structure`: computes generalized eigenvector chain leaders per eigenvalue and block size; iterates block sizes largest-first, excluding vectors from smaller kernels and already-used chains.
 - **Decompositions** (public wrappers that validate preconditions, then delegate to internal `_cholesky`/`_LDLdecomposition` in dense/sparse layers):
@@ -44,7 +44,8 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `vec`: reshapes matrix into single-column by stacking columns. `vech`: extracts unique entries from a symmetric matrix into a single column (lower triangle); verifies symmetry by simplifying and comparing to transpose.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
 - **Stacking**: `hstack(*args)` / `vstack(*args)` — class methods that horizontally/vertically concatenate matrices via `reduce` over `row_join`/`col_join`.
-- **Structure / indexing**: `row_join` (horizontal concat; returns `type(self)(rhs)` when self is null/empty, enabling `reduce`-based stacking from an empty accumulator), `col_join` (vertical concat; same null-matrix guard), `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `key2bounds`, `_setitem`.
+- **Structure / indexing**: `row_join` (horizontal concat; returns `type(self)(rhs)` when self is null/empty, enabling `reduce`-based stacking from an empty accumulator), `col_join` (vertical concat; same null-matrix guard), `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `_setitem`.
+- `key2bounds(keys)`: converts mixed integer/slice index keys into (rlo, rhi, clo, chi) boundary ranges; for zero-row or zero-col dimensions with a slice key, short-circuits both bounds to 0 instead of calling `slice.indices`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry. `_eval_simplify` is aliased to `simplify`, so the core simplification framework's internal hook dispatches here.
 - **Dynamic calculus dispatch** (`__getattr__`): lookups for `diff`, `integrate`, `limit` are intercepted and return a function that applies the operation element-wise via `applyfunc`.
@@ -158,6 +159,7 @@ Block-structured symbolic matrices.
 
 ### [`expressions/matmul.py`](expressions/matmul.py)
 - `MatMul`: unevaluated symbolic matrix product A·B·C…; `doit()` evaluates via `canonicalize`.
+- `_entry(i, j)`: computes a single element of the product as a `Sum` over the inner dimension; when inner dimension is symbolic (non-numeric), returns the unevaluated `Sum` without calling `doit()` to avoid wasted computation; for concrete `ImmutableMatrix` factors, expands the sum directly via `Add`.
 - `_eval_inverse`: reverses factor order and inverts each; falls back to `Inverse(self)` on ShapeError (incompatible dimensions).
 - `_eval_transpose`, `_eval_adjoint`: reverse factor order and apply transpose/adjoint to each factor.
 - `_eval_determinant`: extracts scalar coefficient and delegates to `Determinant` per square sub-factor.

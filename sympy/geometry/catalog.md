@@ -12,7 +12,9 @@ Package entry point; re-exports all public geometric entities and utility functi
 Base classes for all geometric entities.
 - `GeometryEntity` — abstract base; provides `intersection()`, `translate()`, `rotate()`, `scale()`, `reflect()`, `encloses_point()`, `equals()`.
   - `reflect(line)` — mirrors across a line; optimizes axis-aligned cases (x-axis → `scale(y=-1)`, y-axis → `scale(x=-1)`), uses point-by-point translation for offset horizontal/vertical lines, and compose translate-rotate-scale-rotate-translate for arbitrary slopes.
-  - `encloses(o)` — type-dispatching containment check; delegates to each subclass's `encloses_point` method.
+  - `encloses(o)` — type-dispatching containment check: Point → `encloses_point`; Segment → both endpoints inside; Ray/Line → always False.
+  - For Ellipse: verifies center is inside AND no boundary intersection AND a point offset by `hradius` from center is also inside.
+  - For Polygon/RegularPolygon: all vertices inside (RegularPolygon also checks center first).
   - `_eval_subs(old, new)` — substitution hook; converts sequence arguments to `Point3D` if entity is 3D, else `Point`.
 - `GeometrySet` — extends `GeometryEntity` with set-theoretic operations (`union`, `intersection`, `difference`, `contains`).
 

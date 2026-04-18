@@ -34,8 +34,8 @@ Convenience function `DynkinDiagram(t)` — delegates to the appropriate type cl
 - `group_order()` — order of the full Weyl group; dispatches per series: factorial formulas for A/B/C/D, hardcoded constants for E (ranks 6/7/8 only), F, G.
 - `group_name()` — descriptive name and geometric interpretation.
 - `element_order(weylelt)` — order of a specific element given as a product of generators.
-- `matrix_form(weylelt)` — converts a product-of-reflections string into its reflection matrix representation per series (A, D, E, F, G).
-  - Each series has distinct per-reflection matrix construction logic with series-specific special cases.
+- `matrix_form(weylelt)` — converts a product-of-reflections string into its reflection matrix representation per series (A, B/C, D, E, F, G).
+  - Exceptional types (G, F, E) use hardcoded per-generator matrices with Rational entries (e.g. G2 in 3D, F4 in 4D, E in 8D).
 - `coxeter_diagram()` — undirected Coxeter diagram.
 
 ## Type Series — Root System Definitions
@@ -69,6 +69,8 @@ Each `type_*.py` file defines root-system properties (simple roots, positive roo
 
 ### [`type_f.py`](type_f.py)
 `TypeF` — F_4 exceptional algebra. Rank 4, dimension 4. 48 roots. Explicit 4×4 Cartan matrix.
+- `basic_root(i, j)` — helper producing a vector with +1 at position i and −1 at position j.
+- `simple_root(i)` — returns the ith simple root of F_4; first two roots use `basic_root`, third is a unit vector, fourth is all −1/2.
 - `positive_roots()` — constructs 24 positive roots in three groups: difference/sum vectors (e_i±e_j), unit vectors (e_i), and half-integer vectors (±1/2 coordinate 4-vectors) enumerated by explicit sign combinations.
 
 ### [`type_g.py`](type_g.py)

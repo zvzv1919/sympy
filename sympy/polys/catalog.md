@@ -124,6 +124,7 @@ Sparse rational function fields and their elements.
   - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
     - **If that fails and domain has an associated field (e.g. ZZ→QQ), retries via the field and returns `(numer, denom)` split**; returns `(0, None, None)` on total failure.
   - Arithmetic (`__add__`, `__sub__`, `__mul__`, etc.): when the other operand is a `FracElement` from a different field, **checks nested domain relationships**: if `g.field` matches `self.field.domain.field`, treats `g` as a ground element; if `self.field` matches `g.field.domain.field`, **delegates to `g.__rsub__`/`g.__rmul__`** (the outer field handles the operation).
+  - `diff(x)` — partial derivative of the rational function w.r.t. `x`; applies the **quotient rule**: `(numer' * denom - numer * denom') / denom²`.
   - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
 
 ---
@@ -284,7 +285,8 @@ Low-level dense polynomial basics: construction, conversion, queries.
 - `dup_multi_deflate`, `dmp_multi_deflate` — simultaneously reduce exponent gaps across multiple polynomials; **`dmp_multi_deflate` delegates to `dup_multi_deflate` when `u==0`**.
 - `dup_inflate`, `dmp_inflate` — inverse of deflation; maps `y` back to `x^m`; **raises `IndexError` if `m` ≤ 0; returns `f` unchanged if `m == 1` or `f` is empty**.
 - `dup_apply_pairs(f, g, h, args, K)` — apply binary function `h` element-wise to paired coefficients of two univariate dense lists; **pads the shorter list with `K.zero` on the left (high-degree end)** to align by degree before zipping.
-- `dmp_strip` — strip leading zero coefficients from nested lists.
+- `dup_strip` — remove leading zeros from univariate coefficient list; **short-circuits via `if not f or f[0]`** (returns immediately when list is empty or first coefficient is nonzero, avoiding iteration).
+- `dmp_strip` — strip leading zero coefficients from nested lists; delegates to `dup_strip` at level 0.
 - `dup_terms_gcd`, `dmp_terms_gcd` — remove GCD of term exponents; `dup_terms_gcd` returns `(0, f)` unchanged when trailing coefficient is nonzero or polynomial is empty.
 - `dmp_inject(f, u, K, front)` — flatten `K[X][Y]` → `K[X,Y]`; when `front=True`, coefficient-ring generators precede outer generators in monomial tuples.
 - `dmp_eject(f, u, K, front)` — reverse of inject: `K[X,Y]` → `K[X][Y]`; **splits monomial tuple using `K.ngens`: when `front=False` (default), trailing positions map to coefficient ring generators; when `front=True`, leading positions do**.
@@ -312,6 +314,7 @@ Advanced dense polynomial operations: calculus, evaluation, composition, denomin
 - `dmp_ground_trunc` — reduce multivariate polynomial coefficients modulo a constant (delegates to `dup_trunc` at level 0).
 - `dup_monic`, `dmp_ground_monic` — make polynomial monic.
 - `dup_content`, `dmp_ground_content`, `dup_primitive`, `dmp_ground_primitive` — ground-level content and primitive part (GCD of scalar coefficients only; for multivariate coefficient GCD, see `dmp_content` in `euclidtools.py`).
+  - `dup_content` **skips early termination (break when GCD reaches 1) for QQ domain**, iterating all coefficients; for other domains (e.g. ZZ), breaks early when running GCD becomes one.
 - `dup_real_imag` — split into real/imaginary parts.
 - `dup_mirror`, `dup_scale`, `dup_shift` — polynomial transformations (sign-flip, rescale, Taylor shift).
 - `dup_transform(f, p, q, K)` — functional transformation `q^n * f(p/q)`; **returns `[]` immediately for zero polynomial**.
@@ -488,6 +491,7 @@ Symbolic root representations and root-sum evaluation.
   - `_roots_trivial(poly, radicals)` — closed-form roots for linear/quadratic/binomial; **if `radicals=False`, returns `None` for all degree > 1** (only linear is always solved).
   - `_reals_index`, `_complexes_index` — map global root index to per-factor local index; `_complexes_index` **offsets the local index by the number of real roots** of the same factor (via `_reals_cache`).
   - `_get_interval`, `_refine_interval`, `_eval_evalf` — numerical evaluation; `_eval_evalf` **creates a Dummy variable and substitutes when the polynomial generator is a compound expression** (not a plain Symbol).
+    - When the complex isolation interval converges to a single point (`ax==bx` and `ay==by`), **assigns the sign of the imaginary part using the polynomial degree and root index parity** (roots sorted with negative-imaginary before positive-imaginary), rather than trusting the interval's sign directly.
   - `_eval_Eq(other)` — symbolic equality check; **returns `S.false` if `other` has no imaginary part but the root is non-real (complex), or vice versa**; refines bounding interval and checks containment for compatible real/imaginary types.
   - `_separate_imaginary_from_complex` — classify non-real roots into imaginary vs complex.
     - For two-term polynomials of power-of-2 degree with opposite-sign LC·TC, marks 2 roots as imaginary (mixed case).
@@ -667,10 +671,12 @@ Rational expression manipulation.
 Exception classes for polynomial operations.
 
 - `PolynomialError`, `MultivariatePolynomialError`, `OperationNotSupported` — general errors.
+- `PolynomialDivisionFailed` — raised when polynomial division cannot reduce degree; `__str__` **branches on domain type**: EX domain → suggests different simplification; inexact domain → suggests adjusting precision; **exact domain → warns of possible SymPy bug** or user domain with improper zero detection.
+- `ExactQuotientFailed` — raised when exact division has nonzero remainder.
 - `UnificationFailed` — raised when domains/polynomials cannot be unified.
 - `NotInvertible` — raised when polynomial modular inverse does not exist.
 - `GeneratorsNeeded`, `GeneratorsError` — generator-related errors.
-- `ComputationFailed`, `ExactQuotientFailed`, `RefinementFailed` — computation errors.
+- `ComputationFailed`, `RefinementFailed` — computation errors.
 
 ---
 
@@ -873,6 +879,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `from_AlgebraicField(a, K0)` — convert algebraic number field element back to QQ; **succeeds only if element is ground (constant)**, extracting its leading coefficient.
     - Implicitly returns `None` (conversion failure) for non-ground algebraic elements.
 - `AlgebraicField` (in `algebraicfield.py`) — algebraic number field `Q(α)`; ground domain must be QQ.
+  - `is_positive(a)` / `is_negative(a)` — sign determination; **inspects only the leading coefficient** of `a`'s internal polynomial representation via `a.LC()`, delegating to the ground domain's sign check.
   - `from_sympy(a)` — two-stage conversion: first tries ground rational field (`dom.from_sympy`); **on `CoercionFailed`, falls back to `to_number_field` to interpret `a` as an algebraic element** of the extension; raises `CoercionFailed` if both fail.
 - `Field` (in `field.py`) — abstract base for field domains; inherits from `Ring`.
   - `gcd(a, b)` — tries to delegate to associated ring's GCD on numerators/denominators; **if no associated ring exists (raises `DomainError`), falls back to returning `self.one`** (trivial GCD).
@@ -889,6 +896,7 @@ Algebraic domain hierarchy: ZZ, QQ, RR, CC, GF(p), algebraic fields, polynomial 
   - `invert()` — compute modular inverse via `dom.invert(val, mod)`.
   - `ModularIntegerFactory(_mod, _dom, _sym, parent)` — creates and caches a `ModularInteger` subclass for a given modulus; **raises `ValueError` if modulus < 1**; names class `SymmetricModularIntegerMod<n>` or `ModularIntegerMod<n>` depending on `_sym` flag.
 - `FiniteField` (in `finitefield.py`) — GF(p) domain; `from_sympy` accepts Integer and whole-number Float (e.g. 3.0), raises `CoercionFailed` otherwise.
+  - `from_RealField(K1, a, K0)` — convert mpmath `mpf` to GF(p) element; **contains a bug: references `self` instead of `K1`**, causing `NameError` at runtime.
 - `PythonIntegerRing` (in `pythonintegerring.py`) — ZZ domain backed by Python `int`; `from_sympy` accepts Integer directly and **also accepts Float if it represents a whole number** (e.g. 3.0 → 3).
 - `PolynomialRing` (in `polynomialring.py`) — `K[x₁,…,xₙ]` domain; `from_FractionField` converts a rational function to a ring element **only if the denominator is ground** (constant), else returns None.
 - `PolynomialRing(dom, *gens, **opts)` factory (in `old_polynomialring.py`) — creates a generalized multivariate polynomial ring.

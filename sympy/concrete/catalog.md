@@ -18,6 +18,7 @@ Abstract base for any expression with limits (integrals, sums, products).
 
 - `_process_limits(*symbols)` — canonicalize limit specifications into `(sym, lo, hi)` triples; coerces symbols and bounds. Returns `(limits, orientation)` where orientation is flipped (×−1) when upper bound is None but lower is present (e.g. `(x,5,None)` → `(x,None,5)` reversed).
 - **`ExprWithLimits`** — base class providing `function`, `limits`, `variables`, `free_symbols`, `is_number`.
+  - `__new__` — constructor: denests nested same-type calls (flattens by prepending inner limits), distributes over `Equality`, applies `piecewise_fold`, then validates all limits have 3 elements with no `None`.
   - `as_dummy()` — replace dummy variables with explicit dummies.
   - `_eval_interval`, `_eval_subs` — substitution helpers.
 - **`AddWithLimits(ExprWithLimits)`** — base for Sum and Integral (oriented additions).

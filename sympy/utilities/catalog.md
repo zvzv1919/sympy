@@ -56,6 +56,8 @@ Large collection of iterable/container utility functions.
 - `subsets`, `variations`, `cartes` — combinatoric generators (set-level, not multiset partition counting).
 - `numbered_symbols` — infinite generator of Symbol objects.
 - `topological_sort` — Kahn's algorithm for DAG ordering.
+- `generate_oriented_forest(n)` — enumerates all acyclic rooted tree (oriented forest) structures on n vertices using a parent-pointer array representation (Beyer–Hedetniemi algorithm).
+- `necklaces`, `bracelets` — circular sequence enumeration under rotation (necklaces) or rotation+reversal (bracelets).
 - `has_dups`, `has_variety` — duplicate/uniqueness checks.
 
 ### [`enumerative.py`](enumerative.py)
