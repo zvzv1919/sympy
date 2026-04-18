@@ -29,7 +29,7 @@ Core boolean types, operators, and normal-form conversions.
 Propositional-logic inference: truth evaluation, satisfiability dispatch, entailment, and knowledge bases.
 - `pl_true(expr, model, deep)` — evaluate a propositional expression under a (possibly partial) truth assignment; returns True/False/None (three-valued).
   - With `deep=True`, uses a heuristic probe: sets all unassigned atoms to True, evaluates, then branches — checks tautology (`valid`) if probe is true, checks unsatisfiability (`satisfiable`) if probe is false.
-- `satisfiable(expr, algorithm, all_models)` — **public entry point** for SAT checking; selects backend (`dpll` or `dpll2`) by `algorithm` param, returns a model dict or, with `all_models=True`, a generator of all satisfying assignments.
+- `satisfiable(expr, algorithm, all_models)` — **public entry point** for SAT checking; thin dispatcher that selects backend (`dpll` or `dpll2`) by `algorithm` param and forwards `all_models`; all model-finding and edge-case logic lives in the backend.
 - `valid(expr)` — check if expression is a tautology (true under every assignment).
 - `entails(expr, formula_set)` — check logical entailment of expr from a set of formulas.
 - `literal_symbol(literal)` — extract the underlying symbol from a (possibly negated) literal.
@@ -57,7 +57,7 @@ Internal classic DPLL SAT backend (called by `inference.satisfiable`); simple re
 ### [`algorithms/dpll2.py`](algorithms/dpll2.py)
 Internal CDCL SAT backend (called by `inference.satisfiable`); iterative solver with clause learning, watched literals, and VSIDS heuristic.
 - Standalone clause helpers (`unit_propagate`, `find_unit_clause`, `find_pure_symbol`) live in `dpll.py`, not here.
-- `dpll_satisfiable(expr, all_models)` — backend entry point; converts to CNF, early-exits for trivially false formulas, yields models to caller.
+- `dpll_satisfiable(expr, all_models)` — backend entry point; converts to CNF, handles `all_models` semantics. Early-exits for trivially false formulas (returns `False`, or a generator yielding `False` when `all_models=True`). Otherwise delegates to `SATSolver` and wraps results via `_all_models` generator.
 - `SATSolver` — stateful SAT solver class operating on integer-encoded clauses.
   - Uses watched-literal data structures for efficient unit propagation.
   - VSIDS (Variable State Independent Decaying Sum) branching heuristic.

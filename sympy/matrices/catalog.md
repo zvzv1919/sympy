@@ -44,7 +44,7 @@ Central base class `MatrixBase` — defines the full matrix API inherited by bot
 - `vec`: reshapes matrix into single-column by stacking columns. `vech`: extracts unique entries from a symmetric matrix into a single column (lower triangle); verifies symmetry by simplifying and comparing to transpose.
 - **Block structure**: `get_diag_blocks` — decomposes a concrete square matrix into independent square sub-matrices along the main diagonal by verifying off-block regions are zero (recursive expansion).
 - **Stacking**: `hstack(*args)` / `vstack(*args)` — class methods that horizontally/vertically concatenate matrices via `reduce` over `row_join`/`col_join`.
-- **Structure / indexing**: `row_join` (horizontal concat; returns `type(self)(rhs)` when self is null/empty, enabling `reduce`-based stacking from an empty accumulator), `col_join` (vertical concat; same null-matrix guard), `row_insert`, `col_insert`, `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `_setitem`.
+- **Structure / indexing**: `row_join` (horizontal concat; returns `type(self)(rhs)` when self is null/empty, enabling `reduce`-based stacking from an empty accumulator), `col_join` (vertical concat; same null-matrix guard), `row_insert`/`col_insert` (negative pos clamped to 0 when abs exceeds dimension), `extract` (submatrix by row/column index lists; also accepts boolean lists — True selects the corresponding row/column), `reshape`, `_setitem`.
 - `key2bounds(keys)`: converts mixed integer/slice index keys into (rlo, rhi, clo, chi) boundary ranges; for zero-row or zero-col dimensions with a slice key, short-circuits both bounds to 0 instead of calling `slice.indices`.
 - `key2ij`: converts indexing key to (row, col) — single integer→`divmod` by cols; sequence of length 2→per-axis index; slice→`.indices` on flattened length.
 - **Element-wise symbolic operations**: `subs`, `xreplace`, `expand`, `simplify` — each delegates to `applyfunc`, applying the operation to every entry. `_eval_simplify` is aliased to `simplify`, so the core simplification framework's internal hook dispatches here.
@@ -132,9 +132,10 @@ Base class for all symbolic (unevaluated) matrix expressions.
 ### [`expressions/matpow.py`](expressions/matpow.py)
 Unevaluated matrix power node `MatPow(base, exp)`.
 
-- `MatPow`: unevaluated symbolic node for M^n; `doit()` delegates to concrete `__pow__` (actual numeric/Jordan computation lives in `matrices.py`).
+- `MatPow`: unevaluated symbolic node for M^n.
 - Properties: `base`, `exp`, `shape`.
-- Note: special-case exponent handling (0, 1, -1) lives in `MatrixExpr.__pow__`, not here.
+- `doit()`: evaluates special cases — exp==0 on square base→`Identity`; `ZeroMatrix` with negative exp→`ValueError` (not invertible); `Identity`/`ZeroMatrix`→returns base unchanged; concrete `MatrixBase`→delegates to `__pow__`; exp==1→returns base; otherwise returns unevaluated `MatPow`.
+- `_entry(i, j)`: for unresolved `MatPow`, expands positive integer exponents into explicit `MatMul`; negative integer exponents not yet implemented.
 
 ### [`expressions/blockmatrix.py`](expressions/blockmatrix.py)
 Block-structured symbolic matrices.

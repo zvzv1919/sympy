@@ -83,6 +83,8 @@ Sparse polynomial rings and their elements (dict-based representation).
   - `evaluate(x, a)` — substitute scalar for one variable; **univariate case returns a plain domain scalar** (drops the ring).
   - `subs(x, a)` — substitute scalar; **univariate case wraps result via `ring.ground_new`, returning a constant polynomial still in the ring**.
   - `compose(x, a)` — substitute a polynomial expression for a variable.
+  - `set_ring(new_ring)` — transfer element to a different ring; **three-way dispatch**: same ring → return self; different symbols → reorder terms via `_dict_reorder` + `from_terms`; **same symbols, different domain → `from_dict` (no reorder)**.
+  - `_sorted(seq, order)` — internal sorting helper for `coeffs`, `monoms`, `terms`; **when ordering is `lex`, sorts directly by monomial tuple** (Python tuple comparison is lexicographic); for other orderings, calls the order object as a key function.
   - `_iadd_monom(mc)` — in-place monomial addition; **copies self first if self is a canonical generator** to avoid mutating ring-cached generators.
   - `_iadd_poly_monom(p2, mc)` — in-place add product; same generator-copy safeguard.
   - `coeff(element)` — return scalar multiplier for a given monomial; accepts integer `1` for constant term or a monomial element; **raises `ValueError` for non-monomial arguments**.
@@ -124,6 +126,7 @@ Sparse rational function fields and their elements.
   - `_extract_ground(element)` — coerce a scalar for arithmetic; tries `domain.convert` first.
     - **If that fails and domain has an associated field (e.g. ZZ→QQ), retries via the field and returns `(numer, denom)` split**; returns `(0, None, None)` on total failure.
   - Arithmetic (`__add__`, `__sub__`, `__mul__`, etc.): when the other operand is a `FracElement` from a different field, **checks nested domain relationships**: if `g.field` matches `self.field.domain.field`, treats `g` as a ground element; if `self.field` matches `g.field.domain.field`, **delegates to `g.__rsub__`/`g.__rmul__`** (the outer field handles the operation).
+  - `__pow__(n)` — exponentiation; **non-negative `n`**: raises numer/denom to `n` via `raw_new` (no GCD reduction); **negative `n` with nonzero element**: swaps numer/denom and raises to `|n|`; **negative `n` with zero element**: raises `ZeroDivisionError`.
   - `diff(x)` — partial derivative of the rational function w.r.t. `x`; applies the **quotient rule**: `(numer' * denom - numer * denom') / denom²`.
   - `__eq__(g)` — if `g` is same dtype, compares both numer and denom; **if `g` is any other value, checks `numer == g` and `denom == ring.one`** (treats non-fraction values as having unit denominator).
 
@@ -214,6 +217,7 @@ User-facing `Poly` class and public free functions for polynomial manipulation.
   - **Validates `eps > 0` (raises `ValueError` if not positive)**; for a single expression, wraps as `Poly` and delegates.
   - **Returns empty list `[]` for a single constant/non-polynomial input** (catches `GeneratorsNeeded` silently), unlike `count_roots`/`refine_root` which raise `PolynomialError` in the same situation.
 - `count_roots`, `real_roots`, `nroots`, `refine_root` — root functions; **each catches `GeneratorsNeeded` and re-raises as `PolynomialError`** when input has no generators (e.g. plain integer).
+  - `Poly.nroots(n, maxsteps)` — compute numerical root approximations; **for QQ coefficients, multiplies through by LCM of all denominators to convert to ZZ** before passing to the iterative solver (for accuracy); for ZZ, casts to Python `int`; for other domains, evaluates coefficients numerically.
 - `poly(expr)` — efficiently convert expression to `Poly` by recursively decomposing `Add`/`Mul`/`Pow` nodes; **non-sum factors in a product are collected separately: numeric factors are multiplied as scalars, while symbolic non-sum factors are converted to `Poly` via `_from_expr`** before multiplication.
 - `PurePoly` — Poly subclass with equality ignoring generator names; compares by number of generators (not identity).
   - `__eq__` — checks `len(f.gens) == len(g.gens)` (not name equality); **attempts domain unification and returns `False` on `UnificationFailed`** (same pattern as `Poly.__eq__`).
@@ -337,12 +341,13 @@ Production Euclidean algorithms, GCD/LCM, polynomial remainder sequences — all
 - `dup_euclidean_prs(f, g, K)` — Euclidean polynomial remainder sequence in `K[x]`; **iteratively computes `dup_rem` until remainder is zero**, collecting all remainders into a list starting with `[f, g, …]`.
 - `dmp_euclidean_prs` — multivariate wrapper; **raises `MultivariatePolynomialError` for `u > 0`** (univariate only).
 - `dup_primitive_prs`, `dup_inner_subresultants` (and `dmp_` variants) — primitive and subresultant polynomial remainder sequences.
+  - `dmp_primitive_prs` — **raises `MultivariatePolynomialError` for `u > 0`** (same pattern as `dmp_euclidean_prs`; delegates to `dup_primitive_prs` when univariate).
   - `dmp_inner_subresultants` — swaps inputs if `deg(f) < deg(g)`; **returns `([], [])` if both are zero; returns `([f], [K.one ground])` if only `g` is zero** (single-element PRS with unit cofactor).
 - `dup_prs_resultant`, `dmp_prs_resultant` — resultant via subresultant PRS; **if the last PRS element has positive degree in the leading variable, returns zero (in n−1 variables) as the resultant** (non-trivial GCD implies zero resultant).
 - `dup_resultant`, `dmp_resultant` — resultant via multiple methods; `dmp_resultant` **dispatches to Collins modular algorithm only for QQ (field) or ZZ (ring) when `USE_COLLINS_RESULTANT` config is set; for other field domains (e.g. algebraic extensions), always falls back to PRS subresultant**.
 - `dmp_zz_modular_resultant(f, g, p, u, K)` — resultant mod prime via evaluation-interpolation; **raises `HomomorphismFailed` if evaluation points exhausted**.
 - `dmp_zz_collins_resultant` / `dmp_qq_collins_resultant` — Collins's modular resultant in Z[X] / Q[X]; iterates over primes, **catches `HomomorphismFailed` from per-prime `dmp_zz_modular_resultant` and `continue`s to the next prime**; accumulates via CRT.
-- `dup_discriminant`, `dmp_discriminant` — discriminant computation.
+- `dup_discriminant`, `dmp_discriminant` — discriminant as `resultant(f, f') / (LC(f) * sign_factor)`; sign factor is `(-1)^(d(d-1)/2)` where `d` is degree; **returns zero (in n−1 variables) for degree ≤ 0**.
 - GCD: `dup_rr_prs_gcd`/`dmp_rr_prs_gcd` (ring PRS), `dup_ff_prs_gcd`/`dmp_ff_prs_gcd` (field PRS).
   - `dup_zz_heu_gcd`/`dmp_zz_heu_gcd` — heuristic over Z; same triple-fallback verification as `heugcd` in `heuristicgcd.py` but on dense coefficient lists.
   - `_dup_zz_gcd_interpolate` / `_dmp_zz_gcd_interpolate` — recover univariate/multivariate polynomial from integer GCD image using **symmetric remainder**.
@@ -372,6 +377,7 @@ Modular GCD algorithms using Chinese Remainder Theorem and Lagrange interpolatio
 
 - `_primitive(f, p)` — compute content and primitive part of `f ∈ Z_p[x₀,…,x_{k-2}, y]` viewed as polynomial over `Z_p[y]`; groups terms by all variables except the last, iteratively GCDs the univariate coefficient sequences via `gf_gcd`, and returns `(content_in_y, quotient)`.
 - `_deg(f)` — degree of `f ∈ K[x₀,…,x_{k-2}, y]` viewed as polynomial in `K[y][x₀,…,x_{k-2}]`; returns the **lexicographically largest** monomial prefix tuple (not total degree).
+- `_LC(f)` — extract leading coefficient of `f ∈ K[x₀,…,x_{k-2}, y]` as a univariate polynomial in `K[y]`; collects all terms whose prefix exponents match `_deg(f)` and projects them into a single-variable ring in the last generator.
 - `_trivial_gcd(f, g)` — handle zero-polynomial GCD cases; **negates the non-zero input if its leading coefficient is negative** to ensure the result has a positive leading coefficient; returns `(ring.zero, ring.zero, ring.zero)` if both are zero.
 - `modgcd_univariate`, `modgcd_bivariate`, `modgcd_multivariate` — modular GCD in Z[x], Z[x,y], Z[X].
 - `_primitive_in_x0(f)` — content and primitive part of `f ∈ Q(α)[x₀,…,xₙ₋₁]` viewed as univariate in x₀; iteratively GCDs coefficients via `func_field_modgcd`.
@@ -580,7 +586,7 @@ Automatic domain inference from coefficient lists.
 - `_construct_algebraic` — handle algebraic coefficients: decomposes each into (irrational_part, multiplicative_factor, additive_constant).
   - Collects distinct irrational parts, **computes a single primitive element to unify all extensions into one algebraic field**.
   - Reconstructs each coefficient in the unified field using the primitive element representation.
-- `_construct_composite` — handle composite domains (ZZ[X], QQ[X], ZZ(X), QQ(X)).
+- `_construct_composite` — handle composite domains (ZZ[X], QQ[X], ZZ(X), QQ(X)); **returns `None` (fallback to EX) if any generator is number-like or if two generators share free symbols** (potential algebraic relations).
 - `_construct_expression` — fallback to the expression domain EX.
 
 ### [`compatibility.py`](compatibility.py)

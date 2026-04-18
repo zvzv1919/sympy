@@ -198,7 +198,8 @@ Integration by rewriting integrands as Meijer G-functions and applying known con
   - Returns the best (simplest) collected result if no clean closed-form is found
 - `meijerint_definite(f, x, a, b)` — definite integral via G-function rewriting; multi-stage pipeline:
   - Tries multiple algebraic rewritings of the integrand (expand_mul, expand, trig expansion) via a guess-and-check loop, deduplicating equivalent forms
-  - For each rewriting, first attempts direct G-function integration; if that fails and the integrand is a sum, falls back to linearity — splits into addends, integrates each term separately, and combines results
+  - For each rewriting, first attempts direct G-function integration; if that fails and the integrand is a sum, falls back to linearity
+  - Linearity fallback: integrates each addend separately, combines partial results, and joins convergence conditions via logical conjunction (And); abandons if conjunction is False
   - Core engine rewrites integrand as one or a product of two G-functions, then applies convolution/integral theorems
   - When the two-G-function approach fails convergence checks, retries with full polar branch substitution enabled
   - Collects boolean convergence conditions; abandons a path if conditions are always False

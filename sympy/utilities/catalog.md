@@ -50,6 +50,7 @@ Large collection of iterable/container utility functions.
 - `flatten`, `unflatten` — recursive/structured flattening of nested iterables.
 - `group`, `take`, `dict_merge`, `postorder_traversal`
 - `partitions(n, m, k)` — generator of unordered integer partitions of n; yields mutable dicts {part: count}; terminates when decomposition capacity is exhausted.
+- `ordered_partitions(n, m)` — generator of sorted integer compositions of n into m additive parts (lists); reuses the same list object across iterations when m is given; recursive strategy iterates a base value and decomposes the remainder.
 - `_set_partitions(n)` — generator enumerating all ways to assign n elements into non-overlapping groups via a constrained n-digit counter; each digit ≤ 1 + max of all digits to its left; yields (num_groups, mutable assignment vector).
 - `multiset_partitions(multiset, m)` — high-level dispatcher for splitting a collection into groups; special-cases all-identical elements (reduces to integer `partitions`), pure sets (`_set_partitions`), and general multisets (delegates to `enumerative.py`).
 - `kbins(l, k, ordered)` — partition a list into k bins; `ordered` is a 2-digit flag (00/01/10/11) controlling whether bin order and item order matter; raises `ValueError` for unsupported values.
@@ -61,7 +62,7 @@ Large collection of iterable/container utility functions.
 - `has_dups`, `has_variety` — duplicate/uniqueness checks.
 
 ### [`enumerative.py`](enumerative.py)
-Low-level algorithms for enumerative combinatorics (multiset partition traversal/counting); called by `iterables.multiset_partitions` for the general multiset case.
+Low-level algorithms for enumerative combinatorics (multiset partition traversal/counting); operates on multisets, not plain integer partitions. Called by `iterables.multiset_partitions` for the general multiset case.
 - `multiset_partitions_taocp` — Knuth's algorithm for multiset partitions.
 - `MultisetPartitionTraverser` — stateful traverser for multiset partition enumeration with size/count constraints.
   - `count_partitions(multiplicities)` — fast partition counting via dynamic programming with a persistent cross-call cache.

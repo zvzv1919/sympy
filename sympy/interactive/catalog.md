@@ -8,7 +8,7 @@ Core print-system initialization for interactive sessions (both plain Python and
   - Configures pretty-printer settings: order, unicode, wrap, column width.
 - `_init_ipython_printing` — registers IPython display formatters (PNG/LaTeX/SVG/pretty-text) for SymPy types.
 - `_init_python_printing` — installs a `sys.displayhook` for plain Python REPL sessions.
-- `_is_ipython` — checks whether a given shell object is an IPython instance.
+- `_is_ipython` — detects whether a shell instance is an IPython `InteractiveShell`; uses cascading imports across IPython versions (≥0.11 vs `iplib`) to handle backward-incompatible API changes.
 
 ## [ipythonprinting.py](ipythonprinting.py)
 **Deprecated** IPython extension shim (deprecated since 0.7.3). Delegates to `init_printing` in `printing.py`.
@@ -17,7 +17,7 @@ Core print-system initialization for interactive sessions (both plain Python and
 ## [session.py](session.py)
 Interactive session bootstrapping and configuration.
 - `init_session` — top-level entry to start an interactive SymPy session (IPython or plain Python).
-  - Probes whether code is running inside IPython (imports IPython, calls `get_ipython()`); handles version branching (≥0.11 vs older API).
+  - Probes whether code is running inside IPython (imports IPython, calls `get_ipython()`) to decide which session type to create.
   - Raises `RuntimeError` if IPython is explicitly requested (`ipython=True`) but not installed; auto-detects when `ipython=None`.
   - Enables IPython pylab/matplotlib integration; silently catches errors when matplotlib is missing or no display is available.
 - `init_ipython_session` — creates and configures an IPython app instance.

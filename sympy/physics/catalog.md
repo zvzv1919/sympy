@@ -111,7 +111,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
   - `J2Op` — total angular momentum squared (Casimir) operator; commutes with all component operators and applies eigenvalue ℏ²j(j+1).
   - `Rotation` — Euler-angle rotation operator; applies to both uncoupled and coupled kets: enumerates D-matrix elements for numeric j, returns symbolic Sum for symbolic j (using Dummy variable by default, named symbol when `dummy=False`).
   - `SpinState._eval_innerproduct_J{x,y,z}Bra` — cross-basis inner products: when bra and ket belong to different component bases, uses the ket's matrix representation in the bra's basis; same-basis returns KroneckerDelta orthonormality.
-  - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes.
+  - `CoupledSpinState` — coupled state constructor with triangle-inequality validation on coupling schemes; auto-generates a default sequential coupling order when none provided (space 1+2, then result+3, etc., with accumulated partial j sums).
     - `_build_coupled(jcoupling, length)` — parses a coupling scheme (list of (n1,n2,j) tuples) into paired subsystem index groups and intermediate j values; used by both the constructor and `uncouple()`.
     - `_eval_hilbert_space`: numeric total j → DirectSumHilbertSpace of ComplexSpaces; symbolic j → falls back to single ComplexSpace(2j+1).
   - `couple()`/`_couple()` — combines uncoupled spin states into coupled representation; validates custom coupling order: after two spaces couple, the result must be referenced by the smaller index (raises ValueError otherwise).
@@ -194,7 +194,7 @@ Abstract quantum mechanics framework: states, operators, Hilbert spaces, represe
     - Power simplification: `_eval_power` reduces exponent mod 2 (squaring any SigmaX/Y/Z yields identity). `SigmaMinus`/`SigmaPlus` are nilpotent: any positive integer power → 0.
     - `SigmaZKet`/`SigmaZBra` — two-level system states (n=0 or 1); operator application methods define action of each Pauli/ladder operator on states (e.g., raising operator on upper state → 0).
   - `qsimplify_pauli(e)` — simplifies products of Pauli operators by chaining pairwise reduction, splitting scalar coefficients from operator parts after each step.
-  - `cartesian.py` — 1-D position/momentum operators (XOp, PxOp) and eigenstates (XKet/XBra, PxKet/PxBra), plus 3-D position operators (YOp, ZOp) and eigenstates (PositionKet3D/PositionBra3D).
+  - `cartesian.py` — 1-D position/momentum operators (XOp, PxOp) and eigenstates (XKet/XBra, PxKet/PxBra), plus 3-D position operators (YOp, ZOp) and eigenstates (PositionKet3D/PositionBra3D). XOp defines `_eval_commutator_PxOp` implementing the canonical commutation relation [X, Px] = iℏ.
     - `PxOp._represent_XKet` — position-basis representation of momentum operator; uses `options.pop("index", 1)` as default start index for basis enumeration.
     - `PxKet._eval_innerproduct_XBra` — computes Fourier-kernel plane-wave overlap exp(i·p·x/ℏ)/√(2πℏ). `XKet._eval_innerproduct_PxBra` — conjugate overlap.
     - Same-basis inner products return DiracDelta; 3-D position states return product of three DiracDeltas.

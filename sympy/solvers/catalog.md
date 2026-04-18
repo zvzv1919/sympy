@@ -39,7 +39,7 @@ Legacy general-purpose algebraic equation solver. Returns solutions as lists or 
   - Multi-generator same-base handling: when generators share one base but differ in power (e.g. exp(x), exp(-x)), expands powers before substituting the base with a dummy variable.
   - Multi-generator different-base handling: for nested transcendental functions (e.g. log(x) and log(log(x)-1)), substitutes the shallowest function with a dummy variable, solves the simplified equation, then inverts to recover solutions.
   - Transcendental fallback via `_tsolve`.
-- `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables.
+- `solve_linear(lhs, rhs)` — fast linear-equation solver for one or more variables. Accepts Equality as `lhs` (extracts sides internally); raises ValueError if `lhs` is an Equality and `rhs` is nonzero (ambiguous RHS). Returns `(symbol, solution)` if linear, `(0, 1)` if trivially zero, `(0, 0)` if no solution, or `(numer, denom)` if not linear.
 - `solve_linear_system(matrix, *syms)` — linear system from augmented matrix.
 - `solve_undetermined_coeffs(equ, coeffs, sym)` — solves for unknown algebraic coefficients in a polynomial identity (not ODE-related; see `ode.py` for the ODE undetermined coefficients method).
 - Post-solve assumption filtering: checks each candidate against the symbol's declared properties (e.g. positive, real) via `check_assumptions`.

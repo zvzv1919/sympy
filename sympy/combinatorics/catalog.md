@@ -202,4 +202,9 @@ Low-level algorithms for computational group theory.
 - `_strong_gens_from_distr`, `_check_cycles_alt_sym`.
 
 ### [`testutil.py`](testutil.py)
-Testing utilities for permutation groups (excluded from localization targets).
+Testing/verification helpers for permutation groups, plus brute-force tensor canonicalization.
+- `_cmp_perm_lists`, `_naive_list_centralizer` — test comparison helpers.
+- `_verify_bsgs`, `_verify_centralizer`, `_verify_normal_closure` — correctness checks for BSGS, centralizers, and normal closures.
+- `canonicalize_naive(g, dummies, sym, *v)` — brute-force tensor canonicalization; reference implementation for `tensor_can.canonicalize`.
+  - Generates full orbit under symmetry and dummy-index groups, sorts it, detects zero tensors via sign contradictions in consecutive orbit elements.
+- `graph_certificate(gr)` — computes a canonical certificate for an unoriented graph by encoding it as a tensor problem and calling `tensor_can.canonicalize`.

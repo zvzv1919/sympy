@@ -11,6 +11,7 @@ Foundation of all set types and operations.
   - `contains` — returns True/False for definite membership; falls back to an unevaluated `Contains` expression when membership is indeterminate
 - `Interval` — continuous real interval with open/closed endpoint flags
   - `__new__` — degenerate cases: equal endpoints with any open boundary → `EmptySet`; equal endpoints both closed → `FiniteSet({point})`; auto-opens boundaries at ±∞
+  - `_contains` — shortcut: when interval spans (−∞, ∞), returns `other.is_real` directly (True/False/None); otherwise builds relational expression from endpoint comparisons
   - `_eval_imageset` computes forward image of a function over the interval (domain → range) via calculus extrema
   - `_eval_Eq` returns false for non-compound sets, unevaluated for Union/Complement/Intersection/ProductSet
 - `ProductSet` — Cartesian product of sets; flattens nested products
@@ -38,7 +39,7 @@ Named infinite sets, image sets, integer ranges, and complex-plane regions.
 - `Naturals` / `Naturals0` — positive integers / non-negative integers (singletons)
   - `_contains` — three-valued membership: returns true if integer+positive/nonnegative, false if not integer or not positive/nonnegative, `None` when sign is indeterminate
 - `Integers` — all integers; `_eval_imageset` canonicalizes linear expressions
-- `Reals` — all reals as Interval(−∞, ∞) singleton
+- `Reals` — all reals; subclass of `Interval(−∞, ∞)` singleton; inherits `_contains` and all interval behavior from `Interval` in `sets.py`
 - `ImageSet` — the image of a base set under a Lambda; intersection uses Diophantine solver for integer bases
   - `_contains` — solves for pre-images via `solveset`/`diophantine`; catches TypeError on domain membership check and falls back to numerical `.evalf()` evaluation
   - `_intersect` with `Interval`: inverts the lambda at interval endpoints to find new domain boundaries; falls back to `solveset` over reals when inverted boundaries are non-real; converts finite `Range` to `FiniteSet` before remapping through the lambda

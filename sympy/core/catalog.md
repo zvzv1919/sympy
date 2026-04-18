@@ -70,7 +70,8 @@ All concrete numeric types and their arithmetic operations.
   - For symbolic real operands, transforms `p/q > expr` into `Integer(p) > q*expr` to clear denominator
 - `int_trace` — profiling decorator for `Integer.__new__`; optimistically increments hit counter before cache lookup, then on KeyError decrements hit and increments miss; registered via `atexit` to print stats
 - `Integer` — whole numbers (subclass of Rational); cached in `_intcache`; `__rdivmod__` converts non-int left operands via `Number()` with TypeError handling
-  - `_eval_power` — negative-base sign branching differs for integer vs fractional exponents
+  - `_eval_power` — handles infinite exponents first: positive base >1 with `oo` → `oo`; negative base (not -1,0,1) with `oo` → `oo + I*oo`; `NegativeInfinity` delegates via `Rational(1,self)**oo`
+  - Negative-base sign branching differs for integer vs fractional exponents
   - For fractional exponents, factors base into primes and extracts perfect roots via divmod; reduces remaining radicals by shared GCD
 - `NegativeOne` — singleton `-1`; `_eval_power`: odd exp → -1, even → 1; rational exp with denominator 2 → `I**p` (imaginary unit); general rational exponents decomposed via `divmod` into integer and fractional parts
 - `Zero` — additive identity singleton; `_eval_power`: positive exp → 0, negative exp → ComplexInfinity, non-real (complex) exp → NaN
@@ -323,6 +324,7 @@ Three-valued fuzzy logic: `fuzzy_and()`, `fuzzy_or()`, `fuzzy_not()`, `_fuzzy_gr
 ### [`relational.py`](relational.py)
 `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` — symbolic relational expression nodes (unevaluated comparison objects). `Relational` base dispatches by operator string.
 
+- `_Inequality` — internal base class for all `*Than` inequalities; `__new__` calls `_eval_relation(lhs, rhs)` — if result is not None, returns it; if None, falls through to create a non-evaluated `Relational` node
 - `_Greater` / `_Less` — internal base classes providing `.gts` (greater-than side) and `.lts` (less-than side) properties; `_Greater` maps gts→arg[0], lts→arg[1]; `_Less` swaps them (gts→arg[1], lts→arg[0])
 - These are the AST nodes returned when `Expr.__ge__`/`__lt__`/etc. in `expr.py` cannot resolve a comparison to True/False
 - `Equality.__new__` — multi-stage evaluation: (1) delegates to `_eval_Eq` hooks on either side; (2) structural equality check; (3) finiteness check — if both sides are non-finite (infinite), returns True; if one finite and one not, returns False; (4) difference-based zero test with non-commutative guard; (5) ratio-based numerator/denominator analysis
